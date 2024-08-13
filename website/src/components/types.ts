@@ -1,9 +1,9 @@
 export interface VisualizationFilter {
-    benchmark?: string[];
-    experiment?: string[];
-    model_family?: string[];
-    model?: string[];
-    metric?: string[];
+    benchmark: string[];
+    experiment: string[];
+    model_family: string[];
+    model: string[];
+    metric: string[];
 }
 
 export interface Experiment {
@@ -28,4 +28,11 @@ export interface CompiledResult {
     model: string;
     metric: string;
     value: number;
+}
+
+export interface TransformedResult {
+    benchmark: string;  
+    experiment: string;  
+    metric: string;  
+    [key: string]: string | number; 
 }

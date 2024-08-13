@@ -6,9 +6,9 @@
     {
       "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
       "metrics": [
-        "all_correct",
         "completeness",
         "satisfied_rate",
+        "all_correct",
         "not_from_author_rate",
         "unsatisfied_rate"
       ]
@@ -16,9 +16,9 @@
     {
       "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
       "metrics": [
-        "all_correct",
         "completeness",
         "satisfied_rate",
+        "all_correct",
         "not_from_author_rate",
         "unsatisfied_rate"
       ]
@@ -26,9 +26,9 @@
     {
       "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
       "metrics": [
-        "all_correct",
         "completeness",
         "satisfied_rate",
+        "all_correct",
         "not_from_author_rate",
         "unsatisfied_rate"
       ]
@@ -36,9 +36,9 @@
     {
       "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
       "metrics": [
-        "all_correct",
         "completeness",
         "satisfied_rate",
+        "all_correct",
         "not_from_author_rate",
         "unsatisfied_rate"
       ]
@@ -46,9 +46,9 @@
     {
       "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
       "metrics": [
-        "all_correct",
         "completeness",
         "satisfied_rate",
+        "all_correct",
         "not_from_author_rate",
         "unsatisfied_rate"
       ]
@@ -58,8 +58,8 @@
     {
       "model_family": "Claude",
       "models": [
-        "Claude-3_5-Sonnet",
-        "Claude-3-Opus"
+        "Claude-3-Opus",
+        "Claude-3_5-Sonnet"
       ]
     },
     {
@@ -71,8 +71,8 @@
     {
       "model_family": "GPT",
       "models": [
-        "GPT-4-1106-Preview",
-        "GPT-4o-2024-05-13"
+        "GPT-4o-2024-05-13",
+        "GPT-4-1106-Preview"
       ]
     },
     {

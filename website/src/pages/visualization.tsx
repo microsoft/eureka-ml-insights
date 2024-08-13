@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';  
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ReferenceLine, ResponsiveContainer, Tooltip, Legend } from 'recharts';  
 import * as d3 from 'd3';
 import Layout from '@theme/Layout';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import { ControlRowView} from "../components/atoms";
 import { Button, Checkbox, CheckboxProps, Divider, Drawer, Input, Modal, Select, Tabs, message, theme } from "antd";
-import { CompiledResult, Experiment, Model, ModelFamily, VisualizationFilter } from '../components/types';
+import { CompiledResult, Experiment, Model, ModelFamily, TransformedResult, VisualizationFilter } from '../components/types';
 
 
 
@@ -28,12 +28,23 @@ const App: React.FC = () => {
 };
 
 const Visualization = () => {
+    const defaultFilter: VisualizationFilter = {  
+        benchmark: [],  
+        experiment: [],  
+        model_family: [],  
+        model: [],  
+        metric: [],  
+    };  
+
     const [filteredData, setFilteredData] = useState<CompiledResult[]>([]);
-    const [visualizationFilter, setVisualizationFilter] = useState<VisualizationFilter>();
+    const [transformedData, setTransformedData] = useState<TransformedResult[]>([]);
+    const [visualizationFilter, setVisualizationFilter] = useState<VisualizationFilter>(defaultFilter);
     const [benchmarks, setBenchmarks] = useState<string[]>([]);
     const [experiments, setExperiments] = useState<Experiment[]>([]);
-    const [modelFamilies, setModelFamilies] = useState<string[]>([]);
+    const [modelFamilies, setModelFamilies] = useState<ModelFamily[]>([]);
     const [models, setModels] = useState<Model[]>([]);
+    const [filteredModels, setFilteredModels] = useState<Model[]>([]);
+    const [displayBars, setDisplayBars] = useState<JSX.Element[]>([]);
 
     React.useEffect(() => {  
         fetch('/config.json')
@@ -42,7 +53,7 @@ const Visualization = () => {
                 {
                     setBenchmarks(fetchedData.benchmarks);
                     setExperiments(fetchedData.experiments);
-                    setModelFamilies(fetchedData.model_list.map((d: ModelFamily) => d.model_family));
+                    setModelFamilies(fetchedData.model_list);
                     setModels(fetchedData.model_list.map((d: ModelFamily) => d.models.map((model: string) => ({ model, model_family: d.model_family }))).flat());
                 })
             .catch(error => console.error(error));
@@ -54,7 +65,7 @@ const Visualization = () => {
             .then(fetchedData => 
                 {
                     for (const key in visualizationFilter) {
-                        if (visualizationFilter[key]) {
+                        if (visualizationFilter[key] && visualizationFilter[key].length > 0) {
                             fetchedData = fetchedData.filter((d: CompiledResult) => visualizationFilter[key].some(x => x === d[key]));
                         }
                     }
@@ -63,18 +74,50 @@ const Visualization = () => {
             .catch(error => console.error(error));
     }, [visualizationFilter]);
 
-    const [modelFamilyChecked, setModelFamilyChecked] = useState<string[]>(modelFamilies);
+    React.useEffect(() => {  
+        fetch('/compiled_results_transformed.json')
+            .then(response => response.json())
+            .then(fetchedData => 
+                {
 
-    const checkAll = modelFamilies.length === modelFamilyChecked.length;
-    const indeterminate = modelFamilyChecked.length > 0 && modelFamilyChecked.length < modelFamilies.length;
+                    for (const key in visualizationFilter) {
+                        if (visualizationFilter[key] && visualizationFilter[key].length > 0) {
+                            if (key.startsWith('model'))
+                            {
+                                const filtered_models = key === "model" ? visualizationFilter["model"] : models.filter((d: Model) => visualizationFilter.model_family.some(x => x === d.model_family)).map((d: Model) => d.model);
+                                console.log(visualizationFilter["model"])
+                                fetchedData = fetchedData.map(d => {  
+                                    return Object.keys(d)  
+                                        .filter(key => key === "benchmark" || key === "experiment" || key === "metric" || filtered_models.includes(key))  
+                                        .reduce((obj, key) => {  
+                                            obj[key] = d[key];  
+                                            return obj;  
+                                        }, {});  
+                                }); 
+                            }
+                            else
+                            {
+                                fetchedData = fetchedData.filter((d: TransformedResult) => visualizationFilter[key].some(x => x === d[key]));
+                            }
+                        }
+                    }
+                    setTransformedData(fetchedData);
+                    const metrics = Object.keys(fetchedData[0]).filter(key => key !== 'experiment');  
+                    const temp = metrics.map(metric => <Bar dataKey={metric} fill="#666" />);  
+                    setDisplayBars(temp);  
+                })
+            .catch(error => console.error(error));
+    }, [visualizationFilter]);
 
+    React.useEffect(() => {  
+        if (visualizationFilter?.model_family && visualizationFilter.model_family.length > 0) {  
+            const filtered = models.filter((d: Model) => visualizationFilter.model_family.some(x => x === d.model_family));  
+            setFilteredModels(filtered);  
+        } else {  
+            setFilteredModels(models);  
+        }  
+    }, [visualizationFilter?.model_family, models]);
 
-    // const experimentFilterOnChange = (list: string[]) => {  
-    //     setModelFamilyChecked(list);  
-    //     console.log(list);  
-    //     const updatedFilter = { ...visualizationFilter, model_family: list };  
-    //     setVisualizationFilter(updatedFilter);  
-    // }; 
     const visualizationFilterOnChange = (list: string[], filterKey: string) => {
         const updatedFilter = { ...visualizationFilter, [filterKey]: list };
         setVisualizationFilter(updatedFilter);  
@@ -86,12 +129,30 @@ const Visualization = () => {
         setVisualizationFilter(updatedFilter);  
     };
 
+    const onModelFamilyChange = (list: string[]) => {
+        const filtered_models = models.filter((d: Model) => list.some(x => x === d.model_family)).map((d: Model) => d.model);
+        visualizationFilterOnChange(filtered_models, 'model');
+        visualizationFilterOnChange(list, 'model_family');
+    };
+
+    const renderExperimentTickMarks = (tickProps) => {
+        const { x, y, payload } = tickProps;
+        const { value, offset } = payload;
+        console.log(value);
+        return (
+          <g transform={`translate(${x},${y})`}>  
+            <text x={0} y={0} textAnchor="start" fill="#666" fontSize={8} transform="rotate(35)">
+              {payload.value}  
+            </text>  
+          </g> )
+    };
+
     return (
         <div>
             <div>
                 <ControlRowView
                     title="Benchmark"
-                    className="mt-4 mb-2"
+                    className="mb-2"
                     description="Filter by Benchmark"
                     value = ""
                     control={
@@ -106,13 +167,13 @@ const Visualization = () => {
                 />
                 <ControlRowView
                     title="Experiment"
-                    className="mt-4 mb-2"
+                    className="mb-2"
                     description="Filter by Experiments"
                     value = ""
                     control={
                       <div>
                         <Checkbox 
-                            indeterminate={indeterminate} 
+                            indeterminate={visualizationFilter?.experiment?.length > 0 && visualizationFilter?.experiment?.length < experiments.length} 
                             onChange={(e) => onCheckAllChange(e, 'experiment', experiments.map((d: Experiment) => d.experiment))} 
                             checked={visualizationFilter?.experiment?.length === experiments.length}>
                           Check all
@@ -127,40 +188,40 @@ const Visualization = () => {
                 />
                 <ControlRowView
                     title="Model Family"
-                    className="mt-4 mb-2"
+                    className="mb-2"
                     description="Filter by Model Families"
                     value = ""
                     control={
                       <div>
                         <Checkbox 
-                            indeterminate={indeterminate} 
-                            onChange={(e) => onCheckAllChange(e, 'model_family', modelFamilies)} 
+                            indeterminate={visualizationFilter?.model_family?.length > 0 && visualizationFilter?.model_family?.length < modelFamilies.length} 
+                            onChange={(e) => onCheckAllChange(e, 'model_family', modelFamilies.map((d: ModelFamily) => d.model_family))} 
                             checked={visualizationFilter?.model_family?.length === modelFamilies.length}>
                           Check all
                         </Checkbox>
                         <Checkbox.Group 
-                            options={modelFamilies} 
+                            options={modelFamilies.map((d: ModelFamily) => d.model_family)} 
                             value={visualizationFilter?.model_family} 
-                            onChange={(list) => visualizationFilterOnChange(list, 'model_family')}  />
+                            onChange={onModelFamilyChange}  />
                         <Divider />
                       </div>
                     }
                 />
                 <ControlRowView
                     title="Model"
-                    className="mt-4 mb-2"
+                    className="mb-2"
                     description="Filter by Model"
                     value = ""
                     control={
                       <div>
                         <Checkbox 
-                            indeterminate={indeterminate} 
+                            indeterminate={visualizationFilter?.model?.length > 0 && visualizationFilter?.model?.length < models.length} 
                             onChange={(e) => onCheckAllChange(e, 'model', models.map((d: Model) => d.model))} 
                             checked={visualizationFilter?.model?.length === models.length}>
                           Check all
                         </Checkbox>
                         <Checkbox.Group 
-                            options={models.map((d: Model) => d.model)} 
+                            options={filteredModels.map((d: Model) => d.model)}
                             value={visualizationFilter?.model} 
                             onChange={(list) => visualizationFilterOnChange(list, 'model')}  />
                         <Divider />
@@ -168,21 +229,32 @@ const Visualization = () => {
                     }
                 />
             </div>
-            <BarChart  
-                width={500}  
-                height={300}  
-                data={filteredData}  
-                margin={{  
-                    top: 5, right: 30, left: 20, bottom: 5,  
-                }}  
-            >  
-                <CartesianGrid strokeDasharray="3 3" />  
-                <XAxis dataKey="model" />  
-                <YAxis />  
-                <Tooltip />  
-                <Legend />  
-                <Bar dataKey="value" fill="#8884d8" />  
-            </BarChart>
+            <ResponsiveContainer width="50%" height={500}>  
+                <BarChart  
+                    data={transformedData}  
+                    margin={{  
+                        top: 15, right: 150, left: 150, bottom: 150,  
+                    }}  
+                >  
+                    <CartesianGrid strokeDasharray="3 3" />  
+                    <XAxis dataKey="experiment" tick={renderExperimentTickMarks} interval={visualizationFilter.experiment.length > 0 ? visualizationFilter.experiment.length : experiments.length}/>
+                    {/* <XAxis dataKey="metric" tick={renderExperimentTickMarks} /> */}
+                    <YAxis />  
+                    <Tooltip />  
+                    <Legend />  
+                    {displayBars}
+                    {/* {transformedData.map((entry, index) => {  
+                        console.log(entry + " " + index);
+                        // const temp =  (visualizationFilter["model"].length > 0 ? visualizationFilter["model"].length : models.length);
+                        const temp = 5;                        
+                        console.log(temp);
+                        if (index % temp === 0) {  
+                            return <ReferenceLine x={entry.experiment} stroke="gray" strokeDasharray="3 3" />  
+                        }  
+                        return null;  
+                    })}   */}
+                </BarChart>
+            </ResponsiveContainer>
         </div>
     );
 }
