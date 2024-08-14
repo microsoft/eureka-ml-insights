@@ -1,3 +1,10 @@
+export interface VisualizationConfig {
+    benchmarks: string[];
+    experiments: Experiment[];
+    models: Model[];
+    model_families: ModelFamily[];
+}
+
 export interface VisualizationFilter {
     benchmark: string[];
     experiment: string[];
@@ -19,15 +26,7 @@ export interface ModelFamily {
 export interface Model {
     model: string;
     model_family: string;
-}
-
-export interface CompiledResult {
-    benchmark: string;
-    experiment: string;
-    model_family: string;
-    model: string;
-    metric: string;
-    value: number;
+    color: string;
 }
 
 export interface TransformedResult {
@@ -35,4 +34,12 @@ export interface TransformedResult {
     experiment: string;  
     metric: string;  
     [key: string]: string | number; 
+}
+
+export interface ModelResult {  
+    name: string;
+    data: number[];
+    pointPlacement: string;
+    type: string;
+    color: string;
 }

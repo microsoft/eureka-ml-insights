@@ -4,7 +4,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
   title: 'Project Eureka',
-  tagline: 'Dinosaurs are cool',
+  tagline: 'AI Frontiers Evaluation and Understanding',
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here
@@ -35,8 +35,6 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
           editUrl:
             'https://github.com/microsoft/eureka-ml-insights',
         },
@@ -56,7 +54,7 @@ const config: Config = {
 
   themeConfig: {
     // Replace with your project's social card
-    image: 'img/docusaurus-social-card.jpg',
+    image: 'img/background.png',
     navbar: {
       title: 'My Site',
       logo: {
@@ -71,6 +69,11 @@ const config: Config = {
           position: 'right',
         },
       ],
+    },
+    announcementBar: {
+      content: 'Project Eureka: AI Frontiers Evaluation and Understanding',
+      backgroundColor: '#10adff',
+      
     },
     footer: {
       style: 'dark',

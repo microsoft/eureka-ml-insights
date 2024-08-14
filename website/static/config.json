@@ -6,87 +6,99 @@
     {
       "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
       "metrics": [
-        "completeness",
-        "satisfied_rate",
         "all_correct",
-        "not_from_author_rate",
-        "unsatisfied_rate"
+        "completeness",
+        "unsatisfied_rate",
+        "satisfied_rate",
+        "not_from_author_rate"
       ]
     },
     {
       "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
       "metrics": [
-        "completeness",
-        "satisfied_rate",
         "all_correct",
-        "not_from_author_rate",
-        "unsatisfied_rate"
+        "completeness",
+        "unsatisfied_rate",
+        "satisfied_rate",
+        "not_from_author_rate"
       ]
     },
     {
       "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
       "metrics": [
-        "completeness",
-        "satisfied_rate",
         "all_correct",
-        "not_from_author_rate",
-        "unsatisfied_rate"
+        "completeness",
+        "unsatisfied_rate",
+        "satisfied_rate",
+        "not_from_author_rate"
       ]
     },
     {
       "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
       "metrics": [
-        "completeness",
-        "satisfied_rate",
         "all_correct",
-        "not_from_author_rate",
-        "unsatisfied_rate"
+        "completeness",
+        "unsatisfied_rate",
+        "satisfied_rate",
+        "not_from_author_rate"
       ]
     },
     {
       "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
       "metrics": [
-        "completeness",
-        "satisfied_rate",
         "all_correct",
-        "not_from_author_rate",
-        "unsatisfied_rate"
+        "completeness",
+        "unsatisfied_rate",
+        "satisfied_rate",
+        "not_from_author_rate"
       ]
     }
   ],
   "model_list": [
     {
       "model_family": "Claude",
-      "models": [
-        "Claude-3-Opus",
-        "Claude-3_5-Sonnet"
-      ]
+      "model": "Claude-3-Opus",
+      "color": "#4762D6"
+    },
+    {
+      "model_family": "Claude",
+      "model": "Claude-3_5-Sonnet",
+      "color": "#4762D6"
     },
     {
       "model_family": "Gemini",
-      "models": [
-        "Gemini-1_5-Pro"
-      ]
+      "model": "Gemini-1_5-Pro",
+      "color": "AE8C00"
     },
     {
       "model_family": "GPT",
-      "models": [
-        "GPT-4o-2024-05-13",
-        "GPT-4-1106-Preview"
-      ]
+      "model": "GPT-4-1106-Preview",
+      "color": "#E3008C"
+    },
+    {
+      "model_family": "GPT",
+      "model": "GPT-4o-2024-05-13",
+      "color": "#B61A40"
     },
     {
       "model_family": "Llama",
-      "models": [
-        "Llama-3-70B",
-        "Llama-3_1-70B"
-      ]
+      "model": "Llama-3-70B",
+      "color": "#058801"
+    },
+    {
+      "model_family": "Llama",
+      "model": "Llama-3_1-405B",
+      "color": "#71A920"
+    },
+    {
+      "model_family": "Llama",
+      "model": "Llama-3_1-70B",
+      "color": "#65D060"
     },
     {
       "model_family": "Mistral",
-      "models": [
-        "Mistral_Large_2_2407"
-      ]
+      "model": "Mistral_Large_2_2407",
+      "color": "#E86B24"
     }
   ]
 }

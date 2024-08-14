@@ -60,18 +60,19 @@ def coallate_kitlab_results(directory_path, file_pattern):
 
 def create_config(directory_path, file_pattern):
     data = { "benchmarks": ["Kitab"], "experiments": [], "model_list":[] }
-    modelsSet = {}
+    modelsSet = set()
 
     experiments = os.listdir(directory_path)
     for experiment in experiments:
         model_families = os.listdir(os.path.join(directory_path, experiment))
         metrics = set()
         for model_family in model_families:
-            if model_family not in modelsSet:
-                modelsSet[model_family] = set()
             models = os.listdir(os.path.join(directory_path, experiment, model_family))
-            modelsSet[model_family].update(models)
+            # modelsSet[model_family].update(models)
             for model in models:
+                if model not in modelsSet:
+                    modelsSet.add(model)
+                    data['model_list'].append({"model_family": model_family, "model": model, "color": ""})
                 runs = os.listdir(os.path.join(directory_path, experiment, model_family, model))
                 for run in runs:
                     report_files = [f for f in os.listdir(os.path.join(directory_path, experiment, model_family, model, run, 'eval_report')) if file_pattern.match(f)]
@@ -84,8 +85,8 @@ def create_config(directory_path, file_pattern):
                                 metrics.add(metric.replace("KitabMetric_", ''))
         data['experiments'].append({"experiment": experiment, "metrics": list(set(metrics))})
 
-    for model_family in modelsSet:
-        data['model_list'].append({"model_family": model_family, "models": list(modelsSet[model_family])})
+    # for model_family in modelsSet:
+    #     data['model_list'].append({"model_family": model_family, "models": list(modelsSet[model_family])})
 
     # Write the final JSON file
     with open('website\\static\\config.json', 'w') as f:
@@ -95,5 +96,5 @@ def create_config(directory_path, file_pattern):
 # Example usage
 directory_path = 'C:\\Users\\jluey\\Downloads\\reports\\release\\Kitab'
 file_pattern = re.compile(r'^(?!.*by).*\.json$', re.IGNORECASE)
-coallate_kitlab_results(directory_path, file_pattern)
-# create_config(directory_path, file_pattern)
+# coallate_kitlab_results(directory_path, file_pattern)
+create_config(directory_path, file_pattern)

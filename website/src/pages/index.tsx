@@ -4,26 +4,20 @@ import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
 import HomepageFeatures from '@site/src/components/HomepageFeatures';
 import Heading from '@theme/Heading';
-
 import styles from './index.module.css';
 
 function HomepageHeader() {
   return (
-    <header className={clsx('hero hero--primary', styles.heroBanner)}>
-      <div className="container">
-        <Heading as="h1" className="hero__title">
-          Project Eureka
-        </Heading>
-        <p className="hero__subtitle">AI Frontiers Evaluation and Understanding</p>
-        <div className={styles.buttons}>
-          <Link
-            className="button button--secondary button--lg"
-            to="/visualization">
-            Visualize Findings
-          </Link>
-        </div>
-      </div>
-    </header>
+    <header className={styles.hero}>  
+      <div className={styles.heroBackground}></div>  
+      <div className="container">  
+        <Heading as="h1" className="hero__title">  
+          Project Eureka  
+        </Heading>  
+        <p className="hero-content">AI Frontiers Evaluation and Understanding</p>  
+        <p className="hero__subtitle">LFM Model Benchmarking</p>  
+      </div>  
+    </header>  
   );
 }
 
