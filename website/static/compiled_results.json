@@ -1,1402 +1,310 @@
-[
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Claude",
-    "model": "Claude-3-Opus",
-    "metric": "satisfied_rate",
-    "value": 0.5055000000000001
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Claude",
-    "model": "Claude-3-Opus",
-    "metric": "unsatisfied_rate",
-    "value": 0.29
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Claude",
-    "model": "Claude-3-Opus",
-    "metric": "not_from_author_rate",
-    "value": 0.2045
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Claude",
-    "model": "Claude-3-Opus",
-    "metric": "completeness",
-    "value": 0.187
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Claude",
-    "model": "Claude-3-Opus",
-    "metric": "all_correct",
-    "value": 0.0275
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Claude",
-    "model": "Claude-3_5-Sonnet",
-    "metric": "satisfied_rate",
-    "value": 0.553
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Claude",
-    "model": "Claude-3_5-Sonnet",
-    "metric": "unsatisfied_rate",
-    "value": 0.2225
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Claude",
-    "model": "Claude-3_5-Sonnet",
-    "metric": "not_from_author_rate",
-    "value": 0.224
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Claude",
-    "model": "Claude-3_5-Sonnet",
-    "metric": "completeness",
-    "value": 0.206
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Claude",
-    "model": "Claude-3_5-Sonnet",
-    "metric": "all_correct",
-    "value": 0.0365
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Gemini",
-    "model": "Gemini-1_5-Pro",
-    "metric": "satisfied_rate",
-    "value": 0.4135
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Gemini",
-    "model": "Gemini-1_5-Pro",
-    "metric": "unsatisfied_rate",
-    "value": 0.2945
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Gemini",
-    "model": "Gemini-1_5-Pro",
-    "metric": "not_from_author_rate",
-    "value": 0.292
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Gemini",
-    "model": "Gemini-1_5-Pro",
-    "metric": "completeness",
-    "value": 0.0975
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Gemini",
-    "model": "Gemini-1_5-Pro",
-    "metric": "all_correct",
-    "value": 0.012
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "GPT",
-    "model": "GPT-4-1106-Preview",
-    "metric": "satisfied_rate",
-    "value": 0.46699999999999997
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "GPT",
-    "model": "GPT-4-1106-Preview",
-    "metric": "unsatisfied_rate",
-    "value": 0.2855
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "GPT",
-    "model": "GPT-4-1106-Preview",
-    "metric": "not_from_author_rate",
-    "value": 0.247
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "GPT",
-    "model": "GPT-4-1106-Preview",
-    "metric": "completeness",
-    "value": 0.2325
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "GPT",
-    "model": "GPT-4-1106-Preview",
-    "metric": "all_correct",
-    "value": 0.0215
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "GPT",
-    "model": "GPT-4o-2024-05-13",
-    "metric": "satisfied_rate",
-    "value": 0.5365
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "GPT",
-    "model": "GPT-4o-2024-05-13",
-    "metric": "unsatisfied_rate",
-    "value": 0.2555
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "GPT",
-    "model": "GPT-4o-2024-05-13",
-    "metric": "not_from_author_rate",
-    "value": 0.2075
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "GPT",
-    "model": "GPT-4o-2024-05-13",
-    "metric": "completeness",
-    "value": 0.20350000000000001
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "GPT",
-    "model": "GPT-4o-2024-05-13",
-    "metric": "all_correct",
-    "value": 0.036
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Llama",
-    "model": "Llama-3-70B",
-    "metric": "satisfied_rate",
-    "value": 0.374
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Llama",
-    "model": "Llama-3-70B",
-    "metric": "unsatisfied_rate",
-    "value": 0.208
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Llama",
-    "model": "Llama-3-70B",
-    "metric": "not_from_author_rate",
-    "value": 0.418
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Llama",
-    "model": "Llama-3-70B",
-    "metric": "completeness",
-    "value": 0.15
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Llama",
-    "model": "Llama-3-70B",
-    "metric": "all_correct",
-    "value": 0.018
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Llama",
-    "model": "Llama-3_1-70B",
-    "metric": "satisfied_rate",
-    "value": 0.442
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Llama",
-    "model": "Llama-3_1-70B",
-    "metric": "unsatisfied_rate",
-    "value": 0.245
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Llama",
-    "model": "Llama-3_1-70B",
-    "metric": "not_from_author_rate",
-    "value": 0.312
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Llama",
-    "model": "Llama-3_1-70B",
-    "metric": "completeness",
-    "value": 0.16
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Llama",
-    "model": "Llama-3_1-70B",
-    "metric": "all_correct",
-    "value": 0.026
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Mistral",
-    "model": "Mistral_Large_2_2407",
-    "metric": "satisfied_rate",
-    "value": 0.363
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Mistral",
-    "model": "Mistral_Large_2_2407",
-    "metric": "unsatisfied_rate",
-    "value": 0.269
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Mistral",
-    "model": "Mistral_Large_2_2407",
-    "metric": "not_from_author_rate",
-    "value": 0.368
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Mistral",
-    "model": "Mistral_Large_2_2407",
-    "metric": "completeness",
-    "value": 0.176
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Mistral",
-    "model": "Mistral_Large_2_2407",
-    "metric": "all_correct",
-    "value": 0.022
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "Claude",
-    "model": "Claude-3-Opus",
-    "metric": "satisfied_rate",
-    "value": 0.485
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "Claude",
-    "model": "Claude-3-Opus",
-    "metric": "unsatisfied_rate",
-    "value": 0.284
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "Claude",
-    "model": "Claude-3-Opus",
-    "metric": "not_from_author_rate",
-    "value": 0.23
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "Claude",
-    "model": "Claude-3-Opus",
-    "metric": "completeness",
-    "value": 0.236
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "Claude",
-    "model": "Claude-3-Opus",
-    "metric": "all_correct",
-    "value": 0.04
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "Claude",
-    "model": "Claude-3_5-Sonnet",
-    "metric": "satisfied_rate",
-    "value": 0.56
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "Claude",
-    "model": "Claude-3_5-Sonnet",
-    "metric": "unsatisfied_rate",
-    "value": 0.232
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "Claude",
-    "model": "Claude-3_5-Sonnet",
-    "metric": "not_from_author_rate",
-    "value": 0.209
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "Claude",
-    "model": "Claude-3_5-Sonnet",
-    "metric": "completeness",
-    "value": 0.247
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "Claude",
-    "model": "Claude-3_5-Sonnet",
-    "metric": "all_correct",
-    "value": 0.049
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "Gemini",
-    "model": "Gemini-1_5-Pro",
-    "metric": "satisfied_rate",
-    "value": 0.38
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "Gemini",
-    "model": "Gemini-1_5-Pro",
-    "metric": "unsatisfied_rate",
-    "value": 0.247
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "Gemini",
-    "model": "Gemini-1_5-Pro",
-    "metric": "not_from_author_rate",
-    "value": 0.373
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "Gemini",
-    "model": "Gemini-1_5-Pro",
-    "metric": "completeness",
-    "value": 0.176
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "Gemini",
-    "model": "Gemini-1_5-Pro",
-    "metric": "all_correct",
-    "value": 0.022
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "GPT",
-    "model": "GPT-4-1106-Preview",
-    "metric": "satisfied_rate",
-    "value": 0.434
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "GPT",
-    "model": "GPT-4-1106-Preview",
-    "metric": "unsatisfied_rate",
-    "value": 0.245
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "GPT",
-    "model": "GPT-4-1106-Preview",
-    "metric": "not_from_author_rate",
-    "value": 0.321
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "GPT",
-    "model": "GPT-4-1106-Preview",
-    "metric": "completeness",
-    "value": 0.256
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "GPT",
-    "model": "GPT-4-1106-Preview",
-    "metric": "all_correct",
-    "value": 0.034
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "GPT",
-    "model": "GPT-4o-2024-05-13",
-    "metric": "satisfied_rate",
-    "value": 0.493
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "GPT",
-    "model": "GPT-4o-2024-05-13",
-    "metric": "unsatisfied_rate",
-    "value": 0.249
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "GPT",
-    "model": "GPT-4o-2024-05-13",
-    "metric": "not_from_author_rate",
-    "value": 0.258
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "GPT",
-    "model": "GPT-4o-2024-05-13",
-    "metric": "completeness",
-    "value": 0.246
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "GPT",
-    "model": "GPT-4o-2024-05-13",
-    "metric": "all_correct",
-    "value": 0.043
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "Llama",
-    "model": "Llama-3-70B",
-    "metric": "satisfied_rate",
-    "value": 0.371
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "Llama",
-    "model": "Llama-3-70B",
-    "metric": "unsatisfied_rate",
-    "value": 0.197
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "Llama",
-    "model": "Llama-3-70B",
-    "metric": "not_from_author_rate",
-    "value": 0.431
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "Llama",
-    "model": "Llama-3-70B",
-    "metric": "completeness",
-    "value": 0.168
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "Llama",
-    "model": "Llama-3-70B",
-    "metric": "all_correct",
-    "value": 0.023
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "Llama",
-    "model": "Llama-3_1-70B",
-    "metric": "satisfied_rate",
-    "value": 0.48
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "Llama",
-    "model": "Llama-3_1-70B",
-    "metric": "unsatisfied_rate",
-    "value": 0.263
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "Llama",
-    "model": "Llama-3_1-70B",
-    "metric": "not_from_author_rate",
-    "value": 0.257
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "Llama",
-    "model": "Llama-3_1-70B",
-    "metric": "completeness",
-    "value": 0.161
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "model_family": "Llama",
-    "model": "Llama-3_1-70B",
-    "metric": "all_correct",
-    "value": 0.028
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Claude",
-    "model": "Claude-3_5-Sonnet",
-    "metric": "satisfied_rate",
-    "value": 0.859
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Claude",
-    "model": "Claude-3_5-Sonnet",
-    "metric": "unsatisfied_rate",
-    "value": 0.1405
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Claude",
-    "model": "Claude-3_5-Sonnet",
-    "metric": "not_from_author_rate",
-    "value": 0.0005
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Claude",
-    "model": "Claude-3_5-Sonnet",
-    "metric": "completeness",
-    "value": 0.6699999999999999
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Claude",
-    "model": "Claude-3_5-Sonnet",
-    "metric": "all_correct",
-    "value": 0.3435
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Gemini",
-    "model": "Gemini-1_5-Pro",
-    "metric": "satisfied_rate",
-    "value": 0.745
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Gemini",
-    "model": "Gemini-1_5-Pro",
-    "metric": "unsatisfied_rate",
-    "value": 0.253
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Gemini",
-    "model": "Gemini-1_5-Pro",
-    "metric": "not_from_author_rate",
-    "value": 0.002
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Gemini",
-    "model": "Gemini-1_5-Pro",
-    "metric": "completeness",
-    "value": 0.613
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Gemini",
-    "model": "Gemini-1_5-Pro",
-    "metric": "all_correct",
-    "value": 0.304
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "GPT",
-    "model": "GPT-4-1106-Preview",
-    "metric": "satisfied_rate",
-    "value": 0.752
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "GPT",
-    "model": "GPT-4-1106-Preview",
-    "metric": "unsatisfied_rate",
-    "value": 0.23
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "GPT",
-    "model": "GPT-4-1106-Preview",
-    "metric": "not_from_author_rate",
-    "value": 0.018
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "GPT",
-    "model": "GPT-4-1106-Preview",
-    "metric": "completeness",
-    "value": 0.692
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "GPT",
-    "model": "GPT-4-1106-Preview",
-    "metric": "all_correct",
-    "value": 0.266
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "GPT",
-    "model": "GPT-4o-2024-05-13",
-    "metric": "satisfied_rate",
-    "value": 0.847
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "GPT",
-    "model": "GPT-4o-2024-05-13",
-    "metric": "unsatisfied_rate",
-    "value": 0.152
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "GPT",
-    "model": "GPT-4o-2024-05-13",
-    "metric": "not_from_author_rate",
-    "value": 0.0
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "GPT",
-    "model": "GPT-4o-2024-05-13",
-    "metric": "completeness",
-    "value": 0.692
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "GPT",
-    "model": "GPT-4o-2024-05-13",
-    "metric": "all_correct",
-    "value": 0.314
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Llama",
-    "model": "Llama-3-70B",
-    "metric": "satisfied_rate",
-    "value": 0.769
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Llama",
-    "model": "Llama-3-70B",
-    "metric": "unsatisfied_rate",
-    "value": 0.224
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Llama",
-    "model": "Llama-3-70B",
-    "metric": "not_from_author_rate",
-    "value": 0.006
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Llama",
-    "model": "Llama-3-70B",
-    "metric": "completeness",
-    "value": 0.623
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Llama",
-    "model": "Llama-3-70B",
-    "metric": "all_correct",
-    "value": 0.239
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Llama",
-    "model": "Llama-3_1-70B",
-    "metric": "satisfied_rate",
-    "value": 0.859
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Llama",
-    "model": "Llama-3_1-70B",
-    "metric": "unsatisfied_rate",
-    "value": 0.138
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Llama",
-    "model": "Llama-3_1-70B",
-    "metric": "not_from_author_rate",
-    "value": 0.003
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Llama",
-    "model": "Llama-3_1-70B",
-    "metric": "completeness",
-    "value": 0.616
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Llama",
-    "model": "Llama-3_1-70B",
-    "metric": "all_correct",
-    "value": 0.305
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Claude",
-    "model": "Claude-3-Opus",
-    "metric": "satisfied_rate",
-    "value": 0.335
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Claude",
-    "model": "Claude-3-Opus",
-    "metric": "unsatisfied_rate",
-    "value": 0.382
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Claude",
-    "model": "Claude-3-Opus",
-    "metric": "not_from_author_rate",
-    "value": 0.283
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Claude",
-    "model": "Claude-3-Opus",
-    "metric": "completeness",
-    "value": 0.177
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Claude",
-    "model": "Claude-3-Opus",
-    "metric": "all_correct",
-    "value": 0.071
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Claude",
-    "model": "Claude-3_5-Sonnet",
-    "metric": "satisfied_rate",
-    "value": 0.415
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Claude",
-    "model": "Claude-3_5-Sonnet",
-    "metric": "unsatisfied_rate",
-    "value": 0.325
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Claude",
-    "model": "Claude-3_5-Sonnet",
-    "metric": "not_from_author_rate",
-    "value": 0.26
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Claude",
-    "model": "Claude-3_5-Sonnet",
-    "metric": "completeness",
-    "value": 0.145
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Claude",
-    "model": "Claude-3_5-Sonnet",
-    "metric": "all_correct",
-    "value": 0.078
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Gemini",
-    "model": "Gemini-1_5-Pro",
-    "metric": "satisfied_rate",
-    "value": 0.294
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Gemini",
-    "model": "Gemini-1_5-Pro",
-    "metric": "unsatisfied_rate",
-    "value": 0.404
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Gemini",
-    "model": "Gemini-1_5-Pro",
-    "metric": "not_from_author_rate",
-    "value": 0.302
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Gemini",
-    "model": "Gemini-1_5-Pro",
-    "metric": "completeness",
-    "value": 0.048
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Gemini",
-    "model": "Gemini-1_5-Pro",
-    "metric": "all_correct",
-    "value": 0.016
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "GPT",
-    "model": "GPT-4-1106-Preview",
-    "metric": "satisfied_rate",
-    "value": 0.305
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "GPT",
-    "model": "GPT-4-1106-Preview",
-    "metric": "unsatisfied_rate",
-    "value": 0.411
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "GPT",
-    "model": "GPT-4-1106-Preview",
-    "metric": "not_from_author_rate",
-    "value": 0.284
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "GPT",
-    "model": "GPT-4-1106-Preview",
-    "metric": "completeness",
-    "value": 0.179
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "GPT",
-    "model": "GPT-4-1106-Preview",
-    "metric": "all_correct",
-    "value": 0.059
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "GPT",
-    "model": "GPT-4o-2024-05-13",
-    "metric": "satisfied_rate",
-    "value": 0.407
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "GPT",
-    "model": "GPT-4o-2024-05-13",
-    "metric": "unsatisfied_rate",
-    "value": 0.333
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "GPT",
-    "model": "GPT-4o-2024-05-13",
-    "metric": "not_from_author_rate",
-    "value": 0.259
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "GPT",
-    "model": "GPT-4o-2024-05-13",
-    "metric": "completeness",
-    "value": 0.172
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "GPT",
-    "model": "GPT-4o-2024-05-13",
-    "metric": "all_correct",
-    "value": 0.085
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Llama",
-    "model": "Llama-3-70B",
-    "metric": "satisfied_rate",
-    "value": 0.248
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Llama",
-    "model": "Llama-3-70B",
-    "metric": "unsatisfied_rate",
-    "value": 0.239
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Llama",
-    "model": "Llama-3-70B",
-    "metric": "not_from_author_rate",
-    "value": 0.513
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Llama",
-    "model": "Llama-3-70B",
-    "metric": "completeness",
-    "value": 0.123
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Llama",
-    "model": "Llama-3-70B",
-    "metric": "all_correct",
-    "value": 0.045
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Llama",
-    "model": "Llama-3_1-70B",
-    "metric": "satisfied_rate",
-    "value": 0.344
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Llama",
-    "model": "Llama-3_1-70B",
-    "metric": "unsatisfied_rate",
-    "value": 0.306
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Llama",
-    "model": "Llama-3_1-70B",
-    "metric": "not_from_author_rate",
-    "value": 0.35
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Llama",
-    "model": "Llama-3_1-70B",
-    "metric": "completeness",
-    "value": 0.123
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "model_family": "Llama",
-    "model": "Llama-3_1-70B",
-    "metric": "all_correct",
-    "value": 0.067
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Claude",
-    "model": "Claude-3-Opus",
-    "metric": "satisfied_rate",
-    "value": 0.647
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Claude",
-    "model": "Claude-3-Opus",
-    "metric": "unsatisfied_rate",
-    "value": 0.352
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Claude",
-    "model": "Claude-3-Opus",
-    "metric": "not_from_author_rate",
-    "value": 0.0
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Claude",
-    "model": "Claude-3-Opus",
-    "metric": "completeness",
-    "value": 0.588
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Claude",
-    "model": "Claude-3-Opus",
-    "metric": "all_correct",
-    "value": 0.299
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Claude",
-    "model": "Claude-3_5-Sonnet",
-    "metric": "satisfied_rate",
-    "value": 0.731
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Claude",
-    "model": "Claude-3_5-Sonnet",
-    "metric": "unsatisfied_rate",
-    "value": 0.269
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Claude",
-    "model": "Claude-3_5-Sonnet",
-    "metric": "not_from_author_rate",
-    "value": 0.001
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Claude",
-    "model": "Claude-3_5-Sonnet",
-    "metric": "completeness",
-    "value": 0.531
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Claude",
-    "model": "Claude-3_5-Sonnet",
-    "metric": "all_correct",
-    "value": 0.325
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Gemini",
-    "model": "Gemini-1_5-Pro",
-    "metric": "satisfied_rate",
-    "value": 0.559
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Gemini",
-    "model": "Gemini-1_5-Pro",
-    "metric": "unsatisfied_rate",
-    "value": 0.438
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Gemini",
-    "model": "Gemini-1_5-Pro",
-    "metric": "not_from_author_rate",
-    "value": 0.003
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Gemini",
-    "model": "Gemini-1_5-Pro",
-    "metric": "completeness",
-    "value": 0.51
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Gemini",
-    "model": "Gemini-1_5-Pro",
-    "metric": "all_correct",
-    "value": 0.244
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "GPT",
-    "model": "GPT-4-1106-Preview",
-    "metric": "satisfied_rate",
-    "value": 0.516
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "GPT",
-    "model": "GPT-4-1106-Preview",
-    "metric": "unsatisfied_rate",
-    "value": 0.473
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "GPT",
-    "model": "GPT-4-1106-Preview",
-    "metric": "not_from_author_rate",
-    "value": 0.01
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "GPT",
-    "model": "GPT-4-1106-Preview",
-    "metric": "completeness",
-    "value": 0.541
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "GPT",
-    "model": "GPT-4-1106-Preview",
-    "metric": "all_correct",
-    "value": 0.183
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "GPT",
-    "model": "GPT-4o-2024-05-13",
-    "metric": "satisfied_rate",
-    "value": 0.63
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "GPT",
-    "model": "GPT-4o-2024-05-13",
-    "metric": "unsatisfied_rate",
-    "value": 0.369
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "GPT",
-    "model": "GPT-4o-2024-05-13",
-    "metric": "not_from_author_rate",
-    "value": 0.0
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "GPT",
-    "model": "GPT-4o-2024-05-13",
-    "metric": "completeness",
-    "value": 0.52
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "GPT",
-    "model": "GPT-4o-2024-05-13",
-    "metric": "all_correct",
-    "value": 0.27
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Llama",
-    "model": "Llama-3-70B",
-    "metric": "satisfied_rate",
-    "value": 0.542
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Llama",
-    "model": "Llama-3-70B",
-    "metric": "unsatisfied_rate",
-    "value": 0.447
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Llama",
-    "model": "Llama-3-70B",
-    "metric": "not_from_author_rate",
-    "value": 0.011
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Llama",
-    "model": "Llama-3-70B",
-    "metric": "completeness",
-    "value": 0.49
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Llama",
-    "model": "Llama-3-70B",
-    "metric": "all_correct",
-    "value": 0.209
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Llama",
-    "model": "Llama-3_1-70B",
-    "metric": "satisfied_rate",
-    "value": 0.656
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Llama",
-    "model": "Llama-3_1-70B",
-    "metric": "unsatisfied_rate",
-    "value": 0.339
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Llama",
-    "model": "Llama-3_1-70B",
-    "metric": "not_from_author_rate",
-    "value": 0.005
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Llama",
-    "model": "Llama-3_1-70B",
-    "metric": "completeness",
-    "value": 0.485
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "model_family": "Llama",
-    "model": "Llama-3_1-70B",
-    "metric": "all_correct",
-    "value": 0.277
+{
+  "language": {
+    "capabilities": [
+      {
+        "name": "Instruction Following",
+        "description": "The ability to understand and follow instructions precisely.",
+        "models": [
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.847
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 0.859
+          },
+          {
+            "name": "Llama-3_1-70B",
+            "score": 0.859
+          },
+          {
+            "name": "Llama-3-70B",
+            "score": 0.769
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 0.745
+          },
+          {
+            "name": "GPT-4-1106-Preview",
+            "score": 0.752
+          }
+        ]
+      },
+      {
+        "name": "Long Context QA",
+        "description": "The ability to answer questions based on a long context.",
+        "models": [
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.847
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 0.659
+          },
+          {
+            "name": "Llama-3_1-70B",
+            "score": 0.859
+          },
+          {
+            "name": "Llama-3-70B",
+            "score": 0.769
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 0.745
+          },
+          {
+            "name": "GPT-4-1106-Preview",
+            "score": 0.752
+          }
+        ]
+      },
+      {
+        "name": "Information Retrieval",
+        "description": "The ability to retrieve information from a large corpus.",
+        "models": [
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.547
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 0.859
+          },
+          {
+            "name": "Llama-3_1-70B",
+            "score": 0.859
+          },
+          {
+            "name": "Llama-3-70B",
+            "score": 0.769
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 0.745
+          },
+          {
+            "name": "GPT-4-1106-Preview",
+            "score": 0.752
+          }
+        ]
+      },
+      {
+        "name": "Toxicity Detection",
+        "description": "The ability to detect toxic language.",
+        "models": [
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.847
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 0.859
+          },
+          {
+            "name": "Llama-3_1-70B",
+            "score": 0.899
+          },
+          {
+            "name": "Llama-3-70B",
+            "score": 0.769
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 0.745
+          },
+          {
+            "name": "GPT-4-1106-Preview",
+            "score": 0.232
+          }
+        ]
+      }
+    ]
+  },
+  "multimodal": {
+    "capabilities": [
+      {
+        "name": "Geometric Reasoning",
+        "description": "The ability to understand and follow instructions precisely.",
+        "models": [
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.847
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 0.859
+          },
+          {
+            "name": "Llama-3_1-70B",
+            "score": 0.859
+          },
+          {
+            "name": "Llama-3-70B",
+            "score": 0.769
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 0.745
+          },
+          {
+            "name": "GPT-4-1106-Preview",
+            "score": 0.752
+          }
+        ]
+      },
+      {
+        "name": "Multimodal QA",
+        "description": "The ability to answer questions based on a long context.",
+        "models": [
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.847
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 0.659
+          },
+          {
+            "name": "Llama-3_1-70B",
+            "score": 0.859
+          },
+          {
+            "name": "Llama-3-70B",
+            "score": 0.769
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 0.745
+          },
+          {
+            "name": "GPT-4-1106-Preview",
+            "score": 0.752
+          }
+        ]
+      },
+      {
+        "name": "Object Recognition",
+        "description": "The ability to retrieve information from a large corpus.",
+        "models": [
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.547
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 0.859
+          },
+          {
+            "name": "Llama-3_1-70B",
+            "score": 0.859
+          },
+          {
+            "name": "Llama-3-70B",
+            "score": 0.769
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 0.745
+          },
+          {
+            "name": "GPT-4-1106-Preview",
+            "score": 0.752
+          }
+        ]
+      },
+      {
+        "name": "Object Detection",
+        "description": "The ability to detect toxic language.",
+        "models": [
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.847
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 0.859
+          },
+          {
+            "name": "Llama-3_1-70B",
+            "score": 0.899
+          },
+          {
+            "name": "Llama-3-70B",
+            "score": 0.769
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 0.745
+          },
+          {
+            "name": "GPT-4-1106-Preview",
+            "score": 0.232
+          }
+        ]
+      },
+      {
+        "name": "Visual Prompting",
+        "description": "The ability to detect toxic language.",
+        "models": [
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.847
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 0.859
+          },
+          {
+            "name": "Llama-3_1-70B",
+            "score": 0.899
+          },
+          {
+            "name": "Llama-3-70B",
+            "score": 0.769
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 0.745
+          },
+          {
+            "name": "GPT-4-1106-Preview",
+            "score": 0.232
+          }
+        ]
+      },
+      {
+        "name": "Spatial Reasoning",
+        "description": "The ability to detect toxic language.",
+        "models": [
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.847
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 0.859
+          },
+          {
+            "name": "Llama-3_1-70B",
+            "score": 0.899
+          },
+          {
+            "name": "Llama-3-70B",
+            "score": 0.769
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 0.745
+          },
+          {
+            "name": "GPT-4-1106-Preview",
+            "score": 0.232
+          }
+        ]
+      }
+    ]
   }
-]
+}

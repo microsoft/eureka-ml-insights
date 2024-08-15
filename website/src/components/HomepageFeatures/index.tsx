@@ -2,8 +2,13 @@ import clsx from 'clsx';
 import Heading from '@theme/Heading';
 import styles from './styles.module.css';
 import Visualization from '@site/src/pages/visualization';
+import ExecutiveSummary from '@site/src/pages/executive_summary';
 import React from 'react';
 import { ModelFamily, VisualizationConfig } from '../types';
+import { Button, Card, Col, Collapse, CollapseProps, Layout, Row } from 'antd';
+import Sider from 'antd/es/layout/Sider';
+import { Content, Header } from 'antd/es/layout/layout';
+
 
 export default function HomepageFeatures(): JSX.Element {
   const [config, setConfig] = React.useState<VisualizationConfig | null>(null);
@@ -12,11 +17,9 @@ export default function HomepageFeatures(): JSX.Element {
        .then(response => response.json())
        .then(fetchedData => 
           {
-            console.log(fetchedData);
               const benchmarks = fetchedData.benchmarks;
               const experiments = fetchedData.experiments;
               const models = fetchedData.model_list;
-              console.log(models);
               const modelMap = fetchedData.model_list.reduce((acc, curr) => {  
                   if(!acc[curr.model_family]) {  
                     acc[curr.model_family] = [];  
@@ -38,7 +41,8 @@ export default function HomepageFeatures(): JSX.Element {
     <section className={styles.features}>
       <div className="container">
         <Visualization config={config}/>
-      </div>
+        <ExecutiveSummary/>
+      </div>      
     </section>
   );
 }

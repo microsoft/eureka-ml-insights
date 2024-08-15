@@ -1,104 +1,86 @@
 {
   "benchmarks": [
-    "Kitab"
-  ],
-  "experiments": [
-    {
-      "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-      "metrics": [
-        "all_correct",
-        "completeness",
-        "unsatisfied_rate",
-        "satisfied_rate",
-        "not_from_author_rate"
-      ]
-    },
-    {
-      "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-      "metrics": [
-        "all_correct",
-        "completeness",
-        "unsatisfied_rate",
-        "satisfied_rate",
-        "not_from_author_rate"
-      ]
-    },
-    {
-      "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-      "metrics": [
-        "all_correct",
-        "completeness",
-        "unsatisfied_rate",
-        "satisfied_rate",
-        "not_from_author_rate"
-      ]
-    },
-    {
-      "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-      "metrics": [
-        "all_correct",
-        "completeness",
-        "unsatisfied_rate",
-        "satisfied_rate",
-        "not_from_author_rate"
-      ]
-    },
-    {
-      "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-      "metrics": [
-        "all_correct",
-        "completeness",
-        "unsatisfied_rate",
-        "satisfied_rate",
-        "not_from_author_rate"
-      ]
-    }
+    "Geometric Reasoning",
+    "MMMU",
+    "Image Understanding",
+    "Vision Language Understanding",
+    "IFEval",
+    "FlenQA",
+    "Kitab",
+    "Toxigen"
   ],
   "model_list": [
     {
       "model_family": "Claude",
       "model": "Claude-3-Opus",
-      "color": "#4762D6"
+      "color": "#4762D6",
+      "modality": ["vision", "language"]
     },
     {
       "model_family": "Claude",
       "model": "Claude-3_5-Sonnet",
-      "color": "#4762D6"
+      "color": "#4762D6",
+      "modality": ["vision", "language"]
     },
     {
       "model_family": "Gemini",
       "model": "Gemini-1_5-Pro",
-      "color": "AE8C00"
-    },
-    {
-      "model_family": "GPT",
-      "model": "GPT-4-1106-Preview",
-      "color": "#E3008C"
-    },
-    {
-      "model_family": "GPT",
-      "model": "GPT-4o-2024-05-13",
-      "color": "#B61A40"
+      "color": "AE8C00",
+      "modality": ["vision", "language"]
     },
     {
       "model_family": "Llama",
       "model": "Llama-3-70B",
-      "color": "#058801"
+      "color": "#058801",
+      "modality": ["language"]
     },
     {
       "model_family": "Llama",
       "model": "Llama-3_1-405B",
-      "color": "#71A920"
+      "color": "#71A920",
+      "modality": ["language"]
     },
     {
       "model_family": "Llama",
       "model": "Llama-3_1-70B",
-      "color": "#65D060"
+      "color": "#65D060",
+      "modality": ["language"]
+    },
+    {
+      "model_family": "GPT",
+      "model": "GPT-4-1106-Preview",
+      "color": "#E3008C",
+      "modality": ["language"]
+    },
+    {
+      "model_family": "GPT",
+      "model": "GPT-4o-2024-05-13",
+      "color": "#B61A40",
+      "modality": ["vision", "language"]
+    },
+    {
+      "model_family": "GPT",
+      "model": "GPT-4-Vision-Preview",
+      "color": "#E3008C",
+      "modality": ["vision"]
+    },
+    {
+      "model_family": "GPT",
+      "model": "GPT-4-Turbo-2024-04-09",
+      "color": "#B61A40",
+      "modality": ["vision"]
     },
     {
       "model_family": "Mistral",
       "model": "Mistral_Large_2_2407",
-      "color": "#E86B24"
+      "color": "#E86B24",
+      "modality": ["language"]
+    },
+    {
+      "model_family": "Llava",
+      "model": "Llava-v1.6-34b",
+      "color": "#E86B24",
+      "modality": ["language"]
     }
   ]
 }

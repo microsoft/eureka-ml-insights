@@ -1,7 +1,7 @@
 export interface VisualizationConfig {
     benchmarks: string[];
     experiments: Experiment[];
-    models: Model[];
+    models: ModelConfig[];
     model_families: ModelFamily[];
 }
 
@@ -24,9 +24,21 @@ export interface ModelFamily {
 }
 
 export interface Model {
-    model: string;
+    name: string;
+    score: number;
+}
+
+export interface ModelConfig {
     model_family: string;
+    model: string;
     color: string;
+    modalities: string[];
+}
+
+export interface Capability{
+    name: string;
+    description: string;
+    models: Model[];
 }
 
 export interface TransformedResult {

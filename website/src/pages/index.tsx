@@ -5,6 +5,7 @@ import Layout from '@theme/Layout';
 import HomepageFeatures from '@site/src/components/HomepageFeatures';
 import Heading from '@theme/Heading';
 import styles from './index.module.css';
+import { Card, Col, Row } from 'antd';
 
 function HomepageHeader() {
   return (
@@ -16,7 +17,7 @@ function HomepageHeader() {
         </Heading>  
         <p className="hero-content">AI Frontiers Evaluation and Understanding</p>  
         <p className="hero__subtitle">LFM Model Benchmarking</p>  
-      </div>  
+      </div>
     </header>  
   );
 }

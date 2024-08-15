@@ -8,7 +8,7 @@ const config: Config = {
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here
-  url: 'https://your-docusaurus-site.example.com',
+  url: 'https://github.com/microsoft/eureka-ml-insights',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/',
@@ -43,7 +43,7 @@ const config: Config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+            'https://github.com/microsoft/eureka-ml-insights',
         },
         theme: {
           customCss: './src/css/custom.css',
@@ -73,7 +73,6 @@ const config: Config = {
     announcementBar: {
       content: 'Project Eureka: AI Frontiers Evaluation and Understanding',
       backgroundColor: '#10adff',
-      
     },
     footer: {
       style: 'dark',
@@ -116,10 +115,10 @@ const config: Config = {
       ],
       copyright: `Copyright © ${new Date().getFullYear()} Micmrosoft Research |  <a target="_blank" style="color:#10adff" href="https://go.microsoft.com/fwlink/?LinkId=521839">Privacy and Cookies</a>`,
     },
-    prism: {
-      theme: prismThemes.github,
-      darkTheme: prismThemes.dracula,
-    },
+    // prism: {
+    //   theme: prismThemes.github,
+    //   darkTheme: prismThemes.dracula,
+    // },
   } satisfies Preset.ThemeConfig,
 };
 
