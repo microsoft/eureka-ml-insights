@@ -1,36 +1,32 @@
 import clsx from 'clsx';
-import Heading from '@theme/Heading';
 import styles from './styles.module.css';
-import Visualization from '@site/src/pages/visualization';
+import OverallVisualization from '@site/src/pages/overall_visualization';
 import ExecutiveSummary from '@site/src/pages/executive_summary';
+import StatsBar from '@site/src/pages/stats_bar';
 import SummaryTable from '@site/src/pages/summary_table';
 import React from 'react';
-import { ModelFamily, VisualizationConfig } from '../types';
+import { Config } from '../types';
 
 
 export default function HomepageFeatures(): JSX.Element {
-  const [config, setConfig] = React.useState<VisualizationConfig | null>(null);
+  const [config, setConfig] = React.useState<Config | null>(null);
   React.useEffect(() => {  
         fetch('/config.json')
        .then(response => response.json())
        .then(fetchedData => 
           {
               const benchmarks = fetchedData.benchmarks;
-              const experiments = fetchedData.experiments;
               const models = fetchedData.model_list;
+              const model_families = fetchedData.model_families;
               const modelMap = fetchedData.model_list.reduce((acc, curr) => {  
                   if(!acc[curr.model_family]) {  
                     acc[curr.model_family] = [];  
                   }  
                   acc[curr.model_family].push(curr.model);  
                   return acc;  
-                }, {});  
-              const model_families: ModelFamily[] = Object.keys(modelMap).map(model_family => ({  
-                  model_family,  
-                  models: modelMap[model_family]  
-                })); 
+                }, {});
               
-              setConfig({benchmarks: benchmarks, experiments: experiments, models: models, model_families: model_families});
+              setConfig({benchmarks: benchmarks, models: models, model_families: model_families});
           })
        .catch(error => console.error(error));
   }, []);
@@ -38,10 +34,8 @@ export default function HomepageFeatures(): JSX.Element {
   return (
     <section className={styles.features}>
       <div className="container">
-        <Heading as="h1" className="hero__title" style={{textAlign: "center"}}>
-          Overall Performance
-        </Heading>
-        <Visualization config={config}/>
+        <StatsBar config={config}/>
+        <OverallVisualization config={config}/>
         <br/>
         <ExecutiveSummary/>
         <br/>

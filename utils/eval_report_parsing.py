@@ -27,23 +27,32 @@ def coallate_results(release_directory_path, config):
                 continue
             models = os.listdir(os.path.join(release_directory_path, *capability["path"], model_family))
             for model in models:
-                runs = os.listdir(os.path.join(release_directory_path, *capability["path"], model_family, model))
+                if capability["run"] == "average":
+                    runs = os.listdir(os.path.join(release_directory_path, *capability["path"], model_family, model))
+                else:
+                    runs = [capability["run"]]
+                
+                sum = 0.0
+                num = 0 # there's a chance that one of the runs doesn't have the correct output file so need to keep track separately
                 for run in runs:
                     try:
                         report = [f for f in os.listdir(os.path.join(release_directory_path, *capability["path"], model_family, model, run, 'eval_report')) if file_pattern.match(f)][0]
+                        file_path = os.path.join(release_directory_path, *capability["path"], model_family, model, run, 'eval_report', report)
+                        with open(file_path, 'r') as f:
+                            file_contents = f.read()
+                            scores = json.loads(file_contents)
+                            for metric in capability["metric"]:
+                                scores = scores[metric]
+                            sum += scores
+                        num += 1
                         break
                     except FileNotFoundError:
                         continue
-                file_path = os.path.join(release_directory_path, *capability["path"], model_family, model, run, 'eval_report', report)
-                with open(file_path, 'r') as f:
-                    file_contents = f.read()
-                    scores = json.loads(file_contents)
-                    for metric in capability["metric"]:
-                        scores = scores[metric]
-                    model_scores.append({
-                        "name": model,
-                        "score": scores
-                    })
+                
+                model_scores.append({   
+                    "name": model,
+                    "score": sum / num
+                })
         data[modality]["capabilities"].append({
             "name": name,
             "description": description,

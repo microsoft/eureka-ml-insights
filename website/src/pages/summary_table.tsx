@@ -1,11 +1,11 @@
 import React, { Children, useState } from 'react';
-import { Capability, Model, ModelConfig, VisualizationConfig } from '../components/types';
+import { Capability, ModelScore, ModelConfig, Config } from '../components/types';
 import Highcharts, { SeriesOptionsType } from 'highcharts';
 import { Layout, Table, CollapseProps, Collapse } from 'antd';
 import Title from 'antd/es/skeleton/Title';
 import { ColumnsType } from 'antd/es/table';
 
-const SummaryTable = ({config}: {config: VisualizationConfig}) => {
+const SummaryTable = ({config}: {config: Config}) => {
     if (!config) {  
         // config is still null, probably still fetching data
         return <div>Loading...</div>;
@@ -31,7 +31,7 @@ const SummaryTable = ({config}: {config: VisualizationConfig}) => {
         
         const modelScores = {};
         capabilities.forEach((d: Capability) => {
-            d.models.forEach((model: Model) => {
+            d.models.forEach((model: ModelScore) => {
                 if (!modelScores[model.name]) {
                     modelScores[model.name] = [];
                 }

@@ -56,23 +56,23 @@ const config: Config = {
     // Replace with your project's social card
     image: 'img/background.png',
     navbar: {
-      title: 'My Site',
+      title: 'Model Benchmarking',
       logo: {
-        alt: 'My Site Logo',
+        alt: 'Project Eureka',
         src: 'img/logo.svg',
       },
       items: [
-        {to: '/blog', label: 'Blog', position: 'left'},
+        {
+          to: '/blog', 
+          label: 'Blog', 
+          position: 'right'
+        },
         {
           href: 'https://github.com/microsoft/eureka-ml-insights',
           label: 'GitHub',
           position: 'right',
         },
       ],
-    },
-    announcementBar: {
-      content: 'Project Eureka: AI Frontiers Evaluation and Understanding',
-      backgroundColor: '#10adff',
     },
     footer: {
       style: 'dark',
