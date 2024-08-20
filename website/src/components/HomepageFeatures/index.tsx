@@ -6,9 +6,6 @@ import ExecutiveSummary from '@site/src/pages/executive_summary';
 import SummaryTable from '@site/src/pages/summary_table';
 import React from 'react';
 import { ModelFamily, VisualizationConfig } from '../types';
-import { Button, Card, Col, Collapse, CollapseProps, Layout, Row} from 'antd';
-import Sider from 'antd/es/layout/Sider';
-import { Content, Header } from 'antd/es/layout/layout';
 
 
 export default function HomepageFeatures(): JSX.Element {
@@ -41,6 +38,9 @@ export default function HomepageFeatures(): JSX.Element {
   return (
     <section className={styles.features}>
       <div className="container">
+        <Heading as="h1" className="hero__title" style={{textAlign: "center"}}>
+          Overall Performance
+        </Heading>
         <Visualization config={config}/>
         <br/>
         <ExecutiveSummary/>

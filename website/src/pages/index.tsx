@@ -13,10 +13,9 @@ function HomepageHeader() {
       <div className={styles.heroBackground}></div>  
       <div className="container">  
         <Heading as="h1" className="hero__title">  
-          Project Eureka  
+          LFM Model Benchmarking
         </Heading>  
-        <p className="hero-content">AI Frontiers Evaluation and Understanding</p>  
-        <p className="hero__subtitle">LFM Model Benchmarking</p>  
+        <p className="hero__subtitle">AI Frontiers Evaluation and Understanding</p>  
       </div>
     </header>  
   );
