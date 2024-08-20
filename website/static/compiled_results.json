@@ -2,122 +2,170 @@
   "language": {
     "capabilities": [
       {
-        "name": "Instruction Following",
-        "description": "The ability to understand and follow instructions precisely.",
+        "name": "Information Retrieval",
+        "description": "Task: Retrieving long-form information from the model's parametric knowledge or from given input context with filtering constraints. Capability importance: All information retrieval tasks involve some form of constraint that defines the retrieval query. However, other simpler IR benchmarks only test for short-form generation (finding a single fact) and for a single con-straint. Being able to answer more complex queries is relevant to advanced search and information finding. State-of-the-art: Constrained retrieval from parametric knowledge is still prone to major irrelevance and fact fabrication with constraint satisfaction being less than 60%. Constrained retrieval from given input context is significantly better in overall, but for queries with more than one constraint constraint satisfaction and completeness drop to less than 70% and 60% respectively.",
         "models": [
           {
-            "name": "GPT-4o-2024-05-13",
-            "score": 0.847
+            "name": "Claude-3-Opus",
+            "score": 0.505
           },
           {
             "name": "Claude-3_5-Sonnet",
-            "score": 0.859
-          },
-          {
-            "name": "Llama-3_1-70B",
-            "score": 0.859
-          },
-          {
-            "name": "Llama-3-70B",
-            "score": 0.769
+            "score": 0.553
           },
           {
             "name": "Gemini-1_5-Pro",
-            "score": 0.745
+            "score": 0.413
+          },
+          {
+            "name": "GPT-4-1106-Preview",
+            "score": 0.47
+          },
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.537
+          },
+          {
+            "name": "Llama-3-70B",
+            "score": 0.374
+          },
+          {
+            "name": "Llama-3_1-405B",
+            "score": 0.549
+          },
+          {
+            "name": "Llama-3_1-70B",
+            "score": 0.442
+          },
+          {
+            "name": "Mistral_Large_2_2407",
+            "score": 0.363
+          }
+        ]
+      },
+      {
+        "name": "Instruction Following",
+        "description": "TBD",
+        "models": [
+          {
+            "name": "Claude-3-Opus",
+            "score": 0.819
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 0.813
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 0.752
           },
           {
             "name": "GPT-4-1106-Preview",
             "score": 0.752
+          },
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.813
+          },
+          {
+            "name": "Llama-3-70B",
+            "score": 0.773
+          },
+          {
+            "name": "Llama-3_1-405B",
+            "score": 0.835
+          },
+          {
+            "name": "Llama-3_1-70B",
+            "score": 0.808
+          },
+          {
+            "name": "Mistral_Large_2_2407",
+            "score": 0.773
           }
         ]
       },
       {
         "name": "Long Context QA",
-        "description": "The ability to answer questions based on a long context.",
+        "description": "TBD",
         "models": [
           {
-            "name": "GPT-4o-2024-05-13",
-            "score": 0.847
+            "name": "Claude-3-Opus",
+            "score": 0.82
           },
           {
             "name": "Claude-3_5-Sonnet",
-            "score": 0.659
-          },
-          {
-            "name": "Llama-3_1-70B",
-            "score": 0.859
-          },
-          {
-            "name": "Llama-3-70B",
-            "score": 0.769
+            "score": 0.845
           },
           {
             "name": "Gemini-1_5-Pro",
-            "score": 0.745
+            "score": 0.877
           },
           {
             "name": "GPT-4-1106-Preview",
-            "score": 0.752
-          }
-        ]
-      },
-      {
-        "name": "Information Retrieval",
-        "description": "The ability to retrieve information from a large corpus.",
-        "models": [
+            "score": 0.927
+          },
           {
             "name": "GPT-4o-2024-05-13",
-            "score": 0.547
-          },
-          {
-            "name": "Claude-3_5-Sonnet",
-            "score": 0.859
-          },
-          {
-            "name": "Llama-3_1-70B",
-            "score": 0.859
+            "score": 0.955
           },
           {
             "name": "Llama-3-70B",
-            "score": 0.769
+            "score": 0.868
           },
           {
-            "name": "Gemini-1_5-Pro",
-            "score": 0.745
+            "name": "Llama-3_1-405B",
+            "score": 0.966
           },
           {
-            "name": "GPT-4-1106-Preview",
-            "score": 0.752
+            "name": "Llama-3_1-70B",
+            "score": 0.939
+          },
+          {
+            "name": "Mistral_Large_2_2407",
+            "score": 0.848
           }
         ]
       },
       {
         "name": "Toxicity Detection",
-        "description": "The ability to detect toxic language.",
+        "description": "TBD",
         "models": [
           {
-            "name": "GPT-4o-2024-05-13",
-            "score": 0.847
+            "name": "Claude-3-Opus",
+            "score": 0.553
           },
           {
             "name": "Claude-3_5-Sonnet",
-            "score": 0.859
-          },
-          {
-            "name": "Llama-3_1-70B",
-            "score": 0.899
-          },
-          {
-            "name": "Llama-3-70B",
-            "score": 0.769
+            "score": 0.616
           },
           {
             "name": "Gemini-1_5-Pro",
-            "score": 0.745
+            "score": 0.405
           },
           {
             "name": "GPT-4-1106-Preview",
-            "score": 0.232
+            "score": 0.881
+          },
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.864
+          },
+          {
+            "name": "Llama-3-70B",
+            "score": 0.867
+          },
+          {
+            "name": "Llama-3_1-405B",
+            "score": 0.544
+          },
+          {
+            "name": "Llama-3_1-70B",
+            "score": 0.869
+          },
+          {
+            "name": "Mistral_Large_2_2407",
+            "score": 0.829
           }
         ]
       }
@@ -127,181 +175,261 @@
     "capabilities": [
       {
         "name": "Geometric Reasoning",
-        "description": "The ability to understand and follow instructions precisely.",
+        "description": "TBD",
         "models": [
           {
-            "name": "GPT-4o-2024-05-13",
-            "score": 0.847
+            "name": "Claude-3-Opus",
+            "score": 0.401
           },
           {
             "name": "Claude-3_5-Sonnet",
-            "score": 0.859
-          },
-          {
-            "name": "Llama-3_1-70B",
-            "score": 0.859
-          },
-          {
-            "name": "Llama-3-70B",
-            "score": 0.769
+            "score": 0.486
           },
           {
             "name": "Gemini-1_5-Pro",
-            "score": 0.745
+            "score": 0.461
           },
           {
-            "name": "GPT-4-1106-Preview",
-            "score": 0.752
+            "name": "GPT-4-Turbo-2024-04-09",
+            "score": 0.365
+          },
+          {
+            "name": "GPT-4-Vision-Preview",
+            "score": 0.369
+          },
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.415
+          },
+          {
+            "name": "Llava-1_6-34B",
+            "score": 0.349
           }
         ]
       },
       {
         "name": "Multimodal QA",
-        "description": "The ability to answer questions based on a long context.",
+        "description": "TBD",
         "models": [
           {
-            "name": "GPT-4o-2024-05-13",
-            "score": 0.847
+            "name": "Claude-3-Opus",
+            "score": 0.457
           },
           {
             "name": "Claude-3_5-Sonnet",
-            "score": 0.659
-          },
-          {
-            "name": "Llama-3_1-70B",
-            "score": 0.859
-          },
-          {
-            "name": "Llama-3-70B",
-            "score": 0.769
+            "score": 0.593
           },
           {
             "name": "Gemini-1_5-Pro",
-            "score": 0.745
+            "score": 0.509
           },
           {
-            "name": "GPT-4-1106-Preview",
-            "score": 0.752
+            "name": "GPT-4-Turbo-2024-04-09",
+            "score": 0.572
+          },
+          {
+            "name": "GPT-4-Vision-Preview",
+            "score": 0.452
+          },
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.58
+          },
+          {
+            "name": "Llava-1_6-34B",
+            "score": 0.424
           }
         ]
       },
       {
         "name": "Object Recognition",
-        "description": "The ability to retrieve information from a large corpus.",
+        "description": "TBD",
         "models": [
           {
-            "name": "GPT-4o-2024-05-13",
-            "score": 0.547
+            "name": "Claude-3-Opus",
+            "score": 0.723
           },
           {
             "name": "Claude-3_5-Sonnet",
-            "score": 0.859
-          },
-          {
-            "name": "Llama-3_1-70B",
-            "score": 0.859
-          },
-          {
-            "name": "Llama-3-70B",
-            "score": 0.769
+            "score": 0.867
           },
           {
             "name": "Gemini-1_5-Pro",
-            "score": 0.745
+            "score": 0.881
           },
           {
-            "name": "GPT-4-1106-Preview",
-            "score": 0.752
-          }
-        ]
-      },
-      {
-        "name": "Object Detection",
-        "description": "The ability to detect toxic language.",
-        "models": [
+            "name": "GPT-4-Turbo-2024-04-09",
+            "score": 0.783
+          },
+          {
+            "name": "GPT-4-Vision-Preview",
+            "score": 0.748
+          },
           {
             "name": "GPT-4o-2024-05-13",
-            "score": 0.847
+            "score": 0.865
           },
           {
-            "name": "Claude-3_5-Sonnet",
-            "score": 0.859
-          },
-          {
-            "name": "Llama-3_1-70B",
-            "score": 0.899
-          },
-          {
-            "name": "Llama-3-70B",
-            "score": 0.769
-          },
-          {
-            "name": "Gemini-1_5-Pro",
-            "score": 0.745
-          },
-          {
-            "name": "GPT-4-1106-Preview",
-            "score": 0.232
+            "name": "Llava-1_6-34B",
+            "score": 0.794
           }
         ]
       },
       {
         "name": "Visual Prompting",
-        "description": "The ability to detect toxic language.",
+        "description": "TBD",
         "models": [
           {
-            "name": "GPT-4o-2024-05-13",
-            "score": 0.847
+            "name": "Claude-3-Opus",
+            "score": 0.761
           },
           {
             "name": "Claude-3_5-Sonnet",
-            "score": 0.859
-          },
-          {
-            "name": "Llama-3_1-70B",
-            "score": 0.899
-          },
-          {
-            "name": "Llama-3-70B",
-            "score": 0.769
+            "score": 0.843
           },
           {
             "name": "Gemini-1_5-Pro",
-            "score": 0.745
+            "score": 0.863
           },
           {
-            "name": "GPT-4-1106-Preview",
-            "score": 0.232
+            "name": "GPT-4-Turbo-2024-04-09",
+            "score": 0.681
+          },
+          {
+            "name": "GPT-4-Vision-Preview",
+            "score": 0.634
+          },
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.769
+          },
+          {
+            "name": "Llava-1_6-34B",
+            "score": 0.805
           }
         ]
       },
       {
         "name": "Spatial Reasoning",
-        "description": "The ability to detect toxic language.",
+        "description": "TBD",
         "models": [
           {
-            "name": "GPT-4o-2024-05-13",
-            "score": 0.847
+            "name": "Claude-3-Opus",
+            "score": 0.449
           },
           {
             "name": "Claude-3_5-Sonnet",
-            "score": 0.859
-          },
-          {
-            "name": "Llama-3_1-70B",
-            "score": 0.899
-          },
-          {
-            "name": "Llama-3-70B",
-            "score": 0.769
+            "score": 0.862
           },
           {
             "name": "Gemini-1_5-Pro",
-            "score": 0.745
+            "score": 0.752
           },
           {
-            "name": "GPT-4-1106-Preview",
-            "score": 0.232
+            "name": "GPT-4-Turbo-2024-04-09",
+            "score": 0.666
+          },
+          {
+            "name": "GPT-4-Vision-Preview",
+            "score": 0.68
+          },
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.876
+          },
+          {
+            "name": "Llava-1_6-34B",
+            "score": 0.921
+          }
+        ]
+      },
+      {
+        "name": "Spatial Understanding",
+        "description": "TBD",
+        "models": [
+          {
+            "name": "Claude-3-Opus",
+            "score": 0.511
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 0.569
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 0.627
+          },
+          {
+            "name": "GPT-4-Turbo-2024-04-09",
+            "score": 0.458
+          },
+          {
+            "name": "GPT-4-Vision-Preview",
+            "score": 0.402
+          },
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.639
+          }
+        ]
+      },
+      {
+        "name": "Navigation",
+        "description": "TBD",
+        "models": [
+          {
+            "name": "Claude-3-Opus",
+            "score": 0.712
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 0.915
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 0.865
+          },
+          {
+            "name": "GPT-4-Turbo-2024-04-09",
+            "score": 0.831
+          },
+          {
+            "name": "GPT-4-Vision-Preview",
+            "score": 0.844
+          },
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.934
+          }
+        ]
+      },
+      {
+        "name": "Counting",
+        "description": "TBD",
+        "models": [
+          {
+            "name": "Claude-3-Opus",
+            "score": 0.712
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 0.915
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 0.865
+          },
+          {
+            "name": "GPT-4-Turbo-2024-04-09",
+            "score": 0.831
+          },
+          {
+            "name": "GPT-4-Vision-Preview",
+            "score": 0.844
+          },
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.934
           }
         ]
       }

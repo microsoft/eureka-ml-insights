@@ -1,302 +1,310 @@
-[
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "metric": "satisfied_rate",
-    "Claude-3-Opus": 0.5055000000000001,
-    "Claude-3_5-Sonnet": 0.553,
-    "Gemini-1_5-Pro": 0.4135,
-    "GPT-4-1106-Preview": 0.46699999999999997,
-    "GPT-4o-2024-05-13": 0.5365,
-    "Llama-3-70B": 0.374,
-    "Llama-3_1-70B": 0.442,
-    "Mistral_Large_2_2407": 0.363
+{
+  "language": {
+    "capabilities": [
+      {
+        "name": "Instruction Following",
+        "description": "The ability to understand and follow instructions precisely.",
+        "models": [
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.847
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 0.859
+          },
+          {
+            "name": "Llama-3_1-70B",
+            "score": 0.859
+          },
+          {
+            "name": "Llama-3-70B",
+            "score": 0.769
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 0.745
+          },
+          {
+            "name": "GPT-4-1106-Preview",
+            "score": 0.752
+          }
+        ]
+      },
+      {
+        "name": "Long Context QA",
+        "description": "The ability to answer questions based on a long context.",
+        "models": [
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.847
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 0.659
+          },
+          {
+            "name": "Llama-3_1-70B",
+            "score": 0.859
+          },
+          {
+            "name": "Llama-3-70B",
+            "score": 0.769
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 0.745
+          },
+          {
+            "name": "GPT-4-1106-Preview",
+            "score": 0.752
+          }
+        ]
+      },
+      {
+        "name": "Information Retrieval",
+        "description": "The ability to retrieve information from a large corpus.",
+        "models": [
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.547
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 0.859
+          },
+          {
+            "name": "Llama-3_1-70B",
+            "score": 0.859
+          },
+          {
+            "name": "Llama-3-70B",
+            "score": 0.769
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 0.745
+          },
+          {
+            "name": "GPT-4-1106-Preview",
+            "score": 0.752
+          }
+        ]
+      },
+      {
+        "name": "Toxicity Detection",
+        "description": "The ability to detect toxic language.",
+        "models": [
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.847
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 0.859
+          },
+          {
+            "name": "Llama-3_1-70B",
+            "score": 0.899
+          },
+          {
+            "name": "Llama-3-70B",
+            "score": 0.769
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 0.745
+          },
+          {
+            "name": "GPT-4-1106-Preview",
+            "score": 0.232
+          }
+        ]
+      }
+    ]
   },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "metric": "unsatisfied_rate",
-    "Claude-3-Opus": 0.29,
-    "Claude-3_5-Sonnet": 0.2225,
-    "Gemini-1_5-Pro": 0.2945,
-    "GPT-4-1106-Preview": 0.2855,
-    "GPT-4o-2024-05-13": 0.2555,
-    "Llama-3-70B": 0.208,
-    "Llama-3_1-70B": 0.245,
-    "Mistral_Large_2_2407": 0.269
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "metric": "not_from_author_rate",
-    "Claude-3-Opus": 0.2045,
-    "Claude-3_5-Sonnet": 0.224,
-    "Gemini-1_5-Pro": 0.292,
-    "GPT-4-1106-Preview": 0.247,
-    "GPT-4o-2024-05-13": 0.2075,
-    "Llama-3-70B": 0.418,
-    "Llama-3_1-70B": 0.312,
-    "Mistral_Large_2_2407": 0.368
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "metric": "completeness",
-    "Claude-3-Opus": 0.187,
-    "Claude-3_5-Sonnet": 0.206,
-    "Gemini-1_5-Pro": 0.0975,
-    "GPT-4-1106-Preview": 0.2325,
-    "GPT-4o-2024-05-13": 0.20350000000000001,
-    "Llama-3-70B": 0.15,
-    "Llama-3_1-70B": 0.16,
-    "Mistral_Large_2_2407": 0.176
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE",
-    "metric": "all_correct",
-    "Claude-3-Opus": 0.0275,
-    "Claude-3_5-Sonnet": 0.0365,
-    "Gemini-1_5-Pro": 0.012,
-    "GPT-4-1106-Preview": 0.0215,
-    "GPT-4o-2024-05-13": 0.036,
-    "Llama-3-70B": 0.018,
-    "Llama-3_1-70B": 0.026,
-    "Mistral_Large_2_2407": 0.022
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "metric": "satisfied_rate",
-    "Claude-3-Opus": 0.485,
-    "Claude-3_5-Sonnet": 0.56,
-    "Gemini-1_5-Pro": 0.38,
-    "GPT-4-1106-Preview": 0.434,
-    "GPT-4o-2024-05-13": 0.493,
-    "Llama-3-70B": 0.371,
-    "Llama-3_1-70B": 0.48
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "metric": "unsatisfied_rate",
-    "Claude-3-Opus": 0.284,
-    "Claude-3_5-Sonnet": 0.232,
-    "Gemini-1_5-Pro": 0.247,
-    "GPT-4-1106-Preview": 0.245,
-    "GPT-4o-2024-05-13": 0.249,
-    "Llama-3-70B": 0.197,
-    "Llama-3_1-70B": 0.263
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "metric": "not_from_author_rate",
-    "Claude-3-Opus": 0.23,
-    "Claude-3_5-Sonnet": 0.209,
-    "Gemini-1_5-Pro": 0.373,
-    "GPT-4-1106-Preview": 0.321,
-    "GPT-4o-2024-05-13": 0.258,
-    "Llama-3-70B": 0.431,
-    "Llama-3_1-70B": 0.257
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "metric": "completeness",
-    "Claude-3-Opus": 0.236,
-    "Claude-3_5-Sonnet": 0.247,
-    "Gemini-1_5-Pro": 0.176,
-    "GPT-4-1106-Preview": 0.256,
-    "GPT-4o-2024-05-13": 0.246,
-    "Llama-3-70B": 0.168,
-    "Llama-3_1-70B": 0.161
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT",
-    "metric": "all_correct",
-    "Claude-3-Opus": 0.04,
-    "Claude-3_5-Sonnet": 0.049,
-    "Gemini-1_5-Pro": 0.022,
-    "GPT-4-1106-Preview": 0.034,
-    "GPT-4o-2024-05-13": 0.043,
-    "Llama-3-70B": 0.023,
-    "Llama-3_1-70B": 0.028
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "metric": "satisfied_rate",
-    "Claude-3_5-Sonnet": 0.859,
-    "Gemini-1_5-Pro": 0.745,
-    "GPT-4-1106-Preview": 0.752,
-    "GPT-4o-2024-05-13": 0.847,
-    "Llama-3-70B": 0.769,
-    "Llama-3_1-70B": 0.859
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "metric": "unsatisfied_rate",
-    "Claude-3_5-Sonnet": 0.1405,
-    "Gemini-1_5-Pro": 0.253,
-    "GPT-4-1106-Preview": 0.23,
-    "GPT-4o-2024-05-13": 0.152,
-    "Llama-3-70B": 0.224,
-    "Llama-3_1-70B": 0.138
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "metric": "not_from_author_rate",
-    "Claude-3_5-Sonnet": 0.0005,
-    "Gemini-1_5-Pro": 0.002,
-    "GPT-4-1106-Preview": 0.018,
-    "GPT-4o-2024-05-13": 0.0,
-    "Llama-3-70B": 0.006,
-    "Llama-3_1-70B": 0.003
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "metric": "completeness",
-    "Claude-3_5-Sonnet": 0.6699999999999999,
-    "Gemini-1_5-Pro": 0.613,
-    "GPT-4-1106-Preview": 0.692,
-    "GPT-4o-2024-05-13": 0.692,
-    "Llama-3-70B": 0.623,
-    "Llama-3_1-70B": 0.616
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "metric": "all_correct",
-    "Claude-3_5-Sonnet": 0.3435,
-    "Gemini-1_5-Pro": 0.304,
-    "GPT-4-1106-Preview": 0.266,
-    "GPT-4o-2024-05-13": 0.314,
-    "Llama-3-70B": 0.239,
-    "Llama-3_1-70B": 0.305
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "metric": "satisfied_rate",
-    "Claude-3-Opus": 0.335,
-    "Claude-3_5-Sonnet": 0.415,
-    "Gemini-1_5-Pro": 0.294,
-    "GPT-4-1106-Preview": 0.305,
-    "GPT-4o-2024-05-13": 0.407,
-    "Llama-3-70B": 0.248,
-    "Llama-3_1-70B": 0.344
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "metric": "unsatisfied_rate",
-    "Claude-3-Opus": 0.382,
-    "Claude-3_5-Sonnet": 0.325,
-    "Gemini-1_5-Pro": 0.404,
-    "GPT-4-1106-Preview": 0.411,
-    "GPT-4o-2024-05-13": 0.333,
-    "Llama-3-70B": 0.239,
-    "Llama-3_1-70B": 0.306
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "metric": "not_from_author_rate",
-    "Claude-3-Opus": 0.283,
-    "Claude-3_5-Sonnet": 0.26,
-    "Gemini-1_5-Pro": 0.302,
-    "GPT-4-1106-Preview": 0.284,
-    "GPT-4o-2024-05-13": 0.259,
-    "Llama-3-70B": 0.513,
-    "Llama-3_1-70B": 0.35
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "metric": "completeness",
-    "Claude-3-Opus": 0.177,
-    "Claude-3_5-Sonnet": 0.145,
-    "Gemini-1_5-Pro": 0.048,
-    "GPT-4-1106-Preview": 0.179,
-    "GPT-4o-2024-05-13": 0.172,
-    "Llama-3-70B": 0.123,
-    "Llama-3_1-70B": 0.123
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE",
-    "metric": "all_correct",
-    "Claude-3-Opus": 0.071,
-    "Claude-3_5-Sonnet": 0.078,
-    "Gemini-1_5-Pro": 0.016,
-    "GPT-4-1106-Preview": 0.059,
-    "GPT-4o-2024-05-13": 0.085,
-    "Llama-3-70B": 0.045,
-    "Llama-3_1-70B": 0.067
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "metric": "satisfied_rate",
-    "Claude-3-Opus": 0.647,
-    "Claude-3_5-Sonnet": 0.731,
-    "Gemini-1_5-Pro": 0.559,
-    "GPT-4-1106-Preview": 0.516,
-    "GPT-4o-2024-05-13": 0.63,
-    "Llama-3-70B": 0.542,
-    "Llama-3_1-70B": 0.656
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "metric": "unsatisfied_rate",
-    "Claude-3-Opus": 0.352,
-    "Claude-3_5-Sonnet": 0.269,
-    "Gemini-1_5-Pro": 0.438,
-    "GPT-4-1106-Preview": 0.473,
-    "GPT-4o-2024-05-13": 0.369,
-    "Llama-3-70B": 0.447,
-    "Llama-3_1-70B": 0.339
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "metric": "not_from_author_rate",
-    "Claude-3-Opus": 0.0,
-    "Claude-3_5-Sonnet": 0.001,
-    "Gemini-1_5-Pro": 0.003,
-    "GPT-4-1106-Preview": 0.01,
-    "GPT-4o-2024-05-13": 0.0,
-    "Llama-3-70B": 0.011,
-    "Llama-3_1-70B": 0.005
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "metric": "completeness",
-    "Claude-3-Opus": 0.588,
-    "Claude-3_5-Sonnet": 0.531,
-    "Gemini-1_5-Pro": 0.51,
-    "GPT-4-1106-Preview": 0.541,
-    "GPT-4o-2024-05-13": 0.52,
-    "Llama-3-70B": 0.49,
-    "Llama-3_1-70B": 0.485
-  },
-  {
-    "benchmark": "Kitab",
-    "experiment": "TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT",
-    "metric": "all_correct",
-    "Claude-3-Opus": 0.299,
-    "Claude-3_5-Sonnet": 0.325,
-    "Gemini-1_5-Pro": 0.244,
-    "GPT-4-1106-Preview": 0.183,
-    "GPT-4o-2024-05-13": 0.27,
-    "Llama-3-70B": 0.209,
-    "Llama-3_1-70B": 0.277
+  "multimodal": {
+    "capabilities": [
+      {
+        "name": "Geometric Reasoning",
+        "description": "The ability to understand and follow instructions precisely.",
+        "models": [
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.847
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 0.859
+          },
+          {
+            "name": "Llama-3_1-70B",
+            "score": 0.859
+          },
+          {
+            "name": "Llama-3-70B",
+            "score": 0.769
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 0.745
+          },
+          {
+            "name": "GPT-4-1106-Preview",
+            "score": 0.752
+          }
+        ]
+      },
+      {
+        "name": "Multimodal QA",
+        "description": "The ability to answer questions based on a long context.",
+        "models": [
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.847
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 0.659
+          },
+          {
+            "name": "Llama-3_1-70B",
+            "score": 0.859
+          },
+          {
+            "name": "Llama-3-70B",
+            "score": 0.769
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 0.745
+          },
+          {
+            "name": "GPT-4-1106-Preview",
+            "score": 0.752
+          }
+        ]
+      },
+      {
+        "name": "Object Recognition",
+        "description": "The ability to retrieve information from a large corpus.",
+        "models": [
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.547
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 0.859
+          },
+          {
+            "name": "Llama-3_1-70B",
+            "score": 0.859
+          },
+          {
+            "name": "Llama-3-70B",
+            "score": 0.769
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 0.745
+          },
+          {
+            "name": "GPT-4-1106-Preview",
+            "score": 0.752
+          }
+        ]
+      },
+      {
+        "name": "Object Detection",
+        "description": "The ability to detect toxic language.",
+        "models": [
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.847
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 0.859
+          },
+          {
+            "name": "Llama-3_1-70B",
+            "score": 0.899
+          },
+          {
+            "name": "Llama-3-70B",
+            "score": 0.769
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 0.745
+          },
+          {
+            "name": "GPT-4-1106-Preview",
+            "score": 0.232
+          }
+        ]
+      },
+      {
+        "name": "Visual Prompting",
+        "description": "The ability to detect toxic language.",
+        "models": [
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.847
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 0.859
+          },
+          {
+            "name": "Llama-3_1-70B",
+            "score": 0.899
+          },
+          {
+            "name": "Llama-3-70B",
+            "score": 0.769
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 0.745
+          },
+          {
+            "name": "GPT-4-1106-Preview",
+            "score": 0.232
+          }
+        ]
+      },
+      {
+        "name": "Spatial Reasoning",
+        "description": "The ability to detect toxic language.",
+        "models": [
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.847
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 0.859
+          },
+          {
+            "name": "Llama-3_1-70B",
+            "score": 0.899
+          },
+          {
+            "name": "Llama-3-70B",
+            "score": 0.769
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 0.745
+          },
+          {
+            "name": "GPT-4-1106-Preview",
+            "score": 0.232
+          }
+        ]
+      }
+    ]
   }
-]
+}

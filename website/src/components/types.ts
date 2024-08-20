@@ -1,3 +1,5 @@
+import React from "react";
+
 export interface VisualizationConfig {
     benchmarks: string[];
     experiments: Experiment[];
@@ -39,6 +41,12 @@ export interface Capability{
     name: string;
     description: string;
     models: Model[];
+}
+
+export interface TableEntry{
+    key: React.Key;
+    model: string;
+    [capability: string]: string | number;
 }
 
 export interface TransformedResult {

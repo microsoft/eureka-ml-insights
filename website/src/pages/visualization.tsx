@@ -90,14 +90,6 @@ const Visualization = ({config}: {config: VisualizationConfig}) => {
         xAxis: {
             categories: multimodalCapabilties.map(d => d.name),
             tickmarkPlacement: 'on',
-//             labels: {  
-//                 formatter: function () {  
-//                   return `<div class="tooltip">${this.value}  
-//   <div class="tooltiptext">Tooltip text</div>
-// </div>  `;  
-//                 },  
-//                 useHTML: true  
-//               }  
         },
         yAxis: {
             gridLineInterpolation: 'polygon',
@@ -115,38 +107,44 @@ const Visualization = ({config}: {config: VisualizationConfig}) => {
     return (
         <div>
             <div>
-                <Card bodyStyle={{ padding: 0 }}>  
+                <Card>  
                     <Row align='middle'> 
-                        <Col span={3}>  
+                        <Col span={4} >  
                             <p style={{ fontWeight: 'bold', fontSize: '20px' }}>{config.model_families.length}</p>  
                             <p style={{ color: 'grey', fontSize: '14px' }}>Model Families</p>
                         </Col>  
-                        <Col span={3}>
+                        <Col span={3} >
                             <p style={{ fontWeight: 'bold', fontSize: '20px' }}>{config.models.length}</p>  
                             <p style={{ color: 'grey', fontSize: '14px' }}>Models</p>
                         </Col>  
-                        <Col span={3}>  
+                        <Col span={3} >  
                             <p style={{ fontWeight: 'bold', fontSize: '20px' }}>{config.benchmarks.length}</p>  
                             <p style={{ color: 'grey', fontSize: '14px' }}>Benchmarks</p>
                         </Col>  
-                        <Col span={3}>  
+                        <Col span={3} >  
                             <div style={{fontSize: '20px'}}><NewspaperIcon className='inline-block mr-1' width={40} height={40}/></div>
                             <p style={{ color: 'grey', fontSize: '14px' }}>Language tasks</p>
                         </Col>  
-                        <Col span={3}>  
+                        <Col span={3} >  
                             <div style={{fontSize: '20px'}}><PhotoIcon className='inline-block mr-1' width={40} height={40}/></div>
                             <p style={{ color: 'grey', fontSize: '14px' }}>Multimodal tasks</p>
                         </Col>  
-                        <Col span={3}>  
-                            <Button type='primary'><ChartBarIcon width={20} height={20}/>AI Quality</Button>
+                        <Col span={4} style={{ flexDirection: 'column', justifyContent: 'center' }}>  
+                            <Button style={{fontSize: '16px'}} size='large' type='primary'><ChartBarIcon width={30} height={30}/>AI Quality</Button>
                         </Col>  
-                        <Col>  
-                            <Button type='default'><ShieldCheckIcon width={20} height={20}/>AI Safety</Button>
+                        <Col span={4} style={{ flexDirection: 'column', justifyContent: 'center' }}>  
+                            <Button style={{fontSize: '16px'}} size='large' type='default'><ShieldCheckIcon width={30} height={30}/>AI Safety</Button>
                         </Col>  
                     </Row>  
                 </Card>
-                <HighchartsReact highcharts={Highcharts} options={languageChartOptions} />
-                <HighchartsReact highcharts={Highcharts} options={multimodalChartOptions} />
+                <Row>
+                    <Col>
+                        <HighchartsReact highcharts={Highcharts} options={languageChartOptions} />
+                    </Col>
+                    <Col>
+                        <HighchartsReact highcharts={Highcharts} options={multimodalChartOptions} />
+                    </Col>
+                </Row>
             </div>
         </div>
     );
