@@ -18,15 +18,9 @@ export default function HomepageFeatures(): JSX.Element {
               const benchmarks = fetchedData.benchmarks;
               const models = fetchedData.model_list;
               const model_families = fetchedData.model_families;
-              const modelMap = fetchedData.model_list.reduce((acc, curr) => {  
-                  if(!acc[curr.model_family]) {  
-                    acc[curr.model_family] = [];  
-                  }  
-                  acc[curr.model_family].push(curr.model);  
-                  return acc;  
-                }, {});
-              
-              setConfig({benchmarks: benchmarks, models: models, model_families: model_families});
+              const capabilities = fetchedData.capability_mapping;  
+              console.log(capabilities);            
+              setConfig({benchmarks: benchmarks, models: models, model_families: model_families, capability_mapping: capabilities});
           })
        .catch(error => console.error(error));
   }, []);

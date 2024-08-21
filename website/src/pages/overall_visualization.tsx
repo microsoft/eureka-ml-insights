@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Capability, ModelScore, ModelConfig, Config } from '../components/types';
+import { CapabilityScores, ModelScore, ModelConfig, Config } from '../components/types';
 import Highcharts, { SeriesOptionsType } from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import HC_more from 'highcharts/highcharts-more';
 import { Button, Card, Col, Row } from 'antd';
 import Heading from '@theme/Heading';
+import Link from '@docusaurus/Link';
 
 HC_more(Highcharts); 
 
@@ -14,15 +15,15 @@ const OverallVisualization = ({config}: {config: Config}) => {
         return <div>Loading...</div>;
     }
 
-    const [languageCapabilties, setLanguageCapabilties] = useState<Capability[]>([]);
+    const [languageCapabilties, setLanguageCapabilties] = useState<CapabilityScores[]>([]);
     const [langOverallSeries, setLangOverallSeries] = useState<SeriesOptionsType[]>([]);
-    const [multimodalCapabilties, setMultimodalCapabilties] = useState<Capability[]>([]);
+    const [multimodalCapabilties, setMultimodalCapabilties] = useState<CapabilityScores[]>([]);
     const [multimodalOverallSeries, setMultimodalOverallSeries] = useState<SeriesOptionsType[]>([]);
 
-    const parseResultCategory = (capabilities: Capability[], setCapabilityFunction, setSeriesFunction) => {
+    const parseResultCategory = (capabilities: CapabilityScores[], setCapabilityFunction, setSeriesFunction) => {
         setCapabilityFunction(capabilities);
         const modelScores = {};
-        capabilities.forEach((d: Capability) => {
+        capabilities.forEach((d: CapabilityScores) => {
             d.models.forEach((model: ModelScore) => {
                 if (!modelScores[model.name]) {
                     modelScores[model.name] = [];
@@ -112,10 +113,20 @@ const OverallVisualization = ({config}: {config: Config}) => {
             <div>
                 <Row>
                     <Col>
-                        <HighchartsReact highcharts={Highcharts} options={languageChartOptions} />
+                        <Row>
+                            <HighchartsReact highcharts={Highcharts} options={languageChartOptions} />
+                        </Row>
+                        <Row style={{ flexDirection: 'column', alignItems: 'center'}}>
+                            <Button type='primary'><Link to="/detailed_language_view">Explore Results</Link></Button>
+                        </Row>
                     </Col>
                     <Col>
-                        <HighchartsReact highcharts={Highcharts} options={multimodalChartOptions} />
+                        <Row>
+                            <HighchartsReact highcharts={Highcharts} options={multimodalChartOptions} />
+                        </Row>
+                        <Row style={{ flexDirection: 'column', alignItems: 'center'}}>
+                            <Button type='primary'>Explore Results</Button>
+                        </Row>
                     </Col>
                 </Row>
             </div>

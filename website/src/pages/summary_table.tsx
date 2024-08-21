@@ -1,5 +1,5 @@
 import React, { Children, useState } from 'react';
-import { Capability, ModelScore, ModelConfig, Config } from '../components/types';
+import { CapabilityScores, ModelScore, ModelConfig, Config } from '../components/types';
 import Highcharts, { SeriesOptionsType } from 'highcharts';
 import { Layout, Table, CollapseProps, Collapse } from 'antd';
 import Title from 'antd/es/skeleton/Title';
@@ -16,9 +16,9 @@ const SummaryTable = ({config}: {config: Config}) => {
     const [multimodalCapabilties, setMultimodalCapabilties] = useState<ColumnsType<never>>([]);
     const [multimodalOverallSeries, setMultimodalOverallSeries] = useState<[]>([]);
 
-    const parseResultCategory = (capabilities: Capability[], setCapabilityFunction, setSeriesFunction) => {
+    const parseResultCategory = (capabilities: CapabilityScores[], setCapabilityFunction, setSeriesFunction) => {
         const width = 100 / (capabilities.length + 3);
-        const temp = capabilities.map((d: Capability) => {  
+        const temp = capabilities.map((d: CapabilityScores) => {  
             return {
                 title: d.name, 
                 dataIndex: d.name, 
@@ -30,7 +30,7 @@ const SummaryTable = ({config}: {config: Config}) => {
         });
         
         const modelScores = {};
-        capabilities.forEach((d: Capability) => {
+        capabilities.forEach((d: CapabilityScores) => {
             d.models.forEach((model: ModelScore) => {
                 if (!modelScores[model.name]) {
                     modelScores[model.name] = [];
@@ -77,19 +77,18 @@ const SummaryTable = ({config}: {config: Config}) => {
         {
             key: '1',
             label: 'Language Task Performance',
-            children: <Table columns={languageCapabilties} dataSource={langOverallSeries} style={{ width: '100%' }}/>
+            children: <Table columns={languageCapabilties} dataSource={langOverallSeries} />
         },
         {
             key: '2',
             label: 'Multimodal Task Performance',
-            children: <Table columns={multimodalCapabilties} dataSource={multimodalOverallSeries} style={{ width: '100%' }}/>
-        }
-        
+            children: <Table columns={multimodalCapabilties} dataSource={multimodalOverallSeries}/>
+        }   
     ]
 
     return (
         <div style={{ width: '100%' }}>
-            <Collapse items={items} defaultActiveKey={['1', '2']} style={{ width: '100%' }}/>;
+            <Collapse items={items} defaultActiveKey={['1', '2']}/>;
         </div>
     )
 };
