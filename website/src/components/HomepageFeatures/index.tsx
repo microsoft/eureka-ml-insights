@@ -19,7 +19,7 @@ export default function HomepageFeatures(): JSX.Element {
               const models = fetchedData.model_list;
               const model_families = fetchedData.model_families;
               const capabilities = fetchedData.capability_mapping;  
-              console.log(capabilities);            
+              console.log(capabilities);
               setConfig({benchmarks: benchmarks, models: models, model_families: model_families, capability_mapping: capabilities});
           })
        .catch(error => console.error(error));
@@ -29,7 +29,7 @@ export default function HomepageFeatures(): JSX.Element {
     <section className={styles.features}>
       <div className="container">
         <div>
-          <div className={styles.heroBackground}></div>  
+          <div className={styles.heroBackground}></div>
           <StatsBar config={config}/>
           <OverallVisualization config={config}/>
         </div>

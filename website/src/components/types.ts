@@ -27,7 +27,7 @@ export interface ModelConfig {
     modalities: string[];
 }
 
-export interface CapabilityScores{
+export interface CapabilityScores {
     name: string;
     description: string;
     models: ModelScore[];
