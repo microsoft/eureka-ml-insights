@@ -56,7 +56,7 @@ const config: Config = {
     // Replace with your project's social card
     image: 'img/background.png',
     navbar: {
-      title: 'Model Benchmarking',
+      title: 'Eureka Model Benchmarks',
       logo: {
         alt: 'Project Eureka',
         src: 'img/logo.svg',

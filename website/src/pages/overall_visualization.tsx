@@ -55,7 +55,7 @@ const OverallVisualization = ({config}: {config: Config}) => {
 
     const languageChartOptions: Highcharts.Options = {
         title: {
-            text: 'Language Task Performance',
+            text: 'Language Performance',
         },
         chart: {
             polar: true,
@@ -85,7 +85,7 @@ const OverallVisualization = ({config}: {config: Config}) => {
     
     const multimodalChartOptions: Highcharts.Options = {
         title: {
-            text: 'Multi-Modal Task Performance',
+            text: 'Multimodal Performance',
         },
         chart: {
             polar: true,

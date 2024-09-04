@@ -18,20 +18,30 @@ const siderStyle: React.CSSProperties = {
   }; 
 
 const ExecutiveSummary = () => {
+    const languageItems: CollapseProps['items']  = [
+      {
+        key: '1',
+        label: 'Faster improvements for instruction following across all model families.',
+        children: <ReactMarkdown>Amongst the studied language capabilities, instruction following is where most models are improving faster, potentially due to strong investments in instruction tuning processes, with most models now having an instruction following rate of higher than 75%.\n'
+          </ReactMarkdown>,
+      }
+    ]
+
     const executiveSummaryItems: CollapseProps['items'] = [
         {
           key: '1',
           label: 'Language Evaluation',
-          children: <ReactMarkdown>{'The evaluation shows that there have been important advances from state-of-the-art LFMs in the language capabilities of instruction following, long context question answering, information retrieval, and safety.\n' +  
-            '\n' +  
-            '1. **Faster improvements for instruction following across all model families.** Amongst the studied language capabilities, instruction following is where most models are improving faster, potentially due to strong investments in instruction tuning processes, with most models now having an instruction following rate of higher than 75%.\n' +  
-            '\n' +  
-            '2. **All models\' performance in question answering drops with longer context.** When state-of-the-art models are compared in "needle-in-a-haystack" tasks, they seem to all perform equally well. However, testing the models on tasks that involve reasoning over long-context, we see that all models\' performance drops as context size grows. Amongst all models, and have the lowest drop in performance for longer context.\n' +  
-            '\n' +  
-            '3. **Major gaps in factuality and grounding for information retrieval from parametric knowledge or input context.** For example, we observe query constraint satisfaction rates (i.e. fact precision) of lower than 55%, completeness rates of lower than 25% (i.e. fact recall), and information irrelevance rates of higher than 20% (potentially information fabrication). , , and are the best performing models in this task across different conditions. and in particular have significantly lower information irrelevance rates (associated with better factuality). has better constraint satisfaction rates (associated with better constrained text generation and grounding).\n' +  
-            '\n' +  
-            '4. **High refusal rates and low accuracy in detecting neutral content for some models.** While several models have high accuracy rates for toxicity detection, others (, , , and ) exhibit a high amount of refusal and low accuracy in classifying neutral content, leading therefore to erasure risks. During the safe language generation evaluation, models like and have the highest toxicity rates. is the only model that has both a high toxicity detection accuracy and a low toxicity score for safe language generation, as shown in the discriminative and generative evaluations respectively.\n'}  
-            </ReactMarkdown>,
+          children: <Collapse items={languageItems}/>
+          // <ReactMarkdown>{'The evaluation shows that there have been important advances from state-of-the-art LFMs in the language capabilities of instruction following, long context question answering, information retrieval, and safety.\n' +  
+          //   '\n' +  
+          //   '1. **Faster improvements for instruction following across all model families.** Amongst the studied language capabilities, instruction following is where most models are improving faster, potentially due to strong investments in instruction tuning processes, with most models now having an instruction following rate of higher than 75%.\n' +  
+          //   '\n' +  
+          //   '2. **All models\' performance in question answering drops with longer context.** When state-of-the-art models are compared in "needle-in-a-haystack" tasks, they seem to all perform equally well. However, testing the models on tasks that involve reasoning over long-context, we see that all models\' performance drops as context size grows. Amongst all models, and have the lowest drop in performance for longer context.\n' +  
+          //   '\n' +  
+          //   '3. **Major gaps in factuality and grounding for information retrieval from parametric knowledge or input context.** For example, we observe query constraint satisfaction rates (i.e. fact precision) of lower than 55%, completeness rates of lower than 25% (i.e. fact recall), and information irrelevance rates of higher than 20% (potentially information fabrication). , , and are the best performing models in this task across different conditions. and in particular have significantly lower information irrelevance rates (associated with better factuality). has better constraint satisfaction rates (associated with better constrained text generation and grounding).\n' +  
+          //   '\n' +  
+          //   '4. **High refusal rates and low accuracy in detecting neutral content for some models.** While several models have high accuracy rates for toxicity detection, others (, , , and ) exhibit a high amount of refusal and low accuracy in classifying neutral content, leading therefore to erasure risks. During the safe language generation evaluation, models like and have the highest toxicity rates. is the only model that has both a high toxicity detection accuracy and a low toxicity score for safe language generation, as shown in the discriminative and generative evaluations respectively.\n'}  
+          //   </ReactMarkdown>,
         },
         {
           key: '2',

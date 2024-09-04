@@ -5,7 +5,7 @@ import Layout from '@theme/Layout';
 import HomepageFeatures from '@site/src/components/HomepageFeatures';
 import Heading from '@theme/Heading';
 import styles from './index.module.css';
-import { Card, Col, Row } from 'antd';
+import { Button, Card, Col, Row } from 'antd';
 
 function HomepageHeader() {
   return (
@@ -13,9 +13,15 @@ function HomepageHeader() {
       <div className={styles.heroBackground}></div>  
       <div className="container">  
         <Heading as="h1" className="hero__title">  
-          LFM Model Benchmarking
+          Eureka ML Insights
         </Heading>  
-        <p className="hero__subtitle">AI Frontiers Evaluation and Understanding</p>  
+        <p className="hero__subtitle">Evaluating and Understanding Large Foundation Models</p> 
+        <p>TODO: Insert Blurb</p>
+        <Button>Read full report</Button>
+        <Button>Github</Button>
+      </div>
+      <div>
+         
       </div>
     </header>  
   );
