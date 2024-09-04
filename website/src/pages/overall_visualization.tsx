@@ -59,7 +59,8 @@ const OverallVisualization = ({config}: {config: Config}) => {
         },
         chart: {
             polar: true,
-            type: 'area'
+            type: 'area',
+            height: '100%'
         },
         series: langOverallSeries,
         xAxis: {
@@ -77,6 +78,9 @@ const OverallVisualization = ({config}: {config: Config}) => {
             verticalAlign: 'bottom',
             layout: 'horizontal'
         },
+        credits: {
+            enabled: false
+        }
     };
     
     const multimodalChartOptions: Highcharts.Options = {
@@ -85,7 +89,8 @@ const OverallVisualization = ({config}: {config: Config}) => {
         },
         chart: {
             polar: true,
-            type: 'area'
+            type: 'area',
+            height: '100%'
         },
         series: multimodalOverallSeries,
         xAxis: {
@@ -103,6 +108,9 @@ const OverallVisualization = ({config}: {config: Config}) => {
             verticalAlign: 'bottom',
             layout: 'horizontal'
         },
+        credits: {
+            enabled: false
+        }
     };
 
     return (
@@ -116,17 +124,17 @@ const OverallVisualization = ({config}: {config: Config}) => {
                         <Row>
                             <HighchartsReact highcharts={Highcharts} options={languageChartOptions} />
                         </Row>
-                        <Row style={{ flexDirection: 'column', alignItems: 'center'}}>
+                        {/* <Row style={{ flexDirection: 'column', alignItems: 'center'}}>
                             <Button type='primary'><Link to="/detailed_language_view">Explore Results</Link></Button>
-                        </Row>
+                        </Row> */}
                     </Col>
                     <Col>
                         <Row>
                             <HighchartsReact highcharts={Highcharts} options={multimodalChartOptions} />
                         </Row>
-                        <Row style={{ flexDirection: 'column', alignItems: 'center'}}>
+                        {/* <Row style={{ flexDirection: 'column', alignItems: 'center'}}>
                             <Button type='primary'>Explore Results</Button>
-                        </Row>
+                        </Row> */}
                     </Col>
                 </Row>
             </div>
@@ -134,4 +142,4 @@ const OverallVisualization = ({config}: {config: Config}) => {
     );
 }
 
-export default OverallVisualization;
+export default OverallVisualization; 
