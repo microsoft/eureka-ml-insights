@@ -25,7 +25,7 @@ function HomepageHeader() {
         <p className="hero__subtitle">Evaluating and Understanding Large Foundation Models</p> 
         <p>TODO: Insert Blurb</p>
         <Button shape='round' className={`${styles.buttons} ${styles.fullReportButton}`}>Read full report</Button>
-        <Button shape='round' className={`${styles.buttons}`}>Github </Button>
+        <Button shape='round' className={`${styles.buttons}`} href={'https://github.com/microsoft/eureka-ml-insights'}>Github</Button>
       </div>
     </header>
   );
@@ -54,6 +54,7 @@ export default function Home(): JSX.Element {
       description="Welcome to the page for Eureka Model Benchmarks">
       <div className={styles.fullWidthContainer}>
         <div className={styles.heroBackground}></div>
+        <div className={styles.splashSvg}></div>
         <div className="container" style={{position: 'relative'}}>
         <div className={styles.heroContent}>
           <HomepageHeader />

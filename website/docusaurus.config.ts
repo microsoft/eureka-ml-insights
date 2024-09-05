@@ -54,7 +54,7 @@ const config: Config = {
 
   themeConfig: {
     // Replace with your project's social card
-    image: 'img/background.png',
+    // image: 'img/background.png',
     navbar: {
       title: 'Eureka Model Benchmarks',
       logo: {
@@ -63,7 +63,7 @@ const config: Config = {
       },
       items: [
         {
-          to: '/blog', 
+          href: 'https://github.com/microsoft/eureka-ml-insights',
           label: 'Blog', 
           position: 'right'
         },
@@ -87,6 +87,9 @@ const config: Config = {
         },
       ],
       copyright: `Copyright © ${new Date().getFullYear()} Microsoft Research |  <a target="_blank" style="color:#10adff" href="https://go.microsoft.com/fwlink/?LinkId=521839">Privacy and Cookies</a>`,
+    },
+    colorMode: {
+      disableSwitch: true,
     },
     prism: {
       theme: prismThemes.github,

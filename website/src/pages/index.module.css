@@ -72,6 +72,16 @@
     white 100%);
 }  
 
+.splashSvg {  
+  position: absolute;  
+  top: 0;  
+  right: 0;  
+  width: 239px;  
+  height: 500px;  
+  background: url('../../static/img/splash.svg') no-repeat;  
+  z-index: 0;  
+}
+
 .fullWidthContainer {  
   position: relative;  
   width: 100vw;  

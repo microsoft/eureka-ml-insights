@@ -131,10 +131,10 @@ const OverallVisualization = ({config}: {config: Config}) => {
             </Heading>
             <div style={{width: '100%'}}>
                 <Row justify="space-between">
-                    <Col>
+                    <Col xs={24} md={12}>
                         <HighchartsReact highcharts={Highcharts} options={languageChartOptions} />
                     </Col>
-                    <Col>
+                    <Col xs={24} md={12}>
                         <HighchartsReact highcharts={Highcharts} options={multimodalChartOptions} />
                     </Col>
                 </Row>

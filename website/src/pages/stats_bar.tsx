@@ -11,7 +11,7 @@ const statsHeader: React.CSSProperties = {
 
 const statsLabel: React.CSSProperties = {
     color: 'grey', 
-    fontSize: '18px' 
+    fontSize: '1.5em' 
 }
 
 const StatsBar = ({config}: {config: Config}) => {
