@@ -56,6 +56,9 @@ const OverallVisualization = ({config}: {config: Config}) => {
     const languageChartOptions: Highcharts.Options = {
         title: {
             text: 'Language Performance',
+            style: {
+                fontSize: '2.0em',
+            }
         },
         chart: {
             polar: true,
@@ -66,6 +69,11 @@ const OverallVisualization = ({config}: {config: Config}) => {
         xAxis: {
             categories: languageCapabilties.map(d => d.name),
             tickmarkPlacement: 'on',
+            labels: {
+                style: {
+                    textAlign: 'center'
+                }
+            }
         },
         yAxis: {
             gridLineInterpolation: 'polygon',
@@ -86,6 +94,9 @@ const OverallVisualization = ({config}: {config: Config}) => {
     const multimodalChartOptions: Highcharts.Options = {
         title: {
             text: 'Multimodal Performance',
+            style: {
+                fontSize: '2.0em',
+            }
         },
         chart: {
             polar: true,
@@ -114,27 +125,17 @@ const OverallVisualization = ({config}: {config: Config}) => {
     };
 
     return (
-        <div>
+        <div style={{width: '100%'}}>
             <Heading as="h1" className="hero__title" style={{textAlign: "center"}}>
                 Overall Performance 
             </Heading>
-            <div>
-                <Row>
+            <div style={{width: '100%'}}>
+                <Row justify="space-between">
                     <Col>
-                        <Row>
-                            <HighchartsReact highcharts={Highcharts} options={languageChartOptions} />
-                        </Row>
-                        {/* <Row style={{ flexDirection: 'column', alignItems: 'center'}}>
-                            <Button type='primary'><Link to="/detailed_language_view">Explore Results</Link></Button>
-                        </Row> */}
+                        <HighchartsReact highcharts={Highcharts} options={languageChartOptions} />
                     </Col>
                     <Col>
-                        <Row>
-                            <HighchartsReact highcharts={Highcharts} options={multimodalChartOptions} />
-                        </Row>
-                        {/* <Row style={{ flexDirection: 'column', alignItems: 'center'}}>
-                            <Button type='primary'>Explore Results</Button>
-                        </Row> */}
+                        <HighchartsReact highcharts={Highcharts} options={multimodalChartOptions} />
                     </Col>
                 </Row>
             </div>

@@ -11,10 +11,18 @@
   ],
   "capability_mapping": [
     {
-      "capability": "Information Retrieval",
+      "capability": "Information Retrieval Fact Recall",
       "modality": "language",
       "path": ["kitab", "ONE_BOOK_CONSTRAINT_PIPELINE"],
       "metric": ["KitabMetric_satisfied_rate"],
+      "run": "average",
+      "description": "Task: Retrieving long-form information from the model's parametric knowledge or from given input context with filtering constraints. Capability importance: All information retrieval tasks involve some form of constraint that defines the retrieval query. However, other simpler IR benchmarks only test for short-form generation (finding a single fact) and for a single con-straint. Being able to answer more complex queries is relevant to advanced search and information finding. State-of-the-art: Constrained retrieval from parametric knowledge is still prone to major irrelevance and fact fabrication with constraint satisfaction being less than 60%. Constrained retrieval from given input context is significantly better in overall, but for queries with more than one constraint constraint satisfaction and completeness drop to less than 70% and 60% respectively."
+    },
+    {
+      "capability": "Information Retrieval Fact Precision",
+      "modality": "language",
+      "path": ["kitab", "ONE_BOOK_CONSTRAINT_PIPELINE"],
+      "metric": ["KitabMetric_completeness"],
       "run": "average",
       "description": "Task: Retrieving long-form information from the model's parametric knowledge or from given input context with filtering constraints. Capability importance: All information retrieval tasks involve some form of constraint that defines the retrieval query. However, other simpler IR benchmarks only test for short-form generation (finding a single fact) and for a single con-straint. Being able to answer more complex queries is relevant to advanced search and information finding. State-of-the-art: Constrained retrieval from parametric knowledge is still prone to major irrelevance and fact fabrication with constraint satisfaction being less than 60%. Constrained retrieval from given input context is significantly better in overall, but for queries with more than one constraint constraint satisfaction and completeness drop to less than 70% and 60% respectively."
     },
@@ -27,7 +35,7 @@
       "description": "TBD"
     },
     {
-      "capability": "Long Context QA",
+      "capability": "Long Context QA Average",
       "modality": "language",
       "path": ["FlenQA"],
       "metric": ["ExactMatch_result", "correct"],
@@ -35,9 +43,17 @@
       "description": "TBD"
     },
     {
+      "capability": "Long Context QA Longest Context (3K)",
+      "modality": "language",
+      "path": ["FlenQA"],
+      "metric": ["ExactMatch_result", "3000", "correct"],
+      "run": "average",
+      "description": "TBD"
+    },
+    {
       "capability": "Toxicity Detection",
       "modality": "language",
-      "path": ["Toxigen", "Discriminative", "1K"],
+      "path": ["Toxigen", "Discriminative", "9K"],
       "metric": ["ExactMatch_result", "correct"],
       "run": "average",
       "description": "TBD"
@@ -83,7 +99,7 @@
       "description": "TBD"
     },
     {
-      "capability": "Spatial Understanding",
+      "capability": "Spatial Map Understanding",
       "modality": "multimodal",
       "path": ["VISION_LANGUAGE", "SPATIAL_MAP"],
       "metric": ["SpatialAndLayoutReasoningMetricMap_result", "correct"],
@@ -93,13 +109,13 @@
     {
       "capability": "Navigation",
       "modality": "multimodal",
-      "path": ["VISION_LANGUAGE", "SPATIAL_MAZE"],
+      "path": ["VISION_LANGUAGE", "MAZE"],
       "metric": ["SpatialAndLayoutReasoningMetricMaze_result", "correct"],
       "run": "average",
       "description": "TBD"
     },
     {
-      "capability": "Counting",
+      "capability": "Counting in a Grid",
       "modality": "multimodal",
       "path": ["VISION_LANGUAGE", "GRID_ANIMAL"],
       "metric": ["SpatialAndLayoutReasoningMetricGrid_result", "correct"],

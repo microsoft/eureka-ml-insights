@@ -51,9 +51,6 @@ const SummaryTable = ({config}: {config: Config}) => {
         setCapabilityFunction([modelColumn, ...temp]);
         const tableRows = [];
         for (const key in modelScores) {
-            if (key === 'Llava-1_6-34B') {
-                console.log(modelScores[key]);
-            }
             const tableRow = {};
             tableRow['model'] = key;
             for (let i = 0; i < modelScores[key].length; i++) {
@@ -72,23 +69,17 @@ const SummaryTable = ({config}: {config: Config}) => {
                 parseResultCategory(compiledResults.multimodal.capabilities, setMultimodalCapabilties, setMultimodalOverallSeries);
             });
         }, []);
-    
-    const items: CollapseProps['items'] = [
-        {
-            key: '1',
-            label: 'Language Task Performance',
-            children: <Table columns={languageCapabilties} dataSource={langOverallSeries} />
-        },
-        {
-            key: '2',
-            label: 'Multimodal Task Performance',
-            children: <Table columns={multimodalCapabilties} dataSource={multimodalOverallSeries}/>
-        }   
-    ]
 
     return (
         <div style={{ width: '100%' }}>
-            <Collapse items={items} defaultActiveKey={['1', '2']}/>;
+            <div>
+                <h2>Language Performance</h2>
+                <Table columns={languageCapabilties} dataSource={langOverallSeries} pagination={false}/>
+            </div>
+            <div>
+                <h2>Multimodal Performance</h2>
+                <Table columns={multimodalCapabilties} dataSource={multimodalOverallSeries} pagination={false}/>
+            </div>
         </div>
     )
 };

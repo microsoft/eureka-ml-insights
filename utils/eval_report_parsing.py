@@ -36,6 +36,9 @@ def coallate_results(release_directory_path, config):
                 num = 0 # there's a chance that one of the runs doesn't have the correct output file so need to keep track separately
                 for run in runs:
                     try:
+                        file_pattern = re.compile(r'^(?!.*by).*\.json$', re.IGNORECASE)
+                        if name == "Long Context QA Longest Context (3K)":
+                            file_pattern = re.compile(r'^.*by_ctx_size_normalized.*\.json$', re.IGNORECASE)
                         report = [f for f in os.listdir(os.path.join(release_directory_path, *capability["path"], model_family, model, run, 'eval_report')) if file_pattern.match(f)][0]
                         file_path = os.path.join(release_directory_path, *capability["path"], model_family, model, run, 'eval_report', report)
                         with open(file_path, 'r') as f:
@@ -48,7 +51,12 @@ def coallate_results(release_directory_path, config):
                         break
                     except FileNotFoundError:
                         continue
-                
+                if model == 'GPT-4o_2024_05_13_450K':
+                    model = 'GPT-4o-2024-05-13'
+                if model == "LLaVA-34B":
+                    model = "Llava-1_6-34B"
+                if model == "GPT-4":
+                    model = "GPT-4-1106-Preview"
                 model_scores.append({   
                     "name": model,
                     "score": sum / num

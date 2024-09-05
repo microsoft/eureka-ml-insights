@@ -78,39 +78,12 @@ const config: Config = {
       style: 'dark',
       links: [
         {
-          title: 'Docs',
-          items: [
-            {
-              label: 'Tutorial',
-              to: '/docs/intro',
-            },
-          ],
+          label: 'Blog',
+          to: '/blog',
         },
         {
-          title: 'Community',
-          items: [
-            {
-              label: 'Discord',
-              href: '#TODO',
-            },
-            {
-              label: 'Twitter',
-              href: '#TODO',
-            },
-          ],
-        },
-        {
-          title: 'More',
-          items: [
-            {
-              label: 'Blog',
-              to: '/blog',
-            },
-            {
-              label: 'GitHub',
-              href: 'https://github.com/microsoft/eureka-ml-insights',
-            },
-          ],
+          label: 'GitHub',
+          href: 'https://github.com/microsoft/eureka-ml-insights',
         },
       ],
       copyright: `Copyright © ${new Date().getFullYear()} Microsoft Research |  <a target="_blank" style="color:#10adff" href="https://go.microsoft.com/fwlink/?LinkId=521839">Privacy and Cookies</a>`,

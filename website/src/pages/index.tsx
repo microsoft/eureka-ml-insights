@@ -6,36 +6,73 @@ import HomepageFeatures from '@site/src/components/HomepageFeatures';
 import Heading from '@theme/Heading';
 import styles from './index.module.css';
 import { Button, Card, Col, Row } from 'antd';
+import StatsBar from './stats_bar';
+import config from '@generated/docusaurus.config';
+import ExecutiveSummary from './executive_summary';
+import OverallVisualization from './overall_visualization';
+import SummaryTable from './summary_table';
+import React from 'react';
+import { Config } from '../components/types';
 
 function HomepageHeader() {
   return (
     <header className={styles.hero}>  
-      <div className={styles.heroBackground}></div>  
+      {/* <div className={styles.heroBackground}></div>   */}
       <div className="container">  
         <Heading as="h1" className="hero__title">  
           Eureka ML Insights
         </Heading>  
         <p className="hero__subtitle">Evaluating and Understanding Large Foundation Models</p> 
         <p>TODO: Insert Blurb</p>
-        <Button>Read full report</Button>
-        <Button>Github</Button>
+        <Button shape='round' className={`${styles.buttons} ${styles.fullReportButton}`}>Read full report</Button>
+        <Button shape='round' className={`${styles.buttons}`}>Github </Button>
       </div>
-      <div>
-         
-      </div>
-    </header>  
+    </header>
   );
 }
 
 export default function Home(): JSX.Element {
   const {siteConfig} = useDocusaurusContext();
+  const [config, setConfig] = React.useState<Config | null>(null);
+  React.useEffect(() => {  
+        fetch('/config.json')
+       .then(response => response.json())
+       .then(fetchedData => 
+          {
+              const benchmarks = fetchedData.benchmarks;
+              const models = fetchedData.model_list;
+              const model_families = fetchedData.model_families;
+              const capabilities = fetchedData.capability_mapping;  
+              setConfig({benchmarks: benchmarks, models: models, model_families: model_families, capability_mapping: capabilities});
+          })
+       .catch(error => console.error(error));
+  }, []);
+  
   return (
     <Layout
-      title={`Hello from ${siteConfig.title}`}
-      description="Description will go into a meta tag in <head />">
-      <HomepageHeader />
+      title={`${siteConfig.title}`}
+      description="Welcome to the page for Eureka Model Benchmarks">
+      <div className={styles.fullWidthContainer}>
+        <div className={styles.heroBackground}></div>
+        <div className="container" style={{position: 'relative'}}>
+        <div className={styles.heroContent}>
+          <HomepageHeader />
+          <StatsBar config={config}/>
+          <br/>
+          <br/>
+        </div>
+      </div>
+      </div>
       <main>
-        <HomepageFeatures />
+        <section className={styles.features}>
+          <div className="container">
+            <OverallVisualization config={config}/>
+            <br/>
+            <ExecutiveSummary/>
+            <br/>
+            <SummaryTable config={config}/>
+          </div>
+        </section>
       </main>
     </Layout>
   );

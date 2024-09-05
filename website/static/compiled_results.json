@@ -2,7 +2,7 @@
   "language": {
     "capabilities": [
       {
-        "name": "Information Retrieval",
+        "name": "Information Retrieval Fact Recall",
         "description": "Task: Retrieving long-form information from the model's parametric knowledge or from given input context with filtering constraints. Capability importance: All information retrieval tasks involve some form of constraint that defines the retrieval query. However, other simpler IR benchmarks only test for short-form generation (finding a single fact) and for a single con-straint. Being able to answer more complex queries is relevant to advanced search and information finding. State-of-the-art: Constrained retrieval from parametric knowledge is still prone to major irrelevance and fact fabrication with constraint satisfaction being less than 60%. Constrained retrieval from given input context is significantly better in overall, but for queries with more than one constraint constraint satisfaction and completeness drop to less than 70% and 60% respectively.",
         "models": [
           {
@@ -40,6 +40,48 @@
           {
             "name": "Mistral_Large_2_2407",
             "score": 0.363
+          }
+        ]
+      },
+      {
+        "name": "Information Retrieval Fact Precision",
+        "description": "Task: Retrieving long-form information from the model's parametric knowledge or from given input context with filtering constraints. Capability importance: All information retrieval tasks involve some form of constraint that defines the retrieval query. However, other simpler IR benchmarks only test for short-form generation (finding a single fact) and for a single con-straint. Being able to answer more complex queries is relevant to advanced search and information finding. State-of-the-art: Constrained retrieval from parametric knowledge is still prone to major irrelevance and fact fabrication with constraint satisfaction being less than 60%. Constrained retrieval from given input context is significantly better in overall, but for queries with more than one constraint constraint satisfaction and completeness drop to less than 70% and 60% respectively.",
+        "models": [
+          {
+            "name": "Claude-3-Opus",
+            "score": 0.187
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 0.206
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 0.098
+          },
+          {
+            "name": "GPT-4-1106-Preview",
+            "score": 0.233
+          },
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.203
+          },
+          {
+            "name": "Llama-3-70B",
+            "score": 0.15
+          },
+          {
+            "name": "Llama-3_1-405B",
+            "score": 0.168
+          },
+          {
+            "name": "Llama-3_1-70B",
+            "score": 0.16
+          },
+          {
+            "name": "Mistral_Large_2_2407",
+            "score": 0.176
           }
         ]
       },
@@ -86,7 +128,7 @@
         ]
       },
       {
-        "name": "Long Context QA",
+        "name": "Long Context QA Average",
         "description": "TBD",
         "models": [
           {
@@ -128,44 +170,86 @@
         ]
       },
       {
+        "name": "Long Context QA Longest Context (3K)",
+        "description": "TBD",
+        "models": [
+          {
+            "name": "Claude-3-Opus",
+            "score": 0.73
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 0.756
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 0.758
+          },
+          {
+            "name": "GPT-4-1106-Preview",
+            "score": 0.855
+          },
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.908
+          },
+          {
+            "name": "Llama-3-70B",
+            "score": 0.749
+          },
+          {
+            "name": "Llama-3_1-405B",
+            "score": 0.925
+          },
+          {
+            "name": "Llama-3_1-70B",
+            "score": 0.864
+          },
+          {
+            "name": "Mistral_Large_2_2407",
+            "score": 0.667
+          }
+        ]
+      },
+      {
         "name": "Toxicity Detection",
         "description": "TBD",
         "models": [
           {
             "name": "Claude-3-Opus",
-            "score": 0.553
+            "score": 0.532
           },
           {
             "name": "Claude-3_5-Sonnet",
-            "score": 0.616
+            "score": 0.651
           },
           {
             "name": "Gemini-1_5-Pro",
-            "score": 0.405
+            "score": 0.426
           },
           {
             "name": "GPT-4-1106-Preview",
-            "score": 0.881
+            "score": 0.841
           },
           {
             "name": "GPT-4o-2024-05-13",
-            "score": 0.864
+            "score": 0.861
           },
           {
             "name": "Llama-3-70B",
-            "score": 0.867
+            "score": 0.874
           },
           {
             "name": "Llama-3_1-405B",
-            "score": 0.544
+            "score": 0.571
           },
           {
             "name": "Llama-3_1-70B",
-            "score": 0.869
+            "score": 0.86
           },
           {
             "name": "Mistral_Large_2_2407",
-            "score": 0.829
+            "score": 0.841
           }
         ]
       }
@@ -331,7 +415,7 @@
           },
           {
             "name": "GPT-4-Vision-Preview",
-            "score": 0.68
+            "score": 0.684
           },
           {
             "name": "GPT-4o-2024-05-13",
@@ -344,12 +428,12 @@
         ]
       },
       {
-        "name": "Spatial Understanding",
+        "name": "Spatial Map Understanding",
         "description": "TBD",
         "models": [
           {
             "name": "Claude-3-Opus",
-            "score": 0.511
+            "score": 0.505
           },
           {
             "name": "Claude-3_5-Sonnet",
@@ -369,7 +453,11 @@
           },
           {
             "name": "GPT-4o-2024-05-13",
-            "score": 0.639
+            "score": 0.634
+          },
+          {
+            "name": "Llava-1_6-34B",
+            "score": 0.42
           }
         ]
       },
@@ -379,32 +467,36 @@
         "models": [
           {
             "name": "Claude-3-Opus",
-            "score": 0.712
+            "score": 0.28
           },
           {
             "name": "Claude-3_5-Sonnet",
-            "score": 0.915
+            "score": 0.367
           },
           {
             "name": "Gemini-1_5-Pro",
-            "score": 0.865
+            "score": 0.406
           },
           {
             "name": "GPT-4-Turbo-2024-04-09",
-            "score": 0.831
+            "score": 0.288
           },
           {
             "name": "GPT-4-Vision-Preview",
-            "score": 0.844
+            "score": 0.256
           },
           {
             "name": "GPT-4o-2024-05-13",
-            "score": 0.934
+            "score": 0.386
+          },
+          {
+            "name": "Llava-1_6-34B",
+            "score": 0.372
           }
         ]
       },
       {
-        "name": "Counting",
+        "name": "Counting in a Grid",
         "description": "TBD",
         "models": [
           {
@@ -430,6 +522,10 @@
           {
             "name": "GPT-4o-2024-05-13",
             "score": 0.934
+          },
+          {
+            "name": "Llava-1_6-34B",
+            "score": 0.287
           }
         ]
       }

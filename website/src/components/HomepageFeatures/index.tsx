@@ -28,11 +28,12 @@ export default function HomepageFeatures(): JSX.Element {
   return (
     <section className={styles.features}>
       <div className="container">
-        <div>
-          <div className={styles.heroBackground}></div>
+        <div className="container">
+          {/* <div className={styles.heroBackground}></div> */}
           <StatsBar config={config}/>
-          <OverallVisualization config={config}/>
+          
         </div>
+        <OverallVisualization config={config}/>
         <br/>
         <ExecutiveSummary/>
         <br/>
