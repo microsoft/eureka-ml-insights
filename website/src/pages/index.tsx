@@ -23,7 +23,7 @@ function HomepageHeader() {
           Eureka ML Insights
         </Heading>  
         <p className="hero__subtitle">Evaluating and Understanding Large Foundation Models</p> 
-        <p>TODO: Insert Blurb</p>
+        <p>Eureka is an open-source framework for standardizing evaluations of large foundation models, beyond single-score reporting and rankings. We report in-depth evaluation and analysis of 12 state-of-the-art models across a collection of language and multimodal benchmarks. These benchmarks test fundamental but overlooked capabilities that are still challenging for even the most capable models. </p>
         <Button shape='round' className={`${styles.buttons} ${styles.fullReportButton}`}>Read full report</Button>
         <Button shape='round' className={`${styles.buttons}`} href={'https://github.com/microsoft/eureka-ml-insights'}>Github</Button>
       </div>

@@ -32,33 +32,30 @@ const ExecutiveSummary = () => {
       {
         key: '2',
         label: '02\t\tAll models\' performance in question answering drops with longer context',
-        children: <ReactMarkdown>When state-of-the-art models are compared in "needle-in-a-haystack" 
-          tasks, they seem to all perform equally well. However, testing the models on tasks that 
-          involve reasoning over long-context, we see that all models\' performance drops as context 
-          size grows. Amongst all models, GPT-4o and Llama-3_1-405B have the lowest drop in 
-          performance for longer context.</ReactMarkdown>,
+        children: <ReactMarkdown>Contrary to “needle-in-a-haystack” experiments, testing state-of-the-art
+           models on tasks that involve reasoning over long-context shows significant performance 
+           drops as context size grows. Amongst all models, GPT-4o 2024-05-13 and Llama 3.1 405B 
+           have the lowest drop in performance for longer context.</ReactMarkdown>,
       },
       {
         key: '3',
         label: '03\t\tMajor gaps in factuality and grounding for information retrieval from parametric knowledge or input context',
-        children: <ReactMarkdown>For example, we observe query constraint satisfaction rates (i.e. 
-          fact precision) of lower than 55%, completeness rates of lower than 25% (i.e. fact recall), 
-          and information irrelevance rates of higher than 20% (potentially information fabrication). 
-          Llama-3_1-405B, GPT-4o, and Claude-3_5-Sonnet are the best performing models in this task 
-          across different conditions. GPT-4o and Claude-3_5-Sonnet in particular have significantly 
-          lower information irrelevance rates (associated with better factuality). Llama-3_1-405B
-          has better constraint satisfaction rates (associated with better constrained text generation and grounding).</ReactMarkdown>,
+        children: <ReactMarkdown>Models exhibit query constraint satisfaction rates (i.e. fact 
+          precision) of lower than 55\%, completeness rates of lower than 25% (i.e. fact recall), 
+          and information irrelevance rates of higher than 20% (potentially fabricated information). 
+          Llama 3.1 405B, GPT-4o 2024-05-13, and Claude 3.5 Sonnet are the best performing models in 
+          this area across different conditions.</ReactMarkdown>,
       },
       {
         key: '4',
-        label: '04\t\tHigh refusal rates and low accuracy in detecting neutral content for some models',
+        label: '04\t\tHigh refusal rates. Lower accuracy in detecting toxic content vs. neutral content for most models.',
         children: <ReactMarkdown>While several models have high accuracy rates for toxicity detection, 
-          others (Gemini-1_5-Pro, Claude-3_5-Sonnet, Claude-3-Opus, and Llama-3_1-405B) exhibit a high amount of
-          refusal and low accuracy in classifying neutral content, leading therefore to erasure risks. 
-          During the safe language generation evaluation, models like GPTFourPrev and MistralLargeTwo 
-          have the highest toxicity rates. GPT-4o is the only model that has both a high toxicity 
-          detection accuracy and a low toxicity score for safe language generation, as shown in the 
-          discriminative and generative evaluations respectively.</ReactMarkdown>,
+          others (Gemini 1.5 Pro, Claude 3.5 Sonnet, Claude 3 Opus, and Llama 3.1 405B) exhibit low 
+          accuracy in classifying toxic content and a high amount of refusal. During the safe language 
+          generation evaluation, models like GPT-4 1106 Preview and Mistral Large 2407 have the highest 
+          toxicity rates. GPT-4o 2024-05-13 is the only model that has both a high toxicity detection 
+          accuracy and a low toxicity score for safe language generation, as shown in the discriminative 
+          and generative evaluations respectively. </ReactMarkdown>,
       }
     ]
 
@@ -66,9 +63,9 @@ const ExecutiveSummary = () => {
       {
         key: '1',
         label: '01\t\tState-of-the-art multimodal models struggle with geometric reasoning',
-        children: <ReactMarkdown>Reasoning about height is more difficult than about depth. Claude-3_5-Sonnet 
-          and Gemini-1_5-Pro are the best performing models for this task with Claude-3_5-Sonnet being the most 
-          accurate model for depth ordering and Gemini-1_5-Pro the most accurate for height ordering.</ReactMarkdown>,
+        children: <ReactMarkdown>Models perform worse in reasoning about height than about depth. Claude 3.5 
+          Sonnet and Gemini 1.5 Pro are the best performing models for this task with Claude 3.5 Sonnet being 
+          the most accurate model for depth ordering and Gemini 1.5 Pro the most accurate for height ordering. </ReactMarkdown>,
       },
       {
         key: '2',
@@ -81,11 +78,11 @@ const ExecutiveSummary = () => {
       {
         key: '3',
         label: '03\t\tComplementary performance across models for fundamental multimodal skills',
-        children: <ReactMarkdown>For example, Claude-3_5-Sonnet, GPT-4o, and GPT-4o-2025-13 have comparable 
-          performance in multimodal question answering (MMMU) but they outperform all other models by at
-          least 15%. There are tasks like object recognition and visual prompting where the performance of 
-          Claude-3_5-Sonnet is better or comparable to GPT-4o, Gemini-1_5-Pro but outperforms them both. Finally, 
-          in tasks like object detection and spatial reasoning, GPT-4o is the most accurate model.</ReactMarkdown>,
+        children: <ReactMarkdown>Claude 3.5 Sonnet, GPT-4o 2024-05-13, and GPT-4 Turbo 2024-04-09 have comparable 
+          performance in multimodal question answering (MMMU). In tasks like object recognition and visual prompting, 
+          the performance of Claude 3.5 Sonnet is better or comparable to GPT-4o 2024-05-13, but Gemini 1.5 Pro 
+          outperforms them both. Finally, in tasks like object detection and spatial reasoning, GPT-4o 2024-05-13 
+          is the most accurate model. </ReactMarkdown>,
       }
     ]
 
@@ -125,13 +122,11 @@ const ExecutiveSummary = () => {
                 </div>
                 <div>
                   <h3 style={headerStyle}>Multimodal Evaluation</h3>
-                  <p style={{marginLeft: '.3em'}}>Evaluations on important vision-language capabilities such as geometric and spatial 
-                    reasoning, object recognition and detection, multimodal question answering, and navigation 
-                    demonstrate increased capabilities of most recent models when compared to their previous 
-                    versions. For example, improvements over range between 3%-20%. Yet, state-of-the-art models 
-                    are still fairly limited in their multimodal abilities, specifically when it comes to detailed 
-                    image understanding (e.g. localization of objects, geometric and spatial reasoning, and navigation),
-                    which is most needed in truly multimodal scenarios that require physical awareness and localization.</p>
+                  <p style={{marginLeft: '.3em'}}>State-of-the-art models are still fairly limited in their 
+                    multimodal abilities, specifically when it comes to detailed image understanding. For 
+                    example, these models struggle with localizing objects, geometric and spatial reasoning, 
+                    and navigation, which are all examples of capabilities that are most needed in truly 
+                    multimodal scenarios that require physical awareness, visual grounding and localization.</p>
                   <Collapse expandIconPosition='end' expandIcon={customExpandIcon}>
                     {multimodalItems.map(item => (  
                       <Collapse.Panel   
