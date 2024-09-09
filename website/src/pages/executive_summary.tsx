@@ -10,8 +10,9 @@ const siderStyle: React.CSSProperties = {
     alignItems: 'center',  
     justifyContent: 'center',  
     color: '#000000',  
-    backgroundColor: '#F9FAFF',  
-    fontSize: '20px',  
+    backgroundColor: '#F9FAFF',
+    minWidth: '22%',
+    // fontSize: '2em',  
   };  
   
 const headerStyle: React.CSSProperties = {  
@@ -96,24 +97,25 @@ const ExecutiveSummary = () => {
     return (
         <div>
           <Layout>
-            <Layout.Sider width="22%" style={siderStyle}>
+            <Layout.Sider style={siderStyle}>
               <div>
-                <h1 style={{marginLeft: '1em', marginTop: '1em'}}>Executive Summary</h1>
+                <h1 style={{marginLeft: '1em', marginTop: '1em', wordBreak: 'break-all'}}>Executive Summary</h1>
               </div>
             </Layout.Sider>
             <Layout.Content>
               <div>
                 <div>
                   <h3 style={headerStyle}>Language Evaluation</h3>
-                  <p style={{marginLeft: '.3em'}}>The evaluation shows that there have been important advances from state-of-the-art LFMs 
-                    in the language capabilities of instruction following, long context question answering, 
-                    information retrieval, and safety.</p>
-                  {/* <Collapse items={languageItems} expandIconPosition='end' expandIcon={customExpandIcon}/> */}
+                  <p style={{marginLeft: '.3em'}}>The evaluation through Eureka shows that there have been important 
+                    advances from state-of-the-art models in the language capabilities of instruction following, long 
+                    context question answering, information retrieval, and safety. The analysis also discovers major 
+                    differences and gaps between models related to robustness to context length, factuality and 
+                    grounding for information retrieval, and refusal behavior.</p>
                   <Collapse expandIconPosition='end' expandIcon={customExpandIcon}>
                     {languageItems.map(item => (  
                       <Collapse.Panel   
                         key={item.key}   
-                        header={<div style={{ fontWeight: 'bold', fontSize: '16px', whiteSpace: 'pre' }}>{item.label}</div>}   
+                        header={<div style={{ fontWeight: 'bold', fontSize: '16px', whiteSpace: 'pre', wordWrap: 'break-word', overflowWrap: 'break-word', hyphens: 'auto' }}>{item.label}</div>}   
                       >
                         {item.children}  
                       </Collapse.Panel>  

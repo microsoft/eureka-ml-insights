@@ -62,7 +62,7 @@ const SummaryTable = ({config}: {config: Config}) => {
     };
 
     React.useEffect(() => {
-        fetch('/compiled_results.json')
+        fetch('compiled_results.json')
             .then(response => response.json())
             .then(compiledResults => {
                 parseResultCategory(compiledResults.language.capabilities, setLanguageCapabilties, setLangOverallSeries);

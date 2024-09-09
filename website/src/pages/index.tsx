@@ -1,13 +1,9 @@
-import clsx from 'clsx';
-import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
-import HomepageFeatures from '@site/src/components/HomepageFeatures';
 import Heading from '@theme/Heading';
 import styles from './index.module.css';
-import { Button, Card, Col, Row } from 'antd';
+import { Button } from 'antd';
 import StatsBar from './stats_bar';
-import config from '@generated/docusaurus.config';
 import ExecutiveSummary from './executive_summary';
 import OverallVisualization from './overall_visualization';
 import SummaryTable from './summary_table';
@@ -35,7 +31,7 @@ export default function Home(): JSX.Element {
   const {siteConfig} = useDocusaurusContext();
   const [config, setConfig] = React.useState<Config | null>(null);
   React.useEffect(() => {  
-        fetch('/config.json')
+        fetch('config.json')
        .then(response => response.json())
        .then(fetchedData => 
           {
@@ -44,6 +40,7 @@ export default function Home(): JSX.Element {
               const model_families = fetchedData.model_families;
               const capabilities = fetchedData.capability_mapping;  
               setConfig({benchmarks: benchmarks, models: models, model_families: model_families, capability_mapping: capabilities});
+              console.log(config);
           })
        .catch(error => console.error(error));
   }, []);
@@ -56,13 +53,14 @@ export default function Home(): JSX.Element {
         <div className={styles.heroBackground}></div>
         <div className={styles.splashSvg}></div>
         <div className="container" style={{position: 'relative'}}>
-        <div className={styles.heroContent}>
-          <HomepageHeader />
-          <StatsBar config={config}/>
-          <br/>
-          <br/>
+          <div className={styles.heroContent}>
+            <HomepageHeader />
+            <br/>
+            <StatsBar config={config}/>
+            <br/>
+            <br/>
+          </div>
         </div>
-      </div>
       </div>
       <main>
         <section className={styles.features}>

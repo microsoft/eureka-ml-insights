@@ -8,15 +8,15 @@ const config: Config = {
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here
-  url: 'https://your-docusaurus-site.example.com',
+  url: 'https://microsoft.github.io',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/',
+  baseUrl: '/eureka-ml-insights/',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
   organizationName: 'Microsoft', // Usually your GitHub org/user name.
-  projectName: 'Eureka', // Usually your repo name.
+  projectName: 'eureka-ml-insights', // Usually your repo name.
 
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
@@ -63,7 +63,7 @@ const config: Config = {
       },
       items: [
         {
-          href: 'https://github.com/microsoft/eureka-ml-insights',
+          href: 'https://www.microsoft.com/en-us/research/lab/ai-frontiers/?msockid=117853c4ea29677d3c4a4782eb9a6678',
           label: 'Blog', 
           position: 'right'
         },
@@ -79,14 +79,14 @@ const config: Config = {
       links: [
         {
           label: 'Blog',
-          to: '/blog',
+          href: 'https://www.microsoft.com/en-us/research/lab/ai-frontiers/?msockid=117853c4ea29677d3c4a4782eb9a6678',
         },
         {
           label: 'GitHub',
           href: 'https://github.com/microsoft/eureka-ml-insights',
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} Microsoft Research |  <a target="_blank" style="color:#10adff" href="https://go.microsoft.com/fwlink/?LinkId=521839">Privacy and Cookies</a>`,
+      copyright: `Copyright © ${new Date().getFullYear()} Microsoft Research |  <a target="_blank" style="color:#10adff" href="https://go.microsoft.com/fwlink/?LinkId=521839">Privacy and Cookies</a> |  <a target="_blank" style="color:#10adff" href="https://go.microsoft.com/fwlink/?linkid=2259814">Consumer Health Privacy</a> |  <a target=_blank style="color:#10adff" href="https://go.microsoft.com/fwlink/?LinkID=206977">Terms of Use</a>`,
     },
     colorMode: {
       disableSwitch: true,

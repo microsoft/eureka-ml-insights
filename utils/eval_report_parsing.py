@@ -2,6 +2,12 @@ import os
 import json
 import re
 
+# Usage instructions (internal use only):
+# TODO: Should this be checked into somewhere else?
+# 1. Download the "reports" folder from blob storage and extract it to a local directory
+# 2. Point release_directory_path to the release directory inside of the extracted "reports" folder
+# 3. Run 'python utils/eval_report_parsing.py'
+# 4. The compiled results will be written to 'website/static/compiled_results.json'
 
 def coallate_results(release_directory_path, config):
     file_pattern = re.compile(r'^(?!.*by).*\.json$', re.IGNORECASE)
