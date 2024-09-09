@@ -73,10 +73,12 @@ const SummaryTable = ({config}: {config: Config}) => {
     return (
         <div style={{ width: '100%' }}>
             <div>
+                <br/>
                 <h2>Language Performance</h2>
                 <Table columns={languageCapabilties} dataSource={langOverallSeries} pagination={false}/>
             </div>
             <div>
+                <br/>
                 <h2>Multimodal Performance</h2>
                 <Table columns={multimodalCapabilties} dataSource={multimodalOverallSeries} pagination={false}/>
             </div>

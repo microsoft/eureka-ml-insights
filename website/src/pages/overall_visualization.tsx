@@ -70,8 +70,9 @@ const OverallVisualization = ({config}: {config: Config}) => {
             categories: languageCapabilties.map(d => d.name),
             tickmarkPlacement: 'on',
             labels: {
+                padding: 20,
                 style: {
-                    textAlign: 'center'
+                    fontSize: '1em'
                 }
             }
         },
@@ -84,7 +85,8 @@ const OverallVisualization = ({config}: {config: Config}) => {
         legend: {
             align: 'center',
             verticalAlign: 'bottom',
-            layout: 'horizontal'
+            layout: 'horizontal',
+            itemMarginTop: 10,
         },
         credits: {
             enabled: false
@@ -107,6 +109,12 @@ const OverallVisualization = ({config}: {config: Config}) => {
         xAxis: {
             categories: multimodalCapabilties.map(d => d.name),
             tickmarkPlacement: 'on',
+            labels: {
+                padding: 20,
+                style: {
+                    fontSize: '1em',
+                }
+            }
         },
         yAxis: {
             gridLineInterpolation: 'polygon',
@@ -117,7 +125,8 @@ const OverallVisualization = ({config}: {config: Config}) => {
         legend: {
             align: 'center',
             verticalAlign: 'bottom',
-            layout: 'horizontal'
+            layout: 'horizontal',
+            itemMarginTop: 10,
         },
         credits: {
             enabled: false
@@ -129,6 +138,7 @@ const OverallVisualization = ({config}: {config: Config}) => {
             <Heading as="h1" className="hero__title" style={{textAlign: "center"}}>
                 Overall Performance 
             </Heading>
+            <br/>
             <div style={{width: '100%'}}>
                 <Row justify="space-between">
                     <Col xs={24} md={12}>

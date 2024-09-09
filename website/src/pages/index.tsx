@@ -21,7 +21,7 @@ function HomepageHeader() {
         <p className="hero__subtitle">Evaluating and Understanding Large Foundation Models</p> 
         <p>Eureka is an open-source framework for standardizing evaluations of large foundation models, beyond single-score reporting and rankings. We report in-depth evaluation and analysis of 12 state-of-the-art models across a collection of language and multimodal benchmarks. These benchmarks test fundamental but overlooked capabilities that are still challenging for even the most capable models. </p>
         <Button shape='round' className={`${styles.buttons} ${styles.fullReportButton}`}>Read full report</Button>
-        <Button shape='round' className={`${styles.buttons}`} href={'https://github.com/microsoft/eureka-ml-insights'}>Github</Button>
+        <Button shape='round' className={`${styles.buttons}`} href={'https://github.com/microsoft/eureka-ml-insights'}>Github <img src='img/link_icon.svg' alt="External Link to Github"/></Button>
       </div>
     </header>
   );
@@ -40,7 +40,6 @@ export default function Home(): JSX.Element {
               const model_families = fetchedData.model_families;
               const capabilities = fetchedData.capability_mapping;  
               setConfig({benchmarks: benchmarks, models: models, model_families: model_families, capability_mapping: capabilities});
-              console.log(config);
           })
        .catch(error => console.error(error));
   }, []);
@@ -54,9 +53,15 @@ export default function Home(): JSX.Element {
         <div className={styles.splashSvg}></div>
         <div className="container" style={{position: 'relative'}}>
           <div className={styles.heroContent}>
+            <br/>
+            <br/>
             <HomepageHeader />
             <br/>
+            <br/>
+            <br/>
             <StatsBar config={config}/>
+            <br/>
+            <br/>
             <br/>
             <br/>
           </div>
@@ -66,6 +71,7 @@ export default function Home(): JSX.Element {
         <section className={styles.features}>
           <div className="container">
             <OverallVisualization config={config}/>
+            <br/>
             <br/>
             <ExecutiveSummary/>
             <br/>
