@@ -15,7 +15,9 @@ const layoutStyle: React.CSSProperties = {
 const siderStyle: React.CSSProperties = {  
   ...layoutStyle,
   alignItems: 'center',  
-  minWidth: '22%',
+  minWidth: '30%',
+  maxWidth: '30%',
+  marginRight: '2em',
 };
   
 const headerStyle: React.CSSProperties = {  
@@ -119,7 +121,7 @@ const ExecutiveSummary = () => {
                   <Collapse bordered={false} className="custom-collapse" expandIconPosition='end' expandIcon={customExpandIcon}>
                     {languageItems.map(item => (  
                       <Collapse.Panel
-                        key={item.key}   
+                        key={item.key}
                         header={<h4><span style={{paddingRight: '2em'}}>0{item.key}</span>{item.label}</h4>}
                       >
                         {item.children}  

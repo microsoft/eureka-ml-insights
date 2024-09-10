@@ -20,7 +20,7 @@ const StatsBar = ({config}: {config: Config}) => {
       return <div>Loading...</div>;
   }
   return (
-    <Card style={{marginTop: 0, marginBottom: 0}}>  
+    <Card>  
         <Row align='middle' > 
             <Col span={4} >  
                 <p style={statsHeader}>{config.model_families.length}</p>  

@@ -58,7 +58,8 @@ const OverallVisualization = ({config}: {config: Config}) => {
             text: 'Language Performance',
             style: {
                 fontSize: '2.0em',
-            }
+                paddingbottom: '2em',
+            },
         },
         chart: {
             polar: true,
@@ -98,6 +99,7 @@ const OverallVisualization = ({config}: {config: Config}) => {
             text: 'Multimodal Performance',
             style: {
                 fontSize: '2.0em',
+                paddingbottom: '2em'
             }
         },
         chart: {
@@ -135,7 +137,7 @@ const OverallVisualization = ({config}: {config: Config}) => {
 
     return (
         <div style={{width: '100%'}}>
-            <Heading as="h1" className="hero__title" style={{textAlign: "center"}}>
+            <Heading as="h2" className="hero__title" style={{textAlign: "center"}}>
                 Overall Performance 
             </Heading>
             <br/>

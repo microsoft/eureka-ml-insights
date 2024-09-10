@@ -86,7 +86,12 @@ const config: Config = {
           href: 'https://github.com/microsoft/eureka-ml-insights',
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} Microsoft Research |  <a target="_blank" style="color:#10adff" href="https://go.microsoft.com/fwlink/?LinkId=521839">Privacy and Cookies</a> |  <a target="_blank" style="color:#10adff" href="https://go.microsoft.com/fwlink/?linkid=2259814">Consumer Health Privacy</a> |  <a target=_blank style="color:#10adff" href="https://go.microsoft.com/fwlink/?LinkID=206977">Terms of Use</a>`,
+      copyright: `Copyright © ${new Date().getFullYear()} Microsoft Research | 
+        <a target="_blank" style="color:#10adff" href="https://go.microsoft.com/fwlink/?LinkId=521839">Privacy and Cookies</a> |  
+        <a target="_blank" style="color:#10adff" href="https://go.microsoft.com/fwlink/?linkid=2259814">Consumer Health Privacy</a> |  
+        <a target=_blank style="color:#10adff" href="https://go.microsoft.com/fwlink/?LinkID=206977">Terms of Use</a> | 
+        <a target="_blank" style="color:#10adff" href="mailto:eureka-ml-insights@microsoft.com">Contact Us</a> | 
+        <a target="_blank" style="color:#10adff" href="https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks">Trademarks</a>`,
     },
     colorMode: {
       disableSwitch: true,
