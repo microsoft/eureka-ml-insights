@@ -5,7 +5,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 const config: Config = {
   title: 'Project Eureka',
   tagline: 'AI Frontiers Evaluation and Understanding',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/eureka_logo.png',
 
   // Set the production url of your site here
   url: 'https://microsoft.github.io',
@@ -59,7 +59,7 @@ const config: Config = {
       title: 'Eureka Model Benchmarks',
       logo: {
         alt: 'Project Eureka',
-        src: 'img/logo.svg',
+        src: 'img/eureka_logo.png',
       },
       items: [
         {

@@ -39,11 +39,11 @@ const StatsBar = ({config}: {config: Config}) => {
                 <p style={statsLabel}>Capabilities</p>
             </Col>  
             <Col span={4} >  
-                <div style={statsHeader}><NewspaperIcon className='inline-block mr-1' width={40} height={40}/></div>
+                <div style={statsHeader}><img src='img/language.svg' alt="Language Tasks"/></div>
                 <p style={statsLabel}>Language tasks</p>
             </Col>  
             <Col span={4} >  
-                <div style={statsHeader}><PhotoIcon className='inline-block mr-1' width={40} height={40}/></div>
+                <div style={statsHeader}><img src='img/multimodal.svg' alt="Language Tasks"/></div>
                 <p style={statsLabel}>Multimodal tasks</p>
             </Col>
         </Row>  
