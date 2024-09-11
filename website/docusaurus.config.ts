@@ -43,7 +43,7 @@ const config: Config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+            'https://aka.ms/eureka-ml-insights-blog',
         },
         theme: {
           customCss: './src/css/custom.css',
@@ -63,7 +63,7 @@ const config: Config = {
       },
       items: [
         {
-          href: 'https://www.microsoft.com/en-us/research/lab/ai-frontiers/?msockid=117853c4ea29677d3c4a4782eb9a6678',
+          href: 'https://aka.ms/eureka-ml-insights-blog',
           label: 'Blog', 
           position: 'right'
         },
@@ -79,7 +79,7 @@ const config: Config = {
       links: [
         {
           label: 'Blog',
-          href: 'https://www.microsoft.com/en-us/research/lab/ai-frontiers/?msockid=117853c4ea29677d3c4a4782eb9a6678',
+          href: 'https://aka.ms/eureka-ml-insights-blog',
         },
         {
           label: 'GitHub',

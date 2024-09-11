@@ -1,3 +1,4 @@
+import React from 'react';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
 import Heading from '@theme/Heading';
@@ -7,14 +8,11 @@ import StatsBar from './stats_bar';
 import ExecutiveSummary from './executive_summary';
 import OverallVisualization from './overall_visualization';
 import SummaryTable from './summary_table';
-import React from 'react';
-import { Config } from '../components/types';
-import Column from 'antd/es/table/Column';
+import { EurekaConfig } from '../components/types';
 
 function HomepageHeader() {
   return (
-    <header className={styles.hero}>  
-      {/* <div className={styles.heroBackground}></div>   */}
+    <header className={styles.hero} style={{paddingTop: '2em', paddingBottom: '4em'}}>  
       <div className="container">  
         <div>
           <Row style={{ display: 'flex', alignItems: 'center' }}>
@@ -23,7 +21,7 @@ function HomepageHeader() {
           </Row>
         </div>
         <p className="hero__subtitle">Evaluating and Understanding Large Foundation Models</p> 
-        <p>Eureka is an open-source framework for standardizing evaluations of large foundation models, beyond single-score 
+        <p style={{fontSize: '1.3em'}}>Eureka is an open-source framework for standardizing evaluations of large foundation models, beyond single-score 
           reporting and rankings. We report in-depth evaluation and analysis of 12 state-of-the-art models across a collection 
           of language and multimodal benchmarks. These benchmarks test fundamental but overlooked capabilities that are still 
           challenging for even the most capable models.</p>
@@ -42,7 +40,7 @@ function HomepageHeader() {
 
 export default function Home(): JSX.Element {
   const {siteConfig} = useDocusaurusContext();
-  const [config, setConfig] = React.useState<Config | null>(null);
+  const [config, setConfig] = React.useState<EurekaConfig | null>(null);
   React.useEffect(() => {  
         fetch('config.json')
        .then(response => response.json())
@@ -66,17 +64,8 @@ export default function Home(): JSX.Element {
         <div className={styles.splashSvg}></div>
         <div className="container" style={{position: 'relative'}}>
           <div className={styles.heroContent}>
-            <br/>
-            <br/>
             <HomepageHeader />
-            <br/>
-            <br/>
-            <br/>
             <StatsBar config={config}/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
           </div>
         </div>
       </div>
@@ -84,8 +73,6 @@ export default function Home(): JSX.Element {
         <section className={styles.features}>
           <div className="container">
             <OverallVisualization config={config}/>
-            <br/>
-            <br/>
             <ExecutiveSummary/>
             <br/>
             <SummaryTable config={config}/>

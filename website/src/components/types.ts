@@ -1,6 +1,6 @@
 import React from "react";
 
-export interface Config {
+export interface EurekaConfig {
     benchmarks: string[];
     models: ModelConfig[];
     model_families: string[];

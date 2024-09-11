@@ -96,9 +96,9 @@ const ExecutiveSummary = () => {
 
     const customExpandIcon = (props) => {  
       if (props.isActive) {  
-        return <MinusIcon className='inline-block' width={20} height={20}/>;  
+        return <MinusIcon className='inline-block' width={'4.5em'} height={'4.5em'} style={{paddingTop: '2.4em'}}/>;  
       }
-      return <PlusIcon className='inline-block' width={20} height={20} />;  
+      return <PlusIcon className='inline-block' width={'4.5em'} height={'4.5em'} style={{paddingTop: '2.4em'}}/>;  
     }  
 
     return (
@@ -122,7 +122,7 @@ const ExecutiveSummary = () => {
                     {languageItems.map(item => (  
                       <Collapse.Panel
                         key={item.key}
-                        header={<h4><span style={{paddingRight: '2em'}}>0{item.key}</span>{item.label}</h4>}
+                        header={<h4 style={{paddingTop: '1em'}}><span style={{paddingRight: '2em'}}>0{item.key}</span>{item.label}</h4>}
                       >
                         {item.children}  
                       </Collapse.Panel>  
@@ -140,7 +140,7 @@ const ExecutiveSummary = () => {
                     {multimodalItems.map(item => (  
                       <Collapse.Panel   
                         key={item.key}   
-                        header={<h4><span style={{paddingRight: '2em'}}>0{item.key}</span>{item.label}</h4>}
+                        header={<h4 style={{paddingTop: '1em'}}><span style={{paddingRight: '2em'}}>0{item.key}</span>{item.label}</h4>}
                       >
                         {item.children}  
                       </Collapse.Panel>  

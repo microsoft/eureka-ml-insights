@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
-import { CapabilityScores, ModelScore, ModelConfig, Config } from '../components/types';
+import { CapabilityScores, ModelScore, ModelConfig, EurekaConfig } from '../components/types';
 import Highcharts, { SeriesOptionsType } from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import HC_more from 'highcharts/highcharts-more';
-import { Button, Card, Col, Row } from 'antd';
+import { Col, Row } from 'antd';
 import Heading from '@theme/Heading';
-import Link from '@docusaurus/Link';
 
 HC_more(Highcharts); 
 
-const OverallVisualization = ({config}: {config: Config}) => {
+const OverallVisualization = ({config}: {config: EurekaConfig}) => {
     if (!config) {  
         // config is still null, probably still fetching data
         return <div>Loading...</div>;
@@ -19,6 +18,7 @@ const OverallVisualization = ({config}: {config: Config}) => {
     const [langOverallSeries, setLangOverallSeries] = useState<SeriesOptionsType[]>([]);
     const [multimodalCapabilties, setMultimodalCapabilties] = useState<CapabilityScores[]>([]);
     const [multimodalOverallSeries, setMultimodalOverallSeries] = useState<SeriesOptionsType[]>([]);
+    const [isLoading, setIsLoading] = useState(true);  
 
     const parseResultCategory = (capabilities: CapabilityScores[], setCapabilityFunction, setSeriesFunction) => {
         setCapabilityFunction(capabilities);
@@ -31,17 +31,17 @@ const OverallVisualization = ({config}: {config: Config}) => {
                 modelScores[model.name].push(model.score); 
             });
         });
-        const langSeries = [];
+        const series = [];
         for (const key in modelScores) {
-            langSeries.push({
+            series.push({
                 name: key,
                 data: modelScores[key],
                 pointPlacement: 'on',
                 type: 'line',
-                color: config.models.find((d: ModelConfig) => d.model === key).color,
+                color: config?.models?.find((d: ModelConfig) => d.model === key)?.color || 'black',
             });
         }
-        setSeriesFunction(langSeries);
+        setSeriesFunction(series);
     };
 
     React.useEffect(() => {
@@ -50,14 +50,19 @@ const OverallVisualization = ({config}: {config: Config}) => {
                 .then(compiledResults => {
                     parseResultCategory(compiledResults.language.capabilities, setLanguageCapabilties, setLangOverallSeries);
                     parseResultCategory(compiledResults.multimodal.capabilities, setMultimodalCapabilties, setMultimodalOverallSeries);
-                });
+                    setIsLoading(false);
+                })
+                .catch(error => console.error('Error fetching compiled results:', error));
             }, []);
 
+    if (isLoading) {  
+        return <div>Loading...</div>;  
+    }  
     const languageChartOptions: Highcharts.Options = {
         title: {
             text: 'Language Performance',
             style: {
-                fontSize: '2.0em',
+                fontSize: '1.7em',
                 paddingbottom: '2em',
             },
         },
@@ -68,7 +73,7 @@ const OverallVisualization = ({config}: {config: Config}) => {
         },
         series: langOverallSeries,
         xAxis: {
-            categories: languageCapabilties.map(d => d.name),
+            categories: languageCapabilties?.map(d => d.name),
             tickmarkPlacement: 'on',
             labels: {
                 padding: 20,
@@ -98,7 +103,7 @@ const OverallVisualization = ({config}: {config: Config}) => {
         title: {
             text: 'Multimodal Performance',
             style: {
-                fontSize: '2.0em',
+                fontSize: '1.7em',
                 paddingbottom: '2em'
             }
         },
@@ -109,7 +114,7 @@ const OverallVisualization = ({config}: {config: Config}) => {
         },
         series: multimodalOverallSeries,
         xAxis: {
-            categories: multimodalCapabilties.map(d => d.name),
+            categories: multimodalCapabilties?.map(d => d.name),
             tickmarkPlacement: 'on',
             labels: {
                 padding: 20,
@@ -136,8 +141,8 @@ const OverallVisualization = ({config}: {config: Config}) => {
     };
 
     return (
-        <div style={{width: '100%'}}>
-            <Heading as="h2" className="hero__title" style={{textAlign: "center"}}>
+        <div style={{width: '100%', paddingBottom: '4em'}}>
+            <Heading as="h4" className="hero__title" style={{textAlign: "center", fontSize: '2.5em'}}>
                 Overall Performance 
             </Heading>
             <br/>

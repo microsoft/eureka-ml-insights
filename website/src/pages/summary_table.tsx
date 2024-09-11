@@ -1,11 +1,11 @@
 import React, { Children, useState } from 'react';
-import { CapabilityScores, ModelScore, ModelConfig, Config } from '../components/types';
+import { CapabilityScores, ModelScore, ModelConfig, EurekaConfig } from '../components/types';
 import Highcharts, { SeriesOptionsType } from 'highcharts';
 import { Layout, Table, CollapseProps, Collapse } from 'antd';
 import Title from 'antd/es/skeleton/Title';
 import { ColumnsType } from 'antd/es/table';
 
-const SummaryTable = ({config}: {config: Config}) => {
+const SummaryTable = ({config}: {config: EurekaConfig}) => {
     if (!config) {  
         // config is still null, probably still fetching data
         return <div>Loading...</div>;
