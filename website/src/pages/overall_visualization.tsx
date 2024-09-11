@@ -6,13 +6,21 @@ import HC_more from 'highcharts/highcharts-more';
 import { Col, Row } from 'antd';
 import Heading from '@theme/Heading';
 
-HC_more(Highcharts); 
+// HC_more(Highcharts); 
 
 const OverallVisualization = ({config}: {config: EurekaConfig}) => {
     if (!config) {  
         // config is still null, probably still fetching data
         return <div>Loading...</div>;
     }
+
+    React.useEffect(() => {  
+        const loadHighchartsMore = async () => {  
+          const HC_more = await import('highcharts/highcharts-more');  
+          HC_more.default(Highcharts);  
+        };  
+        loadHighchartsMore();  
+      }, []); 
 
     const [languageCapabilties, setLanguageCapabilties] = useState<CapabilityScores[]>([]);
     const [langOverallSeries, setLangOverallSeries] = useState<SeriesOptionsType[]>([]);

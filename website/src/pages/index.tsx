@@ -56,29 +56,29 @@ export default function Home(): JSX.Element {
   }, []);
   
   return (
-    <Layout
+     <Layout
       title={`${siteConfig.title}`}
       description="Welcome to the page for Eureka Model Benchmarks">
-      <div className={styles.fullWidthContainer}>
-        <div className={styles.heroBackground}></div>
-        <div className={styles.splashSvg}></div>
-        <div className="container" style={{position: 'relative'}}>
-          <div className={styles.heroContent}>
-            <HomepageHeader />
-            <StatsBar config={config}/>
+        <div className={styles.fullWidthContainer}>
+          <div className={styles.heroBackground}/>
+          <div className={styles.splashSvg}/>
+          <div className="container" style={{position: 'relative'}}>
+            <div className={styles.heroContent}>
+              <HomepageHeader />
+              <StatsBar config={config}/>
+            </div>
           </div>
         </div>
-      </div>
-      <main>
-        <section className={styles.features}>
-          <div className="container">
-            <OverallVisualization config={config}/>
-            <ExecutiveSummary/>
-            <br/>
-            <SummaryTable config={config}/>
-          </div>
-        </section>
-      </main>
-    </Layout>
+        <main>
+          <section className={styles.features}>
+            <div className="container">
+              <OverallVisualization config={config}/>
+              <ExecutiveSummary/>
+              <br/>
+              <SummaryTable config={config}/>
+            </div>
+          </section>
+        </main>
+     </Layout>
   );
 }
