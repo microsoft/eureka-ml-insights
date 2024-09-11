@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { CapabilityScores, ModelScore, ModelConfig, EurekaConfig } from '../components/types';
 import Highcharts, { SeriesOptionsType } from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
-import HC_more from 'highcharts/highcharts-more';
 import { Col, Row } from 'antd';
 import Heading from '@theme/Heading';
 

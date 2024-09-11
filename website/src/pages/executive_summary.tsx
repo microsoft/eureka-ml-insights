@@ -1,8 +1,8 @@
 
 import React from 'react';
 import './executive_summary.css';  
-import { Layout, Button, CollapseProps, Collapse } from 'antd';
-import { MinusIcon, NewspaperIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { Layout, CollapseProps, Collapse } from 'antd';
+import { MinusIcon, PlusIcon } from '@heroicons/react/24/outline';
 
 const layoutStyle: React.CSSProperties = {
   display: 'flex',  
