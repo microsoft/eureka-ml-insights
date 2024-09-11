@@ -1,0 +1,210 @@
+{
+  "benchmarks": [
+    "Geometric Reasoning",
+    "MMMU",
+    "Image Understanding",
+    "Vision Language Understanding",
+    "IFEval",
+    "FlenQA",
+    "Kitab",
+    "Toxigen"
+  ],
+  "capability_mapping": [
+    {
+      "capability": "Information Retrieval Fact Recall",
+      "modality": "language",
+      "path": ["kitab", "ONE_BOOK_CONSTRAINT_PIPELINE"],
+      "metric": ["KitabMetric_satisfied_rate"],
+      "run": "average",
+      "description": "Task: Retrieving long-form information from the model's parametric knowledge or from given input context with filtering constraints. Capability importance: All information retrieval tasks involve some form of constraint that defines the retrieval query. However, other simpler IR benchmarks only test for short-form generation (finding a single fact) and for a single con-straint. Being able to answer more complex queries is relevant to advanced search and information finding. State-of-the-art: Constrained retrieval from parametric knowledge is still prone to major irrelevance and fact fabrication with constraint satisfaction being less than 60%. Constrained retrieval from given input context is significantly better in overall, but for queries with more than one constraint constraint satisfaction and completeness drop to less than 70% and 60% respectively."
+    },
+    {
+      "capability": "Information Retrieval Fact Precision",
+      "modality": "language",
+      "path": ["kitab", "ONE_BOOK_CONSTRAINT_PIPELINE"],
+      "metric": ["KitabMetric_completeness"],
+      "run": "average",
+      "description": "Task: Retrieving long-form information from the model's parametric knowledge or from given input context with filtering constraints. Capability importance: All information retrieval tasks involve some form of constraint that defines the retrieval query. However, other simpler IR benchmarks only test for short-form generation (finding a single fact) and for a single con-straint. Being able to answer more complex queries is relevant to advanced search and information finding. State-of-the-art: Constrained retrieval from parametric knowledge is still prone to major irrelevance and fact fabrication with constraint satisfaction being less than 60%. Constrained retrieval from given input context is significantly better in overall, but for queries with more than one constraint constraint satisfaction and completeness drop to less than 70% and 60% respectively."
+    },
+    {
+      "capability": "Instruction Following",
+      "modality": "language",
+      "path": ["IFEval"],
+      "metric": ["IFEvalMetric_strict_follow_all_instructions"],
+      "run": "average",
+      "description": "TBD"
+    },
+    {
+      "capability": "Long Context QA Average",
+      "modality": "language",
+      "path": ["FlenQA"],
+      "metric": ["ExactMatch_result", "correct"],
+      "run": "average",
+      "description": "TBD"
+    },
+    {
+      "capability": "Long Context QA Longest Context (3K)",
+      "modality": "language",
+      "path": ["FlenQA"],
+      "metric": ["ExactMatch_result", "3000", "correct"],
+      "run": "average",
+      "description": "TBD"
+    },
+    {
+      "capability": "Toxicity Detection",
+      "modality": "language",
+      "path": ["Toxigen", "Discriminative", "9K"],
+      "metric": ["ExactMatch_result", "correct"],
+      "run": "average",
+      "description": "TBD"
+    },
+    {
+      "capability": "Geometric Reasoning",
+      "modality": "multimodal",
+      "path": ["Geometric-Reasoning"],
+      "metric": ["GeoMCQMetric_result", "correct"],
+      "run": "average",
+      "description": "TBD"
+    },
+    {
+      "capability": "Multimodal QA",
+      "modality": "multimodal",
+      "path": ["MMMU", "MMMU"],
+      "metric": ["MMMUMetric_result", "correct"],
+      "run": "average",
+      "description": "TBD"
+    },
+    {
+      "capability": "Object Recognition",
+      "modality": "multimodal",
+      "path": ["SPATIAL_UNDERSTANDING", "OBJECT_RECOGNITION_SINGLE"],
+      "metric": ["ObjectRecognitionMetric_result", "correct"],
+      "run": "average",
+      "description": "TBD"
+    },
+    {
+      "capability": "Visual Prompting",
+      "modality": "multimodal",
+      "path": ["SPATIAL_UNDERSTANDING", "VISUAL_PROMPTING_SINGLE"],
+      "metric": ["ObjectRecognitionMetric_result", "correct"],
+      "run": "average",
+      "description": "TBD"
+    },
+    {
+      "capability": "Spatial Reasoning",
+      "modality": "multimodal",
+      "path": ["SPATIAL_UNDERSTANDING", "SPATIAL_REASONING_SINGLE"],
+      "metric": ["SpatialAndLayoutReasoningMetric_result", "correct"],
+      "run": "average",
+      "description": "TBD"
+    },
+    {
+      "capability": "Spatial Map Understanding",
+      "modality": "multimodal",
+      "path": ["VISION_LANGUAGE", "SPATIAL_MAP"],
+      "metric": ["SpatialAndLayoutReasoningMetricMap_result", "correct"],
+      "run": "average",
+      "description": "TBD"
+    },
+    {
+      "capability": "Navigation",
+      "modality": "multimodal",
+      "path": ["VISION_LANGUAGE", "MAZE"],
+      "metric": ["SpatialAndLayoutReasoningMetricMaze_result", "correct"],
+      "run": "average",
+      "description": "TBD"
+    },
+    {
+      "capability": "Counting in a Grid",
+      "modality": "multimodal",
+      "path": ["VISION_LANGUAGE", "GRID_ANIMAL"],
+      "metric": ["SpatialAndLayoutReasoningMetricGrid_result", "correct"],
+      "run": "average",
+      "description": "TBD"
+    }
+  ],
+  "model_families": [
+    "claude", "gemini", "llama", "gpt", "mistral", "llava"
+  ],
+  "model_list": [
+    {
+      "model_family": "Claude",
+      "model": "Claude-3-Opus",
+      "color": "#4762D6",
+      "modality": ["vision", "language"]
+    },
+    {
+      "model_family": "Claude",
+      "model": "Claude-3_5-Sonnet",
+      "color": "#4762D6",
+      "modality": ["vision", "language"]
+    },
+    {
+      "model_family": "Gemini",
+      "model": "Gemini-1_5-Pro",
+      "color": "#AE8C00",
+      "modality": ["vision", "language"]
+    },
+    {
+      "model_family": "Llama",
+      "model": "Llama-3-70B",
+      "color": "#058801",
+      "modality": ["language"]
+    },
+    {
+      "model_family": "Llama",
+      "model": "Llama-3_1-405B",
+      "color": "#71A920",
+      "modality": ["language"]
+    },
+    {
+      "model_family": "Llama",
+      "model": "Llama-3_1-70B",
+      "color": "#65D060",
+      "modality": ["language"]
+    },
+    {
+      "model_family": "GPT",
+      "model": "GPT-4-1106-Preview",
+      "color": "#E3008C",
+      "modality": ["language"]
+    },
+    {
+      "model_family": "GPT",
+      "model": "GPT-4o-2024-05-13",
+      "color": "#B61A40",
+      "modality": ["vision", "language"]
+    },
+    {
+      "model_family": "GPT",
+      "model": "GPT-4-Vision-Preview",
+      "color": "#E3008C",
+      "modality": ["vision"]
+    },
+    {
+      "model_family": "GPT",
+      "model": "GPT-4-Turbo-2024-04-09",
+      "color": "#B61A40",
+      "modality": ["vision"]
+    },
+    {
+      "model_family": "Mistral",
+      "model": "Mistral_Large_2_2407",
+      "color": "#E86B24",
+      "modality": ["language"]
+    },
+    {
+      "model_family": "Llava",
+      "model": "Llava-1_6-34B",
+      "color": "#E86B24",
+      "modality": ["language"]
+    }
+  ],
+  "TODO: Readd": {
+    "capability": "Object Detection",
+    "modality": "multimodal",
+    "path": ["SPATIAL_UNDERSTANDING", "OBJECT_DETECTION_SINGLE"],
+    "metric": [0,"CocoObjectDetectionMetric_result", "AP50"],
+    "description": "TBD"
+  }
+}

@@ -1,0 +1,8 @@
+.custom-collapse .ant-collapse-header,  
+.custom-collapse .ant-collapse-item { 
+    background-color: #F9FAFF;
+}  
+
+.custom-collapse .ant-collapse-content {  
+    background-color: #F9FAFF;  /* Sets background of expanded elements */  
+}  

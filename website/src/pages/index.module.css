@@ -1,0 +1,90 @@
+/**
+ * CSS files with the .module.css suffix will be treated as CSS modules
+ * and scoped locally.
+ */
+
+.heroBanner {
+  padding: 4rem 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+@media screen and (max-width: 996px) {
+  .heroBanner {
+    padding: 2rem;
+  }
+}
+
+.buttons {
+  align-items: center;
+  justify-content: center;
+  padding: 1em 1.5em !important;
+  font-size: 1.1em;
+  outline: black;
+  outline-color: black;
+}
+
+.buttons.fullReportButton {
+  margin-right: .8em;
+  background-color: black;
+  color: white;
+}
+
+.hero {  
+  position: relative;  
+  display: flex;  
+  align-items: center;  
+  justify-content: center;  
+}  
+
+.heroContainer {  
+  position: relative;  
+}  
+  
+.heroContent {  
+  position: relative;  
+}
+  
+.heroBackground {  
+  position: absolute;  
+  top: 0;  
+  left: 0;  
+  width: 100vw;  
+  height: 100%;  
+  background: url('../../static/img/website_banner_bg.png') center/cover no-repeat;  
+  z-index: -1;  
+}  
+  
+.heroBackground::after {  
+  content: '';  
+  position: absolute;  
+  top: 0;  
+  right: 0;  
+  bottom: 0;  
+  left: 0;  
+  background: linear-gradient(to bottom,   
+    transparent 0%,  
+    transparent 50%,
+    white 100%);
+}  
+
+.splashSvg {  
+  position: absolute;  
+  top: 0;  
+  right: 0;  
+  width: 239px;  
+  height: 500px;  
+  background: url('../../static/img/splash.svg') no-repeat;  
+  z-index: 0;  
+}
+
+.fullWidthContainer {  
+  position: relative;  
+  width: 100vw;  
+  left: 50%;  
+  right: 50%;  
+  margin-left: -50vw;  
+  margin-right: -50vw;  
+}  
+
