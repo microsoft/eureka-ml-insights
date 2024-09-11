@@ -103,7 +103,7 @@ const ExecutiveSummary = () => {
 
     return (
         <div>
-          <Layout>
+          <Layout style={{backgroundColor: '#F9FAFF'}}>
             <Layout.Sider style={siderStyle}>
               <div>
                 <h1 style={{marginLeft: '1em', marginTop: '1em', wordBreak: 'break-all'}}>Executive Summary</h1>

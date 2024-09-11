@@ -9,9 +9,16 @@ const statsHeader: React.CSSProperties = {
     marginBottom: '.08em'
 }; 
 
+const statsIcon: React.CSSProperties = {  
+    fontWeight: 'bold', 
+    fontSize: '2em', 
+    marginBottom: '-.07em'
+}; 
+
 const statsLabel: React.CSSProperties = {
     color: 'grey', 
-    fontSize: '1.5em' 
+    fontSize: '1.5em', 
+    marginBottom: '0'
 }
 
 const StatsBar = ({config}: {config: Config}) => {
@@ -39,11 +46,11 @@ const StatsBar = ({config}: {config: Config}) => {
                 <p style={statsLabel}>Capabilities</p>
             </Col>  
             <Col span={4} >  
-                <div style={statsHeader}><img src='img/language.svg' alt="Language Tasks"/></div>
+                <div style={statsIcon}><img src='img/language.svg' alt="Language Tasks"/></div>
                 <p style={statsLabel}>Language tasks</p>
             </Col>  
             <Col span={4} >  
-                <div style={statsHeader}><img src='img/multimodal.svg' alt="Language Tasks"/></div>
+                <div style={statsIcon}><img src='img/multimodal.svg' alt="Language Tasks"/></div>
                 <p style={statsLabel}>Multimodal tasks</p>
             </Col>
         </Row>  

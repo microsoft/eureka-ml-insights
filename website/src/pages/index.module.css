@@ -21,14 +21,12 @@
   justify-content: center;
   padding: 1em 1.5em !important;
   font-size: 1.1em;
-}
-.buttons.fullReportButton {
-  margin-right: .8em;
-  background-color: black;
-  color: white;
+  outline: black;
+  outline-color: black;
 }
 
-.fullReportButton {
+.buttons.fullReportButton {
+  margin-right: .8em;
   background-color: black;
   color: white;
 }
