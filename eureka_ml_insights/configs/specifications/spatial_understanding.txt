@@ -1,0 +1,71 @@
+What are the experimental design setup dimensions 
+(e.g. settings, prompt templates, dataset subsets) for this benchmark? 
+
+This dataset has 4 variations that test:
+
+- Object Detection
+- Object Recognition
+- Spatial Reasoning
+- Visual Prompting
+
+For each varitions, the images consist of images of pasted objects on random images.
+For each there are 2 conditions "single" and "pairs" each test set has 1280 images and text pairs
+
+__Object Detection__
+
+	Answer type: Open-ended
+
+	Example for "single":
+
+		{"images": ["val\\banana\\left\\fire_station\\0000075_Places365_val_00030609.jpg"], "prompt": "You are an object detection model that aims to detect all the objects in the image.\n\nDefinition of Bounding Box Coordinates:\n\nThe bounding box coordinates (a, b, c, d) represent the normalized positions of the object within the image:\n\na: The x-coordinate of the top-left corner of the bounding box, expressed as a percentage of the image width. It indicates the position from the left side of the image to the object's left boundary. The a ranges from 0.00 to 1.00 with precision of 0.01.\nb: The y-coordinate of the top-left corner of the bounding box, expressed as a percentage of the image height. It indicates the position from the top of the image to the object's top boundary. The b ranges from 0.00 to 1.00 with precision of 0.01.\nc: The x-coordinate of the bottom-right corner of the bounding box, expressed as a percentage of the image width. It indicates the position from the left side of the image to the object's right boundary. The c ranges from 0.00 to 1.00 with precision of 0.01.\nd: The y-coordinate of the bottom-right corner of the bounding box, expressed as a percentage of the image height. It indicates the position from the top of the image to the object's bottom boundary. The d ranges from 0.00 to 1.00 with precision of 0.01.\n\nThe top-left of the image has coordinates (0.00, 0.00). The bottom-right of the image has coordinates (1.00, 1.00).\n\nInstructions:\n1. Specify any particular regions of interest within the image that should be prioritized during object detection.\n2. For all the specified regions that contain the objects, generate the object's category type, bounding box coordinates, and your confidence for the prediction. The bounding box coordinates (a, b, c, d) should be as precise as possible. Do not only output rough coordinates such as (0.1, 0.2, 0.3, 0.4).\n3. If there are more than one object of the same category, output all of them.\n4. Please ensure that the bounding box coordinates are not examples. They should really reflect the position of the objects in the image.\n5.\nReport your results in this output format:\n(a, b, c, d) - category for object 1 - confidence\n(a, b, c, d) - category for object 2 - confidence\n...\n(a, b, c, d) - category for object n - confidence."}
+
+	Example for "pairs":
+
+		{"images": ["val\\hair drier_broccoli\\left\\church-indoor\\0000030_0000059_Places365_val_00000401.jpg"], "prompt": "You are an object detection model that aims to detect all the objects in the image.\n\nDefinition of Bounding Box Coordinates:\n\nThe bounding box coordinates (a, b, c, d) represent the normalized positions of the object within the image:\n\na: The x-coordinate of the top-left corner of the bounding box, expressed as a percentage of the image width. It indicates the position from the left side of the image to the object's left boundary. The a ranges from 0.00 to 1.00 with precision of 0.01.\nb: The y-coordinate of the top-left corner of the bounding box, expressed as a percentage of the image height. It indicates the position from the top of the image to the object's top boundary. The b ranges from 0.00 to 1.00 with precision of 0.01.\nc: The x-coordinate of the bottom-right corner of the bounding box, expressed as a percentage of the image width. It indicates the position from the left side of the image to the object's right boundary. The c ranges from 0.00 to 1.00 with precision of 0.01.\nd: The y-coordinate of the bottom-right corner of the bounding box, expressed as a percentage of the image height. It indicates the position from the top of the image to the object's bottom boundary. The d ranges from 0.00 to 1.00 with precision of 0.01.\n\nThe top-left of the image has coordinates (0.00, 0.00). The bottom-right of the image has coordinates (1.00, 1.00).\n\nInstructions:\n1. Specify any particular regions of interest within the image that should be prioritized during object detection.\n2. For all the specified regions that contain the objects, generate the object's category type, bounding box coordinates, and your confidence for the prediction. The bounding box coordinates (a, b, c, d) should be as precise as possible. Do not only output rough coordinates such as (0.1, 0.2, 0.3, 0.4).\n3. If there are more than one object of the same category, output all of them.\n4. Please ensure that the bounding box coordinates are not examples. They should really reflect the position of the objects in the image.\n5.\nReport your results in this output format:\n(a, b, c, d) - category for object 1 - confidence\n(a, b, c, d) - category for object 2 - confidence\n...\n(a, b, c, d) - category for object n - confidence."}
+
+__Object Recognition__
+
+	Answer type: Open-ended
+
+	Example for "single"
+
+		{"images": ["val\\potted plant\\left\\ruin\\0000097_Places365_val_00018147.jpg"], "prompt": "What objects are in this image?", "ground_truth": "potted plant"}
+
+	Example for "pairs":
+
+		{"images": ["val\\bottle_keyboard\\left\\ruin\\0000087_0000069_Places365_val_00035062.jpg"], "prompt": "What objects are in this image?", "ground_truth": "['bottle', 'keyboard']"}
+
+__Spatial Reasoning__
+
+	Answer type: Multiple Choice
+
+	Example for "single"
+
+		{"images": ["val\\potted plant\\left\\ruin\\0000097_Places365_val_00018147.jpg"], 
+		"query_text": "Is the potted plant on the right, top, left, or bottom of the image?\nAnswer with one of (right, bottom, top, or left) only.", 
+		"target_text": "left"}
+
+	Example for "pairs"
+
+		{"images": ["val\\bottle_keyboard\\left\\ruin\\0000087_0000069_Places365_val_00035062.jpg"], 
+		"query_text": "Is the bottle above, below, right, or left of the keyboard in the image?\nAnswer with one of (below, right, left, or above) only.", 
+		"target_text": "left"}
+
+	What are the evaluation disaggregation pivots/attributes to run metrics for?
+
+	Disaggregation by (group by):
+
+	"single": (left, right, top, bottom)
+	"pairs": (left, right, above, below) 
+
+__Visual Prompting__
+
+Answer type: Open-ended
+
+	Example for "single"
+
+		{"images": ["val\\potted plant\\left\\ruin\\0000097_Places365_val_00018147.jpg"], "prompt": "What objects are in this image?", "ground_truth": "potted plant"}
+
+	Example for "pairs":
+
+		{"images": ["val\\sheep_banana\\left\\landfill\\0000099_0000001_Places365_val_00031238.jpg"], "prompt": "What objects are in the red and yellow box in this image?", "ground_truth": "['sheep', 'banana']"}

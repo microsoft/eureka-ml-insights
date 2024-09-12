@@ -1,0 +1,27 @@
+Benchmark Name: Flexible LENgth Question Answering dataset (FLenQA)
+Paper Title: Same Task, More Tokens: the Impact of Input Length on the Reasoning Performance of Large Language Models
+Paper Link: https://arxiv.org/pdf/2402.14848
+Github Link: https://github.com/alonj/Same-Task-More-Tokens
+Dataset Link: https://huggingface.co/datasets/alonj/FLenQA
+
+Benchmark Details:
+12K Questions/Assertions with True/False labels that aim to isolate the effect of input length on LLMs' performance using multiple versions of the same sample, each being extended with padding of different lengths, types and locations.
+
+What are the experimental design setup dimensions 
+(e.g. settings, prompt templates, dataset subsets) for this benchmark? 
+I.e. each dimension will map to one experiment.
+ 
+Dimension 1 (Chain of Thought): The dataset can be used with or without the Chain of Thought (CoT) prompts. The paper reports different models being affected differently by CoT prompting in terms of robustness to input length.
+
+What are the evaluation disaggregation pivots/attributes to run metrics for?
+ 
+Disaggregation by (group by):
+- padding_type: The type of padding used in the sample (e.g. resampling from the same task or from Books corpus).
+- dispersion: The type of dispersion used to place the facts in the prompt text (e.g. random, first, middle, etc).
+- ctx_size: The input length.
+
+What are the metrics used for evaluation?
+Accuracy: The percentage of correct True/False responses after post processing of the model responses to extract the categorical response.
+In the chain of thought (CoT) setting, specific failure modes can be evaluated namely, CoT coverage and early response (response before reasoning).    
+
+

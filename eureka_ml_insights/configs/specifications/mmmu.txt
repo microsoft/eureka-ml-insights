@@ -1,0 +1,34 @@
+What are the experimental design setup dimensions 
+(e.g. settings, prompt templates, dataset subsets) for this benchmark? 
+
+https://mmmu-benchmark.github.io/
+
+MMMU is a benchmark designed to evaluate multimodal models on massive multi-discipline tasks 
+demanding college-level subject knowledge and deliberate reasoning. MMMU includes 11.5K multimodal 
+questions from college exams, quizzes, and textbooks, covering six core disciplines: 
+Art & Design, Business, Science, Health & Medicine, Humanities & Social Science, and Tech & Engineering. 
+These questions span 30 subjects and 183 subfields, comprising 30 highly heterogeneous image types, 
+such as charts, diagrams, maps, tables, music sheets, and chemical structures. 
+
+Questions are both multiple-choice and open-ended.  
+
+
+What are the evaluation disaggregation pivots/attributes to run metrics for?
+
+There are 5 categories and each have several subcategories as shown below 
+
+MMMUCategories = {
+  'Art and Design': ['Art', 'Art_Theory', 'Design', 'Music'],
+  'Business': ['Accounting', 'Economics', 'Finance', 'Manage','Marketing'],
+  'Science': ['Biology', 'Chemistry', 'Geography', 'Math', 'Physics',],
+  'Health and Medicine': ['Basic_Medical_Science', 'Clinical_Medicine', 'Diagnostics_and_Laboratory_Medicine', 'Pharmacy', 'Public_Health'],
+  'Humanities and Social Science': ['History', 'Literature', 'Sociology', 'Psychology'],
+  'Tech and Engineering': ['Agriculture', 'Architecture_and_Engineering', 'Computer_Science', 'Electronics', 'Energy_and_Power', 'Materials', 'Mechanical_Engineering'],
+}
+
+What are the metrics used for evaluation?
+
+Both as defined by the MMMU eval code:
+
+1 Multi-choice correctness
+2 Open-eneded correctness

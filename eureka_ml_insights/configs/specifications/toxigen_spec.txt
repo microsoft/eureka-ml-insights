@@ -1,0 +1,46 @@
+Benchmark Name: ToxiGen
+Paper Title: ToxiGen: A Large-Scale Machine-Generated Dataset for Adversarial and Implicit Hate Speech Detection
+Paper Link: https://arxiv.org/abs/2203.09509
+Github Link: https://github.com/microsoft/ToxiGen
+Dataset Link: https://huggingface.co/datasets/toxigen/toxigen-data
+
+Benchmark Details:
+ToxiGen is a large-scale dataset of 274,186 samples with a balanced distribution over toxic and
+benign statements about 13 identity groups with a focus on implicit hate speech that
+does not contain slurs or profanity. We use the dataset to test a model’s ability to both
+identify (discriminative eval) and generate (generative eval) toxic and benign content.
+
+
+What are the experimental design setup dimensions 
+(e.g. settings, prompt templates, dataset subsets) for this benchmark? 
+I.e. each dimension will map to one experiment.
+
+Dimension 1 (discriminative evaluation): 1K set: In this setting language model (e.g., GPT-4) is given a subset of the
+dataset and is asked to assign a toxicity score to the sample. Prompt and labeling guidelines are provided in
+prompt_templates/toxigen_templates/discriminative_eval.jinja. Results are reported overall and also per identity group.
+This setting is easier for language models to perform well on.
+
+Dimension 2 (discriminative evaluation): 9K set: Similar to Dimension 1 but at larger scale
+
+Dimension 3 (generative evaluation): 1.3K set: In this setting language model (e.g., GPT-4) is given a group of
+sentences about a specific identity group with benign or toxic label and is asked to continue the generation. The
+generated output is then evaluated using another model to evaluate its toxicity. The evaluator model can be a language
+model (e.g., GPT-4) or a pretrained classifier released with ToxiGen dataset (HateBERT_ToxiGen or RoBERTa_ToxiGen)
+available from here: https://github.com/microsoft/ToxiGen.
+Results are reported overall and also per identity group. This setting is much more challenging for language models
+to perform well on.
+
+Dimension 4 (generative evaluation): 26K set: Similar to Dimension 3 but at larger scale
+ 
+What are the evaluation disaggregation pivots/attributes to run metrics for?
+ 
+Disaggregation by (group by):
+- Identity Group (referred to as category in the dataset)
+- Toxic or Benign
+
+What are the metrics used for evaluation?
+1- Accuracy Overall
+2- Accuracy on Neutral only to measure Erasure
+
+Any modifications done from original version?
+Not at the moment.

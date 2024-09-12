@@ -1,0 +1,33 @@
+What are the experimental design setup dimensions 
+(e.g. settings, prompt templates, dataset subsets, metrics) for this benchmark? 
+I.e. each dimension will map to one experiment.
+
+Task. The task is an image-text (VQA) task for geometric reasoning tasks. 
+1. Input is an image and question. Question is framed as multi-choice questions.
+2. Output is finding correct answer from multiple choices.
+
+Prompt template. Text prompt corresponds to question asking about the geometric reasoning
+of the objects in image. The task involves reasoning about depth, height properties of objects in image.
+
+Prompt example. 
+- prompt: "The image shows 2D shapes placed randomly. The shapes overlap each other, creating a depth effect. \
+When two shapes are overlapping, the shape that is complete is defined to be on top of the partially \
+hidden shape. Each 2D shape is represented by a color which we call color shape and must be inferred \
+as the label for the corresponding shape. Provide depth ordering from top to bottom for the shapes \
+(27, 14) in the image. Answer in the format: (ShapeID, ShapeID, ...). For eg. (1, 2, 3) is a valid \
+answer format.\nFrom the given options: ['(27, 14)', '(14, 27)'], select the correct answer (ONLY output the answer)."
+- target_options: "['(27, 14)', '(14, 27)']"
+- target_text: "(14, 27)"
+- model_output: "(14, 27)"
+
+
+Dataset. The task is defined using synthetic datasets.
+1. Number of test image-text pairs - 1086 image-text pairs.
+2. Dataset can be accessed from huggingface: "GeoMeterData/GeoMeter"
+
+
+Metrics. Two sets of numbers.
+- Overall accuracy. 
+- Disaggregation by (group by): accuracy is also shown for "depth" and "height" categories.
+
+

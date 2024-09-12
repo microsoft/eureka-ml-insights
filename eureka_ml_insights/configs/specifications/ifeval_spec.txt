@@ -1,0 +1,36 @@
+Benchmark Name: Instruction Following Evaluation (IFEval)
+Paper Title:  Instruction Following Evaluation for Large Language Models
+Paper Link: https://arxiv.org/abs/2311.07911
+Github Link: https://github.com/google-research/google-research/blob/master/instruction_following_eval/
+Dataset Link: https://huggingface.co/datasets/google/IFEval
+
+Benchmark Details:
+IFEval is a straightforward and easy-to-reproduce evaluation benchmark. 
+It focuses on a set of 25 types of “verifiable instructions” and constains around 500 prompts. 
+Each prompt containing one or more verifiable instructions.
+
+
+What are the experimental design setup dimensions 
+(e.g. settings, prompt templates, dataset subsets) for this benchmark? 
+I.e. each dimension will map to one experiment.
+ 
+IFEval has one dimension which produces aggregate accuracy as well as instruction level accuracy numbers.
+ 
+What are the evaluation disaggregation pivots/attributes to run metrics for?
+ 
+Disaggregation by (group by):
+- Intruction Type - type already provided in dataset
+- Fine Intruction Type - type already provided in dataset
+
+What are the metrics used for evaluation?
+1. Prompt-level strict-accuracy: The percentage of prompts that all verifiable instructions in each
+prompt are followed.
+2. Inst-level strict-accuracy: The percentage of verifiable instructions that are followed.
+3. Prompt-level loose-accuracy: Prompt-level accuracy computed with the loose criterion.
+4. Inst-level loose-accuracy: Instruction-level accuracy computed with a loose criterion.
+
+Any modifications done from original version?
+None
+
+
+

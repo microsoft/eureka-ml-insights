@@ -1,0 +1,1 @@
+{"images": ["test.jpg"], "prompt": "Is the bottle above, below, right, or left of the keyboard in the image?\nAnswer with one of (below, right, left, or above) only.", "target_text": "left"}

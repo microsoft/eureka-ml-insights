@@ -1,0 +1,15 @@
+{% if dataset == "Simplified RuleTaker" %}
+    <|user|>\nAnswer whether the statement {{question}} can be derived from the rule and the facts. Answer with either "True" or "False".
+    Rule: {{rule}}
+    Facts: {{mixin}}
+    Answer with either "True or "False".<|end|>\n<|assistant|>
+{% elif dataset == "PIR" %}
+    <|user|>\n{{mixin}}
+    True/False Question: {{question}}
+    Answer only True or False.<|end|>\n<|assistant|>
+{% elif dataset == "MonoRel" %}
+    <|user|>\nHere are some facts. Answer the exact following question based on the text: {{question}} Answer the question as it appears exactly.
+    {{mixin}}
+    {{question}}
+    Answer only True or False.<|end|>\n<|assistant|>
+{% endif %}
