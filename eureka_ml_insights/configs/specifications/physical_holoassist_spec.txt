@@ -1,0 +1,18 @@
+What are the experimental design setup dimensions 
+(e.g. settings, prompt templates, dataset subsets, metrics) for this benchmark? 
+I.e. each dimension will map to one experiment.
+
+Task. The task is an image-text (VQA) task about the object recognition task. 
+1. Input is an image and question.
+2. Output is finding correct object present in the image.
+
+Dataset. The task is defined on the Holoassist dataset.
+1. Number of test image-text pairs - 1032 image-text pairs.
+2. Number of classes - four classes.
+
+Prompt template. Text prompt corresponds to question asking about the object present in the image.
+
+Metrics. GPT-4 has been used to compare prediction with the ground-truth.
+1. Per-class scores.
+2. Average across classes scores.
+

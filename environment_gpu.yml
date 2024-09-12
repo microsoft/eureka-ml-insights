@@ -1,0 +1,12 @@
+name: aifeval
+channels:
+  - anaconda
+  - pytorch
+  - huggingface
+  - nvidia
+  - conda-forge
+  - defaults
+  - pip:
+      - deepspeed==0.14.4
+      - flash-attn==2.6.3
+      - git+https://github.com/neelsj/LLaVA.git
