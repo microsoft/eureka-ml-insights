@@ -24,7 +24,7 @@ setup(
         'jsonlines>=2.0.0',
         'pandas>=2.2.1',
         'pillow>=10.0.1',
-        'torch==2.1.2',
+        'torch==2.2.0',
         'numpy==1.26.4',
         'tqdm>=4.65.0',
         'jinja2>=3.1.3',
