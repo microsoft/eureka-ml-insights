@@ -50,6 +50,8 @@ def coallate_results(release_directory_path, config):
                         with open(file_path, 'r') as f:
                             file_contents = f.read()
                             scores = json.loads(file_contents)
+                            if(name == "Object Detection"):
+                                scores = scores[0]
                             for metric in capability["metric"]:
                                 scores = scores[metric]
                             sum += scores
