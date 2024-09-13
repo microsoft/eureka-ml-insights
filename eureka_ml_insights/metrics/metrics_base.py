@@ -64,7 +64,7 @@ class DetectionMetric(Metric):
     def validate_data(self, data):
         """This method checks if the data has the required fields."""
 
-        assert "images" in data.columns, "Data does not have 'model_output' field."
+        assert "id" in data.columns, "Data does not have 'id' field."
         assert "model_output" in data.columns, "Data does not have 'model_output' field."
         assert "is_valid" in data.columns, "Data does not have 'is_valid' field."
         return True
@@ -75,7 +75,7 @@ class DetectionMetric(Metric):
         tqdm.pandas()
 
         data[self.__class__.__name__ + "_result"] = data.progress_apply(
-            lambda x: self.__evaluate__(x["images"], x["model_output"], x["is_valid"]), axis=1
+            lambda x: self.__evaluate__(x["id"], x["model_output"], x["is_valid"]), axis=1
         )
         return data
 

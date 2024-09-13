@@ -32,7 +32,7 @@ from .config import (
 )
 
 
-class MMMU_PIPELINE(ExperimentConfig):
+class MMMU_BASELINE_PIPELINE(ExperimentConfig):
     """
     This defines an ExperimentConfig pipeline for the MMMU dataset.
     There is no model_config by default and the model config must be passed in via command lime.

@@ -18,7 +18,7 @@ from eureka_ml_insights.configs import (
     KITAB_ONE_BOOK_CONSTRAINT_PIPELINE,
     MAZE_PIPELINE,
     MAZE_TEXTONLY_PIPELINE,
-    MMMU_PIPELINE,
+    MMMU_BASELINE_PIPELINE,
     OBJECT_DETECTION_SINGLE_PIPELINE,
     OBJECT_RECOGNITION_SINGLE_PIPELINE,
     SPATIAL_GRID_PIPELINE,
@@ -47,7 +47,6 @@ from tests.test_utils import (
     KitabTestModel,
     MultipleChoiceTestModel,
     SpatialReasoningTestModel,
-    TestAzureMMDataLoader,
     TestDataLoader,
     TestKitabMetric,
     TestMMDataLoader,
@@ -58,63 +57,63 @@ N_ITER = 2
 
 
 class TEST_SPATIAL_REASONING_PIPELINE(SPATIAL_REASONING_SINGLE_PIPELINE):
-    # Test config the spatial reasoning benchmark with the SpatialReasoningTestModel and TestAzureMMDataLoader
+    # Test config the spatial reasoning benchmark with the SpatialReasoningTestModel and TestMMDataLoader
     # with small sample data and a test model
     def configure_pipeline(self):
         model_config = ModelConfig(SpatialReasoningTestModel, {})
         config = super().configure_pipeline(model_config=model_config)
         self.inference_comp = config.component_configs[1]
-        self.inference_comp.data_loader_config.class_name = TestAzureMMDataLoader
+        self.inference_comp.data_loader_config.class_name = TestMMDataLoader
         self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
 
 
 class TEST_OBJECT_DETECTION_PIPELINE(OBJECT_DETECTION_SINGLE_PIPELINE):
-    # Test config the object detection benchmark with the DetectionTestModel and TestAzureMMDataLoader
+    # Test config the object detection benchmark with the DetectionTestModel and TestMMDataLoader
     # with small sample data and a test model
     def configure_pipeline(self, resume_from=None):
         model_config = ModelConfig(DetectionTestModel, {})
         config = super().configure_pipeline(model_config=model_config)
-        self.inference_comp.data_loader_config.class_name = TestAzureMMDataLoader
+        self.inference_comp.data_loader_config.class_name = TestMMDataLoader
         self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
 
 
 class TEST_VISUAL_PROMPTING_PIPELINE(VISUAL_PROMPTING_SINGLE_PIPELINE):
-    # Test config the visual prompting benchmark with the GenericTestModel and TestAzureMMDataLoader
+    # Test config the visual prompting benchmark with the GenericTestModel and TestMMDataLoader
     # with small sample data and a test model
     def configure_pipeline(self, resume_from=None):
         model_config = ModelConfig(GenericTestModel, {})
         config = super().configure_pipeline(model_config=model_config)
-        self.inference_comp.data_loader_config.class_name = TestAzureMMDataLoader
+        self.inference_comp.data_loader_config.class_name = TestMMDataLoader
         self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
 
 
 class TEST_OBJECT_RECOGNITION_PIPELINE(OBJECT_RECOGNITION_SINGLE_PIPELINE):
-    # Test config the object recognition benchmark with the GenericTestModel and TestAzureMMDataLoader
+    # Test config the object recognition benchmark with the GenericTestModel and TestMMDataLoader
     # with small sample data and a test model
     def configure_pipeline(self, resume_from=None):
         model_config = ModelConfig(GenericTestModel, {})
         config = super().configure_pipeline(model_config=model_config)
-        self.inference_comp.data_loader_config.class_name = TestAzureMMDataLoader
+        self.inference_comp.data_loader_config.class_name = TestMMDataLoader
         self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
 
 
 class TEST_SPATIAL_GRID_PIPELINE(SPATIAL_GRID_PIPELINE):
-    # Test config the spatial grid counting benchmark with the TestAzureMMDataLoader
+    # Test config the spatial grid counting benchmark with the TestMMDataLoader
     # with small sample data and a test model
     def configure_pipeline(self, resume_from=None):
         model_config = ModelConfig(GenericTestModel, {})
         config = super().configure_pipeline(model_config=model_config)
-        self.inference_comp.data_loader_config.class_name = TestAzureMMDataLoader
+        self.inference_comp.data_loader_config.class_name = TestMMDataLoader
         self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
 
 
 class TEST_SPATIAL_GRID_TEXTONLY_PIPELINE(SPATIAL_GRID_TEXTONLY_PIPELINE):
-    # Test config the spatial grid counting benchmark textonly version with the TestAzureMMDataLoader
+    # Test config the spatial grid counting benchmark textonly version with the TestDataLoader
     # with small sample data and a test model
     def configure_pipeline(self, resume_from=None):
         model_config = ModelConfig(GenericTestModel, {})
@@ -125,18 +124,18 @@ class TEST_SPATIAL_GRID_TEXTONLY_PIPELINE(SPATIAL_GRID_TEXTONLY_PIPELINE):
 
 
 class TEST_SPATIAL_MAP_PIPELINE(SPATIAL_MAP_PIPELINE):
-    # Test config the spatial map benchmark with the TestAzureMMDataLoader
+    # Test config the spatial map benchmark with the TestMMDataLoader
     # with small sample data and a test model
     def configure_pipeline(self, resume_from=None):
         model_config = ModelConfig(GenericTestModel, {"model_name": "generic_test_model"})
         config = super().configure_pipeline(model_config=model_config)
-        self.inference_comp.data_loader_config.class_name = TestAzureMMDataLoader
+        self.inference_comp.data_loader_config.class_name = TestMMDataLoader
         self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
 
 
 class TEST_SPATIAL_MAP_TEXTONLY_PIPELINE(SPATIAL_MAP_TEXTONLY_PIPELINE):
-    # Test config the spatial map benchmark textonly version with the TestAzureMMDataLoader
+    # Test config the spatial map benchmark textonly version with the TestDataLoader
     # with small sample data and a test model
     def configure_pipeline(self, resume_from=None):
         model_config = ModelConfig(GenericTestModel, {"model_name": "generic_test_model"})
@@ -147,18 +146,18 @@ class TEST_SPATIAL_MAP_TEXTONLY_PIPELINE(SPATIAL_MAP_TEXTONLY_PIPELINE):
 
 
 class TEST_MAZE_PIPELINE(MAZE_PIPELINE):
-    # Test config the maze benchmark with the TestAzureMMDataLoader
+    # Test config the maze benchmark with the TestMMDataLoader
     # with small sample data and a test model
     def configure_pipeline(self, resume_from=None):
         model_config = ModelConfig(GenericTestModel, {})
         config = super().configure_pipeline(model_config=model_config)
-        self.inference_comp.data_loader_config.class_name = TestAzureMMDataLoader
+        self.inference_comp.data_loader_config.class_name = TestMMDataLoader
         self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
 
 
 class TEST_MAZE_TEXTONLY_PIPELINE(MAZE_TEXTONLY_PIPELINE):
-    # Test config the maze benchmark textonly version with the TestAzureMMDataLoader
+    # Test config the maze benchmark textonly version with the TestDataLoader
     # with small sample data and a test model
     def configure_pipeline(self, resume_from=None):
         model_config = ModelConfig(GenericTestModel, {})
@@ -248,7 +247,7 @@ class TEST_TOXIGEN_PIPELINE(ToxiGen_Discriminative_PIPELINE):
         return config
 
 
-class TEST_MMMU_PIPELINE(MMMU_PIPELINE):
+class TEST_MMMU_PIPELINE(MMMU_BASELINE_PIPELINE):
     # Test config the MMMU benchmark with MultipleChoiceTestModel and TestMMDataLoader
     def configure_pipeline(self, resume_from=None):
         config = super().configure_pipeline(model_config=ModelConfig(MultipleChoiceTestModel, {}))
@@ -285,25 +284,21 @@ class PipelineTest:
         self.assertEqual(n_aggregators, n_aggregator_files)
 
 
-@unittest.skipIf("skip_tests_with_auth" in os.environ, "Tests that require some auth are skipped.")
 class SR1_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_SPATIAL_REASONING_PIPELINE().pipeline_config
 
 
-@unittest.skipIf("skip_tests_with_auth" in os.environ, "Tests that require some auth are skipped.")
 class VP1_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_VISUAL_PROMPTING_PIPELINE().pipeline_config
 
 
-@unittest.skipIf("skip_tests_with_auth" in os.environ, "Tests that require some auth are skipped.")
 class OR1_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_OBJECT_RECOGNITION_PIPELINE().pipeline_config
 
 
-@unittest.skipIf("skip_tests_with_auth" in os.environ, "Tests that require some auth are skipped.")
 class OD1_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_OBJECT_DETECTION_PIPELINE().pipeline_config
@@ -314,43 +309,36 @@ class MMMU_PipelineTest(PipelineTest, unittest.TestCase):
         return TEST_MMMU_PIPELINE().pipeline_config
 
 
-@unittest.skipIf("skip_tests_with_auth" in os.environ, "Tests that require some auth are skipped.")
 class SPATIAL_GRID_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_SPATIAL_GRID_PIPELINE().pipeline_config
 
 
-@unittest.skipIf("skip_tests_with_auth" in os.environ, "Tests that require some auth are skipped.")
 class SPATIAL_GRID_TEXTONLY_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_SPATIAL_GRID_TEXTONLY_PIPELINE().pipeline_config
 
 
-@unittest.skipIf("skip_tests_with_auth" in os.environ, "Tests that require some auth are skipped.")
 class SPATIAL_MAP_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_SPATIAL_MAP_PIPELINE().pipeline_config
 
 
-@unittest.skipIf("skip_tests_with_auth" in os.environ, "Tests that require some auth are skipped.")
 class SPATIAL_MAP_TEXTONLY_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_SPATIAL_MAP_TEXTONLY_PIPELINE().pipeline_config
 
 
-@unittest.skipIf("skip_tests_with_auth" in os.environ, "Tests that require some auth are skipped.")
 class MAZE_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_MAZE_PIPELINE().pipeline_config
 
 
-@unittest.skipIf("skip_tests_with_auth" in os.environ, "Tests that require some auth are skipped.")
 class MAZE_TEXTONLY_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_MAZE_TEXTONLY_PIPELINE().pipeline_config
 
 
-@unittest.skipIf("skip_tests_with_auth" in os.environ, "Tests that require some auth are skipped.")
 class GR1_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_GEOMETRIC_REASONING_PIPELINE().pipeline_config
@@ -373,7 +361,6 @@ class DNA_PipelineTest(PipelineTest, unittest.TestCase):
             )
 
 
-@unittest.skipIf("skip_tests_with_auth" in os.environ, "Tests that require some auth are skipped.")
 class IFEval_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         self.test_pipeline = TEST_IFEval_PIPELINE()
