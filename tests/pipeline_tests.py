@@ -284,25 +284,21 @@ class PipelineTest:
         self.assertEqual(n_aggregators, n_aggregator_files)
 
 
-@unittest.skipIf("skip_tests_with_auth" in os.environ, "Tests that require some auth are skipped.")
 class SR1_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_SPATIAL_REASONING_PIPELINE().pipeline_config
 
 
-@unittest.skipIf("skip_tests_with_auth" in os.environ, "Tests that require some auth are skipped.")
 class VP1_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_VISUAL_PROMPTING_PIPELINE().pipeline_config
 
 
-@unittest.skipIf("skip_tests_with_auth" in os.environ, "Tests that require some auth are skipped.")
 class OR1_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_OBJECT_RECOGNITION_PIPELINE().pipeline_config
 
 
-@unittest.skipIf("skip_tests_with_auth" in os.environ, "Tests that require some auth are skipped.")
 class OD1_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_OBJECT_DETECTION_PIPELINE().pipeline_config
@@ -313,43 +309,36 @@ class MMMU_PipelineTest(PipelineTest, unittest.TestCase):
         return TEST_MMMU_PIPELINE().pipeline_config
 
 
-@unittest.skipIf("skip_tests_with_auth" in os.environ, "Tests that require some auth are skipped.")
 class SPATIAL_GRID_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_SPATIAL_GRID_PIPELINE().pipeline_config
 
 
-@unittest.skipIf("skip_tests_with_auth" in os.environ, "Tests that require some auth are skipped.")
 class SPATIAL_GRID_TEXTONLY_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_SPATIAL_GRID_TEXTONLY_PIPELINE().pipeline_config
 
 
-@unittest.skipIf("skip_tests_with_auth" in os.environ, "Tests that require some auth are skipped.")
 class SPATIAL_MAP_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_SPATIAL_MAP_PIPELINE().pipeline_config
 
 
-@unittest.skipIf("skip_tests_with_auth" in os.environ, "Tests that require some auth are skipped.")
 class SPATIAL_MAP_TEXTONLY_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_SPATIAL_MAP_TEXTONLY_PIPELINE().pipeline_config
 
 
-@unittest.skipIf("skip_tests_with_auth" in os.environ, "Tests that require some auth are skipped.")
 class MAZE_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_MAZE_PIPELINE().pipeline_config
 
 
-@unittest.skipIf("skip_tests_with_auth" in os.environ, "Tests that require some auth are skipped.")
 class MAZE_TEXTONLY_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_MAZE_TEXTONLY_PIPELINE().pipeline_config
 
 
-@unittest.skipIf("skip_tests_with_auth" in os.environ, "Tests that require some auth are skipped.")
 class GR1_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_GEOMETRIC_REASONING_PIPELINE().pipeline_config
@@ -372,7 +361,6 @@ class DNA_PipelineTest(PipelineTest, unittest.TestCase):
             )
 
 
-@unittest.skipIf("skip_tests_with_auth" in os.environ, "Tests that require some auth are skipped.")
 class IFEval_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         self.test_pipeline = TEST_IFEval_PIPELINE()
