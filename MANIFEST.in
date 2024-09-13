@@ -1,0 +1,2 @@
+include eureka_ml_insights\prompt_templates\*.jinja
+include eureka_ml_insights\prompt_templates\*\*.jinja

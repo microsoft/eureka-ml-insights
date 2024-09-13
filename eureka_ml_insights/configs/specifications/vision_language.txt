@@ -1,0 +1,64 @@
+What are the experimental design setup dimensions 
+(e.g. settings, prompt templates, dataset subsets) for this benchmark? 
+
+This dataset has 3 datasets:
+
+- Grid
+- Maze
+- Spatial Map
+
+__Grid__
+
+Each input consists of a grid of cells, each containing an image (e.g.,a rabbit). Alternatively, this grid 
+can also be represented in a purely textual format; for instance, the first row might be described as: 
+elephant | cat | giraffe | elephant | cat. The evaluations focus on tasks such as counting specific objects (e.g., rabbits) and
+identifying the object located at a specific coordinate in the grid (e.g., first row, second column).
+
+The dataset includes 3 conditions: text only, image only, and text+image.  Each condition includes 1500 images and text pairs for a total of 4500 questions.
+ 
+There are 3 question types: 
+	1) How many blocks contain a specific animal (answer is a number)
+	2) What animal is in one specific block, adressed by top-left, top, right, etc. (answer is an animal name)
+	3) What animal is in one specific block, addressed by row, column (answer is an animal name)
+
+Each question is multiple choice. 
+
+__Maze__
+
+The dataset consists of small mazes with questions asked about the maze. Each sample can be 
+represented as colored blocks where different colors signify distinct elements: a green block marks
+the starting point (S), a red block indicates the exit (E), black blocks represent impassable walls,
+white blocks denote navigable paths, and blue blocks trace the path from S to E. The objective is to
+navigate from S to E following the blue path, with movement permitted in the four cardinal directions
+(up, down, left, right). Alternatively, each input can be depicted in textual format using ASCII code.
+The questions asked include counting the number of turns from S to E and determining the spatial relationship 
+between S and E. 
+
+The dataset includes 3 conditions: text only, image only, and text+image.  Each condition includes 1500 images and text pairs for a total of 4500.
+
+There are 3 question types: 
+	1) How many right turns on the path from start to end (answer is a number)
+	2) How many total turns on the path from start to end (answer is a number)
+	3) Where is the exit releative to the start (answer is direction or yes/no)
+
+Each question is multiple choice. 
+
+__Spatial Map__
+
+The dataset consists of spatial relationships for random layouts of symbolic objects with text names on  white background. 
+Each object is associated with a unique location name, such as Unicorn Umbrellas and Gale Gifts. To study the impact of modality,
+the textual representation of each input consists of pairwise relations such as Brews Brothers Pub
+is to the Southeast of Whale’s Watches. The questions include asking about the spatial
+relationships between two locations and the number of objects that meet specific spatial criteria.
+
+The dataset includes 3 conditions: text only, image only, and text+image. Each condition includes 1500 images and text pairs for a total of 4500.
+
+There are 3 question types: 
+	1) In which direction is one object to another (answer is a direction)
+	2) Which object is to the direction of another (answer is an object name)
+	3) How many objects are in a direction of another (answer is a number)
+
+Each question is multiple choice. 
+
+---
+More details here: https://arxiv.org/pdf/2406.14852

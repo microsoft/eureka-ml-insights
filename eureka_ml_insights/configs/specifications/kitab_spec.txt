@@ -1,0 +1,32 @@
+Benchmark Name: Kitab
+Paper Title:  Kitab: Evaluating LLMs on constraint satisfaction for information retrieval
+Paper Link: https://arxiv.org/abs/2310.15511
+HuggingFace Link: https://huggingface.co/datasets/microsoft/kitab
+
+What are the experimental design setup dimensions?
+ 
+Dimension 1 (prompt template): There are three prompt templates that simulate three different settings and experimental conditions:
+1- NO-COONTEXT: the model uses only its own model parameter knowledge.
+2- WITH-CONTEXT: the model receives all books from the author in context and the subsequent task is to filter that list based on the query constraints. Simulates a RAG-style condition.
+3- SELF-CONTEXT: the model uses only its own model parameter knowledge, but is asked to first retrieve all books from the author and then perform filtering on that list based on the query constraints. Simulates a CoT setting that is similar to self retrieval.
+ 
+Dimension 2 (dataset subsets): There are two subsets of the dataset
+1- Queries with one book constraint
+2- Queries with two book constraints
+ 
+What are the evaluation disaggregation pivots/attributes to run metrics for?
+ 
+Disaggregation by (group by):
+- Constraint type
+- Popularity of author
+- Query constrainedness
+
+What are the metrics used for evaluation?
+
+1- Constraint satisfaction rate: Percentage of books from the model output that satisfy all query constraints. Similar to precision.
+2- Constraint unsatisfaction rate: Percentage of books from the model output that do not satisfy at least one of the query constraints.
+3- Information irrelevance: Percentage of books from the model output that do not satisfy the author constraint, hence irrelevant to the query (not from author).
+4- Completeness: Percentage of books from the ground truth list that are also listed in the model output. Similar to recall.
+5- All correctness: Percentage of examples\queries in the dataset for which the list of books in the model output fully matches the ground truth list of books that satisfy the query constraints.
+
+
