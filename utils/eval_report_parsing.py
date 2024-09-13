@@ -50,6 +50,8 @@ def coallate_results(release_directory_path, config):
                         with open(file_path, 'r') as f:
                             file_contents = f.read()
                             scores = json.loads(file_contents)
+                            if(name == "Object Detection"):
+                                scores = scores[0]
                             for metric in capability["metric"]:
                                 scores = scores[metric]
                             sum += scores
@@ -58,6 +60,8 @@ def coallate_results(release_directory_path, config):
                     except FileNotFoundError:
                         continue
                 if model == 'GPT-4o_2024_05_13_450K':
+                    model = 'GPT-4o-2024-05-13'
+                if model == 'GPT-4o_2024_05_13':
                     model = 'GPT-4o-2024-05-13'
                 if model == "LLaVA-34B":
                     model = "Llava-1_6-34B"

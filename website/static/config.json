@@ -77,15 +77,23 @@
     {
       "capability": "Object Recognition",
       "modality": "multimodal",
-      "path": ["SPATIAL_UNDERSTANDING", "OBJECT_RECOGNITION_SINGLE"],
+      "path": ["IMAGE_UNDERSTANDING", "OBJECT_RECOGNITION_SINGLE"],
       "metric": ["ObjectRecognitionMetric_result", "correct"],
+      "run": "average",
+      "description": "TBD"
+    },
+    {
+      "capability": "Object Detection",
+      "modality": "multimodal",
+      "path": ["IMAGE_UNDERSTANDING", "OBJECT_DETECTION_SINGLE"],
+      "metric": ["CocoObjectDetectionMetric_result", "AP50"],
       "run": "average",
       "description": "TBD"
     },
     {
       "capability": "Visual Prompting",
       "modality": "multimodal",
-      "path": ["SPATIAL_UNDERSTANDING", "VISUAL_PROMPTING_SINGLE"],
+      "path": ["IMAGE_UNDERSTANDING", "VISUAL_PROMPTING_SINGLE"],
       "metric": ["ObjectRecognitionMetric_result", "correct"],
       "run": "average",
       "description": "TBD"
@@ -93,7 +101,7 @@
     {
       "capability": "Spatial Reasoning",
       "modality": "multimodal",
-      "path": ["SPATIAL_UNDERSTANDING", "SPATIAL_REASONING_SINGLE"],
+      "path": ["IMAGE_UNDERSTANDING", "SPATIAL_REASONING_SINGLE"],
       "metric": ["SpatialAndLayoutReasoningMetric_result", "correct"],
       "run": "average",
       "description": "TBD"
@@ -117,7 +125,7 @@
     {
       "capability": "Counting in a Grid",
       "modality": "multimodal",
-      "path": ["VISION_LANGUAGE", "GRID_ANIMAL"],
+      "path": ["VISION_LANGUAGE", "SPATIAL_GRID"],
       "metric": ["SpatialAndLayoutReasoningMetricGrid_result", "correct"],
       "run": "average",
       "description": "TBD"
@@ -199,12 +207,5 @@
       "color": "#E86B24",
       "modality": ["language"]
     }
-  ],
-  "TODO: Readd": {
-    "capability": "Object Detection",
-    "modality": "multimodal",
-    "path": ["SPATIAL_UNDERSTANDING", "OBJECT_DETECTION_SINGLE"],
-    "metric": [0,"CocoObjectDetectionMetric_result", "AP50"],
-    "description": "TBD"
-  }
+  ]
 }

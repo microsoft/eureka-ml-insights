@@ -26,7 +26,7 @@ function HomepageHeader() {
           of language and multimodal benchmarks. These benchmarks test fundamental but overlooked capabilities that are still 
           challenging for even the most capable models.</p>
         <br/>
-        <Button shape='round' className={`${styles.buttons} ${styles.fullReportButton}`} href={'https://aka.ms/eureka-ml-insights-blog'}>
+        <Button shape='round' className={`${styles.buttons} ${styles.fullReportButton}`} href={'https://aka.ms/eureka-ml-insights-report'}>
           <strong>Read full report</strong>
         </Button>
         <Button shape='round' className={`${styles.buttons}`} href={'https://github.com/microsoft/eureka-ml-insights'} style={{outline: "black"}}>
