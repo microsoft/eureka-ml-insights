@@ -160,15 +160,6 @@ class CocoObjectDetectionMetric(DetectionMetric):
         self.coco.dataset = target_coco_json_reader.read()
         self.coco.createIndex()
 
-        # get the list of images
-        coco_img_ids = self.coco.getImgIds()
-        coco_imgs = self.coco.loadImgs(coco_img_ids)
-        self.coco_file_name_to_id = {}
-
-        # create a dict to look up image id by filename
-        for c in coco_imgs:
-            self.coco_file_name_to_id[c["file_name"]] = c["id"]
-
         # get a lst of all cats
         coco_cat_ids = self.coco.getCatIds()
         coco_cats = self.coco.loadCats(coco_cat_ids)
@@ -178,13 +169,11 @@ class CocoObjectDetectionMetric(DetectionMetric):
         for c in coco_cats:
             self.coco_cat_name_to_id[c["name"]] = c["id"]
 
-    def __evaluate__(self, images, answer_text, is_valid):
+    def __evaluate__(self, image_id, answer_text, is_valid):
         if not is_valid:
             return "none"
 
         # load image info, need w and h
-        image = images[0]
-        image_id = self.coco_file_name_to_id[image]
         img = self.coco.loadImgs(image_id)
         w = img[0]["width"]
         h = img[0]["height"]
@@ -216,7 +205,7 @@ class CocoObjectDetectionMetric(DetectionMetric):
                     if wordnet_compare(label, cat):
 
                         annotation = {
-                            "image_id": self.coco_file_name_to_id[image],
+                            "image_id": image_id,
                             "category_id": self.coco_cat_name_to_id[cat],
                             "bbox": box,
                             "score": confidence,

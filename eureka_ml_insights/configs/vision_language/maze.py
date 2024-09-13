@@ -3,8 +3,8 @@ import os
 from eureka_ml_insights.configs.experiment_config import ExperimentConfig
 from eureka_ml_insights.core import EvalReporting, Inference, PromptProcessing
 from eureka_ml_insights.data_utils import (
-    AzureDataReader,
-    AzureMMDataLoader,
+    HFDataReader,    
+    MMDataLoader,
     ColumnRename,
     DataLoader,
     DataReader,
@@ -47,14 +47,11 @@ class MAZE_PIPELINE(ExperimentConfig):
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
             data_reader_config=DataSetConfig(
-                AzureDataReader,
+                HFDataReader,
                 {
-                    "account_url": "https://aifeval.blob.core.windows.net/",
-                    "blob_container": "datasets",
-                    "blob_name": "spatial_reason_vlm_datasets/maze_dataset/n500/questions/base_500/gpt4-eval-g3-n500-a_dfs-h76195_seed_42_QA_merged.jsonl",
-                    "transform": PrependStringTransform(
-                        columns="image", string="spatial_reason_vlm_datasets/maze_dataset/n500/"
-                    ),
+                    "path": "microsoft/VISION_LANGUAGE",
+                    "split": "val",
+                    "tasks": "maze",
                 },
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
@@ -65,12 +62,9 @@ class MAZE_PIPELINE(ExperimentConfig):
             component_type=Inference,
             model_config=model_config,
             data_loader_config=DataSetConfig(
-                AzureMMDataLoader,
+                MMDataLoader,
                 {
                     "path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl"),
-                    "account_url": "https://aifeval.blob.core.windows.net/",
-                    "blob_container": "datasets",
-                    "image_column_names": ["image"],
                 },
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
@@ -121,18 +115,9 @@ class MAZE_TEXTONLY_PIPELINE(MAZE_PIPELINE):
 
     def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
         config = super().configure_pipeline(model_config, resume_from)
-        self.data_processing_comp.data_reader_config.init_args["blob_name"] = (
-            "spatial_reason_vlm_datasets/maze_dataset/n500/questions/base_500/gpt4-eval-g3-n500-a_dfs-h76195_seed_42_QA_text_only_merged.jsonl"
+        self.data_processing_comp.data_reader_config.init_args["tasks"] = (
+            "maze_text_only"
         )
-        self.data_processing_comp.data_reader_config.init_args["transform"] = None
-
-        self.inference_comp.data_loader_config = DataSetConfig(
-            DataLoader,
-            {
-                "path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl"),
-            },
-        )
-
         return config
 
 

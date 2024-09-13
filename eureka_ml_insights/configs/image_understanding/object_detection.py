@@ -3,9 +3,9 @@ import os
 from eureka_ml_insights.configs.experiment_config import ExperimentConfig
 from eureka_ml_insights.core import EvalReporting, Inference, PromptProcessing
 from eureka_ml_insights.data_utils import (
-    AzureDataReader,
-    AzureJsonReader,
-    AzureMMDataLoader,
+    HFDataReader,
+    HFJsonReader,
+    MMDataLoader,
     ColumnRename,
     CopyColumn,
     DataReader,
@@ -52,20 +52,11 @@ class OBJECT_DETECTION_PAIRS_PIPELINE(ExperimentConfig):
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
             data_reader_config=DataSetConfig(
-                AzureDataReader,
+                HFDataReader,
                 {
-                    "account_url": "https://aifeval.blob.core.windows.net/",
-                    "blob_container": "datasets",
-                    "blob_name": "msr_aif_object_detection_pairs/object_detection_val_long_prompt.jsonl",
-                    "transform": SequenceTransform(
-                        [
-                            ColumnRename(name_mapping={"query_text": "prompt", "target_text": "ground_truth"}),
-                            CopyColumn(column_name_src="images", column_name_dst="images_prepended"),
-                            PrependStringTransform(
-                                columns="images_prepended", string="msr_aif_object_detection_pairs/"
-                            ),
-                        ]
-                    ),
+                    "path": "microsoft/IMAGE_UNDERSTANDING",
+                    "split": "val",
+                    "tasks": "object_detection_pairs",
                 },
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
@@ -76,22 +67,19 @@ class OBJECT_DETECTION_PAIRS_PIPELINE(ExperimentConfig):
             component_type=Inference,
             model_config=model_config,
             data_loader_config=DataSetConfig(
-                AzureMMDataLoader,
+                MMDataLoader,
                 {
                     "path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl"),
-                    "account_url": "https://aifeval.blob.core.windows.net/",
-                    "blob_container": "datasets",
-                    "image_column_names": ["images_prepended"],
                 },
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
         )
 
-        target_coco_json_reader = AzureJsonReader(
-            account_url="https://aifeval.blob.core.windows.net/",
-            blob_container="datasets",
-            blob_name="msr_aif_object_detection_pairs/coco_instances.json",
+        target_coco_json_reader = HFJsonReader(
+            repo_id="microsoft/IMAGE_UNDERSTANDING",
+            repo_type="dataset",
+            filename="object_detection_pairs/coco_instances.json",            
         )
 
         # Configure the evaluation and reporting component.
@@ -129,17 +117,14 @@ class OBJECT_DETECTION_SINGLE_PIPELINE(OBJECT_DETECTION_PAIRS_PIPELINE):
 
     def configure_pipeline(self, model_config, resume_from=None):
         config = super().configure_pipeline(model_config, resume_from)
-        self.data_processing_comp.data_reader_config.init_args["blob_name"] = (
-            "msr_aif_object_detection_single/object_detection_val_long_prompt.jsonl"
+        self.data_processing_comp.data_reader_config.init_args["tasks"] = (
+            "object_detection_single"
         )
-        self.data_processing_comp.data_reader_config.init_args["transform"].transforms[
-            2
-        ].string = "msr_aif_object_detection_single/"
 
-        target_coco_json_reader = AzureJsonReader(
-            account_url="https://aifeval.blob.core.windows.net/",
-            blob_container="datasets",
-            blob_name="msr_aif_object_detection_single/coco_instances.json",
+        target_coco_json_reader = HFJsonReader(
+            repo_id="microsoft/IMAGE_UNDERSTANDING",
+            repo_type="dataset",
+            filename="object_detection_single/coco_instances.json",
         )
 
         self.evalreporting_comp.metric_config.init_args["target_coco_json_reader"] = target_coco_json_reader

@@ -3,8 +3,8 @@ import os
 from eureka_ml_insights.configs.experiment_config import ExperimentConfig
 from eureka_ml_insights.core import EvalReporting, Inference, PromptProcessing
 from eureka_ml_insights.data_utils import (
-    AzureDataReader,
-    AzureMMDataLoader,
+    HFDataReader,
+    MMDataLoader,
     ColumnRename,
     DataReader,
     PrependStringTransform,
@@ -53,17 +53,11 @@ class VISUAL_PROMPTING_PAIRS_PIPELINE(ExperimentConfig):
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
             data_reader_config=DataSetConfig(
-                AzureDataReader,
+                HFDataReader,
                 {
-                    "account_url": "https://aifeval.blob.core.windows.net/",
-                    "blob_container": "datasets",
-                    "blob_name": "msr_aif_visual_prompting_pairs/visual_prompting_val.jsonl",
-                    "transform": SequenceTransform(
-                        [
-                            ColumnRename(name_mapping={"query_text": "prompt", "target_text": "ground_truth"}),
-                            PrependStringTransform(columns="images", string="msr_aif_visual_prompting_pairs/"),
-                        ]
-                    ),
+                    "path": "microsoft/IMAGE_UNDERSTANDING",
+                    "split": "val",
+                    "tasks": "visual_prompting_pairs",
                 },
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
@@ -74,12 +68,9 @@ class VISUAL_PROMPTING_PAIRS_PIPELINE(ExperimentConfig):
             component_type=Inference,
             model_config=model_config,
             data_loader_config=DataSetConfig(
-                AzureMMDataLoader,
+                MMDataLoader,
                 {
                     "path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl"),
-                    "account_url": "https://aifeval.blob.core.windows.net/",
-                    "blob_container": "datasets",
-                    "image_column_names": ["images"],
                 },
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
@@ -119,12 +110,9 @@ class VISUAL_PROMPTING_SINGLE_PIPELINE(VISUAL_PROMPTING_PAIRS_PIPELINE):
 
     def configure_pipeline(self, model_config, resume_from=None):
         config = super().configure_pipeline(model_config, resume_from)
-        self.data_processing_comp.data_reader_config.init_args["blob_name"] = (
-            "msr_aif_visual_prompting_single/visual_prompting_val.jsonl"
+        self.data_processing_comp.data_reader_config.init_args["tasks"] = (
+            "visual_prompting_single"
         )
-        self.data_processing_comp.data_reader_config.init_args["transform"].transforms[
-            1
-        ].string = "msr_aif_visual_prompting_single/"
         return config
 
 

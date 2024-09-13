@@ -333,7 +333,7 @@ class AzureJsonReader(JsonReader, AzureBlobReader):
         Initializes an AzureJsonReader.
         args:
             account_url: str, The Azure storage account URL.
-            blob_container: str ,Azure storage container name.
+            blob_container: str, Azure storage container name.
             blob_name: str, Azure storage blob name.
         """
         self.blob_url = f"{account_url}/{blob_container}/{blob_name}"
@@ -349,6 +349,24 @@ class AzureJsonReader(JsonReader, AzureBlobReader):
         else:
             raise ValueError("AzureJsonReader currently only supports json and jsonl format.")
         return data
+
+
+class HFJsonReader(JsonReader):
+    """
+    This is a DataReader that loads a json or jsonl data file from HuggingFace.
+    """
+    def __init__(self, repo_id, repo_type, filename):
+        """
+        Initializes an HFJsonReader.
+        args:
+            repo_id: str, The HF repo id.
+            repo_type: str, The HF repo_type.
+            filename: str, The HF filename.
+        """
+        from huggingface_hub import hf_hub_download
+
+        cached_file_path = hf_hub_download(repo_id=repo_id, filename=filename, repo_type=repo_type)
+        super().__init__(cached_file_path)
 
 
 class Writer:
@@ -505,14 +523,17 @@ class HFDataReader(DataReader):
 
         if image_base64:
             # create path to save image
-            file_path = os.path.join(cache_path, image_base64["path"])
-
+            file_path = os.path.join(cache_path, image_base64["path"]) 
+            
             # only do this if the image doesn't already exist
             if not os.path.exists(file_path):
                 # base64 string to binary image data
                 buffered = BytesIO(image_base64["bytes"])
                 query_image = Image.open(buffered).convert("RGB")
-                # save image
+
+                # save image and make the dir path if needed (need for paths with nested new dirs)
+                dir_path = os.path.dirname(file_path)
+                os.makedirs(dir_path, exist_ok=True)
                 query_image.save(file_path)
 
         return file_path
