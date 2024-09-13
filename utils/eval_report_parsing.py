@@ -61,6 +61,8 @@ def coallate_results(release_directory_path, config):
                         continue
                 if model == 'GPT-4o_2024_05_13_450K':
                     model = 'GPT-4o-2024-05-13'
+                if model == 'GPT-4o_2024_05_13':
+                    model = 'GPT-4o-2024-05-13'
                 if model == "LLaVA-34B":
                     model = "Llava-1_6-34B"
                 if model == "GPT-4":
