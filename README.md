@@ -19,21 +19,14 @@ Certainly! Here's a simple markdown table for you:
 
 | Benchmark <br> #prompts       | Modality  | Capability           |Logs| Pipeline Config |
 |-------------------------------|---------------|----------------------|------|-----|
-| GeoMeter 1086            | Image -> Text | Geometric Reasoning  | Link | Link |
-| MMMU 900                 | Image -> Text | Multimodal QA        | Link |Link|
-| Image Understanding <br> 10249| Image -> Text | Object Recognition <br> Object Detection <br> Visual Prompting <br> Spatial Reasoning | Link <br> Link <br> Link <br> Link|Link <br> Link <br> Link <br> Link |
-| Vision Language <br> 13500    | Image -> Text | Spatial Understanding <br> Navigation <br> Counting| Link <br> Link <br> Link |Link <br> Link <br> Link|
-| IFEval 541                 | Text -> Text | Instruction Following        | Link |Link|
-| FlenQA 12000               | Text -> Text | Long Context Multi-hop QA | Link |Link|
-| Kitab 34217                | Text -> Text | Information Retrieval        | Link |Link|
-| Toxigen 10500              | Text -> Text | Toxicity Detection <br> Safe Language Generation         | Link |Link|
-
-
-
-
-Feel free to customize it with your own data! 😊 Is there anything else I can assist you with?
-
-![Eureka](./docs/figures/Benchmarks.png)
+| GeoMeter 1086            | Image -> Text | Geometric Reasoning  | Link | [geometer.py](eureka_ml_insights/configs/geometer.py) |
+| MMMU 900                 | Image -> Text | Multimodal QA        | Link |[mmmu.py](eureka_ml_insights/configs/mmmu.py)|
+| Image Understanding <br> 10249| Image -> Text | Object Recognition <br> Object Detection <br> Visual Prompting <br> Spatial Reasoning | Link <br> Link <br> Link <br> Link | [object_recognition.py](eureka_ml_insights/configs/spatial_understanding/object_recognition.py) <br> [object_detection.py](eureka_ml_insights/configs/spatial_understanding/object_detection.py) <br> [visual_prompting.py](eureka_ml_insights/configs/spatial_understanding/visual_prompting.py) <br> [spatial_reasoning.py](eureka_ml_insights/configs/spatial_understanding/spatial_reasoning.py) |
+| Vision Language <br> 13500    | Image -> Text | Spatial Understanding <br> Navigation <br> Counting| Link <br> Link <br> Link |[spatial_map.py](eureka_ml_insights/configs/vision_language/spatial_map.py) <br> [maze.py](eureka_ml_insights/configs/vision_language/maze.py) <br> [spatial_grid.py](eureka_ml_insights/configs/vision_language/spatial_grid.py)|
+| IFEval 541                 | Text -> Text | Instruction Following        | Link |[ifeval.py](eureka_ml_insights/configs/ifeval.py)|
+| FlenQA 12000               | Text -> Text | Long Context Multi-hop QA | Link |[flenQA.py](eureka_ml_insights/configs/flenqa.py)|
+| Kitab 34217                | Text -> Text | Information Retrieval        | Link |[kitab.py](eureka_ml_insights/configs/kitab.py)|
+| Toxigen 10500              | Text -> Text | Toxicity Detection <br> Safe Language Generation         | Link |[toxigen.py](eureka_ml_insights/configs/toxigen.py)|
 
 ## Installation
 To get started, clone this repository to your local machine and navigate to the project directory.
