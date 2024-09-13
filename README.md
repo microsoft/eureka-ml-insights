@@ -1,10 +1,37 @@
 # Eureka ML Insights Framework
 <p align="left">
-  <a href='https://arxiv.org/TODO'>
-    <img src='https://img.shields.io/badge/Arxiv-2308.16905-A42C25?style=flat&logo=arXiv&logoColor=A42C25'>
+  <a href='https://aka.ms/eureka-ml-insights-report'>
+    <img src=docs/figures/eureka_logo.png width="16">
+    Technical Report  
   </a>
-
+  <a href='https://aka.ms/eureka-ml-insights-blog'>
+    <img src=docs/figures/msr_blog.png width="16">
+    Blog Post
+  </a>
+  <a href='https://microsoft.github.io/eureka-ml-insights'>
+    <img src=docs/figures/github.png width="16">
+    Project Website
+  </a>
+</p>
 This repository contains the code for the Eureka ML Insights framework. The framework is designed to help researchers and practitioners run reproducible evaluations of generative models using a variety of benchmarks and metrics efficiently. The framework allows the user to define custom pipelines for data processing, inference, and evaluation, and provides a set of pre-defined evaluation pipelines for key benchmarks.
+
+Certainly! Here's a simple markdown table for you:
+
+| Benchmark <br> #prompts       | Modality  | Capability           |Logs| Pipeline Config |
+|-------------------------------|---------------|----------------------|------|-----|
+| GeoMeter 1086            | Image -> Text | Geometric Reasoning  | Link | Link |
+| MMMU 900                 | Image -> Text | Multimodal QA        | Link |Link|
+| Image Understanding <br> 10249| Image -> Text | Object Recognition <br> Object Detection <br> Visual Prompting <br> Spatial Reasoning | Link <br> Link <br> Link <br> Link|Link <br> Link <br> Link <br> Link |
+| Vision Language <br> 13500    | Image -> Text | Spatial Understanding <br> Navigation <br> Counting| Link <br> Link <br> Link |Link <br> Link <br> Link|
+| IFEval 541                 | Text -> Text | Instruction Following        | Link |Link|
+| FlenQA 12000               | Text -> Text | Long Context Multi-hop QA | Link |Link|
+| Kitab 34217                | Text -> Text | Information Retrieval        | Link |Link|
+| Toxigen 10500              | Text -> Text | Toxicity Detection <br> Safe Language Generation         | Link |Link|
+
+
+
+
+Feel free to customize it with your own data! 😊 Is there anything else I can assist you with?
 
 ![Eureka](./docs/figures/Benchmarks.png)
 
