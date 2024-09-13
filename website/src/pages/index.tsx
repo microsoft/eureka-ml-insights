@@ -4,10 +4,10 @@ import Layout from '@theme/Layout';
 import Heading from '@theme/Heading';
 import styles from './index.module.css';
 import { Button, Col, Row } from 'antd';
-import StatsBar from './stats_bar';
-import ExecutiveSummary from './executive_summary';
-import OverallVisualization from './overall_visualization';
-import SummaryTable from './summary_table';
+import StatsBar from '../components/HomepageFeatures/stats_bar';
+import ExecutiveSummary from '../components/HomepageFeatures/executive_summary';
+import OverallVisualization from '../components/HomepageFeatures/overall_visualization';
+import SummaryTable from '../components/HomepageFeatures/summary_table';
 import { EurekaConfig } from '../components/types';
 
 function HomepageHeader() {

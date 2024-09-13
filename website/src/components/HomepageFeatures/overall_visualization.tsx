@@ -5,8 +5,6 @@ import HighchartsReact from 'highcharts-react-official';
 import { Col, Row } from 'antd';
 import Heading from '@theme/Heading';
 
-// HC_more(Highcharts); 
-
 const OverallVisualization = ({config}: {config: EurekaConfig}) => {
     if (!config) {  
         // config is still null, probably still fetching data
