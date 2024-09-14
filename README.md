@@ -64,9 +64,9 @@ For example, to run the `FlenQA_Experiment_Pipeline` experiment pipeline defined
 The results of the experiment will be saved in a directory under `logs/FlenQA_Experiment_Pipeline/gpt4_1106_preveiw`. For each experiment you run with these configurations, a new directory will be created using the date and time of the experiment run. 
 For other available experiment pipelines and model configurations, see the `eureka_ml_insights/configs` directory. In [model_configs.py](eureka_ml_insights/configs/model_configs.py) you can configure the model classes to use your API keys, Keu Vault urls, endpoints, and other model-specific configurations.
 
-## 🔧 Configuring a Custom Experiment Pipeline
+## 🗺️ Overview of Experiment Pipelines
 ![Components](./docs/figures/transparent_uml.png)
-You can find examples of experiment pipeline configurations in `configs`. To create a new experiment configuration, you need to define a class that inherits from `ExperimentConfig` and implements the `configure_pipeline` method. In the `configure_pipeline` method you define the Pipeline config (arrangement of Components) for your Experiment. Once your class is ready, add it to `configs/__init__.py` import list.
+Experiment pipelines define the sequence of components that are run to process data, run inference, and evaluate the model outputs. You can find examples of experiment pipeline configurations in the `configs` directory. To create a new experiment configuration, you need to define a class that inherits from `ExperimentConfig` and implements the `configure_pipeline` method. In the `configure_pipeline` method you define the Pipeline config (arrangement of Components) for your Experiment. Once your class is ready, add it to `configs/__init__.py` import list.
 
 
 Your Pipeline can use any of the available Components which can be found under the `core` directory:
@@ -82,7 +82,7 @@ Note that:
 - Make sure the input of each component matches the output of the previous component in the pipeline. The components are run sequentially in the order they are defined in the pipeline configuration.
 - For standard scenarios you do not need to implement new components for your pipeline, but you do need to configure the existing components to use the correct utility classes (i.e. models, data readers, metrics, etc.) for your scenario.
 
-### 🔧 Utility Classes Used in Components
+### ⚒️ Utility Classes Used in Components
 Utility classes include Models, Metrics, DataLoaders, DataReaders, etc. The components in your pipeline need to use the correct utility classes for your scenario. For example, to evaluate an OpenAI model on a dataset that is available on HuggingFace, you need to use the [`HFDataReader`](eureka_ml_insights/data_utils/data.py) data reader and the [`OpenAIModelsOAI`](eureka_ml_insights/models/models.py) model class. In standard scenarios do not need to implement new components for your pipeline, but you do need to configure the existing components to work with the correct utility classes. If you need a functionality that is not provided by the existing utility classes, you can implement a new utility class and use it in your pipeline.
 
 In general, to find out what utility classes and other attributes need to be configured for a component, you can look at the component's corresponding Config dataclass in `configs/config.py`. For example, if you are configuring the `DataProcessing` component, you can look at the `DataProcessingConfig` dataclass in `configs/config.py`.
@@ -91,7 +91,7 @@ Utility classes are also configurable by providing the name of the class and the
 
 Our current components use the following utility classes: `DataReader`, `DataLoader`, `Model`, `Metric`, `Aggregator`. You can use the existing utility classes or implement new ones as needed to configure your components.
 
-### 🔧 Configuring the Data Processing Component
+### 🪛 Configuring the Data Processing Component
 This component is used for general data processing tasks.
 
 - `data_reader_config`: Configuration for the DataReader that is used to load the data into a pandas dataframe, apply any necessary processing on it (optional), and return the processed data. We currently support local and Azure Blob Storage data sources.
@@ -99,19 +99,19 @@ This component is used for general data processing tasks.
 - `output_dir`: This is the folder name where the processed data will be saved. This folder will automatically be created under the experiment log directory and the processed data will be saved in a file called `processed_data.jsonl`.
 - `output_data_columns` (OPTIONAL): This is the list of columns to save in transformed_data.jsonl. By default, all columns are saved.
 
-### 🔧 Configuring the Prompt Processing Component
+### 🪛 Configuring the Prompt Processing Component
 This component inherits from the DataProcessing component and is used specifically for prompt processing tasks, such as applying a Jinja prompt template. If a prompt template is provided, the processed data will have a 'prompt' column that is expected by the inference component. Otherwise the input data is expected to already have a 'prompt' column. This component also reserves the "model_output" column for the model outputs so if it already exists in the input data, it will be removed. 
 
 In addition to the attributes of the DataProcessing component, the PromptProcessing component has the following attributes:
 - `prompt_template_path` (OPTIONAL): This template is used to format your data for model inference in case you need prompt templating or system prompts. Provide your jinja prompt template path to this component. See for example `prompt_templates/basic.jinja`. The prompt template processing step adds a 'prompt' column to the processed data, which is expected by the inference component. If you do not need prompt templating, make sure your data already does have a 'prompt' column.
 - `ignore_failure` (OPTIONAL): Whether to ignore the failure of prompt processing on a row and move on to the next, or to raise an exception. Default is False.
 
-### 🔧 Configuring the Inference Component
+### 🪛 Configuring the Inference Component
 - `model_config`: Configuration of the model class to use for inference. You can find the available models in `models/`.
 - `data_loader_config`: Configuration of the data_loader class to use for inference. You can find the available data classes in `data_utils/data.py`.
 - `output_dir`: This is the folder name where the model outputs will be saved. This folder will automatically be created under the experiment log directory and the model outputs will be saved in a file called `inference_result.jsonl`.
 
-### 🔧 Configuring the Evaluation Reporting  Component
+### 🪛 Configuring the Evaluation Reporting  Component
 - `data_reader_config`: Configuration object for the DataReader that is used to load the data into a pandas dataframe. This is the same type of utility class used in the DataProcessing component.
 - `metric_config`: a MetricConfig object to specify the metric class to use for evaluation. You can find the available metrics in `metrics/`. If you need to implement new metric classes, add them to this directory.
 - `aggregator_configs`/`visualizer_configs`: List of configs for aggregators/visualizers to apply to the metric results. These classes that take metric results and aggragate/analyze/vizualize them and save them. You can find the available aggregators and visualizers in `metrics/reports.py`.
