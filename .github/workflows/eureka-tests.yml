@@ -31,21 +31,18 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+
     - name: Install dependencies
       run: |
-        python -m venv .venv
-        source .venv/bin/activate
         pip install -r requirements.txt
         pip install .
-        pip uninstall -y eureka_ml_insights
     - name: Run linters
       continue-on-error: true
       run: |
-        source .venv/bin/activate
         make linters
     - name: Run tests
       run: |
-        source .venv/bin/activate
         export HF_HOME="${{ github.workspace }} /hf_home"
         echo "$HF_HOME"
         mkdir -p "$HF_HOME"
