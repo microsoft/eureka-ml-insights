@@ -29,7 +29,7 @@ const StatsBar = ({config}: {config: EurekaConfig}) => {
   return (
     <div style={{paddingBottom: '4em'}}>
         <Card>  
-            <Row align='middle' > 
+            <Row align='top' > 
                 <Col span={4} >  
                     <p style={statsHeader}>{config.model_families?.length}</p>  
                     <p style={statsLabel}>Model Families</p>

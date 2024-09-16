@@ -85,7 +85,6 @@ const OverallVisualization = ({config}: {config: EurekaConfig}) => {
             categories: languageCapabilties?.map(d => d.name),
             tickmarkPlacement: 'on',
             labels: {
-                padding: 20,
                 style: {
                     fontSize: '1em'
                 }
@@ -126,7 +125,6 @@ const OverallVisualization = ({config}: {config: EurekaConfig}) => {
             categories: multimodalCapabilties?.map(d => d.name),
             tickmarkPlacement: 'on',
             labels: {
-                padding: 20,
                 style: {
                     fontSize: '1em',
                 }
