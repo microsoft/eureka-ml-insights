@@ -2,9 +2,9 @@ name: Eureka Tests
 
 on:
   push:
-    branches: ci-tests
+    branches: [ci-tests, main]
   pull_request:
-    branches: [ $default-branch ]
+    branches: [main]
 
 jobs:
   build:
