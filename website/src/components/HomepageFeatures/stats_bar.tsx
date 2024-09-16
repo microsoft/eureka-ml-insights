@@ -15,7 +15,7 @@ const statsIcon: React.CSSProperties = {
 }; 
 
 const statsLabel: React.CSSProperties = {
-    color: 'grey', 
+    color: '#727272', 
     fontSize: '1.5em', 
     marginBottom: '0'
 }
@@ -29,7 +29,7 @@ const StatsBar = ({config}: {config: EurekaConfig}) => {
   return (
     <div style={{paddingBottom: '4em'}}>
         <Card>  
-            <Row align='middle' > 
+            <Row align='top' > 
                 <Col span={4} >  
                     <p style={statsHeader}>{config.model_families?.length}</p>  
                     <p style={statsLabel}>Model Families</p>
@@ -47,11 +47,11 @@ const StatsBar = ({config}: {config: EurekaConfig}) => {
                     <p style={statsLabel}>Capabilities</p>
                 </Col>  
                 <Col span={4} >  
-                    <div style={statsIcon}><img src='img/language.svg' alt="Language Tasks"/></div>
+                    <div style={statsIcon}><img src='img/language.svg' alt=""/></div>
                     <p style={statsLabel}>Language tasks</p>
                 </Col>  
                 <Col span={4} >  
-                    <div style={statsIcon}><img src='img/multimodal.svg' alt="Language Tasks"/></div>
+                    <div style={statsIcon}><img src='img/multimodal.svg' alt=""/></div>
                     <p style={statsLabel}>Multimodal tasks</p>
                 </Col>
             </Row>  

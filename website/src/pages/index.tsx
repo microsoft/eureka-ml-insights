@@ -16,11 +16,11 @@ function HomepageHeader() {
       <div className="container">  
         <div>
           <Row style={{ display: 'flex', alignItems: 'center' }}>
-            <Col style={{paddingRight: '1.8em', paddingBottom: '.9em'}}><img src="img/eureka_logo.png" alt="Eureka Logo" style={{objectFit:'cover', height: '5em'}}/></Col>
+            <Col style={{paddingRight: '1.8em', paddingBottom: '.9em'}}><img src="img/eureka_logo.png" alt="" style={{objectFit:'cover', height: '5em'}}/></Col>
             <Col><Heading as="h1" className="hero__title">Eureka ML Insights</Heading></Col>
           </Row>
         </div>
-        <p className="hero__subtitle">Evaluating and Understanding Large Foundation Models</p> 
+        <h2>Evaluating and Understanding Large Foundation Models</h2> 
         <p style={{fontSize: '1.3em'}}>Eureka is an open-source framework for standardizing evaluations of large foundation models, beyond single-score 
           reporting and rankings. We report in-depth evaluation and analysis of 12 state-of-the-art models across a collection 
           of language and multimodal benchmarks. These benchmarks test fundamental but overlooked capabilities that are still 
@@ -31,7 +31,7 @@ function HomepageHeader() {
         </Button>
         <Button shape='round' className={`${styles.buttons}`} href={'https://github.com/microsoft/eureka-ml-insights'} style={{outline: "black"}}>
           <strong>Github</strong>
-          <img src='img/link_icon.svg' alt="External Link to Github"/>
+          <img src='img/link_icon.svg' alt=""/>
         </Button>
       </div>
     </header>

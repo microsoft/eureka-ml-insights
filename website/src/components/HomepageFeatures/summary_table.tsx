@@ -1,8 +1,6 @@
-import React, { Children, useState } from 'react';
-import { CapabilityScores, ModelScore, ModelConfig, EurekaConfig } from '../components/types';
-import Highcharts, { SeriesOptionsType } from 'highcharts';
-import { Layout, Table, CollapseProps, Collapse } from 'antd';
-import Title from 'antd/es/skeleton/Title';
+import React, { useState } from 'react';
+import { CapabilityScores, ModelScore, EurekaConfig } from '../components/types';
+import { Table } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 
 const SummaryTable = ({config}: {config: EurekaConfig}) => {

@@ -3,9 +3,8 @@ import json
 import re
 
 # Usage instructions (internal use only):
-# TODO: Should this be checked into somewhere else?
-# 1. Download the "reports" folder from blob storage and extract it to a local directory
-# 2. Point release_directory_path to the release directory inside of the extracted "reports" folder
+# 1. Download the "release" folder from blob storage and extract it to a local directory
+# 2. Point release_directory_path to the release directory
 # 3. Run 'python utils/eval_report_parsing.py'
 # 4. The compiled results will be written to 'website/static/compiled_results.json'
 
@@ -50,7 +49,7 @@ def coallate_results(release_directory_path, config):
                         with open(file_path, 'r') as f:
                             file_contents = f.read()
                             scores = json.loads(file_contents)
-                            if(name == "Object Detection"):
+                            if(name == 'Object Detection (AP50)'):
                                 scores = scores[0]
                             for metric in capability["metric"]:
                                 scores = scores[metric]
@@ -69,7 +68,7 @@ def coallate_results(release_directory_path, config):
                     model = "GPT-4-1106-Preview"
                 model_scores.append({   
                     "name": model,
-                    "score": sum / num
+                    "score": sum  * 100.0 / num
                 })
         data[modality]["capabilities"].append({
             "name": name,
@@ -82,7 +81,7 @@ def coallate_results(release_directory_path, config):
         json.dump(data, f, indent=2)
 
 # Example usage
-release_directory_path = 'C:\\Users\\jluey\\Downloads\\reports\\release'
+release_directory_path = '\\release'
 config_path = 'website\\static\\config.json'
 
 coallate_results(release_directory_path, json.load(open(config_path)))
