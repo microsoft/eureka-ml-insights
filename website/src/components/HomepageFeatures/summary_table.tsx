@@ -24,6 +24,7 @@ const SummaryTable = ({config}: {config: EurekaConfig}) => {
                 width: `${width}%`,
                 sorter: (a, b) => a[d.name] - b[d.name],
                 defaultSortOrder: 'descend',
+                render: (text, record) => text.toFixed(1),  
             };  
         });
         
@@ -33,7 +34,7 @@ const SummaryTable = ({config}: {config: EurekaConfig}) => {
                 if (!modelScores[model.name]) {
                     modelScores[model.name] = [];
                 }
-                modelScores[model.name].push(model.score); 
+                modelScores[model.name].push(Number(model.score.toFixed(1))); 
             });
         });
         let filters = Object.keys(modelScores).map(model => ({text: model, value: model}));

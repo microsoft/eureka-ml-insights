@@ -68,7 +68,7 @@ def coallate_results(release_directory_path, config):
                     model = "GPT-4-1106-Preview"
                 model_scores.append({   
                     "name": model,
-                    "score": sum  * 100.0 / num
+                    "score": round(sum  * 100.0 / num, 1)
                 })
         data[modality]["capabilities"].append({
             "name": name,
