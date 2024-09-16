@@ -83,7 +83,7 @@
       "description": "TBD"
     },
     {
-      "capability": "Object Detection",
+      "capability": "Object Detection (AP50)",
       "modality": "multimodal",
       "path": ["IMAGE_UNDERSTANDING", "OBJECT_DETECTION_SINGLE"],
       "metric": ["CocoObjectDetectionMetric_result", "AP50"],

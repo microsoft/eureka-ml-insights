@@ -95,7 +95,7 @@ const OverallVisualization = ({config}: {config: EurekaConfig}) => {
             gridLineInterpolation: 'polygon',
             lineWidth: 0,  
             min: 0,
-            max: 1,
+            max: 100,
         },
         legend: {
             align: 'center',
@@ -136,7 +136,7 @@ const OverallVisualization = ({config}: {config: EurekaConfig}) => {
             gridLineInterpolation: 'polygon',
             lineWidth: 0,  
             min: 0,
-            max: 1,
+            max: 100,
         },
         legend: {
             align: 'center',
