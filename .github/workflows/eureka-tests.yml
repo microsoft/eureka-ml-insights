@@ -2,7 +2,7 @@ name: Eureka Tests
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "ci-workflow"]
   pull_request:
     branches: ["main"]
 
