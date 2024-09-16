@@ -24,32 +24,32 @@ from .kitab import (
     KITAB_TWO_BOOK_CONSTRAINT_PIPELINE,
     KITAB_TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT,
 )
-from .mmmu import MMMU_PIPELINE
+from .mmmu import MMMU_BASELINE_PIPELINE
 from .nondeterminism import (
     Geo_Nondeterminism,
     IFEval_Nondeterminism,
     Kitab_Nondeterminism,
     MMMU_Nondeterminism,
 )
-from .spatial_understanding.object_detection import (
+from .image_understanding.object_detection import (
     OBJECT_DETECTION_PAIRS_LOCAL_PIPELINE,
     OBJECT_DETECTION_PAIRS_PIPELINE,
     OBJECT_DETECTION_SINGLE_LOCAL_PIPELINE,
     OBJECT_DETECTION_SINGLE_PIPELINE,
 )
-from .spatial_understanding.object_recognition import (
+from .image_understanding.object_recognition import (
     OBJECT_RECOGNITION_PAIRS_LOCAL_PIPELINE,
     OBJECT_RECOGNITION_PAIRS_PIPELINE,
     OBJECT_RECOGNITION_SINGLE_LOCAL_PIPELINE,
     OBJECT_RECOGNITION_SINGLE_PIPELINE,
 )
-from .spatial_understanding.spatial_reasoning import (
+from .image_understanding.spatial_reasoning import (
     SPATIAL_REASONING_PAIRS_LOCAL_PIPELINE,
     SPATIAL_REASONING_PAIRS_PIPELINE,
     SPATIAL_REASONING_SINGLE_LOCAL_PIPELINE,
     SPATIAL_REASONING_SINGLE_PIPELINE,
 )
-from .spatial_understanding.visual_prompting import (
+from .image_understanding.visual_prompting import (
     VISUAL_PROMPTING_PAIRS_LOCAL_PIPELINE,
     VISUAL_PROMPTING_PAIRS_PIPELINE,
     VISUAL_PROMPTING_SINGLE_LOCAL_PIPELINE,
@@ -115,7 +115,7 @@ __all__ = [
     IFEval_PIPELINE,
     FlenQA_Experiment_Pipeline,
     GEOMETER_PIPELINE,
-    MMMU_PIPELINE,
+    MMMU_BASELINE_PIPELINE,
     BBH_MCQ_ORCA_PIPELINE,
     BBH_MCQ_OpenAI_PIPELINE,
     KITAB_ONE_BOOK_CONSTRAINT_PIPELINE,

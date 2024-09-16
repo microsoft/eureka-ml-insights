@@ -8,7 +8,7 @@ from eureka_ml_insights.data_utils import (
 from .geometer import GEOMETER_PIPELINE
 from .ifeval import IFEval_PIPELINE
 from .kitab import KITAB_ONE_BOOK_CONSTRAINT_PIPELINE
-from .mmmu import MMMU_PIPELINE
+from .mmmu import MMMU_BASELINE_PIPELINE
 
 
 class IFEval_Nondeterminism(IFEval_PIPELINE):
@@ -45,7 +45,7 @@ class Kitab_Nondeterminism(KITAB_ONE_BOOK_CONSTRAINT_PIPELINE):
         return config
 
 
-class MMMU_Nondeterminism(MMMU_PIPELINE):
+class MMMU_Nondeterminism(MMMU_BASELINE_PIPELINE):
     def configure_pipeline(self, **kwargs):
         config = super().configure_pipeline(**kwargs)
         # Downsample the data and repeat each prompt 3 time

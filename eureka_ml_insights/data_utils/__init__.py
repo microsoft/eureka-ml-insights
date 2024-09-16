@@ -7,6 +7,7 @@ from .data import (
     HFDataReader,
     JsonLinesWriter,
     JsonReader,
+    HFJsonReader,
     MMDataLoader,
     TXTWriter,
 )
@@ -38,6 +39,7 @@ from .transform import (
 __all__ = [
     JsonLinesWriter,
     JsonReader,
+    HFJsonReader,
     AzureJsonReader,
     TXTWriter,
     CopyColumn,

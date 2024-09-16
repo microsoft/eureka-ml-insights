@@ -221,7 +221,7 @@
           },
           {
             "name": "Claude-3_5-Sonnet",
-            "score": 0.651
+            "score": 0.676
           },
           {
             "name": "Gemini-1_5-Pro",
@@ -355,7 +355,41 @@
           },
           {
             "name": "Llava-1_6-34B",
-            "score": 0.794
+            "score": 0.815
+          }
+        ]
+      },
+      {
+        "name": "Object Detection",
+        "description": "TBD",
+        "models": [
+          {
+            "name": "Claude-3-Opus",
+            "score": 0.0019151292824828776
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 0.030715956168936426
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 0.029844724833558243
+          },
+          {
+            "name": "GPT-4-Turbo-2024-04-09",
+            "score": 0.005181597714148815
+          },
+          {
+            "name": "GPT-4-Vision-Preview",
+            "score": 0.006812926409292833
+          },
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 0.04452130426008712
+          },
+          {
+            "name": "Llava-1_6-34B",
+            "score": 0.08848131065625695
           }
         ]
       },
@@ -389,7 +423,7 @@
           },
           {
             "name": "Llava-1_6-34B",
-            "score": 0.805
+            "score": 0.845
           }
         ]
       },
@@ -423,7 +457,7 @@
           },
           {
             "name": "Llava-1_6-34B",
-            "score": 0.921
+            "score": 0.912
           }
         ]
       },

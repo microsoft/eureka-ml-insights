@@ -11,19 +11,22 @@ const OverallVisualization = ({config}: {config: EurekaConfig}) => {
         return <div>Loading...</div>;
     }
 
+    const [isLoading, setIsLoading] = useState(true);  
+    const [highchartsLoading, setHighchartsLoading] = useState(true);  
+
     React.useEffect(() => {  
         const loadHighchartsMore = async () => {  
           const HC_more = await import('highcharts/highcharts-more');  
           HC_more.default(Highcharts);  
+          setHighchartsLoading(false);
         };  
-        loadHighchartsMore();  
+        loadHighchartsMore();
       }, []); 
 
     const [languageCapabilties, setLanguageCapabilties] = useState<CapabilityScores[]>([]);
     const [langOverallSeries, setLangOverallSeries] = useState<SeriesOptionsType[]>([]);
     const [multimodalCapabilties, setMultimodalCapabilties] = useState<CapabilityScores[]>([]);
     const [multimodalOverallSeries, setMultimodalOverallSeries] = useState<SeriesOptionsType[]>([]);
-    const [isLoading, setIsLoading] = useState(true);  
 
     const parseResultCategory = (capabilities: CapabilityScores[], setCapabilityFunction, setSeriesFunction) => {
         setCapabilityFunction(capabilities);
@@ -60,9 +63,10 @@ const OverallVisualization = ({config}: {config: EurekaConfig}) => {
                 .catch(error => console.error('Error fetching compiled results:', error));
             }, []);
 
-    if (isLoading) {  
+    if (isLoading || highchartsLoading) {  
         return <div>Loading...</div>;  
-    }  
+    }
+
     const languageChartOptions: Highcharts.Options = {
         title: {
             text: 'Language Performance',
