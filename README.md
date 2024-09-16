@@ -143,7 +143,6 @@ If you use this framework in your research, please cite the following paper:
 }
 
 ```
-
 # Responsible AI Considerations
  
 A cross-cutting dimension for all capability evaluations is the evaluation of several aspects of model behavior important for the responsible fielding of AI systems. These consideration include the fairness, reliability, safety, privacy, and security of models. While evaluations through the Toxigen dataset (included in Eureka-Bench) capture notions of representational fairness for different demographic groups and, to some extent, the ability of the model to generate safe language despite non-safe input triggers in the prompt, other aspects or nuances of fairness and safety require further evaluation and additional clarity, which we hope to integrate in future versions and welcome contributions for. We are also interested in expanding Eureka-Bench with tasks where fairness and bias can be studied in more benign settings that simulate how risks may appear when humans use AI to assist them in everyday tasks (e.g. creative writing, information search etc.) and subtle language or visual biases encoded in training data might be reflected in the AI's assistance.
