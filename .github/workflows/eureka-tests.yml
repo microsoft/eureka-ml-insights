@@ -22,13 +22,11 @@ jobs:
         path: hf_home
         key: hf_home
     - uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Install dependencies
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
-
-    - name: Install dependencies
       run: |
         pip install -r requirements.txt
         pip install .
