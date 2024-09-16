@@ -1,0 +1,52 @@
+name: Eureka Tests
+
+on:
+  pull_request:
+    branches: [ $default-branch ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.8"]
+
+    steps:
+    - name: Cache .venv
+      uses: actions/cache@v3
+      with:
+        path: .venv
+        key: venv
+    - name: Cache hf_home
+      uses: actions/cache@v3
+      with:
+        path: hf_home
+        key: hf_home
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m venv .venv
+        source .venv/bin/activate
+        pip install -r requirements.txt
+        pip install .
+        pip uninstall -y eureka_ml_insights
+    - name: Run linters
+      continue-on-error: true
+      run: |
+        source .venv/bin/activate
+        make linters
+    - name: Run tests
+      run: |
+        source .venv/bin/activate
+        export HF_HOME="${{ github.workspace }} /hf_home"
+        echo "$HF_HOME"
+        mkdir -p "$HF_HOME"
+        pip show eureka_ml_insights
+        export skip_tests_with_auth=1
+        make test
