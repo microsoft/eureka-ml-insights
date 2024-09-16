@@ -10,7 +10,6 @@ from .config import (
     PipelineConfig,
     PromptProcessingConfig,
 )
-from .bbh_mcq import BBH_MCQ_ORCA_PIPELINE, BBH_MCQ_OpenAI_PIPELINE
 from .dna import DNA_PIPELINE
 from .experiment_config import ExperimentConfig, create_logdir
 from .flenqa import FlenQA_Experiment_Pipeline
@@ -116,8 +115,6 @@ __all__ = [
     FlenQA_Experiment_Pipeline,
     GEOMETER_PIPELINE,
     MMMU_BASELINE_PIPELINE,
-    BBH_MCQ_ORCA_PIPELINE,
-    BBH_MCQ_OpenAI_PIPELINE,
     KITAB_ONE_BOOK_CONSTRAINT_PIPELINE,
     KITAB_ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT,
     KITAB_ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT,
