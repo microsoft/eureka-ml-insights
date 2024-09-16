@@ -28,9 +28,10 @@ To get started, clone this repository to your local machine and navigate to the 
 ### 📦 Generate wheel package to share with others
 1. *activate venv*
 2. Update version inside setup.py if needed.
-3. ```python setup.py bdist_wheel```
-4. Fetch from dir dist/ the .whl
-5. This file can be installed via `pip install eureka_ml_insights.whl`
+3. Install wheel package via ```pip install wheel```
+4. ```python setup.py bdist_wheel```
+5. Fetch from dir dist/ the .whl
+6. This file can be installed via `pip install eureka_ml_insights.whl`
 
 ## 💥 Quick start
 To reproduce the results of a pre-defined experiment pipeline, you can run the following command:
