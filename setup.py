@@ -7,7 +7,7 @@ setup(
     author='Microsoft Research',
     author_email='eureka-ml-insights@microsoft.com',
     description='Eureka ML Insights Framework',
-    long_description=open('README.md').read(),
+    long_description=open('README.md', encoding="utf-8").read(),
     long_description_content_type='text/markdown',
     url='https://github.com/microsoft/eureka-ml-insights',
     packages=find_packages(),
