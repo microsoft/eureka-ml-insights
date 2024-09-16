@@ -81,7 +81,7 @@ def coallate_results(release_directory_path, config):
         json.dump(data, f, indent=2)
 
 # Example usage
-release_directory_path = 'C:\\Users\\jluey\\Downloads\\release'
+release_directory_path = '\\release'
 config_path = 'website\\static\\config.json'
 
 coallate_results(release_directory_path, json.load(open(config_path)))
