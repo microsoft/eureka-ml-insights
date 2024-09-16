@@ -19,8 +19,13 @@ jobs:
     - name: Cache hf_home
       uses: actions/cache@v3
       with:
-        path: hf_home
-        key: hf_home
+        path: ${{ github.workspace }}/hf_home
+        key: ${{ runner.os }}-hf_home-${{ hashFiles('**/requirements.txt', '**/setup.py') }}
+    - name: Cache venv
+      uses: actions/cache@v3
+      with:
+        path: ${{ github.workspace }}/.venv
+        key: ${{ runner.os }}-venv-${{ hashFiles('**/requirements.txt', '**/setup.py') }}
     - uses: actions/checkout@v4
     - name: Set up Python 3.10
       uses: actions/setup-python@v3
@@ -30,6 +35,9 @@ jobs:
 
     - name: Install dependencies
       run: |
+        python -m venv ${{ github.workspace }}/.venv
+        source ${{ github.workspace }}/.venv/bin/activate
+        pip install --upgrade pip
         pip install -r requirements.txt
         pip install .
     - name: Run linters
@@ -38,6 +46,7 @@ jobs:
         make linters
     - name: Run tests
       run: |
+        source ${{ github.workspace }}/.venv/bin/activate
         export HF_HOME="${{ github.workspace }} /hf_home"
         echo "$HF_HOME"
         mkdir -p "$HF_HOME"
