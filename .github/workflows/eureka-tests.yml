@@ -1,6 +1,8 @@
 name: Eureka Tests
 
 on:
+  push:
+    branches: ci-tests
   pull_request:
     branches: [ $default-branch ]
 
