@@ -11,7 +11,7 @@
           },
           {
             "name": "Claude-3_5-Sonnet",
-            "score": 55.300000000000004
+            "score": 55.3
           },
           {
             "name": "Gemini-1_5-Pro",
@@ -31,7 +31,7 @@
           },
           {
             "name": "Llama-3_1-405B",
-            "score": 54.900000000000006
+            "score": 54.9
           },
           {
             "name": "Llama-3_1-70B",
@@ -53,7 +53,7 @@
           },
           {
             "name": "Claude-3_5-Sonnet",
-            "score": 20.599999999999998
+            "score": 20.6
           },
           {
             "name": "Gemini-1_5-Pro",
@@ -81,7 +81,7 @@
           },
           {
             "name": "Mistral_Large_2_2407",
-            "score": 17.599999999999998
+            "score": 17.6
           }
         ]
       },
@@ -91,7 +91,7 @@
         "models": [
           {
             "name": "Claude-3-Opus",
-            "score": 81.89999999999999
+            "score": 81.9
           },
           {
             "name": "Claude-3_5-Sonnet",
@@ -119,7 +119,7 @@
           },
           {
             "name": "Llama-3_1-70B",
-            "score": 80.80000000000001
+            "score": 80.8
           },
           {
             "name": "Mistral_Large_2_2407",
@@ -161,7 +161,7 @@
           },
           {
             "name": "Llama-3_1-70B",
-            "score": 93.89999999999999
+            "score": 93.9
           },
           {
             "name": "Mistral_Large_2_2407",
@@ -221,7 +221,7 @@
           },
           {
             "name": "Claude-3_5-Sonnet",
-            "score": 67.60000000000001
+            "score": 67.6
           },
           {
             "name": "Gemini-1_5-Pro",
@@ -241,7 +241,7 @@
           },
           {
             "name": "Llama-3_1-405B",
-            "score": 57.099999999999994
+            "score": 57.1
           },
           {
             "name": "Llama-3_1-70B",
@@ -309,7 +309,7 @@
           },
           {
             "name": "GPT-4-Turbo-2024-04-09",
-            "score": 57.199999999999996
+            "score": 57.2
           },
           {
             "name": "GPT-4-Vision-Preview",
@@ -317,7 +317,7 @@
           },
           {
             "name": "GPT-4o-2024-05-13",
-            "score": 57.99999999999999
+            "score": 58.0
           },
           {
             "name": "Llava-1_6-34B",
@@ -365,31 +365,31 @@
         "models": [
           {
             "name": "Claude-3-Opus",
-            "score": 0.19151292824828775
+            "score": 0.2
           },
           {
             "name": "Claude-3_5-Sonnet",
-            "score": 3.0715956168936427
+            "score": 3.1
           },
           {
             "name": "Gemini-1_5-Pro",
-            "score": 2.9844724833558245
+            "score": 3.0
           },
           {
             "name": "GPT-4-Turbo-2024-04-09",
-            "score": 0.5181597714148816
+            "score": 0.5
           },
           {
             "name": "GPT-4-Vision-Preview",
-            "score": 0.6812926409292832
+            "score": 0.7
           },
           {
             "name": "GPT-4o-2024-05-13",
-            "score": 4.452130426008712
+            "score": 4.5
           },
           {
             "name": "Llava-1_6-34B",
-            "score": 8.848131065625694
+            "score": 8.8
           }
         ]
       },
@@ -411,7 +411,7 @@
           },
           {
             "name": "GPT-4-Turbo-2024-04-09",
-            "score": 68.10000000000001
+            "score": 68.1
           },
           {
             "name": "GPT-4-Vision-Preview",
@@ -445,7 +445,7 @@
           },
           {
             "name": "GPT-4-Turbo-2024-04-09",
-            "score": 66.60000000000001
+            "score": 66.6
           },
           {
             "name": "GPT-4-Vision-Preview",
@@ -471,7 +471,7 @@
           },
           {
             "name": "Claude-3_5-Sonnet",
-            "score": 56.89999999999999
+            "score": 56.9
           },
           {
             "name": "Gemini-1_5-Pro",
@@ -479,7 +479,7 @@
           },
           {
             "name": "GPT-4-Turbo-2024-04-09",
-            "score": 45.800000000000004
+            "score": 45.8
           },
           {
             "name": "GPT-4-Vision-Preview",
@@ -501,7 +501,7 @@
         "models": [
           {
             "name": "Claude-3-Opus",
-            "score": 28.000000000000004
+            "score": 28.0
           },
           {
             "name": "Claude-3_5-Sonnet",
@@ -513,7 +513,7 @@
           },
           {
             "name": "GPT-4-Turbo-2024-04-09",
-            "score": 28.799999999999997
+            "score": 28.8
           },
           {
             "name": "GPT-4-Vision-Preview",
@@ -551,7 +551,7 @@
           },
           {
             "name": "GPT-4-Vision-Preview",
-            "score": 84.39999999999999
+            "score": 84.4
           },
           {
             "name": "GPT-4o-2024-05-13",
