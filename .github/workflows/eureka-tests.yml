@@ -51,4 +51,5 @@ jobs:
         mkdir -p "$HF_HOME"
         pip show eureka_ml_insights
         export skip_tests_with_auth=1
+        pwd
         make test
