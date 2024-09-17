@@ -31,7 +31,7 @@ setup(
         'transformers>=4.40.2',
         'immutabledict>=4.2.0',
         'langdetect>=1.0.9',
-        'nltk>=3.8.1',
+        'nltk>=3.9.1',
         'absl-py>=2.1.0',
         'python-levenshtein>=0.12.2',
         'google-generativeai>=0.7.0',

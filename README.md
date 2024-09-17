@@ -119,7 +119,15 @@ In addition to the attributes of the DataProcessing component, the PromptProcess
 - `output_dir`: This is the folder name where the evaluation results will be saved.
 
 # ✋ How to contribute:
-- To contribute to the framework, please create a new branch.
+This project welcomes contributions and suggestions. Most contributions require you to agree to a Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us the rights to use your contribution. For details, visit https://cla.microsoft.com.
+
+When you submit a pull request, a CLA-bot will automatically determine whether you need to provide a CLA and decorate the PR appropriately (e.g., label, comment). Simply follow the instructions provided by the bot. You will only need to do this once across all repositories using our CLA.
+
+This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
+For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+
+To contribute to the framework:
+- please create a new branch.
 - Implement your pipeline configuration class under `configs`, as well as any utility classes that your pipeline requires.
 - Please add end-to-end tests for your contributions in the `tests` directory.
 - Please add unit tests for any new utility classes you implement in the `tests` directory.
@@ -131,17 +139,14 @@ In addition to the attributes of the DataProcessing component, the PromptProcess
 
 # ✒️ Citation
 If you use this framework in your research, please cite the following paper:
+
 ```
 @article{eureka2024,
   title={Eureka: Evaluating and Understanding Large Foundation Models},
-  author={Vidhisha Balachandran, Jingya Chen, Neel Joshi, Besmira Nushi, Hamid Palangi, Eduardo Salinas, Vibhav Vineet, James Woffinden-Luey, Safoora Yousefi},
+  author={Balachandran, Vidhisha and Chen, Jingya and Joshi, Neel and Nushi, Besmira and Palangi, Hamid and Salinas, Eduardo and Vineet, Vibhav and Woffinden-Luey, James and Yousefi, Safoora},
+  journal={Microsoft Research. MSR-TR-2024-33},
   year={2024}
-  eprint={TODO},
-  archivePrefix={arXiv},
-  primaryClass={cs.CL},
-  url={TODO}, 
 }
-
 ```
 # Responsible AI Considerations
  
