@@ -38,7 +38,6 @@ from eureka_ml_insights.data_utils.transform import (
     SamplerTransform,
     SequenceTransform,
 )
-from eureka_ml_insights.metrics import AverageAggregator
 from tests.test_utils import (
     DetectionTestModel,
     DNAEvaluationInferenceTestModel,
@@ -48,6 +47,7 @@ from tests.test_utils import (
     MultipleChoiceTestModel,
     SpatialReasoningTestModel,
     TestDataLoader,
+    TestHFDataReader,
     TestKitabMetric,
     TestMMDataLoader,
     ToxiGenTestModel,
@@ -62,6 +62,7 @@ class TEST_SPATIAL_REASONING_PIPELINE(SPATIAL_REASONING_SINGLE_PIPELINE):
     def configure_pipeline(self):
         model_config = ModelConfig(SpatialReasoningTestModel, {})
         config = super().configure_pipeline(model_config=model_config)
+        self.data_processing_comp.data_reader_config.class_name = TestHFDataReader
         self.inference_comp = config.component_configs[1]
         self.inference_comp.data_loader_config.class_name = TestMMDataLoader
         self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
@@ -74,6 +75,7 @@ class TEST_OBJECT_DETECTION_PIPELINE(OBJECT_DETECTION_SINGLE_PIPELINE):
     def configure_pipeline(self, resume_from=None):
         model_config = ModelConfig(DetectionTestModel, {})
         config = super().configure_pipeline(model_config=model_config)
+        self.data_processing_comp.data_reader_config.class_name = TestHFDataReader
         self.inference_comp.data_loader_config.class_name = TestMMDataLoader
         self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
@@ -85,6 +87,7 @@ class TEST_VISUAL_PROMPTING_PIPELINE(VISUAL_PROMPTING_SINGLE_PIPELINE):
     def configure_pipeline(self, resume_from=None):
         model_config = ModelConfig(GenericTestModel, {})
         config = super().configure_pipeline(model_config=model_config)
+        self.data_processing_comp.data_reader_config.class_name = TestHFDataReader
         self.inference_comp.data_loader_config.class_name = TestMMDataLoader
         self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
@@ -96,6 +99,7 @@ class TEST_OBJECT_RECOGNITION_PIPELINE(OBJECT_RECOGNITION_SINGLE_PIPELINE):
     def configure_pipeline(self, resume_from=None):
         model_config = ModelConfig(GenericTestModel, {})
         config = super().configure_pipeline(model_config=model_config)
+        self.data_processing_comp.data_reader_config.class_name = TestHFDataReader
         self.inference_comp.data_loader_config.class_name = TestMMDataLoader
         self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
@@ -107,6 +111,7 @@ class TEST_SPATIAL_GRID_PIPELINE(SPATIAL_GRID_PIPELINE):
     def configure_pipeline(self, resume_from=None):
         model_config = ModelConfig(GenericTestModel, {})
         config = super().configure_pipeline(model_config=model_config)
+        self.data_processing_comp.data_reader_config.class_name = TestHFDataReader
         self.inference_comp.data_loader_config.class_name = TestMMDataLoader
         self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
@@ -118,6 +123,7 @@ class TEST_SPATIAL_GRID_TEXTONLY_PIPELINE(SPATIAL_GRID_TEXTONLY_PIPELINE):
     def configure_pipeline(self, resume_from=None):
         model_config = ModelConfig(GenericTestModel, {})
         config = super().configure_pipeline(model_config=model_config)
+        self.data_processing_comp.data_reader_config.class_name = TestHFDataReader
         self.inference_comp.data_loader_config.class_name = TestDataLoader
         self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
@@ -129,6 +135,7 @@ class TEST_SPATIAL_MAP_PIPELINE(SPATIAL_MAP_PIPELINE):
     def configure_pipeline(self, resume_from=None):
         model_config = ModelConfig(GenericTestModel, {"model_name": "generic_test_model"})
         config = super().configure_pipeline(model_config=model_config)
+        self.data_processing_comp.data_reader_config.class_name = TestHFDataReader
         self.inference_comp.data_loader_config.class_name = TestMMDataLoader
         self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
@@ -140,6 +147,7 @@ class TEST_SPATIAL_MAP_TEXTONLY_PIPELINE(SPATIAL_MAP_TEXTONLY_PIPELINE):
     def configure_pipeline(self, resume_from=None):
         model_config = ModelConfig(GenericTestModel, {"model_name": "generic_test_model"})
         config = super().configure_pipeline(model_config=model_config)
+        self.data_processing_comp.data_reader_config.class_name = TestHFDataReader
         self.inference_comp.data_loader_config.class_name = TestDataLoader
         self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
@@ -151,6 +159,7 @@ class TEST_MAZE_PIPELINE(MAZE_PIPELINE):
     def configure_pipeline(self, resume_from=None):
         model_config = ModelConfig(GenericTestModel, {})
         config = super().configure_pipeline(model_config=model_config)
+        self.data_processing_comp.data_reader_config.class_name = TestHFDataReader
         self.inference_comp.data_loader_config.class_name = TestMMDataLoader
         self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
@@ -162,6 +171,7 @@ class TEST_MAZE_TEXTONLY_PIPELINE(MAZE_TEXTONLY_PIPELINE):
     def configure_pipeline(self, resume_from=None):
         model_config = ModelConfig(GenericTestModel, {})
         config = super().configure_pipeline(model_config=model_config)
+        self.data_processing_comp.data_reader_config.class_name = TestHFDataReader
         self.inference_comp.data_loader_config.class_name = TestDataLoader
         self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
@@ -197,6 +207,8 @@ class TEST_GEOMETRIC_REASONING_PIPELINE(GEOMETER_PIPELINE):
     def configure_pipeline(self):
         model_config = ModelConfig(GeometricReasoningTestModel, {})
         config = super().configure_pipeline(model_config=model_config)
+        data_processing_comp = config.component_configs[0]
+        data_processing_comp.data_reader_config.class_name = TestHFDataReader
         inference_comp = config.component_configs[1]
         inference_comp.data_loader_config.class_name = TestDataLoader
         inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
