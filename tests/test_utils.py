@@ -3,9 +3,22 @@ import random
 from eureka_ml_insights.data_utils import (
     AzureMMDataLoader,
     DataLoader,
+    HFDataReader,
     MMDataLoader,
 )
 from eureka_ml_insights.metrics import ClassicMetric, CompositeMetric
+
+
+class TestHFDataReader(HFDataReader):
+    def __init__(self, path, **kwargs):
+        super().__init__(path, **kwargs)
+        self.max_rows = kwargs.get("max_rows", 2)
+
+    def _hf_to_dataframe(self, hf_dataset):
+        # grab the first max_rows rows from the dataset
+        hf_dataset = hf_dataset.shuffle(seed=42)
+        hf_dataset = hf_dataset.select(range(self.max_rows))
+        return super()._hf_to_dataframe(hf_dataset)
 
 
 class SpatialReasoningTestModel:
