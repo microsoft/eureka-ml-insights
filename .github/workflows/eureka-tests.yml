@@ -25,7 +25,7 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         key: venv-${{ runner.os }}-${{ steps.setup_python.outputs.python-version }}-${{ hashFiles('requirements.txt') }}
-        path: .venv
+        path: ~/.venv
     - uses: actions/checkout@v4
     - name: Set up Python 3.10
       uses: actions/setup-python@v3
@@ -40,11 +40,11 @@ jobs:
         pip install -r requirements.txt
         pip install .
         python -m nltk.downloader punkt
-    - name: Saved cached virtualenv
+    - name: Save cache virtualenv
       uses: actions/cache/save@v4
       with:
         key: venv-${{ runner.os }}-${{ steps.setup_python.outputs.python-version }}-${{ hashFiles('requirements.txt') }}
-        path: .venv
+        path: ~/.venv
     - name: Run linters
       continue-on-error: true
       run: |
