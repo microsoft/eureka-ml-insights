@@ -3124,6 +3124,7 @@ class CapitalWordFrequencyChecker(Instruction):
     def check_following(self, value):
         """Checks the frequency of words with all capital letters."""
         # Hyphenated words will count as one word
+        nltk.download('punkt_tab')
         words = nltk.word_tokenize(value)
         capital_words = [word for word in words if word.isupper()]
 
