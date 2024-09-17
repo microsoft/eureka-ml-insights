@@ -19,14 +19,16 @@ jobs:
     - name: Restore cached hf_home
       uses: actions/cache/restore@v4
       with:
-        path: hf_home
+        path: ~/hf_home
         key: hf_home
     - name: Restore cached virtualenv
       uses: actions/cache/restore@v4
       with:
         key: venv-${{ runner.os }}-${{ steps.setup_python.outputs.python-version }}-${{ hashFiles('requirements.txt') }}
         path: ~/.venv
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
+      fetch-depth: 0
     - name: Set up Python 3.10
       uses: actions/setup-python@v3
       with:
@@ -64,4 +66,4 @@ jobs:
       uses: actions/cache/save@v4
       with:
         key: hf_home
-        path: hf_home
+        path: ~/hf_home
