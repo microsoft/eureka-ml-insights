@@ -20,12 +20,12 @@ jobs:
       uses: actions/cache@v3
       with:
         path: ${{ github.workspace }}/hf_home
-        key: ${{ runner.os }}-hf_home-${{ hashFiles('**/setup.py') }}
+        key: ${{ runner.os }}-hf_home-${{ hashFiles('requirements.txt') }}
     - name: Cache venv
       uses: actions/cache@v3
       with:
         path: ${{ github.workspace }}/.venv
-        key: ${{ runner.os }}-venv-${{ hashFiles('**/setup.py') }}
+        key: ${{ runner.os }}-venv
     - uses: actions/checkout@v4
     - name: Set up Python 3.10
       uses: actions/setup-python@v3
@@ -39,6 +39,7 @@ jobs:
         pip install --upgrade pip
         pip install -r requirements.txt
         pip install .
+        python3 -m nltk.downloader punkt wordnet punkt-tab
     - name: Run linters
       continue-on-error: true
       run: |
