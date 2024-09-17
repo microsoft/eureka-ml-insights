@@ -27,3 +27,6 @@ autoflake-inplace:
 format-inplace:
 	make autoflake-inplace
 	make isort-inplace
+	make black-inplace
+test:
+	python run_tests.py
