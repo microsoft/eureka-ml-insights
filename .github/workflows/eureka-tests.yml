@@ -16,16 +16,16 @@ jobs:
         python-version: ["3.10"]
 
     steps:
-    - name: Cache hf_home
-      uses: actions/cache@v3
+    - name: Restore cached hf_home
+      uses: actions/cache/restore@v4
       with:
-        path:  ~/hf_home
+        path: hf_home
         key: hf_home
-    - name: Cache venv
-      uses: actions/cache@v3
+    - name: Restore cached virtualenv
+      uses: actions/cache/restore@v4
       with:
-        path:  ~/.venv
-        key: venv
+        key: venv-${{ runner.os }}-${{ steps.setup_python.outputs.python-version }}-${{ hashFiles('requirements.txt') }}
+        path: .venv
     - uses: actions/checkout@v4
     - name: Set up Python 3.10
       uses: actions/setup-python@v3
@@ -40,6 +40,11 @@ jobs:
         pip install -r requirements.txt
         pip install .
         python -m nltk.downloader punkt
+    - name: Saved cached virtualenv
+      uses: actions/cache/save@v4
+      with:
+        key: venv-${{ runner.os }}-${{ steps.setup_python.outputs.python-version }}-${{ hashFiles('requirements.txt') }}
+        path: .venv
     - name: Run linters
       continue-on-error: true
       run: |
@@ -55,3 +60,8 @@ jobs:
         export skip_tests_with_auth=1
         pwd
         make test
+    - name: Save hf_home
+      uses: actions/cache/save@v4
+      with:
+        key: hf_home
+        path: hf_home

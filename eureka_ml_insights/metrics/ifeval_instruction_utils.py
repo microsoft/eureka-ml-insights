@@ -32,14 +32,6 @@ import langdetect
 import nltk
 from absl import logging
 
-def download_nltk_resources():
-    """Download 'punkt' if not already installed"""
-    try:
-        nltk.data.find("tokenizers/punkt")
-    except LookupError:
-        nltk.download("punkt")
-
-download_nltk_resources()
 
 WORD_LIST = [
     "western",
@@ -1678,7 +1670,8 @@ def count_words(text):
 
 @functools.lru_cache(maxsize=None)
 def _get_sentence_tokenizer():
-    return nltk.data.load("nltk:tokenizers/punkt/english.pickle")
+    from nltk.tokenize import PunktTokenizer
+    return PunktTokenizer()
 
 
 def count_sentences(text):
