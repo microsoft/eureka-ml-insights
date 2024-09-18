@@ -60,7 +60,7 @@ jobs:
         echo "$HF_HOME"
         mkdir -p "$HF_HOME"
         pip show eureka_ml_insights
-        export skip_tests_with_auth=1
+        export skip_tests_with_missing_ds=1
         pwd
         make test
     - name: Save hf_home
