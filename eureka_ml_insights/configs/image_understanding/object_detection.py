@@ -54,7 +54,7 @@ class OBJECT_DETECTION_PAIRS_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 HFDataReader,
                 {
-                    "path": "microsoft/IMAGE_UNDERSTANDING",
+                    "path": "neelsj/IMAGE_UNDERSTANDING",
                     "split": "val",
                     "tasks": "object_detection_pairs",
                 },
@@ -77,9 +77,9 @@ class OBJECT_DETECTION_PAIRS_PIPELINE(ExperimentConfig):
         )
 
         target_coco_json_reader = HFJsonReader(
-            repo_id="microsoft/IMAGE_UNDERSTANDING",
+            repo_id="neelsj/IMAGE_UNDERSTANDING",
             repo_type="dataset",
-            filename="object_detection_pairs/coco_instances.json",            
+            filename="pairs/coco_instances.json",            
         )
 
         # Configure the evaluation and reporting component.
@@ -122,9 +122,9 @@ class OBJECT_DETECTION_SINGLE_PIPELINE(OBJECT_DETECTION_PAIRS_PIPELINE):
         )
 
         target_coco_json_reader = HFJsonReader(
-            repo_id="microsoft/IMAGE_UNDERSTANDING",
+            repo_id="neelsj/IMAGE_UNDERSTANDING",
             repo_type="dataset",
-            filename="object_detection_single/coco_instances.json",
+            filename="single/coco_instances.json",
         )
 
         self.evalreporting_comp.metric_config.init_args["target_coco_json_reader"] = target_coco_json_reader

@@ -57,7 +57,7 @@ class SPATIAL_REASONING_PAIRS_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 HFDataReader,
                 {
-                    "path": "microsoft/IMAGE_UNDERSTANDING",
+                    "path": "neelsj/IMAGE_UNDERSTANDING",
                     "split": "val",
                     "tasks": "spatial_reasoning_lrtb_pairs",
                 },
