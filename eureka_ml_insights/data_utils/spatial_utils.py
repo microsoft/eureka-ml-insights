@@ -453,7 +453,6 @@ class ExtractAnswerGrid(ExtractAnswer):
     question_type_column_name: str
     mode: str
 
-    @abstractmethod
     def _parse_answer_function(self, answer_text, question_type):
         return extract_answer_from_text_grid(answer_text, question_type)
 
@@ -467,7 +466,6 @@ class ExtractAnswerSpatialMap(ExtractAnswer):
     question_type_column_name: str
     model_name: str
 
-    @abstractmethod
     def _parse_answer_function(self, answer_text, question_type):
         return extract_answer_from_text_map(answer_text, question_type, self.model_name)
 
@@ -480,6 +478,5 @@ class ExtractAnswerMaze(ExtractAnswer):
     extracted_answer_column_name: str
     question_type_column_name: str
 
-    @abstractmethod
     def _parse_answer_function(self, answer_text, question_type):
         return extract_answer_from_text_maze(answer_text, question_type)

@@ -242,16 +242,24 @@ class MMMUMetric(MixedQuestionTypeMetric):
 
         return index2ans, all_choices
 
-    def __evaluate__(self, answer_text, target_text, question_type, target_options, is_valid):
+    def __evaluate__(self, answer_text_list, target_text, question_type, target_options, is_valid):
         if not is_valid:
             return "none"
 
-        if question_type == "multiple-choice":
-            index2ans, all_choices = self.get_multi_choice_info(target_options)
-            parsed_pred = self.parse_multi_choice_response(answer_text, all_choices, index2ans)
-            correct = self.eval_multi_choice(target_text, parsed_pred)
-        else:  # open question
-            parsed_pred = self.parse_open_response(answer_text)
-            correct = self.eval_open(target_text, parsed_pred)
+        if not isinstance(answer_text_list, list):
+            answer_text_list = [answer_text_list]
 
-        return "correct" if correct else "incorrect"
+        answers = []
+        for answer_text in answer_text_list:
+
+            if question_type == "multiple-choice":
+                index2ans, all_choices = self.get_multi_choice_info(target_options)
+                parsed_pred = self.parse_multi_choice_response(answer_text, all_choices, index2ans)
+                correct = self.eval_multi_choice(target_text, parsed_pred)
+            else:  # open question
+                parsed_pred = self.parse_open_response(answer_text)
+                correct = self.eval_open(target_text, parsed_pred)
+
+            answers.append(correct)
+
+        return np.mean(list(map(int, answers)))
