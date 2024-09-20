@@ -438,8 +438,9 @@ class HuggingFaceLM(Model):
     apply_model_template: bool = True
 
     def __post_init__(self):
-        self.get_model()
+        # The device need to be set before get_model() is called
         self.device = self.pick_available_device()
+        self.get_model()
 
     def get_model(self):
         from transformers import AutoModelForCausalLM, AutoTokenizer
