@@ -1,5 +1,8 @@
 # Eureka ML Insights Framework
 <p align="left">
+  <a href='https://arxiv.org/abs/2409.10566'>
+    <img src=https://img.shields.io/badge/arXiv-2409.10566-b31b1b.svg>
+  </a>
   <a href='https://aka.ms/eureka-ml-insights-report'>
     <img src=docs/figures/eureka_logo.png width="16">
     Technical Report  
