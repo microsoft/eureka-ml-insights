@@ -16,26 +16,28 @@ jobs:
         python-version: ["3.10"]
 
     steps:
-    - name: Checkout code and install dependencies
-      uses:
-        actions/checkout@v4 
-        actions/setup-python@v5
+    - name: Checkout code
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v5
+      with:
         python-version: '3.10'
         cache: 'pip'
+    - name: Install dependencies
       run: |
         pip install --upgrade pip
         pip install -r requirements.txt
         pip install .
+        python -m nltk.downloader punkt
+
     - name: Run linters
       continue-on-error: true
       run: |
-        source  ~/.venv/bin/activate
         make linters
     - name: Run tests
       run: |
-        source  ~/.venv/bin/activate
         pip show eureka_ml_insights
         export skip_tests_with_missing_ds=1
         pwd
