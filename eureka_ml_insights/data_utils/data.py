@@ -8,7 +8,7 @@ from typing import List, Optional
 
 import jsonlines
 import pandas as pd
-from azure.identity import AzureCliCredential
+from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobClient, ContainerClient
 from datasets import load_dataset
 from PIL import Image
@@ -252,7 +252,7 @@ class AzureMMDataLoader(MMDataLoader):
         self.container_client = ContainerClient(
             account_url=self.account_url,
             container_name=self.blob_container,
-            credential=AzureCliCredential(),
+            credential=DefaultAzureCredential(),
             logger=self.logger,
         )
 
@@ -310,7 +310,7 @@ class AzureBlobReader:
         args:
             blob_url: str, The Azure storage blob full URL.
         """
-        blob_client = BlobClient.from_blob_url(blob_url, credential=AzureCliCredential(), logger=self.logger)
+        blob_client = BlobClient.from_blob_url(blob_url, credential=DefaultAzureCredential(), logger=self.logger)
         # real all the bytes from the blob
         file = blob_client.download_blob().readall()
         file = file.decode("utf-8")
