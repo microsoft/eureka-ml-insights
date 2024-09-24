@@ -70,18 +70,18 @@ jobs:
         path: ~/hf_home
         set +e
     - name: Cleanup
-        run: |
-          gh extension install actions/gh-actions-cache
-          
-          REPO=${{ github.repository }}
-          # get the branch
-          BRANCH="refs/pull/${{ github.event.pull_request.number }}/merge"
-          # fetch list of cache key
-          cacheKeysForPR=$(gh actions-cache list -R $REPO -B $BRANCH | cut -f 1 )
-          # set this to not fail the workflow while deleting cache keys
-          set +e
-          # delete cache key
-          for cacheKey in $cacheKeysForPR
-          do
-              gh actions-cache delete $cacheKey -R $REPO -B $BRANCH --confirm
-          done
+      run: |
+        gh extension install actions/gh-actions-cache
+        
+        REPO=${{ github.repository }}
+        # get the branch
+        BRANCH="refs/pull/${{ github.event.pull_request.number }}/merge"
+        # fetch list of cache key
+        cacheKeysForPR=$(gh actions-cache list -R $REPO -B $BRANCH | cut -f 1 )
+        # set this to not fail the workflow while deleting cache keys
+        set +e
+        # delete cache key
+        for cacheKey in $cacheKeysForPR
+        do
+            gh actions-cache delete $cacheKey -R $REPO -B $BRANCH --confirm
+        done
