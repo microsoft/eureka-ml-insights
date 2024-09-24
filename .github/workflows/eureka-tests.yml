@@ -47,7 +47,6 @@ jobs:
       with:
         key: venv-${{ runner.os }}-${{ steps.setup_python.outputs.python-version }}-${{ hashFiles('requirements.txt') }}
         path: ~/.venv
-        set +e
     - name: Run linters
       continue-on-error: true
       run: |
@@ -68,7 +67,6 @@ jobs:
       with:
         key: hf_home
         path: ~/hf_home
-        set +e
     - name: Cleanup
       run: |
         gh extension install actions/gh-actions-cache
