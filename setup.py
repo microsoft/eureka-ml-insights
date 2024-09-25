@@ -39,6 +39,7 @@ setup(
         'bitsandbytes>=0.42.0',
         'accelerate>=0.21.0',
         'pycocotools>=2.0.8',
+        'ratelimit>=2.2.1',
     ],
     classifiers=[
         # Full list at https://pypi.org/classifiers/

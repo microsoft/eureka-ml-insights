@@ -9,6 +9,8 @@ from dataclasses import dataclass
 import anthropic
 from azure.identity import AzureCliCredential, get_bearer_token_provider
 
+from ratelimit import limits, sleep_and_retry
+
 from eureka_ml_insights.data_utils import GetKey
 
 
@@ -171,9 +173,18 @@ class RestEndpointModels(EndpointModels, KeyBasedAuthentication):
 class RestEndpointO1PreviewModelsAzure(EndpointModels):
 
     do_sample: bool = True
+    calls: int = 10
+    period: int = 60
 
     def __post_init__(self):
         self.bearer_token_provider = get_bearer_token_provider(AzureCliCredential(), "https://cognitiveservices.azure.com/.default")
+
+        @sleep_and_retry
+        @limits(calls=self.calls, period=self.period)
+        def check_call_limit(*args, **kwargs):
+            return None
+
+        self.check_call_limit = check_call_limit
 
     def create_request(self, text_prompt, query_images=None, system_message=None):
         data = {
@@ -202,6 +213,7 @@ class RestEndpointO1PreviewModelsAzure(EndpointModels):
         return urllib.request.Request(self.url, body, headers)
 
     def get_response(self, request):
+        self.check_call_limit()
         response = urllib.request.urlopen(request)
         res = json.loads(response.read())
         return res["choices"][0]["message"]["content"]
