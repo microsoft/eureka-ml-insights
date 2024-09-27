@@ -1,5 +1,8 @@
 # Eureka ML Insights Framework
 <p align="left">
+  <a href='https://arxiv.org/abs/2409.10566'>
+    <img src=https://img.shields.io/badge/arXiv-2409.10566-b31b1b.svg>
+  </a>
   <a href='https://aka.ms/eureka-ml-insights-report'>
     <img src=docs/figures/eureka_logo.png width="16">
     Technical Report  
@@ -26,19 +29,12 @@ This repository contains the code for the Eureka ML Insights framework. The fram
 | Kitab <br> 34217                | Text -> Text | Information Retrieval        | [Kitab.zip](https://aifeval.z5.web.core.windows.net/eureka-bench-logs/Kitab.zip) |[kitab.py](eureka_ml_insights/configs/kitab.py)|  
 | Toxigen <br> 10500              | Text -> Text | Toxicity Detection <br> Safe Language Generation         | [ToxiGen.zip](https://aifeval.z5.web.core.windows.net/eureka-bench-logs/ToxiGen.zip) |[toxigen.py](eureka_ml_insights/configs/toxigen.py)|
 
+Note: The benchmarks on Image Understanding and Vision Language Understanding will be available soon on HuggingFace. Please stay tuned.
+
 For non-determinism evaluations using the above benchmarks, we provide pipelines in [nondeterminism.py](eureka_ml_insights/configs/nondeterminism.py) 
 
 ## Installation
 To get started, clone this repository to your local machine and navigate to the project directory.
-
-### 🐍Installing with Conda
-1. Make sure you have [Conda](https://docs.anaconda.com/free/miniconda/) installed on your system.
-2. Open a terminal and create a new Conda environment using the `environment.yml` file:\
-    ```conda env create --name myenv --file environment.yml```
-3. Activate your newly created environment:\
-    `conda activate myenv`
-4. [Optional] Install GPU packages if you have a GPU machine and want to self-host models:\
-    ```conda env update --file environment_gpu.yml```
 
 ### 📦 Installing with pip + editable for development
 1. ```python3 -m venv .venv```
@@ -52,6 +48,16 @@ To get started, clone this repository to your local machine and navigate to the 
 4. ```python setup.py bdist_wheel```
 5. Fetch from dir dist/ the .whl
 6. This file can be installed via `pip install eureka_ml_insights.whl`
+
+### 🐍Installing with Conda
+1. Make sure you have [Conda](https://docs.anaconda.com/free/miniconda/) installed on your system.
+2. Open a terminal and create a new Conda environment using the `environment.yml` file:\
+    ```conda env create --name myenv --file environment.yml```
+3. Activate your newly created environment:\
+    `conda activate myenv`
+4. [Optional] Install GPU packages if you have a GPU machine and want to self-host models:\
+    ```conda env update --file environment_gpu.yml```
+Installation tested for Unix/Linux, but it is currently not supported on Windows.
 
 ## 🚀 Quick start
 To reproduce the results of a pre-defined experiment pipeline, you can run the following command:

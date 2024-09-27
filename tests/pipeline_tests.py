@@ -296,21 +296,25 @@ class PipelineTest:
         self.assertEqual(n_aggregators, n_aggregator_files)
 
 
+@unittest.skipIf("skip_tests_with_missing_ds" in os.environ, "Missing public dataset. TODO: revert")
 class SR1_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_SPATIAL_REASONING_PIPELINE().pipeline_config
 
 
+@unittest.skipIf("skip_tests_with_missing_ds" in os.environ, "Missing public dataset. TODO: revert")
 class VP1_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_VISUAL_PROMPTING_PIPELINE().pipeline_config
 
 
+@unittest.skipIf("skip_tests_with_missing_ds" in os.environ, "Missing public dataset. TODO: revert")
 class OR1_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_OBJECT_RECOGNITION_PIPELINE().pipeline_config
 
 
+@unittest.skipIf("skip_tests_with_missing_ds" in os.environ, "Missing public dataset. TODO: revert")
 class OD1_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_OBJECT_DETECTION_PIPELINE().pipeline_config
@@ -321,31 +325,37 @@ class MMMU_PipelineTest(PipelineTest, unittest.TestCase):
         return TEST_MMMU_PIPELINE().pipeline_config
 
 
+@unittest.skipIf("skip_tests_with_missing_ds" in os.environ, "Missing public dataset. TODO: revert")
 class SPATIAL_GRID_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_SPATIAL_GRID_PIPELINE().pipeline_config
 
 
+@unittest.skipIf("skip_tests_with_missing_ds" in os.environ, "Missing public dataset. TODO: revert")
 class SPATIAL_GRID_TEXTONLY_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_SPATIAL_GRID_TEXTONLY_PIPELINE().pipeline_config
 
 
+@unittest.skipIf("skip_tests_with_missing_ds" in os.environ, "Missing public dataset. TODO: revert")
 class SPATIAL_MAP_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_SPATIAL_MAP_PIPELINE().pipeline_config
 
 
+@unittest.skipIf("skip_tests_with_missing_ds" in os.environ, "Missing public dataset. TODO: revert")
 class SPATIAL_MAP_TEXTONLY_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_SPATIAL_MAP_TEXTONLY_PIPELINE().pipeline_config
 
 
+@unittest.skipIf("skip_tests_with_missing_ds" in os.environ, "Missing public dataset. TODO: revert")
 class MAZE_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_MAZE_PIPELINE().pipeline_config
 
 
+@unittest.skipIf("skip_tests_with_missing_ds" in os.environ, "Missing public dataset. TODO: revert")
 class MAZE_TEXTONLY_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_MAZE_TEXTONLY_PIPELINE().pipeline_config
