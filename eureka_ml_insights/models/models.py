@@ -9,7 +9,7 @@ from dataclasses import dataclass
 import anthropic
 from azure.identity import AzureCliCredential, get_bearer_token_provider
 
-from ratelimit import limits, sleep_and_retry
+from ratelimit import rate_limited, sleep_and_retry
 
 from eureka_ml_insights.data_utils import GetKey
 
@@ -73,6 +73,13 @@ class EndpointModels(Model):
     num_retries: int = 3
     frequency_penalty: float = 0
     presence_penalty: float = 0
+    rate_limit: bool = False
+    calls: int = 10
+    period: int = 60
+
+    def __post_init__(self):
+        if self.rate_limit:
+            self.generate = sleep_and_retry(rate_limited(calls=self.calls, period=self.period)(self.generate))
 
     @abstractmethod
     def create_request(self, text_prompt, query_images=None, system_message=None):
@@ -173,20 +180,11 @@ class RestEndpointModels(EndpointModels, KeyBasedAuthentication):
 class RestEndpointO1PreviewModelsAzure(EndpointModels):
 
     do_sample: bool = True
-    calls: int = 10
-    period: int = 60
 
     def __post_init__(self):
         self.bearer_token_provider = get_bearer_token_provider(AzureCliCredential(), "https://cognitiveservices.azure.com/.default")
 
-        @sleep_and_retry
-        @limits(calls=self.calls, period=self.period)
-        def check_call_limit(*args, **kwargs):
-            return None
-
-        self.check_call_limit = check_call_limit
-
-    def create_request(self, text_prompt, query_images=None, system_message=None):
+    def create_request(self, text_prompt):
         data = {
             "messages": [
                 {
@@ -195,16 +193,8 @@ class RestEndpointO1PreviewModelsAzure(EndpointModels):
                 }
             ],
         }
-        if system_message:
-            data["messages"]= [{"role": "system", "content": system_message}] + data["input_data"][
-                "input_string"
-            ]
-        if query_images:
-            raise NotImplementedError("Images are not supported for GCR endpoints yet.")
 
         body = str.encode(json.dumps(data))
-        # The azureml-model-deployment header will force the request to go to a specific deployment.
-        # Remove this header to have the request observe the endpoint traffic rules
         headers = {
             "Content-Type": "application/json",
             "Authorization": ("Bearer " + self.bearer_token_provider()),
@@ -213,7 +203,6 @@ class RestEndpointO1PreviewModelsAzure(EndpointModels):
         return urllib.request.Request(self.url, body, headers)
 
     def get_response(self, request):
-        self.check_call_limit()
         response = urllib.request.urlopen(request)
         res = json.loads(response.read())
         return res["choices"][0]["message"]["content"]
