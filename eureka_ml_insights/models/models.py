@@ -183,6 +183,7 @@ class RestEndpointO1PreviewModelsAzure(EndpointModels):
 
     def __post_init__(self):
         self.bearer_token_provider = get_bearer_token_provider(AzureCliCredential(), "https://cognitiveservices.azure.com/.default")
+        super().__post_init__()
 
     def create_request(self, text_prompt, query_images, system_message):
         data = {
