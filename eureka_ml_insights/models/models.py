@@ -79,7 +79,7 @@ class EndpointModels(Model):
 
     def __post_init__(self):
         if self.rate_limit:
-            self.generate = sleep_and_retry(rate_limited(calls=self.calls, period=self.period)(self.generate))
+            self.get_response = sleep_and_retry(rate_limited(calls=self.calls, period=self.period)(self.get_response))
 
     @abstractmethod
     def create_request(self, text_prompt, query_images=None, system_message=None):
