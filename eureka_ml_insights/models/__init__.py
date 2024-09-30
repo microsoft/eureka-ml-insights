@@ -12,7 +12,8 @@ from .models import (
     Phi3HF,
     KeyBasedAuthentication,
     EndpointModels,
-    RestEndpointModels
+    RestEndpointModels,
+    RestEndpointO1PreviewModelsAzure,
 )
 
 __all__ = [

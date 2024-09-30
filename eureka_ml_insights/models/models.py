@@ -9,6 +9,8 @@ from dataclasses import dataclass
 import anthropic
 from azure.identity import AzureCliCredential, get_bearer_token_provider
 
+from ratelimit import rate_limited, sleep_and_retry
+
 from eureka_ml_insights.data_utils import GetKey
 
 
@@ -71,6 +73,13 @@ class EndpointModels(Model):
     num_retries: int = 3
     frequency_penalty: float = 0
     presence_penalty: float = 0
+    rate_limit: bool = False
+    calls: int = 10
+    period: int = 60
+
+    def __post_init__(self):
+        if self.rate_limit:
+            self.get_response = sleep_and_retry(rate_limited(calls=self.calls, period=self.period)(self.get_response))
 
     @abstractmethod
     def create_request(self, text_prompt, query_images=None, system_message=None):
@@ -157,6 +166,47 @@ class RestEndpointModels(EndpointModels, KeyBasedAuthentication):
         response = urllib.request.urlopen(request)
         res = json.loads(response.read())
         return res["output"]
+
+    def handle_request_error(self, e):
+        if isinstance(e, urllib.error.HTTPError):
+            logging.info("The request failed with status code: " + str(e.code))
+            # Print the headers - they include the requert ID and the timestamp, which are useful for debugging.
+            logging.info(e.info())
+            logging.info(e.read().decode("utf8", "ignore"))
+        return None, False, False
+
+
+@dataclass
+class RestEndpointO1PreviewModelsAzure(EndpointModels):
+
+    do_sample: bool = True
+
+    def __post_init__(self):
+        self.bearer_token_provider = get_bearer_token_provider(AzureCliCredential(), "https://cognitiveservices.azure.com/.default")
+        super().__post_init__()
+
+    def create_request(self, text_prompt, query_images, system_message):
+        data = {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": text_prompt,
+                }
+            ],
+        }
+
+        body = str.encode(json.dumps(data))
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": ("Bearer " + self.bearer_token_provider()),
+        }
+
+        return urllib.request.Request(self.url, body, headers)
+
+    def get_response(self, request):
+        response = urllib.request.urlopen(request)
+        res = json.loads(response.read())
+        return res["choices"][0]["message"]["content"]
 
     def handle_request_error(self, e):
         if isinstance(e, urllib.error.HTTPError):
