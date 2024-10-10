@@ -80,8 +80,79 @@ def coallate_results(release_directory_path, config):
     with open('website\\static\\compiled_results.json', 'w') as f:
         json.dump(data, f, indent=2)
 
-# Example usage
-release_directory_path = '\\release'
-config_path = 'website\\static\\config.json'
 
-coallate_results(release_directory_path, json.load(open(config_path)))
+def create_benchmark_breakdown(release_directory_path, config):
+    mapping = config["benchmarks"]
+    model_family_list = config["model_families"]
+    data = { }
+    for benchmark in mapping:
+        name = benchmark["name"]
+        data[name] = {"graphs": []}
+        description = benchmark["description"]
+        file_pattern = re.compile(benchmark["filePattern"], re.IGNORECASE)
+        
+        for graph in benchmark["graphs"]:
+            path = graph["path"]
+            model_families = os.listdir(os.path.join(release_directory_path, *path))
+            model_scores = []
+            for model_family in model_families:
+                if model_family.lower() not in model_family_list:
+                    continue
+                models = os.listdir(os.path.join(release_directory_path, *path, model_family))
+                for model in models:
+                    runs = os.listdir(os.path.join(release_directory_path, *path, model_family, model))
+                    
+                    sum = 0.0
+                    num = 0 # there's a chance that one of the runs doesn't have the correct output file so need to keep track separately
+                    for run in runs:
+                        try:
+                            # if name == "Long Context QA Longest Context (3K)":
+                            #     file_pattern = re.compile(r'^.*by_ctx_size_normalized.*\.json$', re.IGNORECASE)
+                            report = [f for f in os.listdir(os.path.join(release_directory_path, *path, model_family, model, run, 'eval_report')) if file_pattern.match(f)]
+                            if len(report) == 0:
+                                continue
+                            else:
+                                report = report[0]
+                            file_path = os.path.join(release_directory_path, *path, model_family, model, run, 'eval_report', report)
+                            with open(file_path, 'r') as f:
+                                file_contents = f.read()
+                                scores = json.loads(file_contents)
+                                for metric in graph["metric"]:
+                                    scores = scores[metric]
+                                if name == "Geometric Reasoning": # geometric reasoning reports count instead of percentage
+                                    none = 0
+                                    if "none" in scores and (scores["none"] == scores["none"]):
+                                        none = scores["none"]
+                                    scores = scores["correct"] * 1.0 / (scores["correct"] + scores["incorrect"] + none)
+                                sum += scores
+                            num += 1
+                            break
+                        except FileNotFoundError:
+                            continue
+                    if model == 'GPT-4o_2024_05_13_450K':
+                        model = 'GPT-4o-2024-05-13'
+                    if model == 'GPT-4o_2024_05_13':
+                        model = 'GPT-4o-2024-05-13'
+                    if model == "LLaVA-34B":
+                        model = "Llava-1_6-34B"
+                    if model == "GPT-4":
+                        model = "GPT-4-1106-Preview"
+                    
+                    model_scores.append({   
+                        "name": model,
+                        "score": round(sum  * 100.0 / num, 1)
+                    })
+            data[name]["graphs"].append({
+                "title": graph["title"],
+                "models": model_scores
+            })
+    with open('website/static/benchmark_results.json', 'w') as f:
+        json.dump(data, f, indent=2)
+
+
+# Example usage
+release_directory_path = '/mnt/c/Users/jluey/OneDrive - Microsoft/Documents/release'
+config_path = 'website/static/config.json'
+
+# coallate_results(release_directory_path, json.load(open(config_path)))
+create_benchmark_breakdown(release_directory_path, json.load(open(config_path)))

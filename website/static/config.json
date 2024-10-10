@@ -1,13 +1,123 @@
 {
   "benchmarks": [
-    "Geometric Reasoning",
-    "MMMU",
-    "Image Understanding",
-    "Vision Language Understanding",
-    "IFEval",
-    "FlenQA",
-    "Kitab",
-    "Toxigen"
+    {
+      "name": "Geometric Reasoning",
+      "modality": "multimodal",
+      "filePattern": ".*GeoMCQMetric_result_grouped_by_category_report.*",
+      "description": "Cool stuff",
+      
+      "graphs": [
+        {
+          "title": "Depth",
+          "path": ["Geometric-Reasoning"],
+          "metric": ["GeoMCQMetric_result", "depth"]
+        },
+        {
+          "title": "Height",
+          "path": ["Geometric-Reasoning"],
+          "metric": ["GeoMCQMetric_result", "height"]
+        }
+      ]
+    },
+    {
+      "name": "MMMU",
+      "modality": "multimodal",
+      "path": ["MMMU", "MMMU"],
+      "filePattern": ".*MMMUMetric_result_grouped_by_category_normalized_report.*",
+      "description": "",
+      "graphs": [
+        {
+          "title": "Art and Design",
+          "path": ["MMMU", "MMMU"],
+          "metric": ["MMMUMetric_result", "Art and Design", "correct"]
+        },
+        {
+          "title": "Business",
+          "path": ["MMMU", "MMMU"],
+          "metric": ["MMMUMetric_result", "Business", "correct"]
+        },
+        {
+          "title": "Health and Medicine",
+          "path": ["MMMU", "MMMU"],
+          "metric": ["MMMUMetric_result", "Health and Medicine", "correct"]
+        },
+        {
+          "title": "Humanities and Social Science",
+          "path": ["MMMU", "MMMU"],
+          "metric": ["MMMUMetric_result", "Humanities and Social Science", "correct"]
+        },
+        {
+          "title": "Science",
+          "path": ["MMMU", "MMMU"],
+          "metric": ["MMMUMetric_result", "Science", "correct"]
+        },
+        {
+          "title": "Tech and Engineering",
+          "path": ["MMMU", "MMMU"],
+          "metric": ["MMMUMetric_result", "Tech and Engineering", "correct"]
+        }
+      ]
+    },
+    {
+      "name": "Image Understanding",
+      "modality": "multimodal",
+      "path": ["IMAGE_UNDERSTANDING", "OBJECT_RECOGNITION_SINGLE"],
+      "filePattern": ".*GeoMCQMetric_result_grouped_by_category_report.*",
+      "description": "",
+      "graphs": [
+
+      ]
+    },
+    {
+      "name": "Vision Language Understanding",
+      "modality": "multimodal",
+      "path": ["IMAGE_UNDERSTANDING", "OBJECT_RECOGNITION_SINGLE"],
+      "description": "",
+      "filePattern": ".*",
+      "graphs": [
+        
+      ]
+    },
+    {
+      "name": "IFEval",
+      "modality": "multimodal",
+      "path": ["IMAGE_UNDERSTANDING", "OBJECT_RECOGNITION_SINGLE"],
+      "description": "",
+      "filePattern": ".*",
+      "graphs": [
+        
+      ]
+    },
+    {
+      "name": "FlenQA",
+      "modality": "multimodal",
+      "path": ["IMAGE_UNDERSTANDING", "OBJECT_RECOGNITION_SINGLE"],
+      "description": "",
+      "filePattern": ".*",
+      "graphs": [
+        
+      ]
+    },
+    {
+      "name": "Kitab",
+      "modality": "multimodal",
+      "path": ["IMAGE_UNDERSTANDING", "OBJECT_RECOGNITION_SINGLE"],
+      "description": "",
+      "filePattern": ".*",
+      "graphs": [
+        
+      ]
+    },
+    {
+      "name": "Toxigen",
+      "modality": "multimodal",
+      "path": ["IMAGE_UNDERSTANDING", "OBJECT_RECOGNITION_SINGLE"],
+      "description": "",
+      "filePattern": ".*",
+      "graphs": [
+        
+      ]
+    }
   ],
   "capability_mapping": [
     {

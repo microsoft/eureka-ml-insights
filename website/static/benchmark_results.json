@@ -1,0 +1,292 @@
+{
+  "Geometric Reasoning": {
+    "graphs": [
+      {
+        "title": "Depth",
+        "models": [
+          {
+            "name": "Claude-3-Opus",
+            "score": 42.4
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 50.7
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 47.5
+          },
+          {
+            "name": "GPT-4-Turbo-2024-04-09",
+            "score": 38.9
+          },
+          {
+            "name": "GPT-4-Vision-Preview",
+            "score": 39.4
+          },
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 43.9
+          },
+          {
+            "name": "Llava-1_6-34B",
+            "score": 36.9
+          }
+        ]
+      },
+      {
+        "title": "Height",
+        "models": [
+          {
+            "name": "Claude-3-Opus",
+            "score": 17.0
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 28.0
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 33.0
+          },
+          {
+            "name": "GPT-4-Turbo-2024-04-09",
+            "score": 12.0
+          },
+          {
+            "name": "GPT-4-Vision-Preview",
+            "score": 13.0
+          },
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 18.0
+          },
+          {
+            "name": "Llava-1_6-34B",
+            "score": 15.0
+          }
+        ]
+      }
+    ]
+  },
+  "MMMU": {
+    "graphs": [
+      {
+        "title": "Art and Design",
+        "models": [
+          {
+            "name": "Claude-3-Opus",
+            "score": 53.3
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 71.7
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 60.8
+          },
+          {
+            "name": "GPT-4-Turbo-2024-04-09",
+            "score": 71.7
+          },
+          {
+            "name": "GPT-4-Vision-Preview",
+            "score": 64.2
+          },
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 73.3
+          },
+          {
+            "name": "Llava-1_6-34B",
+            "score": 55.0
+          }
+        ]
+      },
+      {
+        "title": "Business",
+        "models": [
+          {
+            "name": "Claude-3-Opus",
+            "score": 40.0
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 62.0
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 51.3
+          },
+          {
+            "name": "GPT-4-Turbo-2024-04-09",
+            "score": 52.0
+          },
+          {
+            "name": "GPT-4-Vision-Preview",
+            "score": 38.7
+          },
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 46.7
+          },
+          {
+            "name": "Llava-1_6-34B",
+            "score": 41.3
+          }
+        ]
+      },
+      {
+        "title": "Health and Medicine",
+        "models": [
+          {
+            "name": "Claude-3-Opus",
+            "score": 45.3
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 64.0
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 53.3
+          },
+          {
+            "name": "GPT-4-Turbo-2024-04-09",
+            "score": 64.7
+          },
+          {
+            "name": "GPT-4-Vision-Preview",
+            "score": 46.0
+          },
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 66.0
+          },
+          {
+            "name": "Llava-1_6-34B",
+            "score": 47.3
+          }
+        ]
+      },
+      {
+        "title": "Humanities and Social Science",
+        "models": [
+          {
+            "name": "Claude-3-Opus",
+            "score": 64.2
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 71.7
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 60.0
+          },
+          {
+            "name": "GPT-4-Turbo-2024-04-09",
+            "score": 74.2
+          },
+          {
+            "name": "GPT-4-Vision-Preview",
+            "score": 65.8
+          },
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 76.7
+          },
+          {
+            "name": "Llava-1_6-34B",
+            "score": 56.7
+          }
+        ]
+      },
+      {
+        "title": "Science",
+        "models": [
+          {
+            "name": "Claude-3-Opus",
+            "score": 36.7
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 48.7
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 46.0
+          },
+          {
+            "name": "GPT-4-Turbo-2024-04-09",
+            "score": 48.0
+          },
+          {
+            "name": "GPT-4-Vision-Preview",
+            "score": 35.3
+          },
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 53.3
+          },
+          {
+            "name": "Llava-1_6-34B",
+            "score": 26.7
+          }
+        ]
+      },
+      {
+        "title": "Tech and Engineering",
+        "models": [
+          {
+            "name": "Claude-3-Opus",
+            "score": 41.4
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 47.6
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 41.4
+          },
+          {
+            "name": "GPT-4-Turbo-2024-04-09",
+            "score": 44.3
+          },
+          {
+            "name": "GPT-4-Vision-Preview",
+            "score": 33.8
+          },
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 44.3
+          },
+          {
+            "name": "Llava-1_6-34B",
+            "score": 35.7
+          }
+        ]
+      }
+    ]
+  },
+  "Image Understanding": {
+    "graphs": []
+  },
+  "Vision Language Understanding": {
+    "graphs": []
+  },
+  "IFEval": {
+    "graphs": []
+  },
+  "FlenQA": {
+    "graphs": []
+  },
+  "Kitab": {
+    "graphs": []
+  },
+  "Toxigen": {
+    "graphs": []
+  }
+}

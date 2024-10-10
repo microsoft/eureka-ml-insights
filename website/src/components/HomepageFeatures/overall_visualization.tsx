@@ -156,13 +156,13 @@ const OverallVisualization = ({config}: {config: EurekaConfig}) => {
             <div style={{width: '100%'}}>
                 <Row justify="space-between" style={{display: 'flex', justifyContent: 'center'}}>
                     <Col xs={24} md={12} style={{ minWidth: '40em'}}>
-                    <div style={{ width: '90%', margin: '0 auto'}}>
-                        <HighchartsReact highcharts={Highcharts} options={languageChartOptions}/>
+                        <div style={{ width: '90%', margin: '0 auto'}}>
+                            <HighchartsReact highcharts={Highcharts} options={languageChartOptions}/>
                         </div>
                     </Col>
                     <Col xs={24} md={12} style={{ minWidth: '40em'}}>
-                    <div style={{ width: '90%', margin: '0 auto'}}>
-                        <HighchartsReact highcharts={Highcharts} options={multimodalChartOptions}/>
+                        <div style={{ width: '90%', margin: '0 auto'}}>
+                            <HighchartsReact highcharts={Highcharts} options={multimodalChartOptions}/>
                         </div>
                     </Col>
                 </Row>

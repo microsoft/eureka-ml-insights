@@ -1,18 +1,29 @@
 import React from "react";
 
 export interface EurekaConfig {
-    benchmarks: string[];
+    benchmarks: Benchmark[];
     models: ModelConfig[];
     model_families: string[];
     capability_mapping: Capability[];
 }
+export interface Benchmark {
+    name: string;
+    modality: string;
+    filePattern: string;
+    description: string;
+}
 
 export interface Capability {
-    "capability": string;
-    "modality": string;
-    "path": string[]
-    "metric": string[],
-    "description": string[];
+    capability: string;
+    modality: string;
+    path: string[];
+    metric: string[];
+    description: string[];
+}
+
+export interface BenchmarkGraph {
+    title: string;
+    models: ModelScore[];
 }
 
 export interface ModelScore {
