@@ -14,6 +14,7 @@ from .models import (
     EndpointModels,
     RestEndpointModels,
     RestEndpointO1PreviewModelsAzure,
+    OpenAIModelsO1Azure,
 )
 
 __all__ = [

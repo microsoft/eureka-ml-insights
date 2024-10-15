@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 import anthropic
-from azure.identity import AzureCliCredential, get_bearer_token_provider
+from azure.identity import AzureCliCredential, ManagedIdentityCredential, get_bearer_token_provider, DefaultAzureCredential
 
 from ratelimit import rate_limited, sleep_and_retry
 
@@ -182,7 +182,7 @@ class RestEndpointO1PreviewModelsAzure(EndpointModels):
     do_sample: bool = True
 
     def __post_init__(self):
-        self.bearer_token_provider = get_bearer_token_provider(AzureCliCredential(), "https://cognitiveservices.azure.com/.default")
+        self.bearer_token_provider = get_bearer_token_provider(ManagedIdentityCredential(client_id="205cb331-87f7-4e09-a6dd-70715dec87ec"), "https://cognitiveservices.azure.com/.default")
         super().__post_init__()
 
     def create_request(self, text_prompt, query_images, system_message):
@@ -373,12 +373,58 @@ class OpenAIModelsAzure(OpenAIModelsMixIn):
     def get_client(self):
         from openai import AzureOpenAI
 
-        token_provider = get_bearer_token_provider(AzureCliCredential(), "https://cognitiveservices.azure.com/.default")
+        token_provider = get_bearer_token_provider(ManagedIdentityCredential(client_id="205cb331-87f7-4e09-a6dd-70715dec87ec"), "https://cognitiveservices.azure.com/.default")
         return AzureOpenAI(
             azure_endpoint=self.url,
             api_version=self.api_version,
             azure_ad_token_provider=token_provider,
         )
+
+    def handle_request_error(self, e):
+        # if the error is due to a content filter, there is no need to retry
+        if e.code == "content_filter":
+            logging.warning("Content filtered.")
+            response = None
+            return response, False, True
+        return None, False, False
+
+
+@dataclass
+class OpenAIModelsO1Azure(OpenAIModelsMixIn):
+    """This class is used to interact with Azure OpenAI models."""
+    rate_limit: bool = False
+    calls: int = 500
+    period: int = 60
+
+    def __post_init__(self):
+        self.client = self.get_client()
+        if self.rate_limit:
+            self.get_response = sleep_and_retry(rate_limited(calls=self.calls, period=self.period)(self.get_response))
+
+    def get_client(self):
+        from openai import AzureOpenAI
+
+        token_provider = get_bearer_token_provider(ManagedIdentityCredential(client_id="205cb331-87f7-4e09-a6dd-70715dec87ec"), "https://cognitiveservices.azure.com/.default")
+        return AzureOpenAI(
+            azure_endpoint=self.url,
+            api_version=self.api_version,
+            azure_ad_token_provider=token_provider,
+        )
+
+    def create_request(self, prompt, query_images, system_message):
+        messages = []
+        user_content = {"role": "user", "content": prompt}
+        messages.append(user_content)
+        return {"messages": messages}
+
+    def get_response(self, request):
+        completion = self.client.chat.completions.create(
+            model=self.model_name,
+            seed=self.seed,
+            **request,
+        )
+        openai_response = completion.model_dump()
+        return openai_response["choices"][0]["message"]["content"]
 
     def handle_request_error(self, e):
         # if the error is due to a content filter, there is no need to retry
