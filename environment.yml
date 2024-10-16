@@ -326,6 +326,7 @@ dependencies:
       - regex==2023.12.25
       - rfc3339-validator==0.1.4
       - rfc3986-validator==0.1.1
+      - ratelimit==2.2.1
       - rich==13.7.1
       - rpds-py==0.18.0
       - ruff==0.3.0

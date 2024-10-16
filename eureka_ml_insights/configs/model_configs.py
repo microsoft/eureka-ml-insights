@@ -11,6 +11,7 @@ from eureka_ml_insights.models import (
     MistralServerlessAzureRestEndpointModels,
     OpenAIModelsOAI,
     RestEndpointModels,
+    OpenAIModelsO1Azure
 )
 
 from .config import ModelConfig
@@ -161,5 +162,13 @@ AIF_NT_MISTRAL_LARGE_2_2407_CONFIG = ModelConfig(
             "key_vault_url": None,
         },
         "model_name": "Mistral-large-2407",
+    },
+)
+
+O1_PREVIEW_AZURE_DEPLOYMENT_MODEL_CONFIG = ModelConfig(
+    OpenAIModelsO1Azure,
+    {
+        "url": "https://crescoeastus2.openai.azure.com",
+        "model_name": "o1-preview",
     },
 )

@@ -7,7 +7,9 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 import anthropic
-from azure.identity import AzureCliCredential, get_bearer_token_provider
+from azure.identity import AzureCliCredential, ManagedIdentityCredential, get_bearer_token_provider, DefaultAzureCredential
+
+from ratelimit import rate_limited, sleep_and_retry
 
 from eureka_ml_insights.data_utils import GetKey
 
@@ -71,6 +73,13 @@ class EndpointModels(Model):
     num_retries: int = 3
     frequency_penalty: float = 0
     presence_penalty: float = 0
+    rate_limit: bool = False
+    calls: int = 10
+    period: int = 60
+
+    def __post_init__(self):
+        if self.rate_limit:
+            self.get_response = sleep_and_retry(rate_limited(calls=self.calls, period=self.period)(self.get_response))
 
     @abstractmethod
     def create_request(self, text_prompt, query_images=None, system_message=None):
@@ -157,6 +166,47 @@ class RestEndpointModels(EndpointModels, KeyBasedAuthentication):
         response = urllib.request.urlopen(request)
         res = json.loads(response.read())
         return res["output"]
+
+    def handle_request_error(self, e):
+        if isinstance(e, urllib.error.HTTPError):
+            logging.info("The request failed with status code: " + str(e.code))
+            # Print the headers - they include the requert ID and the timestamp, which are useful for debugging.
+            logging.info(e.info())
+            logging.info(e.read().decode("utf8", "ignore"))
+        return None, False, False
+
+
+@dataclass
+class RestEndpointO1PreviewModelsAzure(EndpointModels):
+
+    do_sample: bool = True
+
+    def __post_init__(self):
+        self.bearer_token_provider = get_bearer_token_provider(ManagedIdentityCredential(client_id="205cb331-87f7-4e09-a6dd-70715dec87ec"), "https://cognitiveservices.azure.com/.default")
+        super().__post_init__()
+
+    def create_request(self, text_prompt, query_images, system_message):
+        data = {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": text_prompt,
+                }
+            ],
+        }
+
+        body = str.encode(json.dumps(data))
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": ("Bearer " + self.bearer_token_provider()),
+        }
+
+        return urllib.request.Request(self.url, body, headers)
+
+    def get_response(self, request):
+        response = urllib.request.urlopen(request)
+        res = json.loads(response.read())
+        return res["choices"][0]["message"]["content"]
 
     def handle_request_error(self, e):
         if isinstance(e, urllib.error.HTTPError):
@@ -323,12 +373,58 @@ class OpenAIModelsAzure(OpenAIModelsMixIn):
     def get_client(self):
         from openai import AzureOpenAI
 
-        token_provider = get_bearer_token_provider(AzureCliCredential(), "https://cognitiveservices.azure.com/.default")
+        token_provider = get_bearer_token_provider(ManagedIdentityCredential(client_id="205cb331-87f7-4e09-a6dd-70715dec87ec"), "https://cognitiveservices.azure.com/.default")
         return AzureOpenAI(
             azure_endpoint=self.url,
             api_version=self.api_version,
             azure_ad_token_provider=token_provider,
         )
+
+    def handle_request_error(self, e):
+        # if the error is due to a content filter, there is no need to retry
+        if e.code == "content_filter":
+            logging.warning("Content filtered.")
+            response = None
+            return response, False, True
+        return None, False, False
+
+
+@dataclass
+class OpenAIModelsO1Azure(OpenAIModelsMixIn):
+    """This class is used to interact with Azure OpenAI models."""
+    rate_limit: bool = False
+    calls: int = 500
+    period: int = 60
+
+    def __post_init__(self):
+        self.client = self.get_client()
+        if self.rate_limit:
+            self.get_response = sleep_and_retry(rate_limited(calls=self.calls, period=self.period)(self.get_response))
+
+    def get_client(self):
+        from openai import AzureOpenAI
+
+        token_provider = get_bearer_token_provider(ManagedIdentityCredential(client_id="205cb331-87f7-4e09-a6dd-70715dec87ec"), "https://cognitiveservices.azure.com/.default")
+        return AzureOpenAI(
+            azure_endpoint=self.url,
+            api_version=self.api_version,
+            azure_ad_token_provider=token_provider,
+        )
+
+    def create_request(self, prompt, query_images, system_message):
+        messages = []
+        user_content = {"role": "user", "content": prompt}
+        messages.append(user_content)
+        return {"messages": messages}
+
+    def get_response(self, request):
+        completion = self.client.chat.completions.create(
+            model=self.model_name,
+            seed=self.seed,
+            **request,
+        )
+        openai_response = completion.model_dump()
+        return openai_response["choices"][0]["message"]["content"]
 
     def handle_request_error(self, e):
         # if the error is due to a content filter, there is no need to retry
