@@ -62,15 +62,7 @@ class KeyBasedAuthentication:
 @dataclass
 class EndpointModels(Model):
     """This class is used to interact with API-based models."""
-
-    url: str = None
-    model_name: str = None
-    max_tokens: int = 2000
-    temperature: float = 0
-    top_p: float = 0.95
     num_retries: int = 3
-    frequency_penalty: float = 0
-    presence_penalty: float = 0
 
     @abstractmethod
     def create_request(self, text_prompt, query_images=None, system_message=None):
@@ -115,7 +107,13 @@ class EndpointModels(Model):
 
 @dataclass
 class RestEndpointModels(EndpointModels, KeyBasedAuthentication):
-
+    url: str = None
+    model_name: str = None
+    temperature: float = 0
+    max_tokens: int = 2000
+    top_p: float = 0.95
+    frequency_penalty: float = 0
+    presence_penalty: float = 0
     do_sample: bool = True
 
     def create_request(self, text_prompt, query_images=None, system_message=None):
@@ -208,6 +206,11 @@ class LlamaServerlessAzureRestEndpointModels(ServerlessAzureRestEndpointModels, 
 
     """See https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-llama?tabs=llama-three for the api reference."""
 
+    temperature: float = 0
+    max_tokens: int = 2000
+    top_p: float = 0.95
+    frequency_penalty: float = 0
+    presence_penalty: float = 0
     use_beam_search: str = "false"
     best_of: int = 1
     skip_special_tokens: str = "false"
@@ -235,7 +238,9 @@ class MistralServerlessAzureRestEndpointModels(ServerlessAzureRestEndpointModels
     """Tested for Mistral Large 2 2407 deployments."""
 
     """See https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-mistral?tabs=mistral-large#mistral-chat-api for the api reference."""
-
+    temperature: float = 0
+    max_tokens: int = 2000
+    top_p: float = 1
     safe_prompt: str = "false"
 
     def __post_init__(self):
@@ -267,7 +272,11 @@ class OpenAIModelsMixIn(EndpointModels):
     This is an abstract class and should not be used directly. Child classes should implement the get_client
     method and handle_request_error method.
     """
-
+    temperature: float = 0
+    max_tokens: int = 2000
+    top_p: float = 0.95
+    frequency_penalty: float = 0
+    presence_penalty: float = 0
     seed: int = 0
     api_version: str = "2023-06-01-preview"
 
@@ -360,10 +369,58 @@ class OpenAIModelsOAI(OpenAIModelsMixIn, KeyBasedAuthentication):
 
 
 @dataclass
+class OpenAIO1Direct(EndpointModels, KeyBasedAuthentication):
+    model_name: str = None
+    temperature: float = 1
+    max_completion_tokens: int = 2000
+    top_p: float = 1
+    seed: int = 0
+    frequency_penalty: float = 0
+    presence_penalty: float = 0
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.client = self.get_client()
+    
+    def get_client(self):
+        from openai import OpenAI
+
+        return OpenAI(
+            api_key=self.api_key,
+        )
+
+    def create_request(self, prompt, *kwargs):
+        messages = [{"role": "user", "content": prompt}]
+        return {"messages": messages}
+
+
+    def get_response(self, request):
+        completion = self.client.chat.completions.create(
+            model=self.model_name,
+            seed=self.seed,
+            temperature=self.temperature,
+            top_p=self.top_p,
+            frequency_penalty=self.frequency_penalty,
+            presence_penalty=self.presence_penalty,
+            **request,
+        )
+        openai_response = completion.model_dump()
+        return openai_response["choices"][0]["message"]["content"]
+
+    def handle_request_error(self, e):
+        logging.warning(e)
+        return None, False, False
+
+@dataclass
 class GeminiModels(EndpointModels, KeyBasedAuthentication):
     """This class is used to interact with Gemini models through the python api."""
 
     timeout: int = 60
+    model_name: str = None
+    temperature: float = 0
+    max_tokens: int = 2000
+    top_p: float = 0.95
+
 
     def __post_init__(self):
         super().__post_init__()
@@ -724,7 +781,10 @@ class LLaVA(LLaVAHuggingFaceMM):
 class ClaudeModels(EndpointModels, KeyBasedAuthentication):
     """This class is used to interact with Claude models through the python api."""
 
-
+    model_name: str = None
+    temperature: float = 0
+    max_tokens: int = 2000
+    top_p: float = 0.95
     timeout: int = 60
 
     def __post_init__(self):
