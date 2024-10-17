@@ -26,7 +26,10 @@ class SpatialReasoningTestModel:
         self.name = "random_generator"
 
     def generate(self, text_prompt, query_images=None):
-        return random.choice(["left", "right", "above", "below"]), random.choice([True, False])
+        return {
+            "model_output": random.choice(["left", "right", "above", "below"]),
+            "is_valid": random.choice([True, False]),
+        }
 
     def name(self):
         return self.name
@@ -37,7 +40,7 @@ class MultipleChoiceTestModel:
         self.name = "random_generator"
 
     def generate(self, text_prompt, query_images=None):
-        return random.choice(["A", "B", "C", "D"]), random.choice([True, False])
+        return {"model_output": random.choice(["A", "B", "C", "D"]), "is_valid": random.choice([True, False])}
 
     def name(self):
         return self.name
@@ -48,7 +51,10 @@ class HoloAssistTestModel:
         self.name = "random_generator"
 
     def generate(self, text_prompt, query_images=None):
-        return random.choice(["printer", "gopro", "nintendo switch", "dslr"]), random.choice([True, False])
+        return {
+            "model_output": random.choice(["printer", "gopro", "nintendo switch", "dslr"]),
+            "is_valid": random.choice([True, False]),
+        }
 
 
 class GeometricReasoningTestModel:
@@ -56,7 +62,7 @@ class GeometricReasoningTestModel:
         self.name = "random_generator"
 
     def generate(self, text_prompt, query_images=None):
-        return random.choice(["(13, 66)", "(66, 13)"]), random.choice([True, False])
+        return {"model_output": random.choice(["(13, 66)", "(66, 13)"]), "is_valid": random.choice([True, False])}
 
 
 class KitabTestModel:
@@ -86,7 +92,7 @@ class KitabTestModel:
             model_output
             + "Output:\n1. Reason: The title contains only 2 words. Title: An Enemy\n2. Reason: The title contains only 2 words. Title: The Continental\n3. Reason: The title contains only 2 words. Title: The Road\n4. Reason: The title contains only 2 words. Title: A Gentleman"
         )
-        return random.choice(potential_outputs), random.choice([True])
+        return {"model_output": random.choice(potential_outputs), "is_valid": True}
 
 
 class GenericTestModel:
@@ -94,7 +100,7 @@ class GenericTestModel:
         self.name = model_name
 
     def generate(self, text_prompt, query_images=None):
-        return "Generic model output", random.choice([True, False])
+        return {"model_output": "Generic model output", "is_valid": random.choice([True, False])}
 
 
 class DNAEvaluationInferenceTestModel:
@@ -103,9 +109,10 @@ class DNAEvaluationInferenceTestModel:
 
     def generate(self, text_prompt):
         label = random.choice(["1", "2", "3", "4", "5", "6"])
-        return "The Assistant's Response falls under class {0}. \n\n<answer>{0}</answer>".format(label), random.choice(
-            [True, False]
-        )
+        return {
+            "model_output": "The Assistant's Response falls under class {0}. \n\n<answer>{0}</answer>".format(label),
+            "is_valid": random.choice([True, False]),
+        }
 
 
 class ToxiGenTestModel:
@@ -150,7 +157,7 @@ class ToxiGenTestModel:
             "because it can lead people to believe that there is no room for "
             "compromise or understanding between different religious traditions."
         )
-        return random.choice(potential_outputs), random.choice([True, False])
+        return {"model_output": random.choice(potential_outputs), "is_valid": random.choice([True, False])}
 
 
 class DetectionTestModel:
@@ -175,7 +182,8 @@ class DetectionTestModel:
 
             model_output += f"{coords} - {name} - {conf}\n"
 
-        return model_output, True
+        # TODO test fails in the case where is_valid is False
+        return {"model_output": model_output, "is_valid": random.choice([True])}
 
 
 class TestMetric(ClassicMetric):
