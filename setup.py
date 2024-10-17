@@ -33,6 +33,7 @@ setup(
         'langdetect>=1.0.9',
         'nltk>=3.9.1',
         'absl-py>=2.1.0',
+        'tiktoken>=0.8.0',
         'python-levenshtein>=0.12.2',
         'google-generativeai>=0.7.0',
         'openai>=1.35.5',

@@ -9,6 +9,7 @@ from .models import (
     OpenAIModelsMixIn,
     OpenAIModelsAzure,
     OpenAIModelsOAI,
+    OpenAIO1Direct,
     Phi3HF,
     KeyBasedAuthentication,
     EndpointModels,
@@ -17,6 +18,7 @@ from .models import (
 
 __all__ = [
     OpenAIModelsMixIn,
+    OpenAIO1Direct,
     HuggingFaceLM,
     LLaVAHuggingFaceMM,
     Phi3HF,
