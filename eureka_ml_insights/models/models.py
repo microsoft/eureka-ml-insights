@@ -431,7 +431,7 @@ class DirectOpenAIModel(OpenAICommonRequestResponseMixIn, DirectOpenAIClientMixI
     api_version: str = "2023-06-01-preview"
 
     def __post_init__(self):
-        super().__post_init__()
+        self.api_key = self.get_api_key()
         self.client = self.get_client()
 
 class OpenAIO1RequestResponseMixIn():
@@ -469,7 +469,8 @@ class DirectOpenAIO1Model(OpenAIO1RequestResponseMixIn, DirectOpenAIClientMixIn,
     presence_penalty: float = 0
 
     def __post_init__(self):
-        self.client = super().get_client()
+        self.api_key = self.get_api_key()
+        self.client = self.get_client()
 
 @dataclass
 class AzureOpenAIO1Model(OpenAIO1RequestResponseMixIn, AzureOpenAIClientMixIn, EndpointModel):
@@ -488,7 +489,7 @@ class AzureOpenAIO1Model(OpenAIO1RequestResponseMixIn, AzureOpenAIClientMixIn, E
 
 
     def __post_init__(self):
-        self.client = super().get_client()
+        self.client = self.get_client()
 
 
 @dataclass
