@@ -62,7 +62,7 @@ class Model(ABC):
 
 
 @dataclass
-class KeyBasedAuthentication:
+class KeyBasedAuthMixIn:
     """This class is used to handle key-based authentication for models."""
 
     api_key: str = None
@@ -85,7 +85,7 @@ class KeyBasedAuthentication:
 
 
 @dataclass
-class EndpointModels(Model):
+class EndpointModel(Model):
     """This class is used to interact with API-based models."""
 
     num_retries: int = 3
@@ -149,7 +149,7 @@ class EndpointModels(Model):
 
 
 @dataclass
-class RestEndpointModels(EndpointModels, KeyBasedAuthentication):
+class RestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
     url: str = None
     model_name: str = None
     temperature: float = 0
@@ -206,14 +206,14 @@ class RestEndpointModels(EndpointModels, KeyBasedAuthentication):
     def handle_request_error(self, e):
         if isinstance(e, urllib.error.HTTPError):
             logging.info("The request failed with status code: " + str(e.code))
-            # Print the headers - they include the requert ID and the timestamp, which are useful for debugging.
+            # Print the headers - they include the request ID and the timestamp, which are useful for debugging.
             logging.info(e.info())
             logging.info(e.read().decode("utf8", "ignore"))
         return False
 
 
 @dataclass
-class ServerlessAzureRestEndpointModels(EndpointModels, KeyBasedAuthentication):
+class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
     """This class can be used for serverless Azure model deployments."""
 
     """https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-serverless?tabs=azure-ai-studio"""
@@ -222,11 +222,20 @@ class ServerlessAzureRestEndpointModels(EndpointModels, KeyBasedAuthentication):
     stream: str = "false"
 
     def __post_init__(self):
-        super().__post_init__()
-        self.headers = {
-            "Content-Type": "application/json",
-            "Authorization": ("Bearer " + self.api_key),
-        }
+        try:
+            super().__post_init__()
+            self.headers = {
+                "Content-Type": "application/json",
+                "Authorization": ("Bearer " + self.api_key),
+            }
+        except ValueError:
+            self.bearer_token_provider = get_bearer_token_provider(
+                AzureCliCredential(), "https://cognitiveservices.azure.com/.default"
+            )
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": ("Bearer " + self.bearer_token_provider()),
+            }
 
     @abstractmethod
     def create_request(self, text_prompt, query_images=None, system_message=None):
@@ -252,7 +261,7 @@ class ServerlessAzureRestEndpointModels(EndpointModels, KeyBasedAuthentication):
 
 
 @dataclass
-class LlamaServerlessAzureRestEndpointModels(ServerlessAzureRestEndpointModels, KeyBasedAuthentication):
+class LlamaServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
     """Tested for Llama 3.1 405B Instruct deployments."""
 
     """See https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-llama?tabs=llama-three for the api reference."""
@@ -285,7 +294,7 @@ class LlamaServerlessAzureRestEndpointModels(ServerlessAzureRestEndpointModels, 
 
 
 @dataclass
-class MistralServerlessAzureRestEndpointModels(ServerlessAzureRestEndpointModels, KeyBasedAuthentication):
+class MistralServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
     """Tested for Mistral Large 2 2407 deployments."""
 
     """See https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-mistral?tabs=mistral-large#mistral-chat-api for the api reference."""
@@ -317,25 +326,10 @@ class MistralServerlessAzureRestEndpointModels(ServerlessAzureRestEndpointModels
 
 
 @dataclass
-class OpenAIModelsMixIn(EndpointModels):
+class OpenAICommonRequestResponseMixIn:
     """
-    This class defines the request and response handling for OpenAI models.
-    This is an abstract class and should not be used directly. Child classes should implement the get_client
-    method and handle_request_error method.
+    This mixin class defines the request and response handling for most OpenAI models.
     """
-
-    model_name: str = None
-    temperature: float = 0
-    max_tokens: int = 2000
-    top_p: float = 0.95
-    frequency_penalty: float = 0
-    presence_penalty: float = 0
-    seed: int = 0
-    api_version: str = "2023-06-01-preview"
-
-    @abstractmethod
-    def get_client(self):
-        raise NotImplementedError
 
     def create_request(self, prompt, query_images=None, system_message=None):
         messages = []
@@ -373,19 +367,9 @@ class OpenAIModelsMixIn(EndpointModels):
         self.model_output = openai_response["choices"][0]["message"]["content"]
         self.response_time = end_time - start_time
 
-    @abstractmethod
-    def handle_request_error(self, e):
-        raise NotImplementedError
 
-
-@dataclass
-class OpenAIModelsAzure(OpenAIModelsMixIn):
-    """This class is used to interact with Azure OpenAI models."""
-
-    url: str = None
-
-    def __post_init__(self):
-        self.client = self.get_client()
+class AzureOpenAIClientMixIn:
+    """This mixin provides some methods to interact with Azure OpenAI models."""
 
     def get_client(self):
         from openai import AzureOpenAI
@@ -406,13 +390,8 @@ class OpenAIModelsAzure(OpenAIModelsMixIn):
         return False
 
 
-@dataclass
-class OpenAIModelsOAI(OpenAIModelsMixIn, KeyBasedAuthentication):
-    """This class is used to interact with OpenAI models dirctly (not through Azure)"""
-
-    def __post_init__(self):
-        super().__post_init__()
-        self.client = self.get_client()
+class DirectOpenAIClientMixIn(KeyBasedAuthMixIn):
+    """This mixin class provides some methods for using OpenAI models dirctly (not through Azure)"""
 
     def get_client(self):
         from openai import OpenAI
@@ -427,30 +406,43 @@ class OpenAIModelsOAI(OpenAIModelsMixIn, KeyBasedAuthentication):
 
 
 @dataclass
-class OpenAIO1Direct(EndpointModels, KeyBasedAuthentication):
+class AzureOpenAIModel(OpenAICommonRequestResponseMixIn, AzureOpenAIClientMixIn, EndpointModel):
+    """This class is used to interact with Azure OpenAI models."""
+
+    url: str = None
     model_name: str = None
-    temperature: float = 1
-    # Not used currently, because the API throws:
-    # "Completions.create() got an unexpected keyword argument 'max_completion_tokens'"
-    # although this argument is documented in the OpenAI API documentation.
-    max_completion_tokens: int = 2000
-    top_p: float = 1
-    seed: int = 0
+    temperature: float = 0
+    max_tokens: int = 2000
+    top_p: float = 0.95
     frequency_penalty: float = 0
     presence_penalty: float = 0
+    seed: int = 0
+    api_version: str = "2023-06-01-preview"
 
     def __post_init__(self):
-        super().__post_init__()
         self.client = self.get_client()
 
-    def get_client(self):
-        from openai import OpenAI
 
-        return OpenAI(
-            api_key=self.api_key,
-        )
+@dataclass
+class DirectOpenAIModel(OpenAICommonRequestResponseMixIn, DirectOpenAIClientMixIn, EndpointModel):
+    """This class is used to interact with OpenAI models dirctly (not through Azure)"""
 
-    def create_request(self, prompt, *kwargs):
+    model_name: str = None
+    temperature: float = 0
+    max_tokens: int = 2000
+    top_p: float = 0.95
+    frequency_penalty: float = 0
+    presence_penalty: float = 0
+    seed: int = 0
+    api_version: str = "2023-06-01-preview"
+
+    def __post_init__(self):
+        self.api_key = self.get_api_key()
+        self.client = self.get_client()
+
+
+class OpenAIO1RequestResponseMixIn:
+    def create_request(self, prompt, *args, **kwargs):
         messages = [{"role": "user", "content": prompt}]
         return {"messages": messages}
 
@@ -470,13 +462,46 @@ class OpenAIO1Direct(EndpointModels, KeyBasedAuthentication):
         self.model_output = openai_response["choices"][0]["message"]["content"]
         self.response_time = end_time - start_time
 
-    def handle_request_error(self, e):
-        logging.warning(e)
-        return False
+
+@dataclass
+class DirectOpenAIO1Model(OpenAIO1RequestResponseMixIn, DirectOpenAIClientMixIn, EndpointModel):
+    model_name: str = None
+    temperature: float = 1
+    # Not used currently, because the API throws:
+    # "Completions.create() got an unexpected keyword argument 'max_completion_tokens'"
+    # although this argument is documented in the OpenAI API documentation.
+    max_completion_tokens: int = 2000
+    top_p: float = 1
+    seed: int = 0
+    frequency_penalty: float = 0
+    presence_penalty: float = 0
+
+    def __post_init__(self):
+        self.api_key = self.get_api_key()
+        self.client = self.get_client()
 
 
 @dataclass
-class GeminiModels(EndpointModels, KeyBasedAuthentication):
+class AzureOpenAIO1Model(OpenAIO1RequestResponseMixIn, AzureOpenAIClientMixIn, EndpointModel):
+    url: str = None
+    model_name: str = None
+    temperature: float = 1
+    # Not used currently, because the API throws:
+    # "Completions.create() got an unexpected keyword argument 'max_completion_tokens'"
+    # although this argument is documented in the OpenAI API documentation.
+    max_completion_tokens: int = 2000
+    top_p: float = 1
+    seed: int = 0
+    frequency_penalty: float = 0
+    presence_penalty: float = 0
+    api_version: str = "2023-06-01-preview"
+
+    def __post_init__(self):
+        self.client = self.get_client()
+
+
+@dataclass
+class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
     """This class is used to interact with Gemini models through the python api."""
 
     timeout: int = 60
@@ -549,7 +574,7 @@ class GeminiModels(EndpointModels, KeyBasedAuthentication):
 
 
 @dataclass
-class HuggingFaceLM(Model):
+class HuggingFaceModel(Model):
     """This class is used to run a self-hosted language model via HuggingFace apis."""
 
     model_name: str = None
@@ -647,7 +672,7 @@ class HuggingFaceLM(Model):
 
 
 @dataclass
-class Phi3HF(HuggingFaceLM):
+class Phi3HFModel(HuggingFaceModel):
     """This class is used to run a self-hosted PHI3 model via HuggingFace apis."""
 
     def __post_init__(self):
@@ -664,7 +689,7 @@ class Phi3HF(HuggingFaceLM):
 
 
 @dataclass
-class LLaVAHuggingFaceMM(HuggingFaceLM):
+class LLaVAHuggingFaceModel(HuggingFaceModel):
     """This class is used to run a self-hosted LLaVA model via HuggingFace apis."""
 
     quantize: bool = False
@@ -786,7 +811,7 @@ class LLaVAHuggingFaceMM(HuggingFaceLM):
 
 
 @dataclass
-class LLaVA(LLaVAHuggingFaceMM):
+class LLaVAModel(LLaVAHuggingFaceModel):
     """This class is used to run a self-hosted LLaVA model via the LLaVA package."""
 
     model_base: str = None
@@ -857,7 +882,7 @@ class LLaVA(LLaVAHuggingFaceMM):
 
 
 @dataclass
-class ClaudeModels(EndpointModels, KeyBasedAuthentication):
+class ClaudeModel(EndpointModel, KeyBasedAuthMixIn):
     """This class is used to interact with Claude models through the python api."""
 
     model_name: str = None
