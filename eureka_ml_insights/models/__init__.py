@@ -1,19 +1,17 @@
 from .models import (
+    AzureOpenAIModel,
+    AzureOpenAIO1Model,
     ClaudeModel,
+    DirectOpenAIModel,
+    DirectOpenAIO1Model,
     GeminiModel,
     HuggingFaceModel,
     LlamaServerlessAzureRestEndpointModel,
-    LLaVAModel,
     LLaVAHuggingFaceModel,
+    LLaVAModel,
     MistralServerlessAzureRestEndpointModel,
-    AzureOpenAIModel,
-    DirectOpenAIModel,
-    AzureOpenAIO1Model,
-    DirectOpenAIO1Model,
     Phi3HFModel,
-    KeyBasedAuthMixIn,
-    EndpointModel,
-    RestEndpointModel
+    RestEndpointModel,
 )
 
 __all__ = [
@@ -29,4 +27,5 @@ __all__ = [
     MistralServerlessAzureRestEndpointModel,
     LlamaServerlessAzureRestEndpointModel,
     LLaVAModel,
+    RestEndpointModel,
 ]

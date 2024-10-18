@@ -73,7 +73,6 @@ class KeyBasedAuthMixIn:
             raise ValueError("Either api_key or secret_key_params must be provided.")
         self.api_key = self.get_api_key()
 
-
     def get_api_key(self):
         """
         This method is used to get the api_key for the models that require key-based authentication.
@@ -81,7 +80,7 @@ class KeyBasedAuthMixIn:
         if api_key is not directly provided, secret_key_params must be provided to get the api_key using GetKey method.
         """
         if self.api_key is None:
-                self.api_key = GetKey(**self.secret_key_params)
+            self.api_key = GetKey(**self.secret_key_params)
         return self.api_key
 
 
@@ -230,12 +229,13 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
                 "Authorization": ("Bearer " + self.api_key),
             }
         except ValueError:
-            self.bearer_token_provider = get_bearer_token_provider(AzureCliCredential(), "https://cognitiveservices.azure.com/.default")
+            self.bearer_token_provider = get_bearer_token_provider(
+                AzureCliCredential(), "https://cognitiveservices.azure.com/.default"
+            )
             headers = {
                 "Content-Type": "application/json",
                 "Authorization": ("Bearer " + self.bearer_token_provider()),
             }
-        
 
     @abstractmethod
     def create_request(self, text_prompt, query_images=None, system_message=None):
@@ -326,7 +326,7 @@ class MistralServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
 
 
 @dataclass
-class OpenAICommonRequestResponseMixIn():
+class OpenAICommonRequestResponseMixIn:
     """
     This mixin class defines the request and response handling for most OpenAI models.
     """
@@ -368,8 +368,9 @@ class OpenAICommonRequestResponseMixIn():
         self.response_time = end_time - start_time
 
 
-class AzureOpenAIClientMixIn():
+class AzureOpenAIClientMixIn:
     """This mixin provides some methods to interact with Azure OpenAI models."""
+
     def get_client(self):
         from openai import AzureOpenAI
 
@@ -391,6 +392,7 @@ class AzureOpenAIClientMixIn():
 
 class DirectOpenAIClientMixIn(KeyBasedAuthMixIn):
     """This mixin class provides some methods for using OpenAI models dirctly (not through Azure)"""
+
     def get_client(self):
         from openai import OpenAI
 
@@ -402,9 +404,11 @@ class DirectOpenAIClientMixIn(KeyBasedAuthMixIn):
         logging.warning(e)
         return False
 
+
 @dataclass
 class AzureOpenAIModel(OpenAICommonRequestResponseMixIn, AzureOpenAIClientMixIn, EndpointModel):
     """This class is used to interact with Azure OpenAI models."""
+
     url: str = None
     model_name: str = None
     temperature: float = 0
@@ -418,9 +422,11 @@ class AzureOpenAIModel(OpenAICommonRequestResponseMixIn, AzureOpenAIClientMixIn,
     def __post_init__(self):
         self.client = self.get_client()
 
+
 @dataclass
 class DirectOpenAIModel(OpenAICommonRequestResponseMixIn, DirectOpenAIClientMixIn, EndpointModel):
     """This class is used to interact with OpenAI models dirctly (not through Azure)"""
+
     model_name: str = None
     temperature: float = 0
     max_tokens: int = 2000
@@ -434,7 +440,8 @@ class DirectOpenAIModel(OpenAICommonRequestResponseMixIn, DirectOpenAIClientMixI
         self.api_key = self.get_api_key()
         self.client = self.get_client()
 
-class OpenAIO1RequestResponseMixIn():
+
+class OpenAIO1RequestResponseMixIn:
     def create_request(self, prompt, *args, **kwargs):
         messages = [{"role": "user", "content": prompt}]
         return {"messages": messages}
@@ -455,6 +462,7 @@ class OpenAIO1RequestResponseMixIn():
         self.model_output = openai_response["choices"][0]["message"]["content"]
         self.response_time = end_time - start_time
 
+
 @dataclass
 class DirectOpenAIO1Model(OpenAIO1RequestResponseMixIn, DirectOpenAIClientMixIn, EndpointModel):
     model_name: str = None
@@ -472,6 +480,7 @@ class DirectOpenAIO1Model(OpenAIO1RequestResponseMixIn, DirectOpenAIClientMixIn,
         self.api_key = self.get_api_key()
         self.client = self.get_client()
 
+
 @dataclass
 class AzureOpenAIO1Model(OpenAIO1RequestResponseMixIn, AzureOpenAIClientMixIn, EndpointModel):
     url: str = None
@@ -486,7 +495,6 @@ class AzureOpenAIO1Model(OpenAIO1RequestResponseMixIn, AzureOpenAIClientMixIn, E
     frequency_penalty: float = 0
     presence_penalty: float = 0
     api_version: str = "2023-06-01-preview"
-
 
     def __post_init__(self):
         self.client = self.get_client()
