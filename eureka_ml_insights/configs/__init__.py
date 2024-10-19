@@ -15,6 +15,7 @@ from .experiment_config import ExperimentConfig, create_logdir
 from .flenqa import FlenQA_Experiment_Pipeline
 from .geometer import GEOMETER_PIPELINE
 from .ifeval import IFEval_PIPELINE
+from .aime import AIME_PIPELINE
 from .kitab import (
     GPT35_KITAB_ONE_BOOK_CONSTRAINT_PIPELINE,
     KITAB_ONE_BOOK_CONSTRAINT_PIPELINE,
