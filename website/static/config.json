@@ -80,7 +80,7 @@
     },
     {
       "name": "IFEval",
-      "modality": "multimodal",
+      "modality": "language",
       "path": ["IMAGE_UNDERSTANDING", "OBJECT_RECOGNITION_SINGLE"],
       "description": "",
       "filePattern": ".*",
@@ -90,17 +90,44 @@
     },
     {
       "name": "FlenQA",
-      "modality": "multimodal",
+      "modality": "language",
       "path": ["IMAGE_UNDERSTANDING", "OBJECT_RECOGNITION_SINGLE"],
       "description": "",
-      "filePattern": ".*",
+      "filePattern": ".*ExactMatch_result_grouped_by_ctx_size.*",
       "graphs": [
-        
+        {
+          "title": "Context Size: 250",
+          "path": ["FlenQA"],
+          "metric": ["ExactMatch_result", "250", "correct"]
+        },
+        {
+          "title": "Context Size: 500",
+          "path": ["FlenQA"],
+          "metric": ["ExactMatch_result", "500", "correct"]
+        }
+        ,
+        {
+          "title": "Context Size: 1000",
+          "path": ["FlenQA"],
+          "metric": ["ExactMatch_result", "1000", "correct"]
+        }
+        ,
+        {
+          "title": "Context Size: 2000",
+          "path": ["FlenQA"],
+          "metric": ["ExactMatch_result", "2000", "correct"]
+        }
+        ,
+        {
+          "title": "Context Size: 3000",
+          "path": ["FlenQA"],
+          "metric": ["ExactMatch_result", "3000", "correct"]
+        }
       ]
     },
     {
       "name": "Kitab",
-      "modality": "multimodal",
+      "modality": "language",
       "path": ["IMAGE_UNDERSTANDING", "OBJECT_RECOGNITION_SINGLE"],
       "description": "",
       "filePattern": ".*",
@@ -110,7 +137,7 @@
     },
     {
       "name": "Toxigen",
-      "modality": "multimodal",
+      "modality": "language",
       "path": ["IMAGE_UNDERSTANDING", "OBJECT_RECOGNITION_SINGLE"],
       "description": "",
       "filePattern": ".*",

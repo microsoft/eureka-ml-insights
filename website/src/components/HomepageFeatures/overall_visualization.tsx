@@ -2,8 +2,11 @@ import React, { useState } from 'react';
 import { CapabilityScores, ModelScore, ModelConfig, EurekaConfig } from '../components/types';
 import Highcharts, { SeriesOptionsType } from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
-import { Col, Row } from 'antd';
+import { Button, Col, Row } from 'antd';
+import styles from './homepage_header.module.css';
 import Heading from '@theme/Heading';
+import { useHistory } from '@docusaurus/router';
+import Link from '@docusaurus/Link';
 
 const OverallVisualization = ({config}: {config: EurekaConfig}) => {
     if (!config) {  
@@ -147,6 +150,11 @@ const OverallVisualization = ({config}: {config: EurekaConfig}) => {
         }
     };
 
+    const history = useHistory();  
+    const navigateToBenchmarks = (modality) => {  
+        history.push(`/eureka-ml-insights/${modality}`);  
+    }  
+
     return (
         <div style={{width: '100%', paddingBottom: '4em'}}>
             <Heading as="h4" className="hero__title" style={{textAlign: "center", fontSize: '2.5em'}}>
@@ -159,10 +167,20 @@ const OverallVisualization = ({config}: {config: EurekaConfig}) => {
                         <div style={{ width: '90%', margin: '0 auto'}}>
                             <HighchartsReact highcharts={Highcharts} options={languageChartOptions}/>
                         </div>
+                        <div style={{display: 'flex', justifyContent: 'center'}}>
+                            <Button shape='round' className={`${styles.buttons}`} style={{outline: "black"}}>
+                                <Link to="/eureka-ml-insights/language"><strong>Explore Language Results</strong></Link>
+                            </Button>
+                        </div>
                     </Col>
                     <Col xs={24} md={12} style={{ minWidth: '40em'}}>
                         <div style={{ width: '90%', margin: '0 auto'}}>
                             <HighchartsReact highcharts={Highcharts} options={multimodalChartOptions}/>
+                        </div>
+                        <div style={{display: 'flex', justifyContent: 'center'}}>
+                            <Button shape='round' className={`${styles.buttons}`} style={{outline: "black"}}>
+                                <Link to="/eureka-ml-insights/multimodal"><strong>Explore Multimodal Results</strong></Link>
+                            </Button>
                         </div>
                     </Col>
                 </Row>

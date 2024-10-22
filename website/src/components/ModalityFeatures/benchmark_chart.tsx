@@ -11,7 +11,6 @@ const BenchmarkChart = ({benchmark, config}: {benchmark: string, config: EurekaC
     const [highchartsLoading, setHighchartsLoading] = useState(true);  
     const [benchmarkGraphSeries, setBenchmarkGraphSeries] = useState<[]>([]);
     const [graphTitles, setGraphTitles] = useState<[]>([]);
-    const [benchmarkDescription, setBenchmarkDescription] = useState("");
 
     React.useEffect(() => {  
         const loadHighchartsMore = async () => {  
@@ -23,6 +22,7 @@ const BenchmarkChart = ({benchmark, config}: {benchmark: string, config: EurekaC
       }, []); 
 
     React.useEffect(() => {
+        console.log(benchmark);
         if (!benchmark) return;  // Ensure benchmark is not null  
   
         setIsLoading(true);  // Reset loading state  
@@ -66,7 +66,6 @@ const BenchmarkChart = ({benchmark, config}: {benchmark: string, config: EurekaC
     React.useEffect(() => {
         if (!config || !benchmark) return; 
         const matchingBenchmark = config.benchmarks.find((b: Benchmark) => b.name === benchmark); 
-        setBenchmarkDescription(matchingBenchmark.description);
     }, [benchmark, config]); 
 
     if (isLoading || highchartsLoading) {  
@@ -75,13 +74,6 @@ const BenchmarkChart = ({benchmark, config}: {benchmark: string, config: EurekaC
 
     return (
         <div style={{width: '100%', paddingBottom: '4em'}}>
-            <Heading as="h4" className="hero__title" style={{textAlign: "center", fontSize: '2.5em'}}>
-                Benchmark Breakdown
-            </Heading>
-            <Heading as="h5">
-                {benchmarkDescription}
-            </Heading>
-            <br/>
             <div style={{width: '100%'}}>
                 <Row justify="space-between" style={{display: 'flex', justifyContent: 'center'}}>
                     {benchmarkGraphSeries.map((series, index) => {  
@@ -98,13 +90,14 @@ const BenchmarkChart = ({benchmark, config}: {benchmark: string, config: EurekaC
                                 }  
                             },  
                             yAxis: {  
-                                min: 0,  
+                                min: 0,
+                                max: 100,
                                 title: {  
                                     text: 'Score',  
                                 },  
                                 labels: {  
                                     overflow: 'justify'  
-                                }  
+                                }
                             },
                             series: series,
                             credits: {

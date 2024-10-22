@@ -1,19 +1,8 @@
 import { Button, Col, Row } from "antd";
 import Heading from '@theme/Heading';
 import styles from './homepage_header.module.css';
-import { useHistory } from "@docusaurus/router";
 
 function HomepageHeader(mainPage: boolean) {
-    const history = useHistory();  
-  
-    const navigateToBenchmarks = () => {  
-        history.push("/eureka-ml-insights/benchmarks");  
-    }  
-
-    const navigateToHome = () => {  
-        history.push("/eureka-ml-insights");  
-    }  
-
     return (
       <header className={styles.hero} style={{paddingTop: '2em', paddingBottom: '4em'}}>  
         <div className="container">  
@@ -36,13 +25,6 @@ function HomepageHeader(mainPage: boolean) {
             <strong>Github</strong>
             <img src='img/link_icon.svg' alt=""/>
           </Button>
-          {mainPage && <Button shape='round' className={`${styles.buttons}`} style={{outline: "black"}} onClick={navigateToBenchmarks}>
-            <strong>Explore individual benchmark results</strong>
-          </Button>
-          }
-          {!mainPage && <Button shape='round' className={`${styles.buttons}`} style={{outline: "black"}} onClick={navigateToHome}>
-            <strong>Overall results</strong>
-          </Button>}
         </div>
       </header>
     );

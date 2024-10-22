@@ -281,7 +281,213 @@
     "graphs": []
   },
   "FlenQA": {
-    "graphs": []
+    "graphs": [
+      {
+        "title": "Context Size: 250",
+        "models": [
+          {
+            "name": "Claude-3-Opus",
+            "score": 95.6
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 95.4
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 97.8
+          },
+          {
+            "name": "GPT-4-1106-Preview",
+            "score": 99.2
+          },
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 99.3
+          },
+          {
+            "name": "Llama-3-70B",
+            "score": 99.0
+          },
+          {
+            "name": "Llama-3_1-405B",
+            "score": 99.7
+          },
+          {
+            "name": "Llama-3_1-70B",
+            "score": 99.3
+          },
+          {
+            "name": "Mistral_Large_2_2407",
+            "score": 97.4
+          }
+        ]
+      },
+      {
+        "title": "Context Size: 500",
+        "models": [
+          {
+            "name": "Claude-3-Opus",
+            "score": 88.7
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 91.6
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 96.5
+          },
+          {
+            "name": "GPT-4-1106-Preview",
+            "score": 96.4
+          },
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 97.2
+          },
+          {
+            "name": "Llama-3-70B",
+            "score": 95.1
+          },
+          {
+            "name": "Llama-3_1-405B",
+            "score": 98.2
+          },
+          {
+            "name": "Llama-3_1-70B",
+            "score": 97.4
+          },
+          {
+            "name": "Mistral_Large_2_2407",
+            "score": 94.5
+          }
+        ]
+      },
+      {
+        "title": "Context Size: 1000",
+        "models": [
+          {
+            "name": "Claude-3-Opus",
+            "score": 78.5
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 82.4
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 88.8
+          },
+          {
+            "name": "GPT-4-1106-Preview",
+            "score": 93.5
+          },
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 96.2
+          },
+          {
+            "name": "Llama-3-70B",
+            "score": 87.5
+          },
+          {
+            "name": "Llama-3_1-405B",
+            "score": 97.3
+          },
+          {
+            "name": "Llama-3_1-70B",
+            "score": 94.9
+          },
+          {
+            "name": "Mistral_Large_2_2407",
+            "score": 88.2
+          }
+        ]
+      },
+      {
+        "title": "Context Size: 2000",
+        "models": [
+          {
+            "name": "Claude-3-Opus",
+            "score": 74.1
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 77.2
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 79.7
+          },
+          {
+            "name": "GPT-4-1106-Preview",
+            "score": 88.9
+          },
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 94.1
+          },
+          {
+            "name": "Llama-3-70B",
+            "score": 77.7
+          },
+          {
+            "name": "Llama-3_1-405B",
+            "score": 95.2
+          },
+          {
+            "name": "Llama-3_1-70B",
+            "score": 91.6
+          },
+          {
+            "name": "Mistral_Large_2_2407",
+            "score": 77.4
+          }
+        ]
+      },
+      {
+        "title": "Context Size: 3000",
+        "models": [
+          {
+            "name": "Claude-3-Opus",
+            "score": 73.0
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 75.6
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 75.8
+          },
+          {
+            "name": "GPT-4-1106-Preview",
+            "score": 85.5
+          },
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 90.8
+          },
+          {
+            "name": "Llama-3-70B",
+            "score": 74.9
+          },
+          {
+            "name": "Llama-3_1-405B",
+            "score": 92.5
+          },
+          {
+            "name": "Llama-3_1-70B",
+            "score": 86.4
+          },
+          {
+            "name": "Mistral_Large_2_2407",
+            "score": 66.7
+          }
+        ]
+      }
+    ]
   },
   "Kitab": {
     "graphs": []

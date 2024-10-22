@@ -151,7 +151,8 @@ def create_benchmark_breakdown(release_directory_path, config):
 
 
 # Example usage
-release_directory_path = '/mnt/c/Users/jluey/OneDrive - Microsoft/Documents/release'
+# release_directory_path = '/mnt/c/Users/jluey/OneDrive - Microsoft/Documents/release'
+release_directory_path = 'C:\\Users\\jluey\\OneDrive - Microsoft\\Documents\\release'
 config_path = 'website/static/config.json'
 
 # coallate_results(release_directory_path, json.load(open(config_path)))
