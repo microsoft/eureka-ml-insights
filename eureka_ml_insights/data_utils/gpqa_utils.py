@@ -48,5 +48,5 @@ class CreateGPQAPrompt(DFTransformBase):
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         #print(df.apply(lambda row: self._create_prompt(row), axis=1))
         df[["prompt", "ground_truth"]] = df.apply(lambda row: pd.Series(self._create_prompt(row)), axis=1)
-
+        
         return df
