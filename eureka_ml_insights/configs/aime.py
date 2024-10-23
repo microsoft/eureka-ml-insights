@@ -27,14 +27,14 @@ from eureka_ml_insights.data_utils.aime_utils import (
 
 from eureka_ml_insights.data_utils.data import (
     DataLoader,
-    DataReader,
-    HFDataReader,
 )
 from eureka_ml_insights.data_utils.transform import RunPythonTransform
-from eureka_ml_insights.metrics.aime_metrics import AIME_ExactMatch
+from eureka_ml_insights.metrics.metrics_base import ExactMatch
+
 
 from eureka_ml_insights.metrics.reports import (
     AverageAggregator,
+    CountAggregator,
     TwoColumnSumAverageAggregator,
 )
 
@@ -53,7 +53,7 @@ from .experiment_config import ExperimentConfig
 
 
 class AIME_PIPELINE(ExperimentConfig):
-    """This class specifies the config for running IFEval benchmark on any model"""
+    """This class specifies the config for running AIME benchmark on any model"""
 
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, 
@@ -79,7 +79,7 @@ class AIME_PIPELINE(ExperimentConfig):
                             ),
                         SamplerTransform(
                         random_seed=0,
-                        sample_count=10,
+                        sample_count=2,
                         ),
                     
                     ],
@@ -132,14 +132,14 @@ class AIME_PIPELINE(ExperimentConfig):
                 },
             ),
             metric_config=MetricConfig(
-                AIME_ExactMatch
+                ExactMatch
             ),
             aggregator_configs=[
                 AggregatorConfig(
-                    AverageAggregator,
+                    CountAggregator,
                     {
                         "column_names": [
-                            "AIME_ExactMatch_result",
+                            "ExactMatch_result",
                         ],
                         "group_by": "Year",
                         "filename_base": "ExactMatch_GroupBy",

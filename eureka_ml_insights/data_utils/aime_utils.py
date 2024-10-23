@@ -15,35 +15,35 @@ from eureka_ml_insights.data_utils import DFTransformBase
 @dataclass
 class AIMEExtractAnswer(DFTransformBase):
     model_output_column: str
-    model_books_column: str
+    model_answer_column: str
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        df[self.model_books_column] = df[self.model_output_column].apply(parse_output_answer)
+        df[self.model_answer_column] = df[self.model_output_column].apply(parse_output_answer)
         return df
 
-# with all books
 def parse_output_answer(response):
     """
-    Parse the input string to extract titles and reasons from the 'Output:' section.
+    Parse the input string to extract answer of a given AIME question.
     Parameters:
-    s (str): Input string containing information with 'Output:' section.
+    s (str): Input string containing answer X in the form of "Final Answer: X".
     Returns:
-    dict: A dictionary containing extracted titles and reasons.
-          Example: {'titles': ['Title 1', 'Title 2'], 'reasons': ['Reason 1', 'Reason 2']}
+    dict: A numeric value representing the model's output.
+          Example: 255
     """
     # Try to find an answer in the "Final Answer: X" format
-    match = re.search(r"Final Answer:\s*([\$]?[\d,]+(?:\.\d+)?%?)", response)
+    match = re.search(r"Final Answer:\s*([\$]?-?[\d,]+(?:\.\d+)?%?)", response)
     if match:
         answer_str = match.group(1)
     else:
         # If that fails, look for any number with optional $ or % in the response
-        match = re.search(r"([\$]?[\d,]+(?:\.\d+)?%?)", response)
+        match = re.search(r"([\$]?-?[\d,]+(?:\.\d+)?%?)", response)
         answer_str = match.group(1) if match else None
-
+    #return float(answer_str)
     numerical_value = None
     # Store the original format
     original_format = answer_str
 
+    print("----answer string",answer_str)
     if answer_str:
         # Remove $ and commas, handle percentages for numerical comparison
         answer_str = answer_str.replace("$", "").replace(",", "")
@@ -62,7 +62,6 @@ def parse_output_answer(response):
         print(f"Extracted Answer: {original_format}")
         print(f"Numerical Value for Comparison: {numerical_value}")
     else:
-        print("No valid answer extracted. use 0")
-        #numerical_value = 0
+        print("No valid answer extracted.")
 
     return numerical_value

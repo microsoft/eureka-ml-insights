@@ -28,6 +28,7 @@ from eureka_ml_insights.configs import (
     SPATIAL_REASONING_SINGLE_PIPELINE,
     VISUAL_PROMPTING_SINGLE_PIPELINE,
     IFEval_PIPELINE,
+    AIME_PIPELINE,
     MetricConfig,
     ModelConfig,
     ToxiGen_Discriminative_PIPELINE,
@@ -272,6 +273,12 @@ class TEST_MMMU_PIPELINE(MMMU_BASELINE_PIPELINE):
         return config
 
 
+class TEST_AIME_PIPELINE(AIME_PIPELINE):
+    # Test config the IFEval benchmark with TestModel and TestDataLoader
+    def configure_pipeline(self):
+        config = super().configure_pipeline(model_config=ModelConfig(GenericTestModel, {}))
+        return config
+        
 class PipelineTest:
     def setUp(self) -> None:
         self.conf = self.get_config()
@@ -418,6 +425,9 @@ class KITAB_ONE_BOOK_CONSTRAINT_PIPELINE_PipelineTest(PipelineTest, unittest.Tes
     def get_config(self):
         return TEST_KITAB_ONE_BOOK_CONSTRAINT_PIPELINE().pipeline_config
 
-
+class AIME_PipelineTest(PipelineTest, unittest.TestCase):
+    def get_config(self):
+        return TEST_AIME_PIPELINE().pipeline_config
+        
 if __name__ == "__main__":
     unittest.main()

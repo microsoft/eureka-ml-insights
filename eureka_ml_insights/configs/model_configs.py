@@ -23,12 +23,20 @@ from .config import ModelConfig
 
 # OpenAI models
 
-
+'''
 OPENAI_SECRET_KEY_PARAMS = {
     "key_name": "your_openai_secret_key_name",
     "local_keys_path": "keys/keys.json",
     "key_vault_url": None,
 }
+'''
+
+OPENAI_SECRET_KEY_PARAMS = {
+    "key_name": "openai",
+    "local_keys_path": "keys/aifeval-vault-azure-net.json",
+    "key_vault_url": "https://aifeval.vault.azure.net",
+}
+
 
 OAI_O1_PREVIEW_CONFIG = ModelConfig(
     DirectOpenAIO1Model,
