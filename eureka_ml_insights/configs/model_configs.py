@@ -29,8 +29,6 @@ OPENAI_SECRET_KEY_PARAMS = {
     "key_vault_url": None,
 }
 
-
-
 OAI_O1_PREVIEW_CONFIG = ModelConfig(
     DirectOpenAIO1Model,
     {
