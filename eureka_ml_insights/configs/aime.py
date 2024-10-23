@@ -53,10 +53,6 @@ class AIME_PIPELINE(ExperimentConfig):
                                     "Answer": "ground_truth",
                                 }
                             ),
-                            SamplerTransform(
-                                random_seed=0,
-                                sample_count=10,
-                            ),
                         ],
                     ),
                 },
