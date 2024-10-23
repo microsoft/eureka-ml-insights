@@ -4,6 +4,7 @@ You can also add your custom models here by following the same pattern as the ex
 
 from eureka_ml_insights.models import (
     AzureOpenAIO1Model,
+    AzureOpenAIModel,
     ClaudeModel,
     DirectOpenAIModel,
     DirectOpenAIO1Model,
@@ -36,13 +37,13 @@ OAI_O1_PREVIEW_CONFIG = ModelConfig(
     },
 )
 
-OAI_O1_PREVIEW_AUZRE_CONFIG = ModelConfig(
-    AzureOpenAIO1Model,
+OAI_GPT4O_AZURE_CONFIG = ModelConfig(
+    AzureOpenAIModel,
     {
-        "model_name": "o1-preview",
-        "url": "your/endpoint/url",
-        "api_version": "2024-08-01-preview",
-    },
+        "model_name": "gpt-4o-1",
+        "url": "https://ml-orca-brazil-south.openai.azure.com/",
+        "api_version": "2024-02-01",
+    }
 )
 
 OAI_GPT4_1106_PREVIEW_CONFIG = ModelConfig(
