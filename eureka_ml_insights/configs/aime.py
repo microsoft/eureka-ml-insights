@@ -1,42 +1,20 @@
 import os
-from typing import Any, Optional
+from typing import Any
 
-from eureka_ml_insights.core import (
-    DataProcessing,
-    Inference,
-    PromptProcessing,
-)
+from eureka_ml_insights.core import DataProcessing, Inference, PromptProcessing
 from eureka_ml_insights.core.eval_reporting import EvalReporting
 from eureka_ml_insights.data_utils import (
     AddColumn,
     ColumnRename,
     DataReader,
     HFDataReader,
-    MMDataLoader,
-    SequenceTransform,
     SamplerTransform,
-    
+    SequenceTransform,
 )
-
-
-from eureka_ml_insights.data_utils.aime_utils import (
-    AIMEExtractAnswer
-)
-
-
-
-from eureka_ml_insights.data_utils.data import (
-    DataLoader,
-)
-from eureka_ml_insights.data_utils.transform import RunPythonTransform
+from eureka_ml_insights.data_utils.aime_utils import AIMEExtractAnswer
+from eureka_ml_insights.data_utils.data import DataLoader
 from eureka_ml_insights.metrics.metrics_base import ExactMatch
-
-
-from eureka_ml_insights.metrics.reports import (
-    AverageAggregator,
-    CountAggregator,
-    TwoColumnSumAverageAggregator,
-)
+from eureka_ml_insights.metrics.reports import CountAggregator
 
 from .config import (
     AggregatorConfig,
@@ -56,8 +34,8 @@ class AIME_PIPELINE(ExperimentConfig):
     """This class specifies the config for running AIME benchmark on any model"""
 
     def configure_pipeline(
-        self, model_config: ModelConfig, resume_from: str = None, 
-        **kwargs: dict[str, Any]) -> PipelineConfig:
+        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
+    ) -> PipelineConfig:
 
         # data preprocessing
         self.data_processing_comp = PromptProcessingConfig(
@@ -67,30 +45,25 @@ class AIME_PIPELINE(ExperimentConfig):
                 {
                     "path": "qq8933/AIME_1983_2024",
                     "split": "train",
-                    
                     "transform": SequenceTransform(
-                    [
-                        ColumnRename(
+                        [
+                            ColumnRename(
                                 name_mapping={
                                     "Question": "prompt",
                                     "Answer": "ground_truth",
-
-                                    }
+                                }
                             ),
-                        SamplerTransform(
-                        random_seed=0,
-                        sample_count=2,
-                        ),
-                    
-                    ],
+                            SamplerTransform(
+                                random_seed=0,
+                                sample_count=10,
+                            ),
+                        ],
                     ),
-                    
                 },
             ),
-            
             prompt_template_path=os.path.join(
                 os.path.dirname(__file__), "../prompt_templates/aime_templates/Template_1a.jinja"
-            ),            
+            ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
         )
 
@@ -114,14 +87,22 @@ class AIME_PIPELINE(ExperimentConfig):
                     "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
                     "format": ".jsonl",
                     "transform": SequenceTransform(
-                        [AddColumn("extracted_answer"), AIMEExtractAnswer("model_output", "extracted_answer")]
+                        [
+                            ColumnRename(
+                                name_mapping={
+                                    "model_output": "raw_output",
+                                }
+                            ),
+                            AddColumn("model_output"),
+                            AIMEExtractAnswer("raw_output", "model_output"),
+                        ]
                     ),
                 },
             ),
             output_dir=os.path.join(self.log_dir, "data_post_processing_output"),
         )
-        
-        # Configure the evaluation and reporting component for evaluation and dataset level aggregation        
+
+        # Configure the evaluation and reporting component for evaluation and dataset level aggregation
         self.evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
             data_reader_config=DataSetConfig(
@@ -131,9 +112,7 @@ class AIME_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                 },
             ),
-            metric_config=MetricConfig(
-                ExactMatch
-            ),
+            metric_config=MetricConfig(ExactMatch),
             aggregator_configs=[
                 AggregatorConfig(
                     CountAggregator,
