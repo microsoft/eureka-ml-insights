@@ -15,6 +15,7 @@ from .experiment_config import ExperimentConfig, create_logdir
 from .flenqa import FlenQA_Experiment_Pipeline
 from .geometer import GEOMETER_PIPELINE
 from .ifeval import IFEval_PIPELINE
+from .aime import AIME_PIPELINE
 from .image_understanding.object_detection import (
     OBJECT_DETECTION_PAIRS_LOCAL_PIPELINE,
     OBJECT_DETECTION_PAIRS_PIPELINE,
