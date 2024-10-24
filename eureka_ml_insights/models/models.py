@@ -250,6 +250,8 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
         res = json.loads(response.read())
         self.model_output = res["choices"][0]["message"]["content"]
         self.response_time = end_time - start_time
+        if "usage" in res:
+            return {"usage": res["usage"]}
 
     def handle_request_error(self, e):
         if isinstance(e, urllib.error.HTTPError):
@@ -366,6 +368,8 @@ class OpenAICommonRequestResponseMixIn:
         openai_response = completion.model_dump()
         self.model_output = openai_response["choices"][0]["message"]["content"]
         self.response_time = end_time - start_time
+        if "usage" in openai_response:
+            return {"usage": openai_response["usage"]}
 
 
 class AzureOpenAIClientMixIn:
@@ -547,6 +551,17 @@ class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
         end_time = time.time()
         self.model_output = self.gemini_response.parts[0].text
         self.response_time = end_time - start_time
+        if hasattr(self.gemini_response, "usage_metadata"):
+            try:
+                return {
+                    "usage": {
+                        "prompt_token_count": self.gemini_response.usage_metadata.prompt_token_count,
+                        "candidates_token_count": self.gemini_response.usage_metadata.candidates_token_count,
+                        "total_token_count": self.gemini_response.usage_metadata.total_token_count,
+                    }
+                }
+            except AttributeError:
+                logging.warning("Usage metadata not found in the response.")
 
     def handle_request_error(self, e):
         """Handles exceptions originating from making requests to Gemini through the python api.
@@ -935,6 +950,8 @@ class ClaudeModel(EndpointModel, KeyBasedAuthMixIn):
         end_time = time.time()
         self.model_output = completion.content[0].text
         self.response_time = end_time - start_time
+        if hasattr(completion, "usage"):
+            return {"usage": completion.usage.to_dict()}
 
     def handle_request_error(self, e):
         return False
