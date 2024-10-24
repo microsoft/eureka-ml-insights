@@ -274,11 +274,11 @@ class TEST_MMMU_PIPELINE(MMMU_BASELINE_PIPELINE):
 
 
 class TEST_AIME_PIPELINE(AIME_PIPELINE):
-    # Test config the IFEval benchmark with TestModel and TestDataLoader
+    # Test config the AIME benchmark with GenericTestModel and TestMMDataLoader
     def configure_pipeline(self):
         config = super().configure_pipeline(
             model_config=ModelConfig(GenericTestModel, {})
-        )  # use the smaller dataset like MMMU
+        )  # use the smaller dataset like AIME
         self.inference_comp.data_loader_config.class_name = TestMMDataLoader
         self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
