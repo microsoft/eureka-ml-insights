@@ -8,6 +8,7 @@ import Sider from "antd/es/layout/Sider";
 import { Header } from "antd/es/layout/layout";
 import Link from "@docusaurus/Link";
 import { ArrowLeftCircleIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
+import BenchmarkDetails from "./benchmark_details";
 
 const ModalityBreakdown = ({modality}: {modality: string}) => {
     const {siteConfig} = useDocusaurusContext();
@@ -44,6 +45,7 @@ const ModalityBreakdown = ({modality}: {modality: string}) => {
             <Sider>
               <Menu
                 selectedKeys={[selectedBenchmark]} 
+                title="Benchmark List"
                 mode="inline"
                 onClick={({ key }) => setSelectedBenchmark(key)}  
                 >
@@ -57,7 +59,7 @@ const ModalityBreakdown = ({modality}: {modality: string}) => {
             <main style={{ flex: 1 }}>
               <section>
                 <div className="container">
-                {selectedBenchmark ? (<BenchmarkChart benchmark={selectedBenchmark} config={config}></BenchmarkChart>) : (<div>Loading data...</div>)}  
+                {selectedBenchmark ? (<BenchmarkDetails benchmark={selectedBenchmark} config={config}></BenchmarkDetails>) : (<div>Loading data...</div>)}  
                 </div>
               </section>
             </main>

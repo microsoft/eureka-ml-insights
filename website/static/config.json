@@ -9,11 +9,13 @@
       "graphs": [
         {
           "title": "Depth",
+          "description": "the depth",
           "path": ["Geometric-Reasoning"],
           "metric": ["GeoMCQMetric_result", "depth"]
         },
         {
           "title": "Height",
+          "description": "the height",
           "path": ["Geometric-Reasoning"],
           "metric": ["GeoMCQMetric_result", "height"]
         }

@@ -1,16 +1,13 @@
-import config from "@generated/docusaurus.config";
 import React, { useState } from "react";
 import { BenchmarkGraph, ModelScore, ModelConfig, EurekaConfig, Benchmark } from "../types";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import { Col, Row } from "antd";
-import Heading from '@theme/Heading';
 
-const BenchmarkChart = ({benchmark, config}: {benchmark: string, config: EurekaConfig}) => {
+const BenchmarkChart = ({benchmark, subcategory, config}: {benchmark: string, subcategory: string, config: EurekaConfig}) => {
     const [isLoading, setIsLoading] = useState(true);  
     const [highchartsLoading, setHighchartsLoading] = useState(true);  
-    const [benchmarkGraphSeries, setBenchmarkGraphSeries] = useState<[]>([]);
-    const [graphTitles, setGraphTitles] = useState<[]>([]);
+    const [chartOptions, setChartOptions] = useState<any>();
 
     React.useEffect(() => {  
         const loadHighchartsMore = async () => {  
@@ -22,51 +19,62 @@ const BenchmarkChart = ({benchmark, config}: {benchmark: string, config: EurekaC
       }, []); 
 
     React.useEffect(() => {
-        console.log(benchmark);
         if (!benchmark) return;  // Ensure benchmark is not null  
   
         setIsLoading(true);  // Reset loading state  
-        setBenchmarkGraphSeries([]);  // Clear previous data  
-        setGraphTitles([]);
 
         fetch('benchmark_results.json')
         .then(response => response.json())
         .then(benchmarkResults => {
-            const graphs = benchmarkResults[benchmark]["graphs"];
-            const allGraphSeries = [];
-            const titles = [];
-            graphs.forEach((d: BenchmarkGraph) => {
-                const modelScores = {};
-                titles.push(d.title);
-                d.models.forEach((model: ModelScore) => {
-                    if (!modelScores[model.name]) {
-                        modelScores[model.name] = [];
-                    }
-                    modelScores[model.name].push(model.score); 
-                });
-                const series = [];
-                for (const key in modelScores) {
-                    series.push({
-                        name: key,
-                        data: modelScores[key],
-                        color: config?.models?.find((d: ModelConfig) => d.model === key)?.color || 'black',
-                    });
+            const graph = benchmarkResults[benchmark]["graphs"].find((d: BenchmarkGraph) => d.title === subcategory);
+            const modelScores = {};
+            graph.models.forEach((model: ModelScore) => {
+                if (!modelScores[model.name]) {
+                    modelScores[model.name] = [];
                 }
-                console.log(series);
-                allGraphSeries.push(series);
+                modelScores[model.name].push(model.score); 
             });
-            
-            setBenchmarkGraphSeries(allGraphSeries);
-            setGraphTitles(titles)
+            const series = [];
+            for (const key in modelScores) {
+                series.push({
+                    name: key,
+                    data: modelScores[key],
+                    color: config?.models?.find((d: ModelConfig) => d.model === key)?.color || 'black',
+                });
+            }
+            const tempChartOptions = {  
+                chart: {  
+                    type: 'column'
+                },  
+                title: {  
+                    text: graph.title,
+                },  
+                xAxis: {  
+                    title: {  
+                        text: "Model"  
+                    }  
+                },  
+                yAxis: {  
+                    min: 0,
+                    max: 100,
+                    title: {  
+                        text: 'Score',  
+                    },  
+                    labels: {  
+                        overflow: 'justify'  
+                    }
+                },
+                series: series,
+                credits: {
+                    enabled: false
+                }  
+            };
+
+            setChartOptions(tempChartOptions);
             setIsLoading(false);
         })
         .catch(error => console.error('Error fetching compiled results:', error));
-    }, [benchmark, config]); 
-
-    React.useEffect(() => {
-        if (!config || !benchmark) return; 
-        const matchingBenchmark = config.benchmarks.find((b: Benchmark) => b.name === benchmark); 
-    }, [benchmark, config]); 
+    }, [benchmark, subcategory, config]); 
 
     if (isLoading || highchartsLoading) {  
         return <div>Loading...</div>;  
@@ -74,47 +82,7 @@ const BenchmarkChart = ({benchmark, config}: {benchmark: string, config: EurekaC
 
     return (
         <div style={{width: '100%', paddingBottom: '4em'}}>
-            <div style={{width: '100%'}}>
-                <Row justify="space-between" style={{display: 'flex', justifyContent: 'center'}}>
-                    {benchmarkGraphSeries.map((series, index) => {  
-                        const chartOptions = {  
-                            chart: {  
-                                type: 'column'  
-                            },  
-                            title: {  
-                                text: graphTitles[index],
-                            },  
-                            xAxis: {  
-                                title: {  
-                                    text: "Model"  
-                                }  
-                            },  
-                            yAxis: {  
-                                min: 0,
-                                max: 100,
-                                title: {  
-                                    text: 'Score',  
-                                },  
-                                labels: {  
-                                    overflow: 'justify'  
-                                }
-                            },
-                            series: series,
-                            credits: {
-                                enabled: false
-                            }  
-                        };  
-    
-                        return (  
-                            <Col xs={24} md={12} style={{ minWidth: '40em' }} key={index}>  
-                                <div style={{ width: '90%', margin: '0 auto' }}>  
-                                    <HighchartsReact highcharts={Highcharts} options={chartOptions} />  
-                                </div>  
-                            </Col>  
-                        );  
-                    })} 
-                </Row>
-            </div>
+            <HighchartsReact highcharts={Highcharts} options={chartOptions} />  
         </div>
     )
 }

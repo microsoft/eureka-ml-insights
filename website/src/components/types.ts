@@ -11,6 +11,12 @@ export interface Benchmark {
     modality: string;
     filePattern: string;
     description: string;
+    graphs: GraphDetails[];
+}
+
+export interface GraphDetails {
+    title: string;
+    description: string;
 }
 
 export interface Capability {
