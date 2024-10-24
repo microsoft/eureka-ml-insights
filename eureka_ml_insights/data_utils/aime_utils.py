@@ -24,14 +24,12 @@ def parse_output_answer(response):
     Returns: 
         numerical_value (float): A numeric value representing the model's answer.
     """
-    answer_str = None
     numerical_value = None
 
     # Try to find an answer in the "Final Answer: X" format
     match = re.search(r"Final Answer:\s*([\$]?-?[\d,]+(?:\.\d+)?%?)", response)
     if match:
         answer_str = match.group(1)
-    if answer_str:
         # Remove $ and commas, handle percentages for numerical comparison
         answer_str = answer_str.replace("$", "").replace(",", "")
         if answer_str.endswith("%"):
