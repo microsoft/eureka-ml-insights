@@ -278,7 +278,7 @@ class TEST_AIME_PIPELINE(AIME_PIPELINE):
     def configure_pipeline(self):
         config = super().configure_pipeline(
             model_config=ModelConfig(GenericTestModel, {})
-        )  # use the smaller dataset like AIME
+        )  # use a small subset of AIME
         self.inference_comp.data_loader_config.class_name = TestMMDataLoader
         self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
