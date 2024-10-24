@@ -22,6 +22,7 @@ from .config import ModelConfig
 # You don't need to provide both the key_vault_url and local_keys_path. You can provide one of them based on your setup.
 
 # OpenAI models
+
 OPENAI_SECRET_KEY_PARAMS = {
     "key_name": "your_openai_secret_key_name",
     "local_keys_path": "keys/keys.json",
@@ -77,6 +78,13 @@ OAI_GPT4O_2024_05_13_CONFIG = ModelConfig(
     },
 )
 
+OAI_GPT4O_MINI_2024_07_18_CONFIG = ModelConfig(
+    DirectOpenAIModel,
+    {
+        "model_name": "gpt-4o-mini-2024-07-18",
+        "secret_key_params": OPENAI_SECRET_KEY_PARAMS,
+    },
+)
 
 # Gemini models
 GEMINI_SECRET_KEY_PARAMS = {
