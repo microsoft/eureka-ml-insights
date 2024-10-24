@@ -29,11 +29,7 @@ class TestAIMEAnswerExtract(unittest.TestCase):
 
         # Check values, accounting for NaN
         expected_values = [1.0, 3.0, 0.0, 6.0, 5.0, -1.0, float("nan"), 10.0, float("nan")]
-        for res_val, exp_val in zip(result["D"], expected_values):
-            if np.isnan(exp_val):
-                self.assertTrue(np.isnan(res_val), f"Expected NaN, got {res_val}")
-            else:
-                self.assertEqual(res_val, exp_val)
+        np.testing.assert_array_equal(result["D"], expected_values)
 
 
 if __name__ == "__main__":
