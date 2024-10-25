@@ -5,9 +5,9 @@ from eureka_ml_insights.data_utils import (
     DataReader,
     HFDataReader,
     MMDataLoader,
-    SequenceTransform,
+    SequenceTransform
 )
-from eureka_ml_insights.metrics import CountAggregator, GPQAMetric
+from eureka_ml_insights.metrics import AverageAggregator, DropF1ScoreMetric
 from .config import (
     AggregatorConfig,
     DataSetConfig,
@@ -19,11 +19,11 @@ from .config import (
     PromptProcessingConfig,
 )
 from .experiment_config import ExperimentConfig
-from eureka_ml_insights.data_utils.gpqa_utils import CreateGPQAPrompt
+from eureka_ml_insights.data_utils.drop_utils import CreateDropPrompt
 
-"""This file contains user defined configuration classes for the geometric reasoning task on the GPQA dataset.
+"""This file contains user defined configuration classes for the geometric reasoning task on geometer dataset.
 """
-class GPQA_Experiment_Pipeline(ExperimentConfig):
+class Drop_Experiment_Pipeline(ExperimentConfig):
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
@@ -33,18 +33,18 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 HFDataReader,
                 {
-                    "path": "Idavidrein/gpqa",
-                    "tasks": "gpqa_diamond",
-                    "split": "train",
+                    "path": "ucinlp/drop",
+                    "split": "validation",
                     "transform": SequenceTransform(
                         [
-                            CreateGPQAPrompt()
+                            CreateDropPrompt()
                         ]
                     ),
                 },
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
         )
+
         # Configure the inference component
         inference_comp = InferenceConfig(
             component_type=Inference,
@@ -67,9 +67,9 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                     "format": ".jsonl",
                 },
             ),
-            metric_config=MetricConfig(GPQAMetric),
+            metric_config=MetricConfig(DropF1ScoreMetric),
             aggregator_configs=[
-                AggregatorConfig(CountAggregator, {"column_names": ["GPQAMetric_result"], "normalize": True})
+                AggregatorConfig(AverageAggregator, {"column_names": ["DropF1ScoreMetric_result"]})
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
         )
