@@ -1,4 +1,6 @@
 from .geomtric_reasoning_metrics import GeoMCQMetric
+from .gpqa_metrics import GPQAMetric
+from .drop_metrics import DropF1ScoreMetric
 from .metrics_base import (
     CaseInsensitiveMatch,
     ClassicMetric,
@@ -50,4 +52,6 @@ __all__ = [
     TwoColumnSumAverageAggregator,
     SumAggregator,
     MMMUMetric,
+    GPQAMetric,
+    DropF1ScoreMetric
 ]

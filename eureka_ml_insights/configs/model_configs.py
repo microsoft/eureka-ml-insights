@@ -4,6 +4,7 @@ You can also add your custom models here by following the same pattern as the ex
 
 from eureka_ml_insights.models import (
     AzureOpenAIO1Model,
+    AzureOpenAIModel,
     ClaudeModel,
     DirectOpenAIModel,
     DirectOpenAIO1Model,
@@ -34,15 +35,6 @@ OAI_O1_PREVIEW_CONFIG = ModelConfig(
     {
         "model_name": "o1-preview",
         "secret_key_params": OPENAI_SECRET_KEY_PARAMS,
-    },
-)
-
-OAI_O1_PREVIEW_AUZRE_CONFIG = ModelConfig(
-    AzureOpenAIO1Model,
-    {
-        "model_name": "o1-preview",
-        "url": "your/endpoint/url",
-        "api_version": "2024-08-01-preview",
     },
 )
 
