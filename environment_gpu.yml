@@ -6,6 +6,7 @@ channels:
   - nvidia
   - conda-forge
   - defaults
+dependencies:
   - pip:
       - deepspeed==0.14.4
       - flash-attn==2.6.3

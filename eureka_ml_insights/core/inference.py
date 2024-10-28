@@ -76,8 +76,10 @@ class Inference(Component):
                             writer.write(data)
                             continue
                     # generate text from model
-                    answer_text, is_valid = self.model.generate(*model_inputs)
-                    # write results
+                    response_dict = self.model.generate(*model_inputs)
                     # "model_output" and "is_valid" are mandatory fields by any inference component
-                    data["model_output"], data["is_valid"] = answer_text, is_valid
+                    if "model_output" not in response_dict or "is_valid" not in response_dict:
+                        raise ValueError("Response dictionary must contain 'model_output' and 'is_valid' keys.")
+                    # write results
+                    data.update(response_dict)
                     writer.write(data)

@@ -13,6 +13,7 @@ path = str(Path(Path(__file__).parent.absolute()).parent.absolute())  # noqa
 sys.path.insert(0, path)  # noqa
 
 from eureka_ml_insights.configs import (
+    AIME_PIPELINE,
     DNA_PIPELINE,
     GEOMETER_PIPELINE,
     KITAB_ONE_BOOK_CONSTRAINT_PIPELINE,
@@ -272,6 +273,17 @@ class TEST_MMMU_PIPELINE(MMMU_BASELINE_PIPELINE):
         return config
 
 
+class TEST_AIME_PIPELINE(AIME_PIPELINE):
+    # Test config the AIME benchmark with GenericTestModel and TestMMDataLoader
+    def configure_pipeline(self):
+        config = super().configure_pipeline(
+            model_config=ModelConfig(GenericTestModel, {})
+        )  # use a small subset of AIME
+        self.inference_comp.data_loader_config.class_name = TestMMDataLoader
+        self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
+        return config
+
+
 class PipelineTest:
     def setUp(self) -> None:
         self.conf = self.get_config()
@@ -417,6 +429,11 @@ class TOXIGEN_PipelineTest(PipelineTest, unittest.TestCase):
 class KITAB_ONE_BOOK_CONSTRAINT_PIPELINE_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_KITAB_ONE_BOOK_CONSTRAINT_PIPELINE().pipeline_config
+
+
+class AIME_PipelineTest(PipelineTest, unittest.TestCase):
+    def get_config(self):
+        return TEST_AIME_PIPELINE().pipeline_config
 
 
 if __name__ == "__main__":

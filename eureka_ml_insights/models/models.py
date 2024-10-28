@@ -2,11 +2,13 @@
 
 import json
 import logging
+import time
 import urllib.request
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 import anthropic
+import tiktoken
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 
 from eureka_ml_insights.data_utils import GetKey
@@ -14,11 +16,33 @@ from eureka_ml_insights.data_utils import GetKey
 
 @dataclass
 class Model(ABC):
-    """This class is used to define the structure of a model class."""
+    """This class is used to define the structure of a model class.
+    Any model class should inherit from this class and implement the generate method that returns a dict
+    containing the model_output, is_valid, and other relevant information.
+    """
+
+    model_output: str = None
+    is_valid: bool = False
+    response_time: float = None
+    n_output_tokens: int = None
 
     @abstractmethod
-    def generate(self, text_prompt, query_images=None):
+    def generate(self, text_prompt, **kwargs):
         raise NotImplementedError
+
+    def count_tokens(self):
+        """
+        This method uses tiktoken tokenizer to count the number of tokens in the response.
+        See: https://github.com/openai/openai-cookbook/blob/main/examples/How_to_count_tokens_with_tiktoken.ipynb
+        returns:
+            n_output_tokens (int): the number of tokens in the text response.
+        """
+        encoding = tiktoken.get_encoding("cl100k_base")
+        if self.model_output is None or not self.is_valid:
+            return None
+        else:
+            n_output_tokens = len(encoding.encode(self.model_output))
+            return n_output_tokens
 
     def base64encode(self, query_images):
         import base64
@@ -32,14 +56,15 @@ class Model(ABC):
             query_image.save(buffered, format="JPEG")
             base64_bytes = base64.b64encode(buffered.getvalue())
             base64_string = base64_bytes.decode("utf-8")
-
             encoded_images.append(base64_string)
 
         return encoded_images
 
+
 @dataclass
-class KeyBasedAuthentication:
+class KeyBasedAuthMixIn:
     """This class is used to handle key-based authentication for models."""
+
     api_key: str = None
     secret_key_params: dict = None
 
@@ -60,17 +85,10 @@ class KeyBasedAuthentication:
 
 
 @dataclass
-class EndpointModels(Model):
+class EndpointModel(Model):
     """This class is used to interact with API-based models."""
 
-    url: str = None
-    model_name: str = None
-    max_tokens: int = 2000
-    temperature: float = 0
-    top_p: float = 0.95
     num_retries: int = 3
-    frequency_penalty: float = 0
-    presence_penalty: float = 0
 
     @abstractmethod
     def create_request(self, text_prompt, query_images=None, system_message=None):
@@ -78,6 +96,7 @@ class EndpointModels(Model):
 
     @abstractmethod
     def get_response(self, request):
+        # must return the model output and the response time
         raise NotImplementedError
 
     def generate(self, query_text, query_images=None, system_message=None):
@@ -88,34 +107,56 @@ class EndpointModels(Model):
             query_images (list): list of images in base64 bytes format to be included in the request.
             system_message (str): the system message to be included in the request.
         returns:
-            response (str): the generated response.
-            is_valid (bool): whether the response is valid.
+            response_dict (dict): a dictionary containing the model_output, is_valid, response_time, and n_output_tokens,
+                                  and any other relevant information returned by the model.
         """
+        response_dict = {}
         request = self.create_request(query_text, query_images, system_message)
-
         attempts = 0
         while attempts < self.num_retries:
             try:
-                response = self.get_response(request)
+                meta_response = self.get_response(request)
+                if meta_response:
+                    response_dict.update(meta_response)
+                self.is_valid = True
                 break
             except Exception as e:
                 logging.warning(f"Attempt {attempts+1}/{self.num_retries} failed: {e}")
-                response, is_valid, do_return = self.handle_request_error(e)
+                do_return = self.handle_request_error(e)
                 if do_return:
-                    return response, is_valid
+                    self.model_output = self.response
+                    self.is_valid = self.is_valid
+                    break
                 attempts += 1
         else:
             logging.warning("All attempts failed.")
-            return None, False
-        return response, True
+            self.is_valid = False
+            self.model_output = None
+
+        response_dict.update(
+            {
+                "is_valid": self.is_valid,
+                "model_output": self.model_output,
+                "response_time": self.response_time,
+                "n_output_tokens": self.count_tokens(),
+            }
+        )
+        return response_dict
 
     @abstractmethod
     def handle_request_error(self, e):
         raise NotImplementedError
 
-@dataclass
-class RestEndpointModels(EndpointModels, KeyBasedAuthentication):
 
+@dataclass
+class RestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
+    url: str = None
+    model_name: str = None
+    temperature: float = 0
+    max_tokens: int = 2000
+    top_p: float = 0.95
+    frequency_penalty: float = 0
+    presence_penalty: float = 0
     do_sample: bool = True
 
     def create_request(self, text_prompt, query_images=None, system_message=None):
@@ -148,39 +189,53 @@ class RestEndpointModels(EndpointModels, KeyBasedAuthentication):
         headers = {
             "Content-Type": "application/json",
             "Authorization": ("Bearer " + self.api_key),
-            "azureml-model-deployment": self.model_name,
         }
 
         return urllib.request.Request(self.url, body, headers)
 
     def get_response(self, request):
+        # Get the model response and measure the time taken.
+        start_time = time.time()
         response = urllib.request.urlopen(request)
+        end_time = time.time()
+        # Parse the response and return the model output.
         res = json.loads(response.read())
-        return res["output"]
+        self.model_output = res["output"]
+        self.response_time = end_time - start_time
 
     def handle_request_error(self, e):
         if isinstance(e, urllib.error.HTTPError):
             logging.info("The request failed with status code: " + str(e.code))
-            # Print the headers - they include the requert ID and the timestamp, which are useful for debugging.
+            # Print the headers - they include the request ID and the timestamp, which are useful for debugging.
             logging.info(e.info())
             logging.info(e.read().decode("utf8", "ignore"))
-        return None, False, False
+        return False
 
 
 @dataclass
-class ServerlessAzureRestEndpointModels(EndpointModels, KeyBasedAuthentication):
+class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
     """This class can be used for serverless Azure model deployments."""
 
     """https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-serverless?tabs=azure-ai-studio"""
-
+    url: str = None
+    model_name: str = None
     stream: str = "false"
 
     def __post_init__(self):
-        super().__post_init__()
-        self.headers = {
-            "Content-Type": "application/json",
-            "Authorization": ("Bearer " + self.api_key),
-        }
+        try:
+            super().__post_init__()
+            self.headers = {
+                "Content-Type": "application/json",
+                "Authorization": ("Bearer " + self.api_key),
+            }
+        except ValueError:
+            self.bearer_token_provider = get_bearer_token_provider(
+                AzureCliCredential(), "https://cognitiveservices.azure.com/.default"
+            )
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": ("Bearer " + self.bearer_token_provider()),
+            }
 
     @abstractmethod
     def create_request(self, text_prompt, query_images=None, system_message=None):
@@ -189,9 +244,14 @@ class ServerlessAzureRestEndpointModels(EndpointModels, KeyBasedAuthentication):
         raise NotImplementedError
 
     def get_response(self, request):
+        start_time = time.time()
         response = urllib.request.urlopen(request)
+        end_time = time.time()
         res = json.loads(response.read())
-        return res["choices"][0]["message"]["content"]
+        self.model_output = res["choices"][0]["message"]["content"]
+        self.response_time = end_time - start_time
+        if "usage" in res:
+            return {"usage": res["usage"]}
 
     def handle_request_error(self, e):
         if isinstance(e, urllib.error.HTTPError):
@@ -199,15 +259,20 @@ class ServerlessAzureRestEndpointModels(EndpointModels, KeyBasedAuthentication):
             # Print the headers - they include the request ID and the timestamp, which are useful for debugging.
             logging.info(e.info())
             logging.info(e.read().decode("utf8", "ignore"))
-        return None, False, False
+        return False
 
 
 @dataclass
-class LlamaServerlessAzureRestEndpointModels(ServerlessAzureRestEndpointModels, KeyBasedAuthentication):
+class LlamaServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
     """Tested for Llama 3.1 405B Instruct deployments."""
 
     """See https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-llama?tabs=llama-three for the api reference."""
 
+    temperature: float = 0
+    max_tokens: int = 2000
+    top_p: float = 0.95
+    frequency_penalty: float = 0
+    presence_penalty: float = 0
     use_beam_search: str = "false"
     best_of: int = 1
     skip_special_tokens: str = "false"
@@ -231,11 +296,13 @@ class LlamaServerlessAzureRestEndpointModels(ServerlessAzureRestEndpointModels, 
 
 
 @dataclass
-class MistralServerlessAzureRestEndpointModels(ServerlessAzureRestEndpointModels, KeyBasedAuthentication):
+class MistralServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
     """Tested for Mistral Large 2 2407 deployments."""
 
     """See https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-mistral?tabs=mistral-large#mistral-chat-api for the api reference."""
-
+    temperature: float = 0
+    max_tokens: int = 2000
+    top_p: float = 1
     safe_prompt: str = "false"
 
     def __post_init__(self):
@@ -261,19 +328,10 @@ class MistralServerlessAzureRestEndpointModels(ServerlessAzureRestEndpointModels
 
 
 @dataclass
-class OpenAIModelsMixIn(EndpointModels):
+class OpenAICommonRequestResponseMixIn:
     """
-    This class defines the request and response handling for OpenAI models.
-    This is an abstract class and should not be used directly. Child classes should implement the get_client
-    method and handle_request_error method.
+    This mixin class defines the request and response handling for most OpenAI models.
     """
-
-    seed: int = 0
-    api_version: str = "2023-06-01-preview"
-
-    @abstractmethod
-    def get_client(self):
-        raise NotImplementedError
 
     def create_request(self, prompt, query_images=None, system_message=None):
         messages = []
@@ -295,6 +353,7 @@ class OpenAIModelsMixIn(EndpointModels):
         return {"messages": messages}
 
     def get_response(self, request):
+        start_time = time.time()
         completion = self.client.chat.completions.create(
             model=self.model_name,
             top_p=self.top_p,
@@ -305,20 +364,16 @@ class OpenAIModelsMixIn(EndpointModels):
             max_tokens=self.max_tokens,
             **request,
         )
+        end_time = time.time()
         openai_response = completion.model_dump()
-        return openai_response["choices"][0]["message"]["content"]
+        self.model_output = openai_response["choices"][0]["message"]["content"]
+        self.response_time = end_time - start_time
+        if "usage" in openai_response:
+            return {"usage": openai_response["usage"]}
 
-    @abstractmethod
-    def handle_request_error(self, e):
-        raise NotImplementedError
 
-
-@dataclass
-class OpenAIModelsAzure(OpenAIModelsMixIn):
-    """This class is used to interact with Azure OpenAI models."""
-
-    def __post_init__(self):
-        self.client = self.get_client()
+class AzureOpenAIClientMixIn:
+    """This mixin provides some methods to interact with Azure OpenAI models."""
 
     def get_client(self):
         from openai import AzureOpenAI
@@ -336,17 +391,12 @@ class OpenAIModelsAzure(OpenAIModelsMixIn):
             logging.warning("Content filtered.")
             response = None
             return response, False, True
-        return None, False, False
+        return False
 
 
-@dataclass
-class OpenAIModelsOAI(OpenAIModelsMixIn, KeyBasedAuthentication):
-    """This class is used to interact with OpenAI models dirctly (not through Azure)"""
-    
-    def __post_init__(self):
-        super().__post_init__()
-        self.client = self.get_client()
-    
+class DirectOpenAIClientMixIn(KeyBasedAuthMixIn):
+    """This mixin class provides some methods for using OpenAI models dirctly (not through Azure)"""
+
     def get_client(self):
         from openai import OpenAI
 
@@ -356,14 +406,113 @@ class OpenAIModelsOAI(OpenAIModelsMixIn, KeyBasedAuthentication):
 
     def handle_request_error(self, e):
         logging.warning(e)
-        return None, False, False
+        return False
 
 
 @dataclass
-class GeminiModels(EndpointModels, KeyBasedAuthentication):
+class AzureOpenAIModel(OpenAICommonRequestResponseMixIn, AzureOpenAIClientMixIn, EndpointModel):
+    """This class is used to interact with Azure OpenAI models."""
+
+    url: str = None
+    model_name: str = None
+    temperature: float = 0
+    max_tokens: int = 2000
+    top_p: float = 0.95
+    frequency_penalty: float = 0
+    presence_penalty: float = 0
+    seed: int = 0
+    api_version: str = "2023-06-01-preview"
+
+    def __post_init__(self):
+        self.client = self.get_client()
+
+
+@dataclass
+class DirectOpenAIModel(OpenAICommonRequestResponseMixIn, DirectOpenAIClientMixIn, EndpointModel):
+    """This class is used to interact with OpenAI models dirctly (not through Azure)"""
+
+    model_name: str = None
+    temperature: float = 0
+    max_tokens: int = 2000
+    top_p: float = 0.95
+    frequency_penalty: float = 0
+    presence_penalty: float = 0
+    seed: int = 0
+    api_version: str = "2023-06-01-preview"
+
+    def __post_init__(self):
+        self.api_key = self.get_api_key()
+        self.client = self.get_client()
+
+
+class OpenAIO1RequestResponseMixIn:
+    def create_request(self, prompt, *args, **kwargs):
+        messages = [{"role": "user", "content": prompt}]
+        return {"messages": messages}
+
+    def get_response(self, request):
+        start_time = time.time()
+        completion = self.client.chat.completions.create(
+            model=self.model_name,
+            seed=self.seed,
+            temperature=self.temperature,
+            top_p=self.top_p,
+            frequency_penalty=self.frequency_penalty,
+            presence_penalty=self.presence_penalty,
+            **request,
+        )
+        end_time = time.time()
+        openai_response = completion.model_dump()
+        self.model_output = openai_response["choices"][0]["message"]["content"]
+        self.response_time = end_time - start_time
+
+
+@dataclass
+class DirectOpenAIO1Model(OpenAIO1RequestResponseMixIn, DirectOpenAIClientMixIn, EndpointModel):
+    model_name: str = None
+    temperature: float = 1
+    # Not used currently, because the API throws:
+    # "Completions.create() got an unexpected keyword argument 'max_completion_tokens'"
+    # although this argument is documented in the OpenAI API documentation.
+    max_completion_tokens: int = 2000
+    top_p: float = 1
+    seed: int = 0
+    frequency_penalty: float = 0
+    presence_penalty: float = 0
+
+    def __post_init__(self):
+        self.api_key = self.get_api_key()
+        self.client = self.get_client()
+
+
+@dataclass
+class AzureOpenAIO1Model(OpenAIO1RequestResponseMixIn, AzureOpenAIClientMixIn, EndpointModel):
+    url: str = None
+    model_name: str = None
+    temperature: float = 1
+    # Not used currently, because the API throws:
+    # "Completions.create() got an unexpected keyword argument 'max_completion_tokens'"
+    # although this argument is documented in the OpenAI API documentation.
+    max_completion_tokens: int = 2000
+    top_p: float = 1
+    seed: int = 0
+    frequency_penalty: float = 0
+    presence_penalty: float = 0
+    api_version: str = "2023-06-01-preview"
+
+    def __post_init__(self):
+        self.client = self.get_client()
+
+
+@dataclass
+class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
     """This class is used to interact with Gemini models through the python api."""
 
     timeout: int = 60
+    model_name: str = None
+    temperature: float = 0
+    max_tokens: int = 2000
+    top_p: float = 0.95
 
     def __post_init__(self):
         super().__post_init__()
@@ -392,13 +541,27 @@ class GeminiModels(EndpointModels, KeyBasedAuthentication):
             return text_prompt
 
     def get_response(self, request):
+        start_time = time.time()
         self.gemini_response = self.model.generate_content(
             request,
             generation_config=self.gen_config,
             request_options={"timeout": self.timeout},
             safety_settings=self.safety_settings,
         )
-        return self.gemini_response.parts[0].text
+        end_time = time.time()
+        self.model_output = self.gemini_response.parts[0].text
+        self.response_time = end_time - start_time
+        if hasattr(self.gemini_response, "usage_metadata"):
+            try:
+                return {
+                    "usage": {
+                        "prompt_token_count": self.gemini_response.usage_metadata.prompt_token_count,
+                        "candidates_token_count": self.gemini_response.usage_metadata.candidates_token_count,
+                        "total_token_count": self.gemini_response.usage_metadata.total_token_count,
+                    }
+                }
+            except AttributeError:
+                logging.warning("Usage metadata not found in the response.")
 
     def handle_request_error(self, e):
         """Handles exceptions originating from making requests to Gemini through the python api.
@@ -415,21 +578,21 @@ class GeminiModels(EndpointModels, KeyBasedAuthentication):
             logging.warning(
                 f"Attempt failed due to explicitly blocked input prompt: {e} Block Reason {self.gemini_response.prompt_feedback.block_reason}"
             )
-            return None, False, True
+            return True
         # Handling cases where the model implicitly blocks prompts and does not provide a reason for it but rather an empty content.
         # In these cases, there is no need to make a new attempt as the model will continue to implicitly block the request, do_return = True.
         elif e.__class__.__name__ == "IndexError" and len(self.gemini_response.parts) == 0:
             logging.warning(f"Attempt failed due to implicitly blocked input prompt and empty model output: {e}")
-            return None, False, True
+            return True
         # Any other case will be re attempted again, do_return = False.
-        return None, False, False
+        return False
 
 
 @dataclass
-class HuggingFaceLM(Model):
+class HuggingFaceModel(Model):
     """This class is used to run a self-hosted language model via HuggingFace apis."""
 
-    model_name: str
+    model_name: str = None
     device: str = "cpu"
     max_tokens: int = 2000
     temperature: float = 0.001
@@ -475,6 +638,7 @@ class HuggingFaceLM(Model):
     def _generate(self, text_prompt, query_images=None):
 
         inputs = self.tokenizer(text_prompt, return_tensors="pt").to(self.device)
+        start_time = time.time()
         output_ids = self.model.generate(
             inputs["input_ids"],
             max_new_tokens=self.max_tokens,
@@ -482,37 +646,48 @@ class HuggingFaceLM(Model):
             top_p=self.top_p,
             do_sample=self.do_sample,
         )
+        end_time = time.time()
         sequence_length = inputs["input_ids"].shape[1]
         new_output_ids = output_ids[:, sequence_length:]
-        answer_text = self.tokenizer.batch_decode(
+        self.model_output = self.tokenizer.batch_decode(
             new_output_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False
         )[0]
 
-        return answer_text
+        self.response_time = end_time - start_time
 
     def generate(self, text_prompt, query_images=None, system_message=None):
+        response_dict = {}
 
-        if text_prompt is None:
-            return None, False
+        if text_prompt:
+            if self.apply_model_template:
+                text_prompt = self.model_template_fn(text_prompt, system_message)
 
-        if self.apply_model_template:
-            text_prompt = self.model_template_fn(text_prompt, system_message)
+            try:
+                meta_response = self._generate(text_prompt, query_images)
+                if meta_response:
+                    response_dict.update(meta_response)
+                self.is_valid = True
 
-        try:
-            answer_text = self._generate(text_prompt, query_images)
+            except Exception as e:
+                logging.warning(e)
+                self.is_valid = False
 
-        except Exception as e:
-            logging.warning(e)
-            return None, False
-
-        return answer_text, True
+        response_dict.update(
+            {
+                "model_output": self.model_output,
+                "is_valid": self.is_valid,
+                "response_time": self.response_time,
+                "n_output_tokens": self.count_tokens(),
+            }
+        )
+        return response_dict
 
     def model_template_fn(self, text_prompt, system_message=None):
         return system_message + " " + text_prompt if system_message else text_prompt
 
 
 @dataclass
-class Phi3HF(HuggingFaceLM):
+class Phi3HFModel(HuggingFaceModel):
     """This class is used to run a self-hosted PHI3 model via HuggingFace apis."""
 
     def __post_init__(self):
@@ -529,7 +704,7 @@ class Phi3HF(HuggingFaceLM):
 
 
 @dataclass
-class LLaVAHuggingFaceMM(HuggingFaceLM):
+class LLaVAHuggingFaceModel(HuggingFaceModel):
     """This class is used to run a self-hosted LLaVA model via HuggingFace apis."""
 
     quantize: bool = False
@@ -601,7 +776,7 @@ class LLaVAHuggingFaceMM(HuggingFaceLM):
 
     def _generate(self, text_prompt, query_images=None):
         inputs = self.processor(text=text_prompt, images=query_images, return_tensors="pt").to(self.device)
-
+        start_time = time.time()
         output_ids = self.model.generate(
             **inputs,
             max_new_tokens=self.max_tokens,
@@ -609,20 +784,20 @@ class LLaVAHuggingFaceMM(HuggingFaceLM):
             top_p=self.top_p,
             do_sample=self.do_sample,
         )
-
+        end_time = time.time()
         sequence_length = inputs["input_ids"].shape[1]
         new_output_ids = output_ids[:, sequence_length:]
-        answer_text = self.processor.batch_decode(
+        self.model_output = self.processor.batch_decode(
             new_output_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False
         )[0]
 
-        return answer_text
+        self.response_time = end_time - start_time
 
     def generate(self, text_prompt, query_images=None, system_message=None):
 
         if len(query_images) > 1:
             logging.error(f"Not implemented for more than 1 image. {len(query_images)} images are in the prompt")
-            return None, False
+            return {"model_output": None, "is_valid": False, "response_time": None, "n_output_tokens": None}
 
         return super().generate(text_prompt, query_images, system_message)
 
@@ -651,7 +826,7 @@ class LLaVAHuggingFaceMM(HuggingFaceLM):
 
 
 @dataclass
-class LLaVA(LLaVAHuggingFaceMM):
+class LLaVAModel(LLaVAHuggingFaceModel):
     """This class is used to run a self-hosted LLaVA model via the LLaVA package."""
 
     model_base: str = None
@@ -704,6 +879,7 @@ class LLaVA(LLaVAHuggingFaceMM):
         )
 
         with torch.inference_mode():
+            start_time = time.time()
             output_ids = self.model.generate(
                 input_ids,
                 images=images_tensor,
@@ -714,17 +890,20 @@ class LLaVA(LLaVAHuggingFaceMM):
                 max_new_tokens=self.max_tokens,
                 use_cache=True,
             )
+            end_time = time.time()
 
-        answer_text = self.tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
-
-        return answer_text
+        self.model_output = self.tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
+        self.response_time = end_time - start_time
 
 
 @dataclass
-class ClaudeModels(EndpointModels, KeyBasedAuthentication):
+class ClaudeModel(EndpointModel, KeyBasedAuthMixIn):
     """This class is used to interact with Claude models through the python api."""
 
-
+    model_name: str = None
+    temperature: float = 0
+    max_tokens: int = 2000
+    top_p: float = 0.95
     timeout: int = 60
 
     def __post_init__(self):
@@ -760,6 +939,7 @@ class ClaudeModels(EndpointModels, KeyBasedAuthentication):
             return {"messages": messages}
 
     def get_response(self, request):
+        start_time = time.time()
         completion = self.client.messages.create(
             model=self.model_name,
             **request,
@@ -767,8 +947,11 @@ class ClaudeModels(EndpointModels, KeyBasedAuthentication):
             top_p=self.top_p,
             max_tokens=self.max_tokens,
         )
-        claude_response = completion.content[0].text
-        return claude_response
+        end_time = time.time()
+        self.model_output = completion.content[0].text
+        self.response_time = end_time - start_time
+        if hasattr(completion, "usage"):
+            return {"usage": completion.usage.to_dict()}
 
     def handle_request_error(self, e):
-        return None, False, False
+        return False
