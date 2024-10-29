@@ -8,7 +8,11 @@ from typing import List, Optional
 import numpy as np
 
 from .pipeline import Component
-from .reserved_names import INFERENCE_RESERVED_NAMES, PROMPT_PROC_RESERVED_NAMES
+from .reserved_names import (
+    INFERENCE_RESERVED_NAMES,
+    PROMPT_PROC_RESERVED_NAMES,
+)
+
 
 def compute_hash(val: str) -> str:
     """
@@ -67,7 +71,7 @@ class DataProcessing(Component):
             data_reader_config: DataReaderConfig
             output_dir: str directory to save the output files of this component.
             output_data_columns: Optional[List[str]] list of columns (subset of input columns)
-                                 to keep in the transformed data output file. The columns reserved for the Eureka framework 
+                                 to keep in the transformed data output file. The columns reserved for the Eureka framework
                                  will automatically be added to the output_data_columns if not provided.
         """
         super().__init__(output_dir)
