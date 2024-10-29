@@ -94,6 +94,8 @@ class Inference(Component):
         pre_inf_results_df: pd.DataFrame, previous inference results
         """
         prev_results = pre_inf_results_df[pre_inf_results_df.uid == data["uid"]]
+        if prev_results.empty:
+            return None
         prev_result_is_valid = bool(prev_results["is_valid"].values[0])
         prev_model_output = prev_results["model_output"].values[0]
 
@@ -181,17 +183,16 @@ class Inference(Component):
                         if prev_result:
                             writer.write(prev_result)
                             continue
-
+                    
                     # if batch is ready for concurrent inference
                     elif len(concurrent_inputs) >= self.max_concurrent:
                         with ThreadPoolExecutor() as executor:
                             await self.run_batch(concurrent_inputs, concurrent_metadata, writer, executor)
                         concurrent_inputs = []
                         concurrent_metadata = []
-                    else:
-                        # add data to batch for concurrent inference
-                        concurrent_inputs.append(model_inputs)
-                        concurrent_metadata.append(data)
+                    # add data to batch for concurrent inference
+                    concurrent_inputs.append(model_inputs)
+                    concurrent_metadata.append(data)
                 # if data loader is exhausted but there are remaining data points that did not form a full batch
                 if concurrent_inputs:
                     with ThreadPoolExecutor() as executor:
