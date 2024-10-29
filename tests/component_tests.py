@@ -118,7 +118,9 @@ class TestDataJoin(unittest.TestCase):
                 {
                     "path": "./sample_data/sample_data2.jsonl",
                     "format": ".jsonl",
-                    "transform": RunPythonTransform("df['images'] = df['images'].apply(lambda x: x[0])"),
+                    "transform": 
+                    SequenceTransform([RunPythonTransform("df['images'] = df['images'].apply(lambda x: x[0])"),
+                                       ColumnRename(name_mapping={"prompt": "prompt_2"})]),
                 },
             ),
             output_dir=os.path.join(self.log_dir, "data_join_output"),

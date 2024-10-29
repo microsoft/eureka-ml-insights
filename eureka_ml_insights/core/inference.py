@@ -10,6 +10,7 @@ from tqdm import tqdm
 from eureka_ml_insights.data_utils.data import DataReader, JsonLinesWriter
 
 from .pipeline import Component
+from .reserved_names import INFERENCE_RESERVED_NAMES
 
 MINUTE = 60
 
@@ -68,15 +69,15 @@ class Inference(Component):
             if "model_output" not in pre_inf_results_df.columns or "is_valid" not in pre_inf_results_df.columns:
                 raise ValueError("Columns 'model_output' and 'is_valid' are required in the resume_from file.")
 
-            # check if remaining columns match those in current data loader
-            pre_inf_results_keys = pre_inf_results_df.columns.drop(["model_output", "is_valid"])
+            # check if after removing reserved columns, remaining columns match those in current data loader
+            pre_inf_results_keys = pre_inf_results_df.columns.drop(INFERENCE_RESERVED_NAMES, errors="ignore")
+
             if set(sample_data_keys) != set(pre_inf_results_keys):
                 raise ValueError(
-                    f"Columns in resume_from do not match the columns in the current data loader."
-                    f"Current data loader columns: {sample_data_keys}. "
-                    f"Provided inference results columns: {pre_inf_results_keys}."
+                    f"Columns in the resume_from file do not match the columns in the current data loader. "
+                    f"Expected columns: {sample_data_keys}. "
+                    f"Columns in resume_from file: {pre_inf_results_keys}."
                 )
-
         # find the last uid that was inferenced
         last_uid = pre_inf_results_df["uid"].astype(int).max()
         logging.info(f"Last uid inferenced: {last_uid}")
@@ -96,9 +97,26 @@ class Inference(Component):
         prev_results = pre_inf_results_df[pre_inf_results_df.uid == data["uid"]]
         prev_result_is_valid = bool(prev_results["is_valid"].values[0])
         prev_model_output = prev_results["model_output"].values[0]
+
         if prev_result_is_valid:
             logging.info(f"Skipping inference for uid: {data['uid']}. Using previous results.")
-            data["model_output"], data["is_valid"] = prev_model_output, prev_result_is_valid
+            try:
+                prev_model_tokens = prev_results["n_output_tokens"].values[0]
+            except KeyError:
+                logging.warn("Previous results do not contain 'n_output_tokens' column, setting to None for this data point.")
+                prev_model_tokens = None
+            try:
+                prev_model_time = prev_results["response_time"].values[0]
+            except KeyError:
+                logging.warn("Previous results do not contain 'response_time' column, setting to None for this data point.")
+                prev_model_time = None
+
+            data["model_output"], data["is_valid"], data["n_output_tokens"], data["response_time"] = (
+                prev_model_output,
+                prev_result_is_valid,
+                prev_model_tokens,
+                prev_model_time,
+            )
             return data
 
     def run(self):
