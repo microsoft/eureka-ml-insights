@@ -103,12 +103,16 @@ class Inference(Component):
             try:
                 prev_model_tokens = prev_results["n_output_tokens"].values[0]
             except KeyError:
-                logging.warn("Previous results do not contain 'n_output_tokens' column, setting to None for this data point.")
+                logging.warn(
+                    "Previous results do not contain 'n_output_tokens' column, setting to None for this data point."
+                )
                 prev_model_tokens = None
             try:
                 prev_model_time = prev_results["response_time"].values[0]
             except KeyError:
-                logging.warn("Previous results do not contain 'response_time' column, setting to None for this data point.")
+                logging.warn(
+                    "Previous results do not contain 'response_time' column, setting to None for this data point."
+                )
                 prev_model_time = None
 
             data["model_output"], data["is_valid"], data["n_output_tokens"], data["response_time"] = (

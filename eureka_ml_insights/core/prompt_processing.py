@@ -11,6 +11,7 @@ from eureka_ml_insights.data_utils import JinjaPromptTemplate
 from .data_processing import DataProcessing
 from .reserved_names import INFERENCE_RESERVED_NAMES
 
+
 def compute_hash(val: str) -> str:
     """
     Hashes the provided value using MD5.
@@ -98,7 +99,9 @@ class PromptProcessing(DataProcessing):
         for col in INFERENCE_RESERVED_NAMES:
             if col in self.output_data_columns:
                 self.output_data_columns.remove(col)
-                logging.warning(f"Removed '{col}' column from transformed data columns because it is reserved for the inference component.")        
+                logging.warning(
+                    f"Removed '{col}' column from transformed data columns because it is reserved for the inference component."
+                )
 
         input_df = input_df[self.output_data_columns]
         input_df["prompt_hash"] = prompt_hashes
