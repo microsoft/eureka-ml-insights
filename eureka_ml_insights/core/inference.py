@@ -10,7 +10,6 @@ from tqdm import tqdm
 from eureka_ml_insights.data_utils.data import DataReader, JsonLinesWriter
 
 from .pipeline import Component
-from .reserved_names import INFERENCE_RESERVED_NAMES
 
 MINUTE = 60
 
@@ -62,23 +61,22 @@ class Inference(Component):
 
         # validate the resume_from contents
         with self.data_loader as loader:
-            sample_data = loader.reader.read()
-            sample_data_keys = sample_data.keys()
+            _, sample_model_input = self.data_loader.get_sample_model_input()
 
             # verify that "model_output" and "is_valid" columns are present
             if "model_output" not in pre_inf_results_df.columns or "is_valid" not in pre_inf_results_df.columns:
                 raise ValueError("Columns 'model_output' and 'is_valid' are required in the resume_from file.")
 
-            # check if after removing reserved columns, remaining columns match those in current data loader
-            pre_inf_results_keys = pre_inf_results_df.columns.drop(INFERENCE_RESERVED_NAMES, errors="ignore")
-
-            if set(sample_data_keys) != set(pre_inf_results_keys):
+            # perform a sample inference call to get the model output keys and validate the resume_from contents
+            sample_response_dict = self.model.generate(*sample_model_input)
+            # check if the inference response dictionary contains the same keys as the resume_from file
+            if set(sample_response_dict.keys()) != set(pre_inf_results_df.columns):
                 logging.warn(
-                    f"Columns in resume_from file do not match the current data loader. "
-                    f"Current data loader columns: {sample_data_keys}. "
-                    f"Resume_from file columns: {pre_inf_results_keys}."
-                    "If the missing columns are going to be added by the inference process, this warning can be ignored."
+                    f"Columns in resume_from file do not match the current inference response. "
+                    f"Current inference response keys: {sample_response_dict.keys()}. "
+                    f"Resume_from file columns: {pre_inf_results_df.columns}."
                 )
+
         # find the last uid that was inferenced
         last_uid = pre_inf_results_df["uid"].astype(int).max()
         logging.info(f"Last uid inferenced: {last_uid}")

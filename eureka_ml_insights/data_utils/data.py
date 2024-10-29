@@ -58,9 +58,17 @@ class DataLoader:
 
     def __iter__(self):
         for data in self.reader.iter(skip_empty=True, skip_invalid=True):
-            query_text = data["prompt"]
-            model_inputs = (query_text,)
-            yield data, model_inputs
+            yield self.prepare_model_input(data)
+
+    def prepare_model_input(self, row):
+        query_text = row["prompt"]
+        model_inputs = (query_text,)
+        return row, model_inputs
+
+    def get_sample_model_input(self):
+        """Get a sample data row and model_inputs from the jsonlines reader."""
+        row = next(self.reader.iter(skip_empty=True, skip_invalid=True))
+        return self.prepare_model_input(row)
 
 
 class MMDataLoader(DataLoader):
@@ -91,28 +99,26 @@ class MMDataLoader(DataLoader):
             image_column_search_regex: optional Regex str, to search for which columns have images in them.
         """
 
-    def __iter__(self):
-        for row in self.reader.iter(skip_empty=True, skip_invalid=True):
-            # get query text
-            query_text = row["prompt"]
-            model_inputs = (query_text,)
+    def prepare_model_input(self, row):
+        # Given a row from the jsonl file, prepare the data for the model.
+        query_text = row["prompt"]
+        model_inputs = (query_text,)
 
-            # if images are present load them
-            if self.load_images:
-                # if the user passed in a list of image column names when creating the class, use it
-                if self.image_column_names:
-                    image_column_names = self.image_column_names
-                # otherwise search for the image columns
-                else:
-                    image_column_names = self._search_for_image_columns(row)
+        # if images are present load them
+        if self.load_images:
+            # if the user passed in a list of image column names when creating the class, use it
+            if self.image_column_names:
+                image_column_names = self.image_column_names
+            # otherwise search for the image columns
+            else:
+                image_column_names = self._search_for_image_columns(row)
 
-                # if found load them from disk and add to model inputs
-                if image_column_names:
-                    images = self._gather_image_file_names(row, image_column_names)
-                    query_images = self._load_images(images)
-                    model_inputs = (query_text, query_images)
-
-            yield row, model_inputs
+            # if found load them from disk and add to model inputs
+            if image_column_names:
+                images = self._gather_image_file_names(row, image_column_names)
+                query_images = self._load_images(images)
+                model_inputs = (query_text, query_images)
+        return row, model_inputs
 
     def _search_for_image_columns(self, data_row) -> list:
         """
