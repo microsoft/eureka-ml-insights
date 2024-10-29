@@ -73,10 +73,11 @@ class Inference(Component):
             pre_inf_results_keys = pre_inf_results_df.columns.drop(INFERENCE_RESERVED_NAMES, errors="ignore")
 
             if set(sample_data_keys) != set(pre_inf_results_keys):
-                raise ValueError(
-                    f"Columns in the resume_from file do not match the columns in the current data loader. "
-                    f"Expected columns: {sample_data_keys}. "
-                    f"Columns in resume_from file: {pre_inf_results_keys}."
+                logging.warn(
+                    f"Columns in resume_from file do not match the current data loader. "
+                    f"Current data loader columns: {sample_data_keys}. "
+                    f"Resume_from file columns: {pre_inf_results_keys}."
+                    "If the missing columns are going to be added by the inference process, this warning can be ignored."
                 )
         # find the last uid that was inferenced
         last_uid = pre_inf_results_df["uid"].astype(int).max()

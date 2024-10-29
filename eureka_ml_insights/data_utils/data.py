@@ -14,6 +14,8 @@ from datasets import load_dataset
 from PIL import Image
 from tqdm import tqdm
 
+from eureka_ml_insights.core import NumpyEncoder
+
 from .secret_key_utils import GetKey
 from .transform import DFTransformBase
 
@@ -272,7 +274,7 @@ class JsonLinesWriter:
         self.writer = None
 
     def __enter__(self):
-        self.writer = jsonlines.open(self.out_path, mode="w")
+        self.writer = jsonlines.open(self.out_path, mode="w", dumps=NumpyEncoder().encode)
         return self.writer
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -355,6 +357,7 @@ class HFJsonReader(JsonReader):
     """
     This is a DataReader that loads a json or jsonl data file from HuggingFace.
     """
+
     def __init__(self, repo_id, repo_type, filename):
         """
         Initializes an HFJsonReader.
@@ -523,8 +526,8 @@ class HFDataReader(DataReader):
 
         if image_base64:
             # create path to save image
-            file_path = os.path.join(cache_path, image_base64["path"]) 
-            
+            file_path = os.path.join(cache_path, image_base64["path"])
+
             # only do this if the image doesn't already exist
             if not os.path.exists(file_path):
                 # base64 string to binary image data
