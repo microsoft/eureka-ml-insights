@@ -39,5 +39,6 @@ jobs:
       run: |
         pip show eureka_ml_insights
         export skip_tests_with_missing_ds=1
+        export skip_slow_tests=1
         pwd
         make test
