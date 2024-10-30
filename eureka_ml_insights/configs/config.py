@@ -111,7 +111,7 @@ class InferenceConfig(ComponentConfig):
     data_loader_config: UtilityClassConfigType = None
     model_config: UtilityClassConfigType = None
     resume_from: str = None
-    n_calls_per_min: int = None
+    requests_per_minute: int = None
     max_concurrent: int = 1
 
 

@@ -15,7 +15,7 @@ MINUTE = 60
 
 
 class Inference(Component):
-    def __init__(self, model_config, data_config, output_dir, resume_from=None, n_calls_per_min=None, max_concurrent=1):
+    def __init__(self, model_config, data_config, output_dir, resume_from=None, requests_per_minute=None, max_concurrent=1):
         """
         Initialize the Inference component.
         args:
@@ -23,7 +23,7 @@ class Inference(Component):
             data_config (dict): DataSetConfig object.
             output_dir (str): Directory to save the inference results.
             resume_from (str): optional. Path to the file where previous inference results are stored.
-            n_calls_per_min (int): optional. Number of calls to be made per minute, used for rate limiting. If not provided, rate limiting will not be applied.
+            requests_per_minute (int): optional. Number of inference requests to be made per minute, used for rate limiting. If not provided, rate limiting will not be applied.
             max_concurrent (int): optional. Maximum number of concurrent inferences to run. Default is 1.
         """
         super().__init__(output_dir)
@@ -36,8 +36,8 @@ class Inference(Component):
             raise FileNotFoundError(f"File {resume_from} not found.")
 
         # rate limiting parameters
-        self.n_calls_per_min = n_calls_per_min
-        self.call_times = deque()
+        self.requests_per_minute = requests_per_minute
+        self.request_times = deque()
         self.period = MINUTE
 
         # parallel inference parameters
@@ -50,7 +50,7 @@ class Inference(Component):
             config.data_loader_config,
             config.output_dir,
             resume_from=config.resume_from,
-            n_calls_per_min=config.n_calls_per_min,
+            requests_per_minute=config.requests_per_minute,
             max_concurrent=config.max_concurrent,
         )
 
@@ -145,15 +145,15 @@ class Inference(Component):
                             continue
 
                     # generate text from model (optionally at a limited rate)
-                    if self.n_calls_per_min:
-                        while len(self.call_times) >= self.n_calls_per_min:
-                            # remove the oldest call time if it is older than the rate limit period
-                            if time.time() - self.call_times[0] > self.period:
-                                self.call_times.popleft()
+                    if self.requests_per_minute:
+                        while len(self.request_times) >= self.requests_per_minute:
+                            # remove the oldest request time if it is older than the rate limit period
+                            if time.time() - self.request_times[0] > self.period:
+                                self.request_times.popleft()
                             else:
                                 # rate limit is reached, wait for a second
                                 time.sleep(1)
-                        self.call_times.append(time.time())
+                        self.request_times.append(time.time())
                     response_dict = self.model.generate(*model_inputs)
                     self.validate_response_dict(response_dict)
                     # write results

@@ -245,7 +245,7 @@ class TestRateLimitedInference(unittest.TestCase):
             ),
             model_config=ModelConfig(TestModel, {}),
             output_dir=os.path.join(self.log_dir, "model_output"),
-            n_calls_per_min=20,
+            requests_per_minute=20,
         )
         component = Inference.from_config(self.config)
         start = time.time()
