@@ -5,9 +5,14 @@ from eureka_ml_insights.data_utils import (
     DataReader,
     HFDataReader,
     MMDataLoader,
-    SequenceTransform
+    SequenceTransform,
+    RunPythonTransform,
+    CopyColumn,
+    RegexTransform,
+    SamplerTransform,
+    ImputeNA
 )
-from eureka_ml_insights.metrics import AverageAggregator, DropF1ScoreMetric
+from eureka_ml_insights.metrics import AverageAggregator, MaxTokenF1ScoreMetric
 from .config import (
     AggregatorConfig,
     DataSetConfig,
@@ -37,10 +42,14 @@ class Drop_Experiment_Pipeline(ExperimentConfig):
                     "split": "validation",
                     "transform": SequenceTransform(
                         [
-                            CreateDropPrompt()
+                            RunPythonTransform(python_code="df['ground_truth'] = df['answers_spans'].apply(lambda x: x['spans'])"),
+                            SamplerTransform(sample_count=5, random_seed=42),
                         ]
                     ),
                 },
+            ),
+            prompt_template_path=os.path.join(
+                os.path.dirname(__file__), "../prompt_templates/drop_templates/basic.jinja"
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
         )
@@ -65,11 +74,18 @@ class Drop_Experiment_Pipeline(ExperimentConfig):
                 {
                     "path": os.path.join(inference_comp.output_dir, "inference_result.jsonl"),
                     "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            CopyColumn(column_name_src="model_output", column_name_dst="raw_model_output"),
+                            RegexTransform(columns="model_output", prompt_pattern=r"My answer is (.+)", case=True),
+                            ImputeNA(columns="model_output", value="")
+                        ]
+                    ),
                 },
             ),
-            metric_config=MetricConfig(DropF1ScoreMetric),
+            metric_config=MetricConfig(MaxTokenF1ScoreMetric),
             aggregator_configs=[
-                AggregatorConfig(AverageAggregator, {"column_names": ["DropF1ScoreMetric_result"]})
+                AggregatorConfig(AverageAggregator, {"column_names": ["MaxTokenF1ScoreMetric_result"]})
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
         )

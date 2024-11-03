@@ -2,33 +2,19 @@ import re
 from collections import Counter
 from .metrics_base import ClassicMetric
 
-class DropF1ScoreMetric(ClassicMetric):
+class MaxTokenF1ScoreMetric(ClassicMetric):
     def validate_data(self, data):
         """This method checks if the data has the required fields."""
         assert "model_output" in data.columns, "Data does not have 'model_output' field."
         assert "ground_truth" in data.columns, "Data does not have 'ground_truth' field."
         return True
     
-    def _extract_answer(self, model_output):
-        """
-        Expect the model output to end with "My answer is ...".
-        """
-        pattern = r"My answer is (.+)"
-
-        # Search for the pattern in the text
-        match = re.search(pattern, model_output)
-
-        # Check if a match was found and extract the answer
-        if match:
-            return match.group(1)  # Group 1 contains everything after "My answer is"
-        return ""
-    
     def tokenize(self, sentence):
         return re.findall(r'\b\w+\b', sentence.lower())
 
     # Function to compute F1 score between two responses
     def __evaluate__f1(self, model_output, ground_truth):
-        model_answer = self._extract_answer(model_output)
+        model_answer = model_output
         max_f1 = 0
         for ans in ground_truth:
             f1 = self._f1_score(model_answer, ans)
