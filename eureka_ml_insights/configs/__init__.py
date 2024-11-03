@@ -13,7 +13,6 @@ from .config import (
 from .dna import DNA_PIPELINE
 from .experiment_config import ExperimentConfig, create_logdir
 from .flenqa import FlenQA_Experiment_Pipeline
-from .gpqa import GPQA_Experiment_Pipeline
 from .drop import Drop_Experiment_Pipeline
 from .geometer import GEOMETER_PIPELINE
 from .ifeval import IFEval_PIPELINE
@@ -115,7 +114,7 @@ __all__ = [
     MAZE_REPORTING_PIPELINE,
     IFEval_PIPELINE,
     FlenQA_Experiment_Pipeline,
-    GPQA_Experiment_Pipeline,
+    Drop_Experiment_Pipeline,
     GEOMETER_PIPELINE,
     MMMU_BASELINE_PIPELINE,
     KITAB_ONE_BOOK_CONSTRAINT_PIPELINE,

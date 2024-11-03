@@ -42,8 +42,7 @@ class Drop_Experiment_Pipeline(ExperimentConfig):
                     "split": "validation",
                     "transform": SequenceTransform(
                         [
-                            RunPythonTransform(python_code="df['ground_truth'] = df['answers_spans'].apply(lambda x: x['spans'])"),
-                            SamplerTransform(sample_count=5, random_seed=42),
+                            RunPythonTransform(python_code="df['ground_truth'] = df['answers_spans'].apply(lambda x: x['spans'])")
                         ]
                     ),
                 },
