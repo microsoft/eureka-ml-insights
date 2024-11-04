@@ -24,7 +24,6 @@
     {
       "name": "MMMU",
       "modality": "multimodal",
-      "path": ["MMMU", "MMMU"],
       "filePattern": ".*MMMUMetric_result_grouped_by_category_normalized_report.*",
       "description": "",
       "graphs": [
@@ -63,11 +62,49 @@
     {
       "name": "Image Understanding",
       "modality": "multimodal",
-      "path": ["IMAGE_UNDERSTANDING", "OBJECT_RECOGNITION_SINGLE"],
-      "filePattern": ".*GeoMCQMetric_result_grouped_by_category_report.*",
+      "filePattern": ".*result_normalized_report.*",
       "description": "",
       "graphs": [
-
+        {
+          "title": "Object Recognition - One Object Accuracy",
+          "path": ["IMAGE_UNDERSTANDING", "OBJECT_RECOGNITION_SINGLE"],
+          "metric": ["ObjectRecognitionMetric_result", "correct"]
+        },
+        {
+          "title": "Object Recognition - Two Object Accuracy",
+          "path": ["IMAGE_UNDERSTANDING", "OBJECT_RECOGNITION_PAIRS"],
+          "metric": ["ObjectRecognitionMetric_result", "correct"]
+        },
+        {
+          "title": "Visual Prompting - One Object Accuracy",
+          "path": ["IMAGE_UNDERSTANDING", "VISUAL_PROMPTING_SINGLE"],
+          "metric": ["ObjectRecognitionMetric_result", "correct"]
+        },
+        {
+          "title": "Visual Prompting - Two Object Accuracy",
+          "path": ["IMAGE_UNDERSTANDING", "VISUAL_PROMPTING_PAIRS"],
+          "metric": ["ObjectRecognitionMetric_result", "correct"]
+        },
+        {
+          "title": "Spatial Reasoning - One Object Accuracy",
+          "path": ["IMAGE_UNDERSTANDING", "SPATIAL_REASONING_SINGLE"],
+          "metric": ["SpatialAndLayoutReasoningMetric_result", "correct"]
+        },
+        {
+          "title": "Spatial Reasoning - Two Object Accuracy",
+          "path": ["IMAGE_UNDERSTANDING", "SPATIAL_REASONING_PAIRS"],
+          "metric": ["SpatialAndLayoutReasoningMetric_result", "correct"]
+        }        ,
+        {
+          "title": "Object Detection - One Object Accuracy",
+          "path": ["IMAGE_UNDERSTANDING", "OBJECT_DETECTION_SINGLE"],
+          "metric": ["SpatialAndLayoutReasoningMetric_result", "correct"]
+        },
+        {
+          "title": "Object Detection - Two Object Accuracy",
+          "path": ["IMAGE_UNDERSTANDING", "OBJECT_DETECTION_PAIRS"],
+          "metric": ["SpatialAndLayoutReasoningMetric_result", "correct"]
+        }
       ]
     },
     {
@@ -83,11 +120,21 @@
     {
       "name": "IFEval",
       "modality": "language",
-      "path": ["IMAGE_UNDERSTANDING", "OBJECT_RECOGNITION_SINGLE"],
       "description": "",
-      "filePattern": ".*",
+      "filePattern": ".*IFEvalMetric_loose_follow_all_instructions_report.*",
       "graphs": [
-        
+        {
+          "title": "Follow All Instructions (strict)",
+          "path": ["IFEvaL"],
+          "description": "",
+          "metric": ["IFEvalMetric_strict_follow_all_instructions"]
+        },
+        {
+          "title": "Follow All Instructions (loose)",
+          "path": ["IFEvaL"],
+          "description": "",
+          "metric": ["IFEvalMetric_loose_follow_all_instructions"]
+        }
       ]
     },
     {
@@ -106,20 +153,17 @@
           "title": "Context Size: 500",
           "path": ["FlenQA"],
           "metric": ["ExactMatch_result", "500", "correct"]
-        }
-        ,
+        },
         {
           "title": "Context Size: 1000",
           "path": ["FlenQA"],
           "metric": ["ExactMatch_result", "1000", "correct"]
-        }
-        ,
+        },
         {
           "title": "Context Size: 2000",
           "path": ["FlenQA"],
           "metric": ["ExactMatch_result", "2000", "correct"]
-        }
-        ,
+        },
         {
           "title": "Context Size: 3000",
           "path": ["FlenQA"],
@@ -130,11 +174,21 @@
     {
       "name": "Kitab",
       "modality": "language",
-      "path": ["IMAGE_UNDERSTANDING", "OBJECT_RECOGNITION_SINGLE"],
       "description": "",
-      "filePattern": ".*",
+      "filePattern": ".*AllKitabMetrics_GroupBy_report.*",
       "graphs": [
-        
+        {
+          "title": "Satisfied (No-Context)",
+          "path": ["Kitab"],
+          "description": "",
+          "metric": ["KitabMetric_satisfied_rate", "all"]
+        },
+        {
+          "title": "Completeness (No-Context)",
+          "path": ["Kitab"],
+          "description": "",
+          "metric": ["KitabMetric_completeness", "all"]
+        }
       ]
     },
     {

@@ -3,12 +3,12 @@ import { Layout as AntdLayout, Menu, Select} from "antd";
 import Layout from '@theme/Layout';
 import React from "react";
 import { EurekaConfig } from "../types";
-import BenchmarkChart from "./benchmark_chart";
 import Sider from "antd/es/layout/Sider";
 import { Header } from "antd/es/layout/layout";
 import Link from "@docusaurus/Link";
 import { ArrowLeftCircleIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
 import BenchmarkDetails from "./benchmark_details";
+import styles from './modality_breakdown.module.css';
 
 const ModalityBreakdown = ({modality}: {modality: string}) => {
     const {siteConfig} = useDocusaurusContext();
@@ -29,7 +29,6 @@ const ModalityBreakdown = ({modality}: {modality: string}) => {
                 setItems(benchmarks.map((benchmark, index) => ({label: benchmark.name, key: benchmark.name})));
                 
                 if (benchmarks.length > 0) {  
-                  
                   setSelectedBenchmark(benchmarks[0].name);  
                 } 
             })
@@ -38,21 +37,29 @@ const ModalityBreakdown = ({modality}: {modality: string}) => {
 
     return (
        <Layout>
-          <Header style={{ alignItems: 'left', color: 'white' }}>
-            <Link to="/eureka-ml-insights"><strong><ArrowLeftIcon style={{width: '2em'}}/>Multimodal Task Performance</strong></Link>
+          <div className={styles.heroBackground}/>
+          <div className={styles.splashSvg}/>
+          <Header style={{ alignItems: 'left', color: 'white', background: 'none'}}>
+            <Link to="/eureka-ml-insights" style={{ color: 'black', display: 'flex', alignItems: 'center' }}>
+              <ArrowLeftIcon style={{width: '1.5em', color: 'black'}}/>
+              <strong style={{paddingLeft: '.5em'}}>Multimodal Task Performance</strong>
+            </Link>
           </Header>
-          <AntdLayout>
-            <Sider>
+          <AntdLayout style={{background: 'white'}}>
+            <Sider style={{ padding: '10px', margin: '10px', background: 'none' }}>
+              <div style={{textAlign: 'center'}}>
+                <h3>Benchmark List</h3>
+              </div>
               <Menu
                 selectedKeys={[selectedBenchmark]} 
                 title="Benchmark List"
                 mode="inline"
-                onClick={({ key }) => setSelectedBenchmark(key)}  
+                onClick={({ key }) => setSelectedBenchmark(key)}
                 >
-                  {items.map(item => (  
-                    <Menu.Item key={item.key}>  
-                      {item.label}  
-                    </Menu.Item>  
+                  {items.map(item => (
+                    <Menu.Item key={item.key}>
+                      {item.label}
+                    </Menu.Item>
                   ))}  
                 </Menu>
             </Sider>
