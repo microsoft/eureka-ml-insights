@@ -1,5 +1,5 @@
-from .geomtric_reasoning_metrics import GeoMCQMetric
 from .f1score_metrics import MaxTokenF1ScoreMetric
+from .geomtric_reasoning_metrics import GeoMCQMetric
 from .metrics_base import (
     CaseInsensitiveMatch,
     ClassicMetric,
@@ -51,5 +51,5 @@ __all__ = [
     TwoColumnSumAverageAggregator,
     SumAggregator,
     MMMUMetric,
-    MaxTokenF1ScoreMetric
+    MaxTokenF1ScoreMetric,
 ]
