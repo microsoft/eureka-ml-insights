@@ -278,11 +278,9 @@ class LlamaServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
     skip_special_tokens: str = "false"
     ignore_eos: str = "false"
 
-    def create_request(self, text_prompt, *args, **kwargs):
+    def create_request(self, text_prompt, query_images=None, *args, **kwargs):
         user_content = {"role": "user", "content": text_prompt}
-        if "query_images" in kwargs:
-            query_images = kwargs["query_images"]
-            logging.info(query_images)
+        if query_images:
             if len(query_images) > 1:
                 raise ValueError("Llama vision model does not support more than 1 image.")
             encoded_images = self.base64encode(query_images)
@@ -329,7 +327,7 @@ class MistralServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
             self.top_p = 1
         super().__post_init__()
 
-    def create_request(self, text_prompt, *args):
+    def create_request(self, text_prompt, *args, **kwargs):
         data = {
             "messages": [{"role": "user", "content": text_prompt}],
             "max_tokens": self.max_tokens,
