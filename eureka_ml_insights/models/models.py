@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 import anthropic
 import tiktoken
-from azure.identity import AzureCliCredential, get_bearer_token_provider
+from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 
 from eureka_ml_insights.data_utils import GetKey
 
@@ -393,7 +393,7 @@ class AzureOpenAIClientMixIn:
     def get_client(self):
         from openai import AzureOpenAI
 
-        token_provider = get_bearer_token_provider(AzureCliCredential(), "https://cognitiveservices.azure.com/.default")
+        token_provider = get_bearer_token_provider(DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default")
         return AzureOpenAI(
             azure_endpoint=self.url,
             api_version=self.api_version,

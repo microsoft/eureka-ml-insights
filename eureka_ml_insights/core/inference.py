@@ -15,9 +15,8 @@ MINUTE = 60
 
 
 class Inference(Component):
-    def __init__(
-        self, model_config, data_config, output_dir, resume_from=None, requests_per_minute=None, max_concurrent=1
-    ):
+    def __init__(self, model_config, data_config, output_dir, resume_from=None, requests_per_minute=None, max_concurrent=1):
+
         """
         Initialize the Inference component.
         args:
@@ -65,6 +64,7 @@ class Inference(Component):
         with self.data_loader as loader:
             _, sample_model_input = self.data_loader.get_sample_model_input()
             sample_data_keys = loader.reader.read().keys()
+
             # verify that "model_output" and "is_valid" columns are present
             if "model_output" not in pre_inf_results_df.columns or "is_valid" not in pre_inf_results_df.columns:
                 raise ValueError("Columns 'model_output' and 'is_valid' are required in the resume_from file.")
