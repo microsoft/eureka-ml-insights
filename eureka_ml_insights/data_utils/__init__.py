@@ -5,9 +5,9 @@ from .data import (
     DataLoader,
     DataReader,
     HFDataReader,
+    HFJsonReader,
     JsonLinesWriter,
     JsonReader,
-    HFJsonReader,
     MMDataLoader,
     TXTWriter,
 )
@@ -34,6 +34,7 @@ from .transform import (
     RunPythonTransform,
     SamplerTransform,
     SequenceTransform,
+    TokenCounterTransform,
 )
 
 __all__ = [
@@ -68,4 +69,5 @@ __all__ = [
     ExtractAnswerGrid,
     ExtractAnswerSpatialMap,
     ExtractAnswerMaze,
+    TokenCounterTransform,
 ]
