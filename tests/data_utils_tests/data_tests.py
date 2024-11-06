@@ -97,7 +97,7 @@ class TestTokenCounterTransform(unittest.TestCase):
         # make sure the other columns are not affected
         self.assertEqual(result["B"][0], self.df.loc[0, "B"])
         self.assertEqual(result["A"][0], self.df.loc[0, "A"])
-    
+
     def test_token_transform_multi_columns(self):
         transform = TokenCounterTransform(["A", "B"])
         result = transform.transform(self.df)

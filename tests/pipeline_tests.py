@@ -273,6 +273,7 @@ class TEST_MMMU_PIPELINE(MMMU_BASELINE_PIPELINE):
         self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
 
+
 class TEST_GPQA_PIPELINE(GPQA_Experiment_Pipeline):
     # Test config the GPQA benchmark with TestModel and TestDataLoader
     def configure_pipeline(self):
@@ -283,6 +284,7 @@ class TEST_GPQA_PIPELINE(GPQA_Experiment_Pipeline):
             "n_iter": N_ITER,
         }
         return config
+
 
 class TEST_AIME_PIPELINE(AIME_PIPELINE):
     # Test config the AIME benchmark with GenericTestModel and TestMMDataLoader
@@ -441,9 +443,11 @@ class KITAB_ONE_BOOK_CONSTRAINT_PIPELINE_PipelineTest(PipelineTest, unittest.Tes
     def get_config(self):
         return TEST_KITAB_ONE_BOOK_CONSTRAINT_PIPELINE().pipeline_config
 
+
 class GPQA_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_GPQA_PIPELINE().pipeline_config
+
 
 class AIME_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
