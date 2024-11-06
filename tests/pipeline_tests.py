@@ -273,6 +273,7 @@ class TEST_MMMU_PIPELINE(MMMU_BASELINE_PIPELINE):
         self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
 
+
 class TEST_DROP_PIPELINE(Drop_Experiment_Pipeline):
     def configure_pipeline(self):
         config = super().configure_pipeline(model_config=ModelConfig(GenericTestModel, {}))
@@ -283,6 +284,7 @@ class TEST_DROP_PIPELINE(Drop_Experiment_Pipeline):
         }
         return config
 
+
 class TEST_AIME_PIPELINE(AIME_PIPELINE):
     # Test config the AIME benchmark with GenericTestModel and TestMMDataLoader
     def configure_pipeline(self):
@@ -292,6 +294,7 @@ class TEST_AIME_PIPELINE(AIME_PIPELINE):
         self.inference_comp.data_loader_config.class_name = TestMMDataLoader
         self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
+
 
 class PipelineTest:
     def setUp(self) -> None:
@@ -439,9 +442,11 @@ class KITAB_ONE_BOOK_CONSTRAINT_PIPELINE_PipelineTest(PipelineTest, unittest.Tes
     def get_config(self):
         return TEST_KITAB_ONE_BOOK_CONSTRAINT_PIPELINE().pipeline_config
 
+
 class DROP_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_DROP_PIPELINE().pipeline_config
+
 
 class AIME_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
