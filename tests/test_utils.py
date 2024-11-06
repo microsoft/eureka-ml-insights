@@ -1,4 +1,5 @@
 import random
+import time
 
 from eureka_ml_insights.data_utils import (
     AzureMMDataLoader,
@@ -7,6 +8,15 @@ from eureka_ml_insights.data_utils import (
     MMDataLoader,
 )
 from eureka_ml_insights.metrics import ClassicMetric, CompositeMetric
+
+
+class TestModel:
+    def __init__(self, model_name="generic_test_model"):
+        self.name = model_name
+
+    def generate(self, text_prompt, query_images=None):
+        time.sleep(0.1)
+        return {"model_output": "model output", "is_valid": True}
 
 
 class TestHFDataReader(HFDataReader):
