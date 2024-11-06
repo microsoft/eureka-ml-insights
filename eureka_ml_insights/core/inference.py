@@ -15,7 +15,9 @@ MINUTE = 60
 
 
 class Inference(Component):
-    def __init__(self, model_config, data_config, output_dir, resume_from=None, requests_per_minute=None, max_concurrent=1):
+    def __init__(
+        self, model_config, data_config, output_dir, resume_from=None, requests_per_minute=None, max_concurrent=1
+    ):
         """
         Initialize the Inference component.
         args:
@@ -71,7 +73,7 @@ class Inference(Component):
             sample_response_dict = self.model.generate(*sample_model_input)
             # check if the inference response dictionary contains the same keys as the resume_from file
             if set(sample_response_dict.keys()) != set(pre_inf_results_df.columns):
-                logging.warn(
+                raise ValueError(
                     f"Columns in resume_from file do not match the current inference response. "
                     f"Current inference response keys: {sample_response_dict.keys()}. "
                     f"Resume_from file columns: {pre_inf_results_df.columns}."
@@ -183,7 +185,7 @@ class Inference(Component):
                         if prev_result:
                             writer.write(prev_result)
                             continue
-                    
+
                     # if batch is ready for concurrent inference
                     elif len(concurrent_inputs) >= self.max_concurrent:
                         with ThreadPoolExecutor() as executor:
