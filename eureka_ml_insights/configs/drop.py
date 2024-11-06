@@ -35,7 +35,7 @@ class Drop_Experiment_Pipeline(ExperimentConfig):
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
         # Configure the data processing component.
-        data_processing_comp = PromptProcessingConfig(
+        self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
             data_reader_config=DataSetConfig(
                 HFDataReader,
@@ -59,24 +59,24 @@ class Drop_Experiment_Pipeline(ExperimentConfig):
         )
 
         # Configure the inference component
-        inference_comp = InferenceConfig(
+        self.inference_comp = InferenceConfig(
             component_type=Inference,
             model_config=model_config,
             data_loader_config=DataSetConfig(
                 MMDataLoader,
-                {"path": os.path.join(data_processing_comp.output_dir, "transformed_data.jsonl")},
+                {"path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl")},
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
         )
 
         # # Configure the evaluation and reporting component.
-        evalreporting_comp = EvalReportingConfig(
+        self.evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    "path": os.path.join(inference_comp.output_dir, "inference_result.jsonl"),
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
@@ -106,9 +106,9 @@ class Drop_Experiment_Pipeline(ExperimentConfig):
         # # Configure the pipeline
         return PipelineConfig(
             [
-                data_processing_comp,
-                inference_comp,
-                evalreporting_comp,
+                self.data_processing_comp,
+                self.inference_comp,
+                self.evalreporting_comp,
             ],
             self.log_dir,
         )
