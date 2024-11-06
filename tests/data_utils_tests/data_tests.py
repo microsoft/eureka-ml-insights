@@ -87,13 +87,23 @@ class TestDataTransform(unittest.TestCase):
 
 class TestTokenCounterTransform(unittest.TestCase):
     def setUp(self):
-        self.df = pd.DataFrame({"A": ["tiktoken is great!"], "B": ["Hellow!"]})
+        self.df = pd.DataFrame({"A": ["tiktoken is great!"], "B": ["antidisestablishmentarianism"]})
 
     def test_token_transform(self):
         transform = TokenCounterTransform("A")
         result = transform.transform(self.df)
         # make sure the token count is correct
         self.assertEqual(result["A_token_count"][0], 6)
+        # make sure the other columns are not affected
+        self.assertEqual(result["B"][0], self.df.loc[0, "B"])
+        self.assertEqual(result["A"][0], self.df.loc[0, "A"])
+    
+    def test_token_transform_multi_columns(self):
+        transform = TokenCounterTransform(["A", "B"])
+        result = transform.transform(self.df)
+        # make sure the token count is correct
+        self.assertEqual(result["A_token_count"][0], 6)
+        self.assertEqual(result["B_token_count"][0], 6)
         # make sure the other columns are not affected
         self.assertEqual(result["B"][0], self.df.loc[0, "B"])
         self.assertEqual(result["A"][0], self.df.loc[0, "A"])

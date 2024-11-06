@@ -278,12 +278,12 @@ class ASTEvalTransform(MultiColumnTransform):
 
 
 @dataclass
-class TokenCounterTransform(DFTransformBase):
+class TokenCounterTransform(MultiColumnTransform):
     """
-    Counts the number of tokens in the selected column.
+    Counts the number of tokens in the selected columns.
     """
 
-    column: str
+    columns: List[str] | str
 
     def transform(self, df: pd.DataFrame, encoding="cl100k_base") -> pd.DataFrame:
         """
@@ -295,8 +295,10 @@ class TokenCounterTransform(DFTransformBase):
         returns:
             dataframe: the dataframe with the token count column added.
         """
+        self.validate(df)
         encoding = tiktoken.get_encoding(encoding)
-        token_count = df[self.column].apply(lambda x: len(encoding.encode(x)))
-        token_count_column = f"{self.column}_token_count"
-        df[token_count_column] = token_count
+        for column in self.columns:
+            token_count = df[column].apply(lambda x: len(encoding.encode(x)))
+            token_count_column = f"{column}_token_count"
+            df[token_count_column] = token_count
         return df
