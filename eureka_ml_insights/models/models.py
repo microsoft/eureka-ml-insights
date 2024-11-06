@@ -111,7 +111,7 @@ class EndpointModel(Model):
                                   and any other relevant information returned by the model.
         """
         response_dict = {}
-        request = self.create_request(query_text, query_images, system_message)
+        request = self.create_request(query_text, query_images=query_images, system_message=system_message)
         attempts = 0
         while attempts < self.num_retries:
             try:
@@ -278,9 +278,24 @@ class LlamaServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
     skip_special_tokens: str = "false"
     ignore_eos: str = "false"
 
-    def create_request(self, text_prompt, *args):
+    def create_request(self, text_prompt, query_images=None, *args, **kwargs):
+        user_content = {"role": "user", "content": text_prompt}
+        if query_images:
+            if len(query_images) > 1:
+                raise ValueError("Llama vision model does not support more than 1 image.")
+            encoded_images = self.base64encode(query_images)
+            user_content["content"] = [
+                {"type": "text", "text": text_prompt},
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/png;base64,{encoded_images[0]}",
+                    },
+                },
+            ]
+
         data = {
-            "messages": [{"role": "user", "content": text_prompt}],
+            "messages": [user_content],
             "max_tokens": self.max_tokens,
             "temperature": self.temperature,
             "top_p": self.top_p,
@@ -312,7 +327,7 @@ class MistralServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
             self.top_p = 1
         super().__post_init__()
 
-    def create_request(self, text_prompt, *args):
+    def create_request(self, text_prompt, *args, **kwargs):
         data = {
             "messages": [{"role": "user", "content": text_prompt}],
             "max_tokens": self.max_tokens,
@@ -663,7 +678,7 @@ class HuggingFaceModel(Model):
                 text_prompt = self.model_template_fn(text_prompt, system_message)
 
             try:
-                meta_response = self._generate(text_prompt, query_images)
+                meta_response = self._generate(text_prompt, query_images=query_images)
                 if meta_response:
                     response_dict.update(meta_response)
                 self.is_valid = True
@@ -795,11 +810,11 @@ class LLaVAHuggingFaceModel(HuggingFaceModel):
 
     def generate(self, text_prompt, query_images=None, system_message=None):
 
-        if len(query_images) > 1:
+        if query_images and len(query_images) > 1:
             logging.error(f"Not implemented for more than 1 image. {len(query_images)} images are in the prompt")
             return {"model_output": None, "is_valid": False, "response_time": None, "n_output_tokens": None}
 
-        return super().generate(text_prompt, query_images, system_message)
+        return super().generate(text_prompt, query_images=query_images, system_message=system_message)
 
     def model_template_fn(self, text_prompt, system_message=None):
         text_prompt = f"<image>\n{text_prompt}"

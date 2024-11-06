@@ -16,6 +16,7 @@ MINUTE = 60
 
 class Inference(Component):
     def __init__(self, model_config, data_config, output_dir, resume_from=None, requests_per_minute=None, max_concurrent=1):
+
         """
         Initialize the Inference component.
         args:
@@ -62,6 +63,7 @@ class Inference(Component):
         # validate the resume_from contents
         with self.data_loader as loader:
             _, sample_model_input = self.data_loader.get_sample_model_input()
+            sample_data_keys = loader.reader.read().keys()
 
             # verify that "model_output" and "is_valid" columns are present
             if "model_output" not in pre_inf_results_df.columns or "is_valid" not in pre_inf_results_df.columns:
@@ -70,8 +72,9 @@ class Inference(Component):
             # perform a sample inference call to get the model output keys and validate the resume_from contents
             sample_response_dict = self.model.generate(*sample_model_input)
             # check if the inference response dictionary contains the same keys as the resume_from file
-            if set(sample_response_dict.keys()) != set(pre_inf_results_df.columns):
-                logging.warn(
+            eventual_keys = set(sample_response_dict.keys()) | set(sample_data_keys)
+            if set(eventual_keys) != set(pre_inf_results_df.columns):
+                raise ValueError(
                     f"Columns in resume_from file do not match the current inference response. "
                     f"Current inference response keys: {sample_response_dict.keys()}. "
                     f"Resume_from file columns: {pre_inf_results_df.columns}."
@@ -183,7 +186,7 @@ class Inference(Component):
                         if prev_result:
                             writer.write(prev_result)
                             continue
-                    
+
                     # if batch is ready for concurrent inference
                     elif len(concurrent_inputs) >= self.max_concurrent:
                         with ThreadPoolExecutor() as executor:
