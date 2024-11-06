@@ -36,6 +36,7 @@ from .transform import (
     SamplerTransform,
     SequenceTransform,
     ShuffleColumns,
+    TokenCounterTransform,
 )
 
 __all__ = [
@@ -72,4 +73,5 @@ __all__ = [
     ExtractAnswerMaze,
     ShuffleColumns,
     ColumnMatchMap,
+    TokenCounterTransform,
 ]

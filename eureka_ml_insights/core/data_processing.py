@@ -8,6 +8,10 @@ from typing import List, Optional
 import numpy as np
 
 from .pipeline import Component
+from .reserved_names import (
+    INFERENCE_RESERVED_NAMES,
+    PROMPT_PROC_RESERVED_NAMES,
+)
 
 
 def compute_hash(val: str) -> str:
@@ -67,7 +71,8 @@ class DataProcessing(Component):
             data_reader_config: DataReaderConfig
             output_dir: str directory to save the output files of this component.
             output_data_columns: Optional[List[str]] list of columns (subset of input columns)
-                                      to keep in the transformed data output file.
+                                 to keep in the transformed data output file. The columns reserved for the Eureka framework
+                                 will automatically be added to the output_data_columns if not provided.
         """
         super().__init__(output_dir)
         self.data_reader = data_reader_config.class_name(**data_reader_config.init_args)
@@ -88,7 +93,7 @@ class DataProcessing(Component):
         self.output_data_columns = list(self.output_data_columns)
         # if the data was multiplied, keep the columns that are needed to identify datapoint and replicates
         # (just in case the user forgot to specify these columns in output_data_columns)
-        cols_to_keep = ["data_point_id", "data_repeat_id"]
+        cols_to_keep = set(INFERENCE_RESERVED_NAMES + PROMPT_PROC_RESERVED_NAMES)
         self.output_data_columns.extend([col for col in cols_to_keep if col in df.columns])
         self.output_data_columns = list(set(self.output_data_columns))
         return df[self.output_data_columns]

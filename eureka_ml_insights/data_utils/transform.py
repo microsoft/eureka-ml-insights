@@ -6,6 +6,7 @@ from typing import Dict, List
 
 import numpy as np
 import pandas as pd
+import tiktoken
 
 
 @dataclass
@@ -313,8 +314,35 @@ class ASTEvalTransform(MultiColumnTransform):
     Applies ast.literal_eval to parse strings in selected columns
     """
 
-    columns: List[str]
+    columns: List[str] | str
 
     def _transform(self, string):
         list_strings = ast.literal_eval(string)
         return list_strings
+
+
+@dataclass
+class TokenCounterTransform(MultiColumnTransform):
+    """
+    Counts the number of tokens in the selected columns.
+    """
+
+    columns: List[str] | str
+
+    def transform(self, df: pd.DataFrame, encoding="cl100k_base") -> pd.DataFrame:
+        """
+        This method uses tiktoken tokenizer to count the number of tokens in the response.
+        See: https://github.com/openai/openai-cookbook/blob/main/examples/How_to_count_tokens_with_tiktoken.ipynb
+        args:
+            df (dataframe): the dataframe to add the token count column to.
+            encoding (str): the encoding to use with tiktoken. Default is "cl100k_base".
+        returns:
+            dataframe: the dataframe with the token count column added.
+        """
+        self.validate(df)
+        encoding = tiktoken.get_encoding(encoding)
+        for column in self.columns:
+            token_count = df[column].apply(lambda x: len(encoding.encode(x)))
+            token_count_column = f"{column}_token_count"
+            df[token_count_column] = token_count
+        return df

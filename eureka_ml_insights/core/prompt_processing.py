@@ -9,6 +9,7 @@ from transformers import GPT2TokenizerFast
 from eureka_ml_insights.data_utils import JinjaPromptTemplate
 
 from .data_processing import DataProcessing
+from .reserved_names import INFERENCE_RESERVED_NAMES
 
 
 def compute_hash(val: str) -> str:
@@ -93,10 +94,14 @@ class PromptProcessing(DataProcessing):
             logging.info(f"Average prompt num tokens: {statistics.fmean(prompt_num_tokens)}.")
 
         input_df = self.get_desired_columns(input_df)
-        # Remove `model_output` column if it exists in the data because this name is reserved for the model output.
-        if "model_output" in self.output_data_columns:
-            self.output_data_columns.remove("model_output")
-            logging.warning("Removed 'model_output' column from transformed data columns.")
+        # Remove `model_output`, `is_valid`, `response_time`, `n_output_tokens` columns if they exists
+        # in the data because these names are reserved for the inference component's use.
+        for col in INFERENCE_RESERVED_NAMES:
+            if col in self.output_data_columns:
+                self.output_data_columns.remove(col)
+                logging.warning(
+                    f"Removed '{col}' column from transformed data columns because it is reserved for the inference component."
+                )
 
         input_df = input_df[self.output_data_columns]
         input_df["prompt_hash"] = prompt_hashes

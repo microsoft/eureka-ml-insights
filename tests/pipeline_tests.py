@@ -13,6 +13,7 @@ path = str(Path(Path(__file__).parent.absolute()).parent.absolute())  # noqa
 sys.path.insert(0, path)  # noqa
 
 from eureka_ml_insights.configs import (
+    AIME_PIPELINE,
     DNA_PIPELINE,
     GEOMETER_PIPELINE,
     KITAB_ONE_BOOK_CONSTRAINT_PIPELINE,
@@ -272,9 +273,8 @@ class TEST_MMMU_PIPELINE(MMMU_BASELINE_PIPELINE):
         self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
 
-
 class TEST_GPQA_PIPELINE(GPQA_Experiment_Pipeline):
-    # Test config the IFEval benchmark with TestModel and TestDataLoader
+    # Test config the GPQA benchmark with TestModel and TestDataLoader
     def configure_pipeline(self):
         config = super().configure_pipeline(model_config=ModelConfig(GenericTestModel, {}))
         self.inference_comp.data_loader_config.class_name = TestDataLoader
@@ -282,6 +282,16 @@ class TEST_GPQA_PIPELINE(GPQA_Experiment_Pipeline):
             "path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl"),
             "n_iter": N_ITER,
         }
+        return config
+
+class TEST_AIME_PIPELINE(AIME_PIPELINE):
+    # Test config the AIME benchmark with GenericTestModel and TestMMDataLoader
+    def configure_pipeline(self):
+        config = super().configure_pipeline(
+            model_config=ModelConfig(GenericTestModel, {})
+        )  # use a small subset of AIME
+        self.inference_comp.data_loader_config.class_name = TestMMDataLoader
+        self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
 
 
@@ -431,10 +441,13 @@ class KITAB_ONE_BOOK_CONSTRAINT_PIPELINE_PipelineTest(PipelineTest, unittest.Tes
     def get_config(self):
         return TEST_KITAB_ONE_BOOK_CONSTRAINT_PIPELINE().pipeline_config
 
-
 class GPQA_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_GPQA_PIPELINE().pipeline_config
+
+class AIME_PipelineTest(PipelineTest, unittest.TestCase):
+    def get_config(self):
+        return TEST_AIME_PIPELINE().pipeline_config
 
 
 if __name__ == "__main__":
