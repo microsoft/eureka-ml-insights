@@ -49,5 +49,5 @@ __all__ = [
     BiLevelCountAggregator,
     TwoColumnSumAverageAggregator,
     SumAggregator,
-    MMMUMetric
+    MMMUMetric,
 ]

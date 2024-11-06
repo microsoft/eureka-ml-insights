@@ -1,10 +1,10 @@
 import ast
 import re
-import numpy as np
 from abc import abstractmethod
 from dataclasses import dataclass, field
 from typing import Dict, List
 
+import numpy as np
 import pandas as pd
 
 
@@ -149,6 +149,7 @@ class CopyColumn(DFTransformBase):
 
         return df
 
+
 @dataclass
 class MultiColumnTransform(DFTransformBase):
     """
@@ -177,7 +178,7 @@ class MultiColumnTransform(DFTransformBase):
         for column in self.columns:
             df[column] = df[column].apply(self._transform)
         return df
-    
+
 
 @dataclass
 class ShuffleColumns(MultiColumnTransform):
@@ -190,22 +191,24 @@ class ShuffleColumns(MultiColumnTransform):
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """For each row in df, shuffle values across these columns."""
         self.validate(df)
+
         def shuffle_row(row):
             row[self.columns] = np.random.permutation(row[self.columns].values)
             return row
 
         df = df.apply(shuffle_row, axis=1)
         return df
-    
+
+
 @dataclass
 class ColumnMatchMap(MultiColumnTransform):
     """Creates a new column indicating the name of the column that matches the value in the key column for each row.
-    E.g. for a row, if value of key_col matches value of 'A' column, new_col will contain the value 'A'. """
+    E.g. for a row, if value of key_col matches value of 'A' column, new_col will contain the value 'A'."""
 
     key_col: str
     new_col: str
     columns: List[str] | str
-    
+
     # Function to find matching column
     def _find_matching_column(self, row):
         for col in self.columns:
@@ -250,7 +253,7 @@ class ReplaceStringsTransform(MultiColumnTransform):
                 df[column] = df[column].str.replace(source, target, case=self.case, regex=False)
 
         return df
-    
+
 
 @dataclass
 class MapStringsTransform(MultiColumnTransform):
@@ -263,7 +266,7 @@ class MapStringsTransform(MultiColumnTransform):
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         self.validate(df)
-        for column in self.columns:            
+        for column in self.columns:
             df[column] = df[column].map(self.mapping)
 
         return df

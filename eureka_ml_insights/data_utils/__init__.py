@@ -5,9 +5,9 @@ from .data import (
     DataLoader,
     DataReader,
     HFDataReader,
+    HFJsonReader,
     JsonLinesWriter,
     JsonReader,
-    HFJsonReader,
     MMDataLoader,
     TXTWriter,
 )
@@ -22,6 +22,7 @@ from .transform import (
     AddColumn,
     AddColumnAndData,
     ASTEvalTransform,
+    ColumnMatchMap,
     ColumnRename,
     CopyColumn,
     DFTransformBase,
@@ -35,7 +36,6 @@ from .transform import (
     SamplerTransform,
     SequenceTransform,
     ShuffleColumns,
-    ColumnMatchMap
 )
 
 __all__ = [
@@ -71,5 +71,5 @@ __all__ = [
     ExtractAnswerSpatialMap,
     ExtractAnswerMaze,
     ShuffleColumns,
-    ColumnMatchMap
+    ColumnMatchMap,
 ]

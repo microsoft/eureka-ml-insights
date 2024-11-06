@@ -27,11 +27,11 @@ from eureka_ml_insights.configs import (
     SPATIAL_MAP_TEXTONLY_PIPELINE,
     SPATIAL_REASONING_SINGLE_PIPELINE,
     VISUAL_PROMPTING_SINGLE_PIPELINE,
+    GPQA_Experiment_Pipeline,
     IFEval_PIPELINE,
     MetricConfig,
     ModelConfig,
     ToxiGen_Discriminative_PIPELINE,
-    GPQA_Experiment_Pipeline
 )
 from eureka_ml_insights.core import Pipeline
 from eureka_ml_insights.data_utils.transform import (
@@ -248,6 +248,7 @@ class TEST_IFEval_PIPELINE(IFEval_PIPELINE):
         )
         return config
 
+
 class TEST_TOXIGEN_PIPELINE(ToxiGen_Discriminative_PIPELINE):
     def configure_pipeline(self):
         config = super().configure_pipeline(model_config=ModelConfig(ToxiGenTestModel, {}))
@@ -270,7 +271,8 @@ class TEST_MMMU_PIPELINE(MMMU_BASELINE_PIPELINE):
         self.inference_comp.data_loader_config.class_name = TestDataLoader
         self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
-    
+
+
 class TEST_GPQA_PIPELINE(GPQA_Experiment_Pipeline):
     # Test config the IFEval benchmark with TestModel and TestDataLoader
     def configure_pipeline(self):
@@ -428,10 +430,12 @@ class TOXIGEN_PipelineTest(PipelineTest, unittest.TestCase):
 class KITAB_ONE_BOOK_CONSTRAINT_PIPELINE_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_KITAB_ONE_BOOK_CONSTRAINT_PIPELINE().pipeline_config
-    
+
+
 class GPQA_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_GPQA_PIPELINE().pipeline_config
+
 
 if __name__ == "__main__":
     unittest.main()

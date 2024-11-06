@@ -1,19 +1,20 @@
 import os
 from typing import Any
+
 from eureka_ml_insights.core import EvalReporting, Inference, PromptProcessing
 from eureka_ml_insights.data_utils import (
+    ColumnMatchMap,
+    CopyColumn,
     DataReader,
     HFDataReader,
+    ImputeNA,
     MMDataLoader,
-    SequenceTransform,
-    CopyColumn,
-    ShuffleColumns,
-    ColumnMatchMap,
-    SamplerTransform,
     RegexTransform,
-    ImputeNA
+    SequenceTransform,
+    ShuffleColumns,
 )
 from eureka_ml_insights.metrics import CountAggregator, ExactMatch
+
 from .config import (
     AggregatorConfig,
     DataSetConfig,
@@ -28,6 +29,8 @@ from .experiment_config import ExperimentConfig
 
 """This file contains user defined configuration classes for the geometric reasoning task on the GPQA dataset.
 """
+
+
 class GPQA_Experiment_Pipeline(ExperimentConfig):
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
@@ -43,14 +46,15 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                     "split": "train",
                     "transform": SequenceTransform(
                         [
-                            #SamplerTransform(sample_count=30, random_seed=42),
                             CopyColumn(column_name_src="Correct Answer", column_name_dst="A"),
                             CopyColumn(column_name_src="Incorrect Answer 1", column_name_dst="B"),
                             CopyColumn(column_name_src="Incorrect Answer 2", column_name_dst="C"),
                             CopyColumn(column_name_src="Incorrect Answer 3", column_name_dst="D"),
                             ShuffleColumns(columns=["A", "B", "C", "D"]),
-                            # finds the answer choice that "Correct Answer" is mapped to, and stores it in "ground_truth"
-                            ColumnMatchMap(new_col="ground_truth", key_col="Correct Answer", columns=["A", "B", "C", "D"]),
+                            # finds answer choice that "Correct Answer" is mapped to, and stores it in "ground_truth"
+                            ColumnMatchMap(
+                                new_col="ground_truth", key_col="Correct Answer", columns=["A", "B", "C", "D"]
+                            ),
                         ]
                     ),
                 },

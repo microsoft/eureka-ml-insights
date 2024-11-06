@@ -1,22 +1,27 @@
 import unittest
-import pandas as pd
+
 import numpy as np
-from eureka_ml_insights.data_utils.transform import ShuffleColumns 
+import pandas as pd
+
+from eureka_ml_insights.data_utils.transform import ShuffleColumns
+
 
 class TestShuffleColumns(unittest.TestCase):
     def setUp(self):
         # Seed the random number generator for reproducibility
         np.random.seed(42)
-        
+
         self.values = [
             {
-                "df": pd.DataFrame({
-                    'A': [1, 2, 3, 4, 5],
-                    'B': ['a', 'b', 'c', 'd', 'e'],
-                    'C': [-10, -20, -30, -40, -50],
-                    'D': ['hi', 'how', 'are', 'you', '?'],
-                }),
-                "cols": ['A', 'B', 'C']
+                "df": pd.DataFrame(
+                    {
+                        "A": [1, 2, 3, 4, 5],
+                        "B": ["a", "b", "c", "d", "e"],
+                        "C": [-10, -20, -30, -40, -50],
+                        "D": ["hi", "how", "are", "you", "?"],
+                    }
+                ),
+                "cols": ["A", "B", "C"],
             }
         ]
 
@@ -48,13 +53,14 @@ class TestShuffleColumns(unittest.TestCase):
                 # Verify that the order is different between the two shuffles
                 self.assertNotEqual(
                     tuple(transformed_df_1.loc[row.name, self.shuffle_transform.columns]),
-                    tuple(transformed_df_2.loc[row.name, self.shuffle_transform.columns])
+                    tuple(transformed_df_2.loc[row.name, self.shuffle_transform.columns]),
                 )
 
             # Ensure unshuffled columns remain the same in both transformations
             for col in unshuffled_columns:
                 pd.testing.assert_series_equal(self.df[col], transformed_df_1[col], check_exact=True)
                 pd.testing.assert_series_equal(self.df[col], transformed_df_2[col], check_exact=True)
+
 
 if __name__ == "__main__":
     unittest.main()
