@@ -34,6 +34,8 @@ from .transform import (
     RunPythonTransform,
     SamplerTransform,
     SequenceTransform,
+    ShuffleColumns,
+    ColumnMatchMap
 )
 
 __all__ = [
@@ -68,4 +70,6 @@ __all__ = [
     ExtractAnswerGrid,
     ExtractAnswerSpatialMap,
     ExtractAnswerMaze,
+    ShuffleColumns,
+    ColumnMatchMap
 ]

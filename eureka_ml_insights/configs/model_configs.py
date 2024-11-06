@@ -29,6 +29,15 @@ OPENAI_SECRET_KEY_PARAMS = {
     "key_vault_url": None,
 }
 
+OAI_GPT4O_AZURE_CONFIG = ModelConfig(
+    AzureOpenAIModel,
+    {
+        "model_name": "gpt-4o-1",
+        "url": "https://ml-orca-brazil-south.openai.azure.com/",
+        "api_version": "2024-02-01",
+    }
+)
+
 OAI_O1_PREVIEW_CONFIG = ModelConfig(
     DirectOpenAIO1Model,
     {
