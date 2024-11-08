@@ -4,20 +4,14 @@
       "name": "Geometric Reasoning",
       "modality": "multimodal",
       "filePattern": ".*GeoMCQMetric_result_grouped_by_category_report.*",
-      "description": "Cool stuff",
-      
-      "graphs": [
+      "taskDescription": "Cool stuff",
+      "capabilityImportance": "TBD",
+      "experiments": [
         {
-          "title": "Depth",
-          "description": "the depth",
-          "path": ["Geometric-Reasoning"],
-          "metric": ["GeoMCQMetric_result", "depth"]
-        },
-        {
-          "title": "Height",
-          "description": "the height",
-          "path": ["Geometric-Reasoning"],
-          "metric": ["GeoMCQMetric_result", "height"]
+          "title": "Depth and Height",
+          "metricsDescription": "Depth and Height",
+          "series": [
+          ]
         }
       ]
     },
@@ -25,158 +19,156 @@
       "name": "MMMU",
       "modality": "multimodal",
       "filePattern": ".*MMMUMetric_result_grouped_by_category_normalized_report.*",
-      "description": "",
-      "graphs": [
-        {
-          "title": "Art and Design",
-          "path": ["MMMU", "MMMU"],
-          "metric": ["MMMUMetric_result", "Art and Design", "correct"]
-        },
-        {
-          "title": "Business",
-          "path": ["MMMU", "MMMU"],
-          "metric": ["MMMUMetric_result", "Business", "correct"]
-        },
-        {
-          "title": "Health and Medicine",
-          "path": ["MMMU", "MMMU"],
-          "metric": ["MMMUMetric_result", "Health and Medicine", "correct"]
-        },
-        {
-          "title": "Humanities and Social Science",
-          "path": ["MMMU", "MMMU"],
-          "metric": ["MMMUMetric_result", "Humanities and Social Science", "correct"]
-        },
-        {
-          "title": "Science",
-          "path": ["MMMU", "MMMU"],
-          "metric": ["MMMUMetric_result", "Science", "correct"]
-        },
-        {
-          "title": "Tech and Engineering",
-          "path": ["MMMU", "MMMU"],
-          "metric": ["MMMUMetric_result", "Tech and Engineering", "correct"]
-        }
-      ]
+      "taskDescription": "",
+      "capabilityImportance": "TBD",
+      "experiments": [{
+        "title": "Categories",
+        "metricsDescription": "Cool stuff",
+        "series": [
+          {
+            "title": "Art and Design",
+            "path": ["MMMU", "MMMU"],
+            "metric": ["MMMUMetric_result"]
+          }
+        ]
+      }]
     },
     {
       "name": "Image Understanding",
       "modality": "multimodal",
       "filePattern": ".*result_normalized_report.*",
-      "description": "",
-      "graphs": [
-        {
-          "title": "Object Recognition - One Object Accuracy",
-          "path": ["IMAGE_UNDERSTANDING", "OBJECT_RECOGNITION_SINGLE"],
-          "metric": ["ObjectRecognitionMetric_result", "correct"]
-        },
-        {
-          "title": "Object Recognition - Two Object Accuracy",
-          "path": ["IMAGE_UNDERSTANDING", "OBJECT_RECOGNITION_PAIRS"],
-          "metric": ["ObjectRecognitionMetric_result", "correct"]
-        },
-        {
-          "title": "Visual Prompting - One Object Accuracy",
-          "path": ["IMAGE_UNDERSTANDING", "VISUAL_PROMPTING_SINGLE"],
-          "metric": ["ObjectRecognitionMetric_result", "correct"]
-        },
-        {
-          "title": "Visual Prompting - Two Object Accuracy",
-          "path": ["IMAGE_UNDERSTANDING", "VISUAL_PROMPTING_PAIRS"],
-          "metric": ["ObjectRecognitionMetric_result", "correct"]
-        },
-        {
-          "title": "Spatial Reasoning - One Object Accuracy",
-          "path": ["IMAGE_UNDERSTANDING", "SPATIAL_REASONING_SINGLE"],
-          "metric": ["SpatialAndLayoutReasoningMetric_result", "correct"]
-        },
-        {
-          "title": "Spatial Reasoning - Two Object Accuracy",
-          "path": ["IMAGE_UNDERSTANDING", "SPATIAL_REASONING_PAIRS"],
-          "metric": ["SpatialAndLayoutReasoningMetric_result", "correct"]
-        }        ,
-        {
-          "title": "Object Detection - One Object Accuracy",
-          "path": ["IMAGE_UNDERSTANDING", "OBJECT_DETECTION_SINGLE"],
-          "metric": ["SpatialAndLayoutReasoningMetric_result", "correct"]
-        },
-        {
-          "title": "Object Detection - Two Object Accuracy",
-          "path": ["IMAGE_UNDERSTANDING", "OBJECT_DETECTION_PAIRS"],
-          "metric": ["SpatialAndLayoutReasoningMetric_result", "correct"]
-        }
-      ]
+      "taskDescription": "",
+      "capabilityImportance": "TBD",
+      "experiments": [{
+        "title": "",
+        "metricsDescription": "Cool stuff",
+        "series": [
+          {
+            "title": "Object Recognition - One Object Accuracy",
+            "path": ["IMAGE_UNDERSTANDING", "OBJECT_RECOGNITION_SINGLE"],
+            "metric": ["ObjectRecognitionMetric_result", "correct"]
+          },
+          {
+            "title": "Object Recognition - Two Object Accuracy",
+            "path": ["IMAGE_UNDERSTANDING", "OBJECT_RECOGNITION_PAIRS"],
+            "metric": ["ObjectRecognitionMetric_result", "correct"]
+          },
+          {
+            "title": "Visual Prompting - One Object Accuracy",
+            "path": ["IMAGE_UNDERSTANDING", "VISUAL_PROMPTING_SINGLE"],
+            "metric": ["ObjectRecognitionMetric_result", "correct"]
+          },
+          {
+            "title": "Visual Prompting - Two Object Accuracy",
+            "path": ["IMAGE_UNDERSTANDING", "VISUAL_PROMPTING_PAIRS"],
+            "metric": ["ObjectRecognitionMetric_result", "correct"]
+          },
+          {
+            "title": "Spatial Reasoning - One Object Accuracy",
+            "path": ["IMAGE_UNDERSTANDING", "SPATIAL_REASONING_SINGLE"],
+            "metric": ["SpatialAndLayoutReasoningMetric_result", "correct"]
+          },
+          {
+            "title": "Spatial Reasoning - Two Object Accuracy",
+            "path": ["IMAGE_UNDERSTANDING", "SPATIAL_REASONING_PAIRS"],
+            "metric": ["SpatialAndLayoutReasoningMetric_result", "correct"]
+          }        ,
+          {
+            "title": "Object Detection - One Object Accuracy",
+            "path": ["IMAGE_UNDERSTANDING", "OBJECT_DETECTION_SINGLE"],
+            "metric": ["SpatialAndLayoutReasoningMetric_result", "correct"]
+          },
+          {
+            "title": "Object Detection - Two Object Accuracy",
+            "path": ["IMAGE_UNDERSTANDING", "OBJECT_DETECTION_PAIRS"],
+            "metric": ["SpatialAndLayoutReasoningMetric_result", "correct"]
+          }
+        ]
+      }]
     },
     {
       "name": "Vision Language Understanding",
       "modality": "multimodal",
       "path": ["IMAGE_UNDERSTANDING", "OBJECT_RECOGNITION_SINGLE"],
-      "description": "",
+      "taskDescription": "",
+      "capabilityImportance": "TBD",
       "filePattern": ".*",
-      "graphs": [
-        
-      ]
+      "experiments": [{
+        "series": [
+          
+        ]
+      }]
     },
     {
       "name": "IFEval",
       "modality": "language",
-      "description": "",
+      "taskDescription": "",
+      "capabilityImportance": "TBD",
       "filePattern": ".*IFEvalMetric_loose_follow_all_instructions_report.*",
-      "graphs": [
-        {
-          "title": "Follow All Instructions (strict)",
-          "path": ["IFEvaL"],
-          "description": "",
-          "metric": ["IFEvalMetric_strict_follow_all_instructions"]
-        },
-        {
-          "title": "Follow All Instructions (loose)",
-          "path": ["IFEvaL"],
-          "description": "",
-          "metric": ["IFEvalMetric_loose_follow_all_instructions"]
-        }
-      ]
+      "experiments": [{
+        "title": "Follow All Instructions",
+        "metricsDescription": "Cool stuff",
+        "series": [
+          {
+            "title": "Follow All Instructions (strict)",
+            "path": ["IFEvaL"],
+            "description": "",
+            "metric": ["IFEvalMetric_strict_follow_all_instructions"]
+          },
+          {
+            "title": "Follow All Instructions (loose)",
+            "path": ["IFEvaL"],
+            "description": "",
+            "metric": ["IFEvalMetric_loose_follow_all_instructions"]
+          }
+        ]
+      }]
     },
     {
       "name": "FlenQA",
       "modality": "language",
-      "path": ["IMAGE_UNDERSTANDING", "OBJECT_RECOGNITION_SINGLE"],
-      "description": "",
+      "taskDescription": "",
+      "capabilityImportance": "TBD",
       "filePattern": ".*ExactMatch_result_grouped_by_ctx_size.*",
-      "graphs": [
-        {
-          "title": "Context Size: 250",
-          "path": ["FlenQA"],
-          "metric": ["ExactMatch_result", "250", "correct"]
-        },
-        {
-          "title": "Context Size: 500",
-          "path": ["FlenQA"],
-          "metric": ["ExactMatch_result", "500", "correct"]
-        },
-        {
-          "title": "Context Size: 1000",
-          "path": ["FlenQA"],
-          "metric": ["ExactMatch_result", "1000", "correct"]
-        },
-        {
-          "title": "Context Size: 2000",
-          "path": ["FlenQA"],
-          "metric": ["ExactMatch_result", "2000", "correct"]
-        },
-        {
-          "title": "Context Size: 3000",
-          "path": ["FlenQA"],
-          "metric": ["ExactMatch_result", "3000", "correct"]
-        }
-      ]
+      "experiments": [{
+        "title": "Context Size",
+        "metricsDescription": "Cool stuff",
+        "series": [
+          {
+            "title": "Context Size: 250",
+            "path": ["FlenQA"],
+            "metric": ["ExactMatch_result", "250", "correct"]
+          },
+          {
+            "title": "Context Size: 500",
+            "path": ["FlenQA"],
+            "metric": ["ExactMatch_result", "500", "correct"]
+          },
+          {
+            "title": "Context Size: 1000",
+            "path": ["FlenQA"],
+            "metric": ["ExactMatch_result", "1000", "correct"]
+          },
+          {
+            "title": "Context Size: 2000",
+            "path": ["FlenQA"],
+            "metric": ["ExactMatch_result", "2000", "correct"]
+          },
+          {
+            "title": "Context Size: 3000",
+            "path": ["FlenQA"],
+            "metric": ["ExactMatch_result", "3000", "correct"]
+          }
+        ]
+      }]
     },
     {
       "name": "Kitab",
       "modality": "language",
-      "description": "",
+      "taskDescription": "",
+      "capabilityImportance": "TBD",
       "filePattern": ".*AllKitabMetrics_GroupBy_report.*",
-      "graphs": [
+      "series": [
         {
           "title": "Satisfied (No-Context)",
           "path": ["Kitab"],
@@ -194,12 +186,14 @@
     {
       "name": "Toxigen",
       "modality": "language",
-      "path": ["IMAGE_UNDERSTANDING", "OBJECT_RECOGNITION_SINGLE"],
-      "description": "",
+      "taskDescription": "",
+      "capabilityImportance": "TBD",
       "filePattern": ".*",
-      "graphs": [
-        
-      ]
+      "experiments": [{
+        "series": [
+          
+        ]
+      }]
     }
   ],
   "capability_mapping": [
