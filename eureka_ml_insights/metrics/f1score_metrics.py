@@ -5,12 +5,6 @@ from .metrics_base import ClassicMetric
 
 
 class MaxTokenF1ScoreMetric(ClassicMetric):
-    def validate_data(self, data):
-        """This method checks if the data has the required fields."""
-        assert "model_output" in data.columns, "Data does not have 'model_output' field."
-        assert "ground_truth" in data.columns, "Data does not have 'ground_truth' field."
-        return True
-
     def tokenize(self, sentence):
         return re.findall(r"\b\w+\b", sentence.lower())
 
@@ -50,11 +44,3 @@ class MaxTokenF1ScoreMetric(ClassicMetric):
             f1 = 2 * (precision * recall) / (precision + recall)
 
         return f1
-
-    def evaluate(self, data):
-        self.validate_data(data)
-        data[self.__class__.__name__ + "_result"] = data.apply(
-            lambda x: self.evaluate_f1(x["model_output"], x["ground_truth"]),
-            axis=1,
-        )
-        return data
