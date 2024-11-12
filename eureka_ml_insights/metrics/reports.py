@@ -114,13 +114,42 @@ class SumAggregator(NumericalAggregator):
 class AverageAggregator(NumericalAggregator):
 
     def _aggregate(self, data):
-        averages = {col: data[col].mean().round(3) for col in self.column_names}
+        if len(data) == 0:
+            averages = {col: 0 for col in self.column_names}
+        else:
+            averages = {col: data[col].mean().round(3) for col in self.column_names}
         self.aggregated_result = averages
 
     def _aggregate_grouped(self, data):
-        gb = data.groupby(self.group_by)
-        averages = {col: round(gb[col].mean(), 3).to_dict() for col in self.column_names}
+        if len(data) == 0:
+            averages = {col: 0 for col in self.column_names}
+        else:
+            gb = data.groupby(self.group_by)
+            averages = {col: round(gb[col].mean(), 3).to_dict() for col in self.column_names}
         self.aggregated_result = averages
+
+class NAFilteredAverageAggregator(AverageAggregator):
+    def __init__(self, column_name, output_dir, group_by=None, ignore_non_numeric=False, filename_base=None, **kwargs):
+        """
+        args:
+            column_name: column name to filter and aggregate
+            output_dir: str. directory to save the report
+            group_by: str. or list of str. column(s) to group by before aggregating
+            ignore_non_numeric: bool. if True ignore non-numeric values for average aggregator
+            filename_base: str. optional base string to be used in the file name for the report. If not None, the report filename will concatenate the class name, datetime, and filename_base.
+        """
+
+        self.column_name = column_name
+        self.group_by = group_by
+        self.output_dir = output_dir
+        self.aggregated_result = None
+        self.ignore_non_numeric = ignore_non_numeric
+        self.filename_base = filename_base
+        super().__init__([column_name], output_dir, group_by, ignore_non_numeric, filename_base, **kwargs)
+
+    def aggregate(self, data):
+        filtered_data = data[data[self.column_name] != "NA"].copy()
+        super().aggregate(filtered_data)
 
 
 class AverageSTDDevAggregator(NumericalAggregator):
