@@ -9,7 +9,8 @@ class MaxTokenF1ScoreMetric(ClassicMetric):
         return re.findall(r"\b\w+\b", sentence.lower())
 
     # Function to compute F1 score between two responses
-    def evaluate_f1(self, model_output, ground_truth):
+    def __evaluate__(self, model_output, ground_truth, is_valid):
+        if not is_valid: return 0
         model_answer = model_output
         max_f1 = 0
         for ans in ground_truth:
