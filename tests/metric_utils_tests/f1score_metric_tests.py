@@ -32,8 +32,8 @@ class MaxTokenF1ScoreMetricTest(unittest.TestCase):
         ]
 
     def test_evaluate(self):
-        for i, val in enumerate(self.values):
-            result = self.metric.evaluate_f1(val["model_output"], val["ground_truth"])
+        for _, val in enumerate(self.values):
+            result = self.metric.__evaluate__(val["model_output"], val["ground_truth"], "true")
             self.assertAlmostEqual(result, val["expected_f1"], places=2)
 
 

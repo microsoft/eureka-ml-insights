@@ -10,7 +10,8 @@ class MaxTokenF1ScoreMetric(ClassicMetric):
 
     # Function to compute F1 score between two responses
     def __evaluate__(self, model_output, ground_truth, is_valid):
-        if not is_valid: return 0
+        if not is_valid:
+            return 0
         model_answer = model_output
         max_f1 = 0
         for ans in ground_truth:
