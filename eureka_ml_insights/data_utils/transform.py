@@ -183,7 +183,13 @@ class MultiColumnTransform(DFTransformBase):
 
 @dataclass
 class ShuffleColumns(MultiColumnTransform):
-    """For a set of columns, shuffles the values across each row of these columns."""
+    """
+    For a set of columns, shuffles the values across each row of these columns.
+    Values will be shuffled differently for each row. 
+
+    This class is meant to be used in MCQ benchmarks to shuffle answer choices
+    across different letter options (e.g. shuffle what choice maps to 'A' vs 'B' vs 'C').
+    """
 
     columns: List[str] | str
 
@@ -208,7 +214,7 @@ class ColumnMatchMap(MultiColumnTransform):
 
     key_col: str
     new_col: str
-    columns: List[str] | str
+    columns: List[str]
 
     # Function to find matching column
     def _find_matching_column(self, row):

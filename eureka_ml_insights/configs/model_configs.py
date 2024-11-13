@@ -1,9 +1,9 @@
 """ This module contains config objects for the models used in the experiments. To use these configs, make sure to
-replace the placeholders with your own keys.json file, secret key names, and endpint URLs where applicable.
+replace the placeholders with your own keys.json file, secret key names, and endpint URLs where applicable. 
 You can also add your custom models here by following the same pattern as the existing configs. """
 
 from eureka_ml_insights.models import (
-    AzureOpenAIModel,
+    AzureOpenAIO1Model,
     ClaudeModel,
     DirectOpenAIModel,
     DirectOpenAIO1Model,
@@ -18,9 +18,8 @@ from eureka_ml_insights.models import (
 from .config import ModelConfig
 
 # For models that require secret keys, you can store the keys in a json file and provide the path to the file
-# in the secret_key_params dictionary. OR you can provide the key name and key vault URL to fetch
-# the key from Azure Key Vault. You don't need to provide both the key_vault_url and local_keys_path.
-#  You can provide one of them based on your setup.
+# in the secret_key_params dictionary. OR you can provide the key name and key vault URL to fetch the key from Azure Key Vault.
+# You don't need to provide both the key_vault_url and local_keys_path. You can provide one of them based on your setup.
 
 # OpenAI models
 
@@ -30,20 +29,20 @@ OPENAI_SECRET_KEY_PARAMS = {
     "key_vault_url": None,
 }
 
-OAI_GPT4O_AZURE_CONFIG = ModelConfig(
-    AzureOpenAIModel,
-    {
-        "model_name": "gpt-4o-1",
-        "url": "https://ml-orca-brazil-south.openai.azure.com/",
-        "api_version": "2024-02-01",
-    },
-)
-
 OAI_O1_PREVIEW_CONFIG = ModelConfig(
     DirectOpenAIO1Model,
     {
         "model_name": "o1-preview",
         "secret_key_params": OPENAI_SECRET_KEY_PARAMS,
+    },
+)
+
+OAI_O1_PREVIEW_AUZRE_CONFIG = ModelConfig(
+    AzureOpenAIO1Model,
+    {
+        "model_name": "o1-preview",
+        "url": "your/endpoint/url",
+        "api_version": "2024-08-01-preview",
     },
 )
 
