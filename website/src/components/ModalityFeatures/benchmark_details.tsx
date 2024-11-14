@@ -1,29 +1,40 @@
 import React from "react";
 import { DownOutlined } from '@ant-design/icons';
-import { BenchmarkGraph, EurekaConfig, GraphDetails } from "../types";
+import { BenchmarkGraph, EurekaConfig, Experiment } from "../types";
 import { Button, Dropdown, Menu, MenuProps, message, Row, Space } from "antd";
 import BenchmarkChart from "./benchmark_chart";
 
 const BenchmarkDetails = ({benchmark, config}: {benchmark: string, config: EurekaConfig}) => {
     const [benchmarkDescription, setBenchmarkDescription] = React.useState<string>('');
-    const [subcategories, setSubcategories] = React.useState<GraphDetails[]>([]);
+    const [capabilityImportance, setCapabilityImportance] = React.useState<string>('');
+    const [subcategories, setSubcategories] = React.useState<Experiment[]>([]);
     const [selectedSubcategory, setSelectedSubcategory] = React.useState(null);
     const [selectedSubcategoryDescription, setSelectedSubcategoryDescription] = React.useState<string>('');
 
     React.useEffect(() => {
         if (!benchmark) return;  // Ensure benchmark is not null  
+        if (!config) return;  // Ensure config is not null
 
-        setBenchmarkDescription(config.benchmarks.find((d) => d.name === benchmark).description);
-        const graphs = config.benchmarks.find((d) => d.name === benchmark).graphs;
-        setSubcategories(graphs);
-        setSelectedSubcategory(graphs[0].title);
-        setSelectedSubcategoryDescription(graphs[0].description);
+        // setBenchmarkDescription(config.benchmarks.find((d) => d.name === benchmark).benchmarkDescription);
+        console.log(config);
+        console.log(config.benchmarks);
+        const benchmarkObject = config.benchmarks.find((d) => d.name === benchmark);  
+        setBenchmarkDescription(benchmarkObject ? benchmarkObject.benchmarkDescription : '');  
+        setCapabilityImportance(benchmarkObject ? benchmarkObject.capabilityImportance : '');
+        const experiments = config.benchmarks.find((d) => d.name === benchmark).experiments;
+        if (experiments.length === 0) {
+            return;
+        }
+
+        setSubcategories(experiments);
+        setSelectedSubcategory(experiments[0].title);
+        setSelectedSubcategoryDescription(experiments[0].experimentDescription);
 
     }, [benchmark, config]); 
 
     const onClick: MenuProps['onClick'] = ({ key }) => {
         setSelectedSubcategory(key);
-        setSelectedSubcategoryDescription(subcategories.find((d) => d.title === key).description);
+        setSelectedSubcategoryDescription(subcategories.find((d) => d.title === key).experimentDescription);
     }; 
 
     const menuItems: MenuProps['items'] = subcategories.map(subcategory => (  
@@ -37,25 +48,28 @@ const BenchmarkDetails = ({benchmark, config}: {benchmark: string, config: Eurek
     return (
         <div style={{width: '100%', paddingBottom: '4em'}}>
             <h2>{benchmark}</h2>
-            <h4>{benchmarkDescription}</h4>
-            
-            <div style={{display: 'flex'}}>
-                <span style={{marginRight: '0.5em'}}>Select Subcategory:</span>
+            <h3>Task Description</h3>
+            <span>{benchmarkDescription}</span>
+            <h3 style={{paddingTop: '1em'}}>Capability Importance</h3>
+            <span>{capabilityImportance}</span>
+            <br/>
+            <div>
+                <h3>Metrics Description</h3>
+                {menuItems.length > 1 ? ( <div style={{display: 'flex'}}>
+                <span style={{marginRight: '0.5em'}}>Select Experiment:</span>
                 <Dropdown menu={{items: menuItems, onClick: onClick}} >  
                     <span>
                         {selectedSubcategory}
                         <DownOutlined />
                     </span>
                 </Dropdown>
-            </div>
-            <br/>
-            <div>
+            </div> ) : (<div></div>)}
                 <span>{selectedSubcategoryDescription}</span>
             </div>
             <br/>
             <div style={{width: '100%'}}>
                 <Row justify="space-between" style={{display: 'flex', justifyContent: 'center'}}>
-                    <BenchmarkChart benchmark={benchmark} subcategory={selectedSubcategory} config={config}></BenchmarkChart>
+                    <BenchmarkChart benchmark={benchmark} experiment={selectedSubcategory} config={config}></BenchmarkChart>
                 </Row>
             </div>
         </div>

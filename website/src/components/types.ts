@@ -9,14 +9,14 @@ export interface EurekaConfig {
 export interface Benchmark {
     name: string;
     modality: string;
-    filePattern: string;
-    description: string;
-    graphs: GraphDetails[];
+    benchmarkDescription: string;
+    capabilityImportance: string;
+    experiments: Experiment[];
 }
 
-export interface GraphDetails {
+export interface Experiment {
     title: string;
-    description: string;
+    experimentDescription: string;
 }
 
 export interface Capability {
@@ -27,14 +27,25 @@ export interface Capability {
     description: string[];
 }
 
-export interface BenchmarkGraph {
+export interface BenchmarkExperiment {
     title: string;
-    models: ModelScore[];
+    categories: string[];
+    series: BenchmarkGraph[];
 }
 
 export interface ModelScore {
     name: string;
     score: number;
+}
+
+export interface BenchmarkGraph {
+    title: string;
+    values: BenchmarkResult[];
+}
+
+export interface BenchmarkResult {
+    name: string;
+    scores: Number[];
 }
 
 export interface ModelConfig {

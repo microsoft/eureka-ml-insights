@@ -1,5 +1,6 @@
 import os
 import json
+import math
 import re
 
 # Usage instructions (internal use only):
@@ -84,25 +85,43 @@ def coallate_results(release_directory_path, config):
 def create_benchmark_breakdown(release_directory_path, config):
     mapping = config["benchmarks"]
     model_family_list = config["model_families"]
+    model_list = [model["model"] for model in config["model_list"]]
+
+    # these models have different names in some of the report folders
+    model_list.append("GPT-4o_2024_05_13_450K")
+    model_list.append("GPT-4o_2024_05_13")
+    model_list.append("LLaVA-34B")
+    model_list.append("GPT-4")
+
     data = { }
     for benchmark in mapping:
         name = benchmark["name"]
-        data[name] = {"graphs": []}
+        data[name] = {"experiments": []}
         file_pattern = re.compile(benchmark["filePattern"], re.IGNORECASE)
         for experiment in benchmark["experiments"]:
+            experiment_json = {
+                "title": experiment["title"],
+                "categories": [],
+                "series": []
+            }
+            
             for graph in experiment["series"]:
+                graph_json = {
+                    "title": graph["title"],
+                    "values": []
+                }
                 path = graph["path"]
                 model_families = os.listdir(os.path.join(release_directory_path, *path))
-                model_scores = []
+                
                 for model_family in model_families:
                     if model_family.lower() not in model_family_list:
                         continue
                     models = os.listdir(os.path.join(release_directory_path, *path, model_family))
                     for model in models:
+                        if model not in model_list:
+                            continue
                         runs = os.listdir(os.path.join(release_directory_path, *path, model_family, model))
-                        
-                        sum = 0.0
-                        num = 0 # there's a chance that one of the runs doesn't have the correct output file so need to keep track separately
+                        model_scores = {}
                         for run in runs:
                             try:
                                 # if name == "Long Context QA Longest Context (3K)":
@@ -117,10 +136,17 @@ def create_benchmark_breakdown(release_directory_path, config):
                                     file_contents = f.read()
                                     scores = json.loads(file_contents)
                                     for metric in graph["metric"]:
-                                        scores = scores[metric]
+                                        try:
+                                            scores = scores[metric]
+                                        except TypeError: # some of the reports are a list instead of a json object (Obj Det (single)/claude opus)
+                                            scores = scores[0][metric]
                                     for category in scores:
-                                        if category not in model_scores[model]:
-                                            model_scores[model][category] = []
+                                        if category == "none" or category == "incorrect":
+                                            continue
+                                        if category not in experiment_json["categories"]:
+                                            experiment_json["categories"].append(category)
+                                        if category not in model_scores:
+                                            model_scores[category] = []
                                         if type(scores[category]) == float:
                                             score = scores[category]
                                         else:
@@ -128,15 +154,14 @@ def create_benchmark_breakdown(release_directory_path, config):
                                                 none = 0
                                                 if "none" in scores and (scores["none"] == scores["none"]): # check for NaN
                                                     none = scores["none"]
-                                                score = scores["correct"] * 1.0 / (scores["correct"] + scores["incorrect"] + none)
+                                                score = scores[category]["correct"] * 1.0 / (scores[category]["correct"] + scores[category]["incorrect"] + none)
                                             else:
                                                 score = scores[category]["correct"]
-                                        model_scores[model][category].append(score)
-                                    sum += scores
-                                num += 1
+                                        model_scores[category].append(score)
                                 break
                             except FileNotFoundError:
                                 continue
+                            
                         if model == 'GPT-4o_2024_05_13_450K':
                             model = 'GPT-4o-2024-05-13'
                         if model == 'GPT-4o_2024_05_13':
@@ -145,15 +170,16 @@ def create_benchmark_breakdown(release_directory_path, config):
                             model = "Llava-1_6-34B"
                         if model == "GPT-4":
                             model = "GPT-4-1106-Preview"
-                        
-                        model_scores.append({   
+
+                        scores = []
+                        for category in experiment_json["categories"]:
+                            scores.append(round(math.fsum(model_scores[category])  * 100.0 / len(model_scores[category]), 1))
+                        graph_json["values"].append({
                             "name": model,
-                            "score": round(sum  * 100.0 / num, 1)
+                            "scores": scores
                         })
-                data[name]["graphs"].append({
-                    "title": graph["title"],
-                    "models": model_scores
-                })
+                experiment_json["series"].append(graph_json)
+            data[name]["experiments"].append(experiment_json)
     with open('website/static/benchmark_results.json', 'w') as f:
         json.dump(data, f, indent=2)
 
