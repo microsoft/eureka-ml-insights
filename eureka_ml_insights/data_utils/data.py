@@ -620,7 +620,7 @@ class HFDataReader(DataReader):
                 hf_dataset = load_dataset(self.path, task, cache_dir=self.cache_dir, split=self.split)
                 for i, data_split in enumerate(hf_dataset):
                     task_df = self._hf_to_dataframe(data_split)
-                    task_df["task"] = task
-                    task_df["split"] = self.split[i]
+                    task_df["__hf_task"] = task
+                    task_df["__hf_split"] = self.split[i]
                     df_frames.append(task_df)
         return pd.concat(df_frames)
