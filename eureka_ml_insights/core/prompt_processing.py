@@ -1,6 +1,5 @@
 import logging
 import os
-import statistics
 from hashlib import md5
 from typing import List, Optional
 
