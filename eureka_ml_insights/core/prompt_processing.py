@@ -4,8 +4,6 @@ import statistics
 from hashlib import md5
 from typing import List, Optional
 
-from transformers import GPT2TokenizerFast
-
 from eureka_ml_insights.data_utils import JinjaPromptTemplate
 
 from .data_processing import DataProcessing
@@ -70,8 +68,6 @@ class PromptProcessing(DataProcessing):
             prompt_hashes = [compute_hash(prompt) for prompt in prompts]
         # otherwise, use the prompt data processor to generate prompts and save in the "prompt" column
         else:
-            prompt_num_tokens = []
-            tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")
             with open(prompt_output_file, "w", encoding="utf-8") as writer:
                 for i, row in input_df.iterrows():
 
@@ -79,7 +75,6 @@ class PromptProcessing(DataProcessing):
                     try:
                         prompt = self.prompt_data_processor.create(placeholders)
                         success_indexes.append(i)
-                        prompt_num_tokens.append(len(tokenizer.tokenize(prompt)))
                         prompt_hashes.append(compute_hash(prompt))
                         prompts.append(prompt)
                         writer.write(prompt + "\n")
@@ -90,8 +85,6 @@ class PromptProcessing(DataProcessing):
                             continue
                         else:
                             raise e
-
-            logging.info(f"Average prompt num tokens: {statistics.fmean(prompt_num_tokens)}.")
 
         input_df = self.get_desired_columns(input_df)
         # Remove `model_output`, `is_valid`, `response_time`, `n_output_tokens` columns if they exists
