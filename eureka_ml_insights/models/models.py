@@ -480,6 +480,8 @@ class OpenAIO1RequestResponseMixIn:
         openai_response = completion.model_dump()
         self.model_output = openai_response["choices"][0]["message"]["content"]
         self.response_time = end_time - start_time
+        if "usage" in openai_response:
+            return {"usage": openai_response["usage"]}
 
 
 @dataclass
