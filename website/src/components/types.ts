@@ -21,6 +21,7 @@ export interface Experiment {
 
 export interface Capability {
     capability: string;
+    benchmark: string;
     modality: string;
     path: string[];
     metric: string[];

@@ -3,6 +3,6 @@ import ModalityBreakdown from '../components/ModalityFeatures/modality_breakdown
 
 export default function Home(): JSX.Element {
   return (
-     <ModalityBreakdown modality={'language'}/>
+     <ModalityBreakdown modality={'Language'}/>
   );
 }

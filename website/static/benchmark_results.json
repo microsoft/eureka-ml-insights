@@ -795,7 +795,85 @@
     ]
   },
   "IFEval": {
-    "experiments": []
+    "experiments": [
+      {
+        "title": "Instruction Following",
+        "categories": [
+          "IFEvalMetric_strict_follow_all_instructions",
+          "IFEvalMetric_loose_follow_all_instructions"
+        ],
+        "series": [
+          {
+            "title": "Instruction Following",
+            "values": [
+              {
+                "name": "Claude-3-Opus",
+                "scores": [
+                  81.9,
+                  88.5
+                ]
+              },
+              {
+                "name": "Claude-3_5-Sonnet",
+                "scores": [
+                  81.3,
+                  89.1
+                ]
+              },
+              {
+                "name": "Gemini-1_5-Pro",
+                "scores": [
+                  75.2,
+                  77.6
+                ]
+              },
+              {
+                "name": "GPT-4-1106-Preview",
+                "scores": [
+                  75.2,
+                  80.4
+                ]
+              },
+              {
+                "name": "GPT-4o-2024-05-13",
+                "scores": [
+                  81.3,
+                  86.9
+                ]
+              },
+              {
+                "name": "Llama-3-70B",
+                "scores": [
+                  77.3,
+                  84.1
+                ]
+              },
+              {
+                "name": "Llama-3_1-405B",
+                "scores": [
+                  83.5,
+                  88.4
+                ]
+              },
+              {
+                "name": "Llama-3_1-70B",
+                "scores": [
+                  80.8,
+                  86.3
+                ]
+              },
+              {
+                "name": "Mistral_Large_2_2407",
+                "scores": [
+                  77.3,
+                  82.1
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
   },
   "FlenQA": {
     "experiments": [

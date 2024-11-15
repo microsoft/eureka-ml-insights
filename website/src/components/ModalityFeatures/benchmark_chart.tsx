@@ -1,8 +1,7 @@
 import React, { useState } from "react";
-import { BenchmarkGraph, ModelScore, ModelConfig, EurekaConfig, Benchmark, BenchmarkResult, BenchmarkExperiment } from "../types";
+import { ModelConfig, EurekaConfig, BenchmarkExperiment } from "../types";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
-import { Col, Row } from "antd";
 
 const BenchmarkChart = ({benchmark, experiment, config}: {benchmark: string, experiment: string, config: EurekaConfig}) => {
     const [isLoading, setIsLoading] = useState(true);  
@@ -30,11 +29,9 @@ const BenchmarkChart = ({benchmark, experiment, config}: {benchmark: string, exp
         .then(benchmarkResults => {
             const selectedExperiment = benchmarkResults[benchmark]["experiments"].find((d: BenchmarkExperiment) => d.title === experiment);
             const chartOptionsArray = [];
-            console.log(selectedExperiment);
             for (const i in selectedExperiment.series) {
                 const series = [];
                 const selectedSeries = selectedExperiment.series[i];
-                console.log(selectedSeries);
                 for (const j in selectedSeries.values) {
                     series.push({
                         name: selectedSeries.values[j].name,
@@ -52,9 +49,6 @@ const BenchmarkChart = ({benchmark, experiment, config}: {benchmark: string, exp
                         text: selectedSeries.title,
                     },  
                     xAxis: {  
-                        title: {  
-                            text: "Model"  
-                        },
                         categories: selectedExperiment.categories
                     },  
                     yAxis: {  
@@ -86,9 +80,9 @@ const BenchmarkChart = ({benchmark, experiment, config}: {benchmark: string, exp
     }
 
     return (
-        <div style={{width: '100%', paddingBottom: '4em'}}>
+        <div style={{width: '100%', paddingBottom: '4em', display:'flex', justifyContent:'center'}}>
             {chartOptions.map((options, index) => (  
-                <HighchartsReact key={index} highcharts={Highcharts} options={options} />  
+                <HighchartsReact key={index} highcharts={Highcharts} options={options} style={{ width: '100%'}} />  
             ))} 
         </div>
     )

@@ -169,7 +169,7 @@ const OverallVisualization = ({config}: {config: EurekaConfig}) => {
                         </div>
                         <div style={{display: 'flex', justifyContent: 'center'}}>
                             <Button shape='round' className={`${styles.buttons}`} style={{outline: "black"}}>
-                                <Link to="/eureka-ml-insights/language"><strong>Explore Language Results</strong></Link>
+                                <Link to="/eureka-ml-insights/Language"><strong>Explore Language Results</strong></Link>
                             </Button>
                         </div>
                     </Col>
@@ -179,7 +179,7 @@ const OverallVisualization = ({config}: {config: EurekaConfig}) => {
                         </div>
                         <div style={{display: 'flex', justifyContent: 'center'}}>
                             <Button shape='round' className={`${styles.buttons}`} style={{outline: "black"}}>
-                                <Link to="/eureka-ml-insights/multimodal"><strong>Explore Multimodal Results</strong></Link>
+                                <Link to="/eureka-ml-insights/Multimodal"><strong>Explore Multimodal Results</strong></Link>
                             </Button>
                         </div>
                     </Col>

@@ -21,7 +21,8 @@ const ModalityBreakdown = ({modality}: {modality: string}) => {
          .then(response => response.json())
          .then(fetchedData => 
             {
-                const benchmarks = fetchedData.benchmarks.filter((benchmark) => benchmark.modality === modality);
+                const benchmarks = fetchedData.benchmarks.filter((benchmark) => benchmark.modality === modality.toLowerCase());
+                console.log(benchmarks);
                 const models = fetchedData.model_list;
                 const model_families = fetchedData.model_families;
                 const capabilities = fetchedData.capability_mapping;  
@@ -42,7 +43,7 @@ const ModalityBreakdown = ({modality}: {modality: string}) => {
           <Header style={{ alignItems: 'left', color: 'white', background: 'none'}}>
             <Link to="/eureka-ml-insights" style={{ color: 'black', display: 'flex', alignItems: 'center' }}>
               <ArrowLeftIcon style={{width: '1.5em', color: 'black'}}/>
-              <strong style={{paddingLeft: '.5em'}}>Multimodal Task Performance</strong>
+              <strong style={{paddingLeft: '.5em'}}>{modality} Task Performance</strong>
             </Link>
           </Header>
           <AntdLayout style={{background: 'white'}}>

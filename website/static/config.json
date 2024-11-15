@@ -9,7 +9,7 @@
       "experiments": [
         {
           "title": "Depth and Height",
-          "experimentDescription": "Depth and Height",
+          "experimentDescription": "The synthetic dataset is divided into two subcategories - depth and height, with each image containing a real-world image as a background to enhance realism. The dataset consists of 1086 image-questions pairs. The depth category consists of 986 images, featuring rectangles, triangles, or circles that partially overlap to create a depth illusion, with unique identifiers such as colors, and numeric labels. The height category has 100 images, where each tower consists of four rectangles with random dimensions. Further, in these images, towers are placed on a horizontal black strip that is treated as a raised platform. This category includes two sets: one with all towers placed at the same height level and another with a randomly chosen tower on a raised platform, with unique identifiers being label. All towers are labeled sequentially.",
           "series": [
             {
               "title": "Depth and Height",
@@ -159,8 +159,20 @@
       "modality": "language",
       "benchmarkDescription": "The benchmark includes instruction based prompts for a category of 'verifiable instructions', which are defined as instructions amenable to objective verification of compliance. Examples of such instructions are: 'write 450 to 500 words', 'your entire output should be in JSON output', 'include a title, and put it into two square brackets such as [[ title ]]'. The benchmark consists of nine broad instruction categories with 25 fine-grained types focusing on various output content and format constraint-based instructions. An input prompt can contain multiple instructions and can support fine-grained instruction level analysis.",
       "capabilityImportance": "A critical skill for frontier models is the ability to follow instructions provided in the input prompt. Users provide increasingly complex instructions to LLMs in order to specify details about tasks they intend the model to perform, teach the model problem solving techniques and format the model's responses under specific requirements. Model training pipelines now often include a dedicated instruction tuning phase for specifically teaching models to follow complex instructions for real-world scenarios.Consequently, evaluating how well models follow such instructions is crucial when assessing overall model behaviour. While real instructions provided by users can be very varied and complex, a predominant category are instructions to control the format or style of the output. IFEval is a benchmark designed to evaluate a model's ability to follow instructions about the output style, structure and form. Recent model evaluations report ~70-80% accuracy on IFEval on average, showing headroom for further analysis and progress on challenging instruction categories.",
-      "filePattern": ".*IFEvalAccuracyMetrics_Aggregated_report.*",
-      "experiments": []
+      "filePattern": "averageaggregator.*",
+      "experiments": [
+        {
+          "title": "Instruction Following",
+          "experimentDescription": "",
+          "series": [
+            {
+              "title": "Instruction Following",
+              "path": ["IFEval"],
+              "metric": []
+            }
+          ]
+        }
+      ]
     },
     {
       "name": "FlenQA",
@@ -260,6 +272,7 @@
   "capability_mapping": [
     {
       "capability": "Information Retrieval Fact Recall",
+      "benchmark": "Kitab",
       "modality": "language",
       "path": ["kitab", "ONE_BOOK_CONSTRAINT_PIPELINE"],
       "metric": ["KitabMetric_satisfied_rate"],
@@ -268,6 +281,7 @@
     },
     {
       "capability": "Information Retrieval Fact Precision",
+      "benchmark": "Kitab",
       "modality": "language",
       "path": ["kitab", "ONE_BOOK_CONSTRAINT_PIPELINE"],
       "metric": ["KitabMetric_completeness"],
@@ -276,6 +290,7 @@
     },
     {
       "capability": "Instruction Following",
+      "benchmark": "IFEval",
       "modality": "language",
       "path": ["IFEval"],
       "metric": ["IFEvalMetric_strict_follow_all_instructions"],
@@ -284,6 +299,7 @@
     },
     {
       "capability": "Long Context QA Average",
+      "benchmark": "FlenQA",
       "modality": "language",
       "path": ["FlenQA"],
       "metric": ["ExactMatch_result"],
@@ -292,6 +308,7 @@
     },
     {
       "capability": "Long Context QA Longest Context (3K)",
+      "benchmark": "FlenQA",
       "modality": "language",
       "path": ["FlenQA"],
       "metric": ["ExactMatch_result", "3000"],
@@ -300,6 +317,7 @@
     },
     {
       "capability": "Toxicity Detection",
+      "benchmark": "Toxigen",
       "modality": "language",
       "path": ["Toxigen", "Discriminative", "9K"],
       "metric": ["ExactMatch_result"],
@@ -308,14 +326,16 @@
     },
     {
       "capability": "Geometric Reasoning",
+      "benchmark": "Geometric Reasoning",
       "modality": "multimodal",
-      "path": ["Geometric-Reasoning"],
+      "path": ["GeoMeter"],
       "metric": ["GeoMCQMetric_result"],
       "run": "average",
       "description": "TBD"
     },
     {
       "capability": "Multimodal QA",
+      "benchmark": "MMMU",
       "modality": "multimodal",
       "path": ["MMMU", "MMMU"],
       "metric": ["MMMUMetric_result"],
@@ -324,6 +344,7 @@
     },
     {
       "capability": "Object Recognition",
+      "benchmark": "Image Understanding",
       "modality": "multimodal",
       "path": ["IMAGE_UNDERSTANDING", "OBJECT_RECOGNITION_SINGLE"],
       "metric": ["ObjectRecognitionMetric_result"],
@@ -332,6 +353,7 @@
     },
     {
       "capability": "Object Detection (AP50)",
+      "benchmark": "Image Understanding",
       "modality": "multimodal",
       "path": ["IMAGE_UNDERSTANDING", "OBJECT_DETECTION_SINGLE"],
       "metric": ["CocoObjectDetectionMetric_result", "AP50"],
@@ -340,6 +362,7 @@
     },
     {
       "capability": "Visual Prompting",
+      "benchmark": "Image Understanding",
       "modality": "multimodal",
       "path": ["IMAGE_UNDERSTANDING", "VISUAL_PROMPTING_SINGLE"],
       "metric": ["ObjectRecognitionMetric_result"],
@@ -348,6 +371,7 @@
     },
     {
       "capability": "Spatial Reasoning",
+      "benchmark": "Image Understanding",
       "modality": "multimodal",
       "path": ["IMAGE_UNDERSTANDING", "SPATIAL_REASONING_SINGLE"],
       "metric": ["SpatialAndLayoutReasoningMetric_result"],
@@ -356,6 +380,7 @@
     },
     {
       "capability": "Spatial Map Understanding",
+      "benchmark": "Vision Language Understanding",
       "modality": "multimodal",
       "path": ["VISION_LANGUAGE", "SPATIAL_MAP"],
       "metric": ["SpatialAndLayoutReasoningMetricMap_result"],
@@ -364,6 +389,7 @@
     },
     {
       "capability": "Navigation",
+      "benchmark": "Vision Language Understanding",
       "modality": "multimodal",
       "path": ["VISION_LANGUAGE", "MAZE"],
       "metric": ["SpatialAndLayoutReasoningMetricMaze_result"],
@@ -372,6 +398,7 @@
     },
     {
       "capability": "Counting in a Grid",
+      "benchmark": "Vision Language Understanding",
       "modality": "multimodal",
       "path": ["VISION_LANGUAGE", "SPATIAL_GRID"],
       "metric": ["SpatialAndLayoutReasoningMetricGrid_result"],
@@ -386,7 +413,7 @@
     {
       "model_family": "Claude",
       "model": "Claude-3-Opus",
-      "color": "#4762D6",
+      "color": "#6AA2F5",
       "modality": ["vision", "language"]
     },
     {
@@ -428,19 +455,19 @@
     {
       "model_family": "GPT",
       "model": "GPT-4o-2024-05-13",
-      "color": "#B61A40",
+      "color": "#ED78CC",
       "modality": ["vision", "language"]
     },
     {
       "model_family": "GPT",
       "model": "GPT-4-Vision-Preview",
-      "color": "#E3008C",
+      "color": "#B61A40",
       "modality": ["vision"]
     },
     {
       "model_family": "GPT",
       "model": "GPT-4-Turbo-2024-04-09",
-      "color": "#B61A40",
+      "color": "#EF787F",
       "modality": ["vision"]
     },
     {

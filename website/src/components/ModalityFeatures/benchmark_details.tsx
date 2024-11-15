@@ -3,6 +3,7 @@ import { DownOutlined } from '@ant-design/icons';
 import { BenchmarkGraph, EurekaConfig, Experiment } from "../types";
 import { Button, Dropdown, Menu, MenuProps, message, Row, Space } from "antd";
 import BenchmarkChart from "./benchmark_chart";
+import OverallBenchmarkChart from "./overall_benchmark_chart";
 
 const BenchmarkDetails = ({benchmark, config}: {benchmark: string, config: EurekaConfig}) => {
     const [benchmarkDescription, setBenchmarkDescription] = React.useState<string>('');
@@ -15,7 +16,6 @@ const BenchmarkDetails = ({benchmark, config}: {benchmark: string, config: Eurek
         if (!benchmark) return;  // Ensure benchmark is not null  
         if (!config) return;  // Ensure config is not null
 
-        // setBenchmarkDescription(config.benchmarks.find((d) => d.name === benchmark).benchmarkDescription);
         console.log(config);
         console.log(config.benchmarks);
         const benchmarkObject = config.benchmarks.find((d) => d.name === benchmark);  
@@ -47,14 +47,22 @@ const BenchmarkDetails = ({benchmark, config}: {benchmark: string, config: Eurek
 
     return (
         <div style={{width: '100%', paddingBottom: '4em'}}>
-            <h2>{benchmark}</h2>
+            <h2 style={{paddingTop: '0.75em'}}>{benchmark}</h2>
             <h3>Task Description</h3>
             <span>{benchmarkDescription}</span>
             <h3 style={{paddingTop: '1em'}}>Capability Importance</h3>
             <span>{capabilityImportance}</span>
             <br/>
             <div>
-                <h3>Metrics Description</h3>
+                <h3 style={{paddingTop: '1em'}}>Overall Performance</h3>
+                <div style={{width: '100%'}}>
+                <Row justify="space-between" style={{display: 'flex', justifyContent: 'center'}}>
+                    <OverallBenchmarkChart benchmark={benchmark} config={config}></OverallBenchmarkChart>
+                </Row>
+            </div>
+            </div>
+            <div>
+                <h3 style={{paddingTop: '1em'}}>Metrics Description</h3>
                 {menuItems.length > 1 ? ( <div style={{display: 'flex'}}>
                 <span style={{marginRight: '0.5em'}}>Select Experiment:</span>
                 <Dropdown menu={{items: menuItems, onClick: onClick}} >  
@@ -64,7 +72,7 @@ const BenchmarkDetails = ({benchmark, config}: {benchmark: string, config: Eurek
                     </span>
                 </Dropdown>
             </div> ) : (<div></div>)}
-                <span>{selectedSubcategoryDescription}</span>
+            <span>{selectedSubcategoryDescription}</span>
             </div>
             <br/>
             <div style={{width: '100%'}}>
