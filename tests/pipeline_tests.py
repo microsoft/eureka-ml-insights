@@ -32,6 +32,7 @@ from eureka_ml_insights.configs import (
     MetricConfig,
     ModelConfig,
     ToxiGen_Discriminative_PIPELINE,
+    ToxiGen_Generative_PIPELINE,
 )
 from eureka_ml_insights.core import Pipeline
 from eureka_ml_insights.data_utils.transform import (
@@ -259,6 +260,17 @@ class TEST_TOXIGEN_PIPELINE(ToxiGen_Discriminative_PIPELINE):
         }
         return config
 
+class TEST_TOXIGEN_GEN_PIPELINE(ToxiGen_Generative_PIPELINE):
+    def configure_pipeline(self):
+        config = super().configure_pipeline(model_config=ModelConfig(GenericTestModel, {}))
+        self.inference_comp.data_loader_config.class_name = TestDataLoader
+        self.inference_comp.data_loader_config.init_args = {
+            "path": os.path.join(self.data_pre_processing.output_dir, "transformed_data.jsonl"),
+            "n_iter": N_ITER,
+        }
+        self.eval_inference_comp.model_config = ModelConfig(ToxiGenTestModel, {})
+        return config
+
 
 class TEST_MMMU_PIPELINE(MMMU_BASELINE_PIPELINE):
     # Test config the MMMU benchmark with MultipleChoiceTestModel and TestMMDataLoader
@@ -425,6 +437,9 @@ class TOXIGEN_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_TOXIGEN_PIPELINE().pipeline_config
 
+class TOXIGEN_GEN_PipelineTest(PipelineTest, unittest.TestCase):
+    def get_config(self):
+        return TEST_TOXIGEN_GEN_PIPELINE().pipeline_config
 
 class KITAB_ONE_BOOK_CONSTRAINT_PIPELINE_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
