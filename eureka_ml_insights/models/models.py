@@ -227,6 +227,7 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
             self.headers = {
                 "Content-Type": "application/json",
                 "Authorization": ("Bearer " + self.api_key),
+                "extra-parameters": "pass-through"
             }
         except ValueError:
             self.bearer_token_provider = get_bearer_token_provider(
@@ -305,7 +306,6 @@ class LlamaServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
             "ignore_eos": self.ignore_eos,
             "skip_special_tokens": self.skip_special_tokens,
             "stream": self.stream,
-            "extra-parameters": "pass-through"
         }
         body = str.encode(json.dumps(data))
         return urllib.request.Request(self.url, body, self.headers)
