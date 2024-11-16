@@ -264,7 +264,7 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
 
 @dataclass
 class LlamaServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
-    """Tested for Llama 3.1 405B Instruct deployments."""
+    """Tested for Llama 3.1 405B Instruct deployments and Llama 3.2 90B Vision Instruct."""
 
     """See https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-llama?tabs=llama-three for the api reference."""
 
@@ -273,10 +273,10 @@ class LlamaServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
     top_p: float = 0.95
     frequency_penalty: float = 0
     presence_penalty: float = 0
-    use_beam_search: str = "false"
+    use_beam_search: bool = False
     best_of: int = 1
-    skip_special_tokens: str = "false"
-    ignore_eos: str = "false"
+    skip_special_tokens: bool = False
+    ignore_eos: bool = False
 
     def create_request(self, text_prompt, query_images=None, *args, **kwargs):
         user_content = {"role": "user", "content": text_prompt}
@@ -305,6 +305,7 @@ class LlamaServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
             "ignore_eos": self.ignore_eos,
             "skip_special_tokens": self.skip_special_tokens,
             "stream": self.stream,
+            "extra-parameters": "pass-through"
         }
         body = str.encode(json.dumps(data))
         return urllib.request.Request(self.url, body, self.headers)
