@@ -219,7 +219,7 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
     """https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-serverless?tabs=azure-ai-studio"""
     url: str = None
     model_name: str = None
-    stream: str = "false"
+    stream: bool = False
 
     def __post_init__(self):
         try:
@@ -227,15 +227,24 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
             self.headers = {
                 "Content-Type": "application/json",
                 "Authorization": ("Bearer " + self.api_key),
+                # The behavior of the API when extra parameters are indicated in the payload. 
+                # Using pass-through makes the API to pass the parameter to the underlying model. 
+                # Use this value when you want to pass parameters that you know the underlying model can support. 
+                # https://learn.microsoft.com/en-us/azure/machine-learning/reference-model-inference-chat-completions?view=azureml-api-2
                 "extra-parameters": "pass-through"
             }
         except ValueError:
             self.bearer_token_provider = get_bearer_token_provider(
-                AzureCliCredential(), "https://cognitiveservices.azure.com/.default"
+                DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"
             )
-            headers = {
+            self.headers = {
                 "Content-Type": "application/json",
                 "Authorization": ("Bearer " + self.bearer_token_provider()),
+                # The behavior of the API when extra parameters are indicated in the payload. 
+                # Using pass-through makes the API to pass the parameter to the underlying model. 
+                # Use this value when you want to pass parameters that you know the underlying model can support.
+                # https://learn.microsoft.com/en-us/azure/machine-learning/reference-model-inference-chat-completions?view=azureml-api-2
+                "extra-parameters": "pass-through"
             }
 
     @abstractmethod
@@ -319,7 +328,7 @@ class MistralServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
     temperature: float = 0
     max_tokens: int = 2000
     top_p: float = 1
-    safe_prompt: str = "false"
+    safe_prompt: bool = False
 
     def __post_init__(self):
         if self.temperature == 0 and self.top_p != 1:
