@@ -136,7 +136,7 @@ class AIME_PIPELINE(ExperimentConfig):
                 {
                  "path": os.path.join(self.evalreporting_comp.output_dir, "metric_results.jsonl"),
                  "format": ".jsonl",
-                 "transform":RunPythonTransform("df = df.loc[(df.groupby('ID')['model_output'].transform(lambda x: x.mode().iloc[0] if not x.mode().empty else x.iloc[0]) == df['model_output']) | (df['model_output'].isna() & df.groupby('ID')['model_output'].transform(lambda x: x.mode().iloc[0] if not x.mode().empty else x.iloc[0]).isna())].drop_duplicates('ID')")
+                 "transform":RunPythonTransform("df = df.loc[(df.groupby('ID')['model_output'].transform(lambda x: x.mode().iloc[0] if not x.mode().empty else x.iloc[0]) == df['model_output']) | (df['model_output'].isna() & df.groupby('ID')['model_output'].transform(lambda x: x.mode().iloc[0] if not x.mode().empty else x.iloc[0]).isna())].drop_duplicates('ID')")  # compute the majority vote over the model_output. If model_output is null, return null.
                 },
             ),
             metric_config=MetricConfig(ExactMatch),
@@ -176,14 +176,7 @@ class AIME_PIPELINE5Run(AIME_PIPELINE):
     ) -> PipelineConfig:
         super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         # data preprocessing
-        self.data_processing_comp = PromptProcessingConfig(
-            component_type=PromptProcessing,
-            data_reader_config=DataSetConfig(
-                HFDataReader,
-                {
-                    "path": "qq8933/AIME_1983_2024",
-                    "split": "train",
-                    "transform": SequenceTransform(
+        self.data_processing_comp.data_reader_config.init_args["transform"]  = SequenceTransform(
                         [
                             ColumnRename(
                                 name_mapping={
@@ -193,25 +186,10 @@ class AIME_PIPELINE5Run(AIME_PIPELINE):
                             ),
                             MultiplyTransform(n_repeats=5),                            
                         ],
-                    ),
-                },
-            ),
-            prompt_template_path=os.path.join(
-                os.path.dirname(__file__), "../prompt_templates/aime_templates/Template_1a.jinja"
-            ),
-            output_dir=os.path.join(self.log_dir, "data_processing_output"),
-        ) 
+                    )           
         # Configure the pipeline
-        return PipelineConfig(
-            [
-                self.data_processing_comp,
-                self.inference_comp,
-                self.data_post_processing,
-                self.evalreporting_comp,
-                self.postevalprocess_comp,
-            ],
-            self.log_dir,
-        )
+        return super().configure_pipeline(model_config=model_config, resume_from=resume_from)
+
 
 
 class AIME_PIPELINE16Run(AIME_PIPELINE):
@@ -221,14 +199,7 @@ class AIME_PIPELINE16Run(AIME_PIPELINE):
     ) -> PipelineConfig:
         super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         # data preprocessing
-        self.data_processing_comp = PromptProcessingConfig(
-            component_type=PromptProcessing,
-            data_reader_config=DataSetConfig(
-                HFDataReader,
-                {
-                    "path": "qq8933/AIME_1983_2024",
-                    "split": "train",
-                    "transform": SequenceTransform(
+        self.data_processing_comp.data_reader_config.init_args["transform"]  = SequenceTransform(
                         [
                             ColumnRename(
                                 name_mapping={
@@ -238,25 +209,10 @@ class AIME_PIPELINE16Run(AIME_PIPELINE):
                             ),
                             MultiplyTransform(n_repeats=16),                            
                         ],
-                    ),
-                },
-            ),
-            prompt_template_path=os.path.join(
-                os.path.dirname(__file__), "../prompt_templates/aime_templates/Template_1a.jinja"
-            ),
-            output_dir=os.path.join(self.log_dir, "data_processing_output"),
-        ) 
+                    ) 
         # Configure the pipeline
-        return PipelineConfig(
-            [
-                self.data_processing_comp,
-                self.inference_comp,
-                self.data_post_processing,
-                self.evalreporting_comp,
-                self.postevalprocess_comp,
-            ],
-            self.log_dir,
-        )
+        return super().configure_pipeline(model_config=model_config, resume_from=resume_from)
+
         
 class AIME_PIPELINE32Run(AIME_PIPELINE):
     """This class specifies the config for running AIME benchmark 5 repeated times"""
@@ -265,14 +221,7 @@ class AIME_PIPELINE32Run(AIME_PIPELINE):
     ) -> PipelineConfig:
         super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         # data preprocessing
-        self.data_processing_comp = PromptProcessingConfig(
-            component_type=PromptProcessing,
-            data_reader_config=DataSetConfig(
-                HFDataReader,
-                {
-                    "path": "qq8933/AIME_1983_2024",
-                    "split": "train",
-                    "transform": SequenceTransform(
+        self.data_processing_comp.data_reader_config.init_args["transform"]  = SequenceTransform(
                         [
                             ColumnRename(
                                 name_mapping={
@@ -282,25 +231,10 @@ class AIME_PIPELINE32Run(AIME_PIPELINE):
                             ),
                             MultiplyTransform(n_repeats=32),                            
                         ],
-                    ),
-                },
-            ),
-            prompt_template_path=os.path.join(
-                os.path.dirname(__file__), "../prompt_templates/aime_templates/Template_1a.jinja"
-            ),
-            output_dir=os.path.join(self.log_dir, "data_processing_output"),
-        ) 
+                    ) 
         # Configure the pipeline
-        return PipelineConfig(
-            [
-                self.data_processing_comp,
-                self.inference_comp,
-                self.data_post_processing,
-                self.evalreporting_comp,
-                self.postevalprocess_comp,                
-            ],
-            self.log_dir,
-        )
+        return super().configure_pipeline(model_config=model_config, resume_from=resume_from)
+
         
 class AIME_PIPELINE64Run(AIME_PIPELINE):
     """This class specifies the config for running AIME benchmark 5 repeated times"""
@@ -309,14 +243,7 @@ class AIME_PIPELINE64Run(AIME_PIPELINE):
     ) -> PipelineConfig:
         super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         # data preprocessing
-        self.data_processing_comp = PromptProcessingConfig(
-            component_type=PromptProcessing,
-            data_reader_config=DataSetConfig(
-                HFDataReader,
-                {
-                    "path": "qq8933/AIME_1983_2024",
-                    "split": "train",
-                    "transform": SequenceTransform(
+        self.data_processing_comp.data_reader_config.init_args["transform"]  = SequenceTransform(
                         [
                             ColumnRename(
                                 name_mapping={
@@ -326,22 +253,6 @@ class AIME_PIPELINE64Run(AIME_PIPELINE):
                             ),
                             MultiplyTransform(n_repeats=64),                            
                         ],
-                    ),
-                },
-            ),
-            prompt_template_path=os.path.join(
-                os.path.dirname(__file__), "../prompt_templates/aime_templates/Template_1a.jinja"
-            ),
-            output_dir=os.path.join(self.log_dir, "data_processing_output"),
-        ) 
+                    ) 
         # Configure the pipeline
-        return PipelineConfig(
-            [
-                self.data_processing_comp,
-                self.inference_comp,
-                self.data_post_processing,
-                self.evalreporting_comp,
-                self.postevalprocess_comp,
-            ],
-            self.log_dir,
-        )
+        return super().configure_pipeline(model_config=model_config, resume_from=resume_from)
