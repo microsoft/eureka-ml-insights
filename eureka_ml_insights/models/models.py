@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 import anthropic
 import tiktoken
-from azure.identity import AzureCliCredential, get_bearer_token_provider
+from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 
 from eureka_ml_insights.data_utils import GetKey
 
@@ -111,7 +111,7 @@ class EndpointModel(Model):
                                   and any other relevant information returned by the model.
         """
         response_dict = {}
-        request = self.create_request(query_text, query_images, system_message)
+        request = self.create_request(query_text, query_images=query_images, system_message=system_message)
         attempts = 0
         while attempts < self.num_retries:
             try:
@@ -250,6 +250,8 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
         res = json.loads(response.read())
         self.model_output = res["choices"][0]["message"]["content"]
         self.response_time = end_time - start_time
+        if "usage" in res:
+            return {"usage": res["usage"]}
 
     def handle_request_error(self, e):
         if isinstance(e, urllib.error.HTTPError):
@@ -276,9 +278,24 @@ class LlamaServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
     skip_special_tokens: str = "false"
     ignore_eos: str = "false"
 
-    def create_request(self, text_prompt, *args):
+    def create_request(self, text_prompt, query_images=None, *args, **kwargs):
+        user_content = {"role": "user", "content": text_prompt}
+        if query_images:
+            if len(query_images) > 1:
+                raise ValueError("Llama vision model does not support more than 1 image.")
+            encoded_images = self.base64encode(query_images)
+            user_content["content"] = [
+                {"type": "text", "text": text_prompt},
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/png;base64,{encoded_images[0]}",
+                    },
+                },
+            ]
+
         data = {
-            "messages": [{"role": "user", "content": text_prompt}],
+            "messages": [user_content],
             "max_tokens": self.max_tokens,
             "temperature": self.temperature,
             "top_p": self.top_p,
@@ -310,7 +327,7 @@ class MistralServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
             self.top_p = 1
         super().__post_init__()
 
-    def create_request(self, text_prompt, *args):
+    def create_request(self, text_prompt, *args, **kwargs):
         data = {
             "messages": [{"role": "user", "content": text_prompt}],
             "max_tokens": self.max_tokens,
@@ -366,6 +383,8 @@ class OpenAICommonRequestResponseMixIn:
         openai_response = completion.model_dump()
         self.model_output = openai_response["choices"][0]["message"]["content"]
         self.response_time = end_time - start_time
+        if "usage" in openai_response:
+            return {"usage": openai_response["usage"]}
 
 
 class AzureOpenAIClientMixIn:
@@ -374,7 +393,7 @@ class AzureOpenAIClientMixIn:
     def get_client(self):
         from openai import AzureOpenAI
 
-        token_provider = get_bearer_token_provider(AzureCliCredential(), "https://cognitiveservices.azure.com/.default")
+        token_provider = get_bearer_token_provider(DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default")
         return AzureOpenAI(
             azure_endpoint=self.url,
             api_version=self.api_version,
@@ -461,6 +480,8 @@ class OpenAIO1RequestResponseMixIn:
         openai_response = completion.model_dump()
         self.model_output = openai_response["choices"][0]["message"]["content"]
         self.response_time = end_time - start_time
+        if "usage" in openai_response:
+            return {"usage": openai_response["usage"]}
 
 
 @dataclass
@@ -547,6 +568,17 @@ class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
         end_time = time.time()
         self.model_output = self.gemini_response.parts[0].text
         self.response_time = end_time - start_time
+        if hasattr(self.gemini_response, "usage_metadata"):
+            try:
+                return {
+                    "usage": {
+                        "prompt_token_count": self.gemini_response.usage_metadata.prompt_token_count,
+                        "candidates_token_count": self.gemini_response.usage_metadata.candidates_token_count,
+                        "total_token_count": self.gemini_response.usage_metadata.total_token_count,
+                    }
+                }
+            except AttributeError:
+                logging.warning("Usage metadata not found in the response.")
 
     def handle_request_error(self, e):
         """Handles exceptions originating from making requests to Gemini through the python api.
@@ -648,7 +680,7 @@ class HuggingFaceModel(Model):
                 text_prompt = self.model_template_fn(text_prompt, system_message)
 
             try:
-                meta_response = self._generate(text_prompt, query_images)
+                meta_response = self._generate(text_prompt, query_images=query_images)
                 if meta_response:
                     response_dict.update(meta_response)
                 self.is_valid = True
@@ -780,11 +812,11 @@ class LLaVAHuggingFaceModel(HuggingFaceModel):
 
     def generate(self, text_prompt, query_images=None, system_message=None):
 
-        if len(query_images) > 1:
+        if query_images and len(query_images) > 1:
             logging.error(f"Not implemented for more than 1 image. {len(query_images)} images are in the prompt")
             return {"model_output": None, "is_valid": False, "response_time": None, "n_output_tokens": None}
 
-        return super().generate(text_prompt, query_images, system_message)
+        return super().generate(text_prompt, query_images=query_images, system_message=system_message)
 
     def model_template_fn(self, text_prompt, system_message=None):
         text_prompt = f"<image>\n{text_prompt}"
@@ -935,6 +967,8 @@ class ClaudeModel(EndpointModel, KeyBasedAuthMixIn):
         end_time = time.time()
         self.model_output = completion.content[0].text
         self.response_time = end_time - start_time
+        if hasattr(completion, "usage"):
+            return {"usage": completion.usage.to_dict()}
 
     def handle_request_error(self, e):
         return False
