@@ -28,6 +28,7 @@ from eureka_ml_insights.configs import (
     SPATIAL_MAP_TEXTONLY_PIPELINE,
     SPATIAL_REASONING_SINGLE_PIPELINE,
     VISUAL_PROMPTING_SINGLE_PIPELINE,
+    Drop_Experiment_Pipeline,
     IFEval_PIPELINE,
     MetricConfig,
     ModelConfig,
@@ -285,6 +286,17 @@ class TEST_MMMU_PIPELINE(MMMU_BASELINE_PIPELINE):
         return config
 
 
+class TEST_DROP_PIPELINE(Drop_Experiment_Pipeline):
+    def configure_pipeline(self):
+        config = super().configure_pipeline(model_config=ModelConfig(GenericTestModel, {}))
+        self.inference_comp.data_loader_config.class_name = TestDataLoader
+        self.inference_comp.data_loader_config.init_args = {
+            "path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl"),
+            "n_iter": N_ITER,
+        }
+        return config
+
+
 class TEST_AIME_PIPELINE(AIME_PIPELINE):
     # Test config the AIME benchmark with GenericTestModel and TestMMDataLoader
     def configure_pipeline(self):
@@ -444,6 +456,11 @@ class TOXIGEN_GEN_PipelineTest(PipelineTest, unittest.TestCase):
 class KITAB_ONE_BOOK_CONSTRAINT_PIPELINE_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_KITAB_ONE_BOOK_CONSTRAINT_PIPELINE().pipeline_config
+
+
+class DROP_PipelineTest(PipelineTest, unittest.TestCase):
+    def get_config(self):
+        return TEST_DROP_PIPELINE().pipeline_config
 
 
 class AIME_PipelineTest(PipelineTest, unittest.TestCase):
