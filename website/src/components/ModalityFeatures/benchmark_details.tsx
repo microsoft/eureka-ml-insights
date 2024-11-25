@@ -63,15 +63,19 @@ const BenchmarkDetails = ({benchmark, config}: {benchmark: string, config: Eurek
             </div>
             <div>
                 <h3 style={{paddingTop: '1em'}}>Metrics Description</h3>
-                {menuItems.length > 1 ? ( <div style={{display: 'flex'}}>
-                <span style={{marginRight: '0.5em'}}>Select Experiment:</span>
-                <Dropdown menu={{items: menuItems, onClick: onClick}} >  
-                    <span>
-                        {selectedSubcategory}
-                        <DownOutlined />
-                    </span>
-                </Dropdown>
-            </div> ) : (<div></div>)}
+                {menuItems.length > 1 ? ( 
+                <div style={{display: 'flex'}}>
+                    <span style={{marginRight: '0.5em', marginBottom: '0.5em'}}>Select Experiment:</span>
+                    <Dropdown 
+                        menu={{items: menuItems, onClick: onClick}}
+                        overlayStyle={{}}
+                    >  
+                        <span style={{border: '1px solid #000000'}}>
+                            {selectedSubcategory}
+                            <DownOutlined />
+                        </span>
+                    </Dropdown>
+                </div> ) : (<div></div>)}
             <span>{selectedSubcategoryDescription}</span>
             </div>
             <br/>
