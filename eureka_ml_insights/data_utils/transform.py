@@ -330,14 +330,13 @@ class MajorityVoteTransform:
                 return group_non_nan.mode().iloc[0]  # Return the mode, the most frequent value
             else:
                 return pd.NA  # Return NaN if all values are NaN
-        
-        majority_votes = df.groupby('ID')['model_output'].transform(majority_vote)
+                
+        df['majority_vote'] = df.groupby('ID')['model_output'].transform(majority_vote)
 
-        # Filter rows where 'model_output' matches the majority vote
-        df_filtered = df[df['model_output'] == majority_votes]
+        df_not_na = df[df['model_output'].notna()]
+        df_not_na = df_not_na[df_not_na['model_output'] == df_not_na['majority_vote']]
         
-        # Drop duplicates based on 'ID' to keep only one row per 'ID'
+        df_is_na = df[df['majority_vote'].isna()]
+        df_filtered = pd.concat([df_not_na,df_is_na],axis=0)
         df_filtered = df_filtered.drop_duplicates(subset='ID')
-
         return df_filtered
-        

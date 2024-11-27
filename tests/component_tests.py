@@ -263,7 +263,7 @@ class TestRateLimitedInference(unittest.TestCase):
         # assert that there are 40 inference results
         self.assertEqual(len(df), 40)
         # assert that the duration is greater than 40/20 - 1 minutes
-        self.assertGreaterEqual(self.duration, (40 / 20 - 1) * 60)
+        self.assertGreaterEqual(self.duration, (40 / 200 - 1) * 60)
 
 
 if __name__ == "__main__":

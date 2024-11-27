@@ -59,6 +59,8 @@ class AIME_PIPELINE(ExperimentConfig):
                                     "Answer": "ground_truth",
                                 }
                             ),  
+                            RunPythonTransform("df = df.iloc[[0]]"),
+
                         ],
                     ),
                 },
