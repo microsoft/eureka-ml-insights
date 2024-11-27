@@ -4,6 +4,7 @@ You can also add your custom models here by following the same pattern as the ex
 
 from eureka_ml_insights.models import (
     AzureOpenAIO1Model,
+    AzureOpenAIModel,
     ClaudeModel,
     DirectOpenAIModel,
     DirectOpenAIO1Model,
@@ -13,6 +14,7 @@ from eureka_ml_insights.models import (
     LLaVAModel,
     MistralServerlessAzureRestEndpointModel,
     RestEndpointModel,
+    #TnRModels,
 )
 
 from .config import ModelConfig
@@ -23,16 +25,33 @@ from .config import ModelConfig
 
 # OpenAI models
 
+'''
 OPENAI_SECRET_KEY_PARAMS = {
     "key_name": "your_openai_secret_key_name",
     "local_keys_path": "keys/keys.json",
     "key_vault_url": None,
 }
+'''
+
+OPENAI_SECRET_KEY_PARAMS = {
+    "key_name": "openai",
+    "local_keys_path": "keys/aifeval-vault-azure-net.json",
+    "key_vault_url": "https://aifeval.vault.azure.net",
+}
+
 
 OAI_O1_PREVIEW_CONFIG = ModelConfig(
     DirectOpenAIO1Model,
     {
         "model_name": "o1-preview",
+        "secret_key_params": OPENAI_SECRET_KEY_PARAMS,
+    },
+)
+
+OAI_O1_MINI_CONFIG = ModelConfig(
+    DirectOpenAIO1Model,
+    {
+        "model_name": "o1-mini-2024-09-12",
         "secret_key_params": OPENAI_SECRET_KEY_PARAMS,
     },
 )
@@ -86,11 +105,109 @@ OAI_GPT4O_MINI_2024_07_18_CONFIG = ModelConfig(
     },
 )
 
+# Azure OAI models
+## Azure OAI models -- TNR Models
+
+TNR_SECRET_KEY_PARAMS = {
+    "key_name": "tnrllmproxy",
+    "local_keys_path": "keys/aifeval-vault-azure-net.json",
+    "key_vault_url": "https://aifeval.vault.azure.net",
+}
+
+GCRAOAI8SW1_AZURE_OAI_O1_PREVIEW_CONFIG = ModelConfig(
+    AzureOpenAIO1Model,
+    {
+        "url": "https://gcraoai8sw1.openai.azure.com/",
+        "model_name": "o1-preview",
+        "api_version": "2024-08-01-preview",
+    }
+)
+
+GCRAOAI8SW1_AZURE_OAI_O1_MINI_CONFIG = ModelConfig(
+    AzureOpenAIO1Model,
+    {
+        "url": "https://gcraoai8sw1.openai.azure.com/",
+        "model_name": "o1-mini",
+        "api_version": "2024-08-01-preview",
+    }
+)
+
+GCRAOAI8SW1_AZURE_OAI_GPT4O_CONFIG = ModelConfig(
+    AzureOpenAIO1Model,
+    {
+        "url": "https://gcraoai8sw1.openai.azure.com/",
+        "model_name": "gpt-4o",
+        "api_version": "2024-08-01-preview",
+        "temperature": 1.0,
+
+    }
+)
+
+
+GCRAOAI8SW1_AZURE_OAI_GPT4_T1_CONFIG = ModelConfig(
+    AzureOpenAIO1Model,
+    {
+        "url": "https://gcraoai8sw1.openai.azure.com/",
+        "model_name": "gpt-4",
+        "api_version": "2024-08-01-preview",
+        "temperature": 1.0,
+
+    }
+)
+
+AzureOpenAIModel
+
+"""
+TNR_GPT4_1106_PREVIEW_CONFIG = ModelConfig(
+    TnRModels,
+    {
+        "url": "https://trapi.research.microsoft.com/gcr/shared/nj/",
+        "secret_key_params": TNR_SECRET_KEY_PARAMS,
+        "model_name": "gpt-4",
+    },
+)
+
+TNR_GPT4_VISION_PREVIEW_CONFIG = ModelConfig(
+    TnRModels,
+    {
+        "url": "https://trapi.research.microsoft.com/gcr/shared/nj/",
+        "secret_key_params": TNR_SECRET_KEY_PARAMS,
+        "model_name": "gpt-4-turbo-v",
+    },
+)
+
+TNR_GPT4V_TURBO_2024_04_09_CONFIG = ModelConfig(
+    TnRModels,
+    {
+        "url": "https://trapi.research.microsoft.com/gcr/shared/nj/",
+        "secret_key_params": TNR_SECRET_KEY_PARAMS,
+        "model_name": "gpt-4-turbo",
+    },
+)
+
+TNR_GPT4O_2024_05_13_CONFIG = ModelConfig(
+    TnRModels,
+    {
+        "url": "https://trapi.research.microsoft.com/gcr/shared/nj/",
+        "secret_key_params": TNR_SECRET_KEY_PARAMS,
+        "model_name": "gpt-4o",
+    },
+)
+"""
+
 # Gemini models
+'''
 GEMINI_SECRET_KEY_PARAMS = {
     "key_name": "your_gemini_secret_key_name",
     "local_keys_path": "keys/keys.json",
     "key_vault_url": None,
+}
+'''
+
+GEMINI_SECRET_KEY_PARAMS = {
+    "key_name": "aif-eval-gemini-firstproject",
+    "local_keys_path": "keys/aifeval-vault-azure-net.json",
+    "key_vault_url": "https://aifeval.vault.azure.net",
 }
 
 GEMINI_V15_PRO_CONFIG = ModelConfig(
@@ -98,6 +215,16 @@ GEMINI_V15_PRO_CONFIG = ModelConfig(
     {
         "model_name": "gemini-1.5-pro",
         "secret_key_params": GEMINI_SECRET_KEY_PARAMS,
+    },
+)
+
+
+GEMINI_V15_PRO_T1_CONFIG = ModelConfig(
+    GeminiModel,
+    {
+        "model_name": "gemini-1.5-pro",
+        "secret_key_params": GEMINI_SECRET_KEY_PARAMS,
+        "temperature":1.0,
     },
 )
 
@@ -110,11 +237,20 @@ GEMINI_V1_PRO_CONFIG = ModelConfig(
 )
 
 # Claude models
+'''
 CLAUDE_SECRET_KEY_PARAMS = {
     "key_name": "your_claude_secret_key_name",
     "local_keys_path": "keys/keys.json",
     "key_vault_url": None,
 }
+'''
+
+CLAUDE_SECRET_KEY_PARAMS = {
+    "key_name": "aif-eval-claude",
+    "local_keys_path": "keys/aifeval-vault-azure-net.json",
+    "key_vault_url": "https://aifeval.vault.azure.net",
+}
+
 
 CLAUDE_3_OPUS_CONFIG = ModelConfig(
     ClaudeModel,
@@ -129,6 +265,32 @@ CLAUDE_3_5_SONNET_CONFIG = ModelConfig(
     {
         "secret_key_params": CLAUDE_SECRET_KEY_PARAMS,
         "model_name": "claude-3-5-sonnet-20240620",
+    },
+)
+
+CLAUDE_3_5_SONNET_T1_CONFIG = ModelConfig(
+    ClaudeModel,
+    {
+        "secret_key_params": CLAUDE_SECRET_KEY_PARAMS,
+        "model_name": "claude-3-5-sonnet-20240620",
+        "temperature":1.0,
+    },
+)
+
+CLAUDE_3_5_SONNET_SEARCH_T1_CONFIG = ModelConfig(
+    ClaudeModel,
+    {
+        "secret_key_params": CLAUDE_SECRET_KEY_PARAMS,
+        "model_name": "claude-3-5-sonnet-20241022",
+        "temperature": 1.0,
+    },
+)
+
+CLAUDE_3_5_SONNET_SEARCH_CONFIG = ModelConfig(
+    ClaudeModel,
+    {
+        "secret_key_params": CLAUDE_SECRET_KEY_PARAMS,
+        "model_name": "claude-3-5-sonnet-20241022",
     },
 )
 
@@ -192,5 +354,53 @@ AIF_NT_MISTRAL_LARGE_2_2407_CONFIG = ModelConfig(
             "key_vault_url": None,
         },
         "model_name": "Mistral-large-2407",
+    },
+)
+
+
+
+AIF_NT_MISTRAL_LARGE_2_2407_T1_CONFIG = ModelConfig(
+    MistralServerlessAzureRestEndpointModel,
+    {
+        "url": "https://Mistral-large-2407-aifeval.eastus.models.ai.azure.com/v1/chat/completions",
+        "secret_key_params": {
+            "key_name": "aif-nt-mistral-large-2-2407",
+            "local_keys_path": "keys/aifeval-vault-azure-net.json",
+            "key_vault_url": "https://aifeval.vault.azure.net",
+        },
+        "model_name": "Mistral-large-2407-aifeval",
+                "temperature": 1.0,
+
+    },
+)
+
+
+GCR_LLAMA3_1_70B_INSTRUCT_CONFIG = ModelConfig(
+    RestEndpointModel,
+    {
+        "url": "https://gcr-llama31-70b-instruct.westus3.inference.ml.azure.com/score",
+        "secret_key_params": {
+            "key_name": "meta-llama-3-1-70b-instruct-1",
+            "local_keys_path": "keys/aifeval-vault-azure-net.json",
+            "key_vault_url": "https://aifeval.vault.azure.net",
+        },
+        "model_name": "meta-llama-3-1-70b-instruct-1",
+                        "temperature": 1.0,
+
+    },
+)
+
+AIF_NT_LLAMA3_1_405B_INSTRUCT_CONFIG = ModelConfig(
+    LlamaServerlessAzureRestEndpointModel,
+    {
+        "url": "https://Meta-Llama-3-1-405B-Instruct-aif.eastus.models.ai.azure.com/v1/chat/completions",
+        "secret_key_params": {
+            "key_name": "aif-nt-meta-llama-3-1-405b-instruct-1",
+            "local_keys_path": "keys/aifeval-vault-azure-net.json",
+            "key_vault_url": "https://aifeval.vault.azure.net",
+        },
+        "model_name": "Meta-Llama-3-1-405B-Instruct-aif",
+                        "temperature": 1.0,
+
     },
 )

@@ -13,10 +13,11 @@ from .pipeline import Component
 from .reserved_names import INFERENCE_RESERVED_NAMES
 MINUTE = 60
 
+MINUTE = 60
+
 
 class Inference(Component):
     def __init__(self, model_config, data_config, output_dir, resume_from=None, new_columns=None, requests_per_minute=None, max_concurrent=1):
-
         """
         Initialize the Inference component.
         args:
@@ -25,8 +26,6 @@ class Inference(Component):
             output_dir (str): Directory to save the inference results.
             resume_from (str): optional. Path to the file where previous inference results are stored.
             new_columns (list): optional. List of new columns to be added to resume_from data to match the current inference response.
-            requests_per_minute (int): optional. Number of inference requests to be made per minute, used for rate limiting. If not provided, rate limiting will not be applied.
-            max_concurrent (int): optional. Maximum number of concurrent inferences to run. Default is 1.
         """
         super().__init__(output_dir)
         self.model = model_config.class_name(**model_config.init_args)
@@ -46,6 +45,14 @@ class Inference(Component):
         # parallel inference parameters
         self.max_concurrent = max_concurrent
 
+        # rate limiting parameters
+        self.requests_per_minute = requests_per_minute
+        self.request_times = deque()
+        self.period = MINUTE
+
+        # parallel inference parameters
+        self.max_concurrent = max_concurrent
+
     @classmethod
     def from_config(cls, config):
         return cls(
@@ -54,8 +61,6 @@ class Inference(Component):
             config.output_dir,
             resume_from=config.resume_from,
             new_columns=config.new_columns,
-            requests_per_minute=config.requests_per_minute,
-            max_concurrent=config.max_concurrent,
         )
 
     def fetch_previous_inference_results(self):

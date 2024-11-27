@@ -35,6 +35,7 @@ from .transform import (
     SamplerTransform,
     SequenceTransform,
     TokenCounterTransform,
+    MajorityVoteTransform,
 )
 
 __all__ = [

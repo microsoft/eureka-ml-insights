@@ -277,6 +277,7 @@ class ASTEvalTransform(MultiColumnTransform):
         return list_strings
 
 
+
 @dataclass
 class TokenCounterTransform(MultiColumnTransform):
     """
@@ -302,3 +303,41 @@ class TokenCounterTransform(MultiColumnTransform):
             token_count_column = f"{column}_token_count"
             df[token_count_column] = token_count
         return df
+
+@dataclass
+class MajorityVoteTransform:
+    """Applies the majority vote transformation to the 'model_output' column per 'ID'."""
+    
+    # No need for additional parameters as the logic is fixed for majority vote.
+    
+    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Transforms the dataframe by calculating the majority vote of 'model_output' per 'ID'.
+        If the 'model_output' is NaN, it will be handled appropriately.
+
+        Args:
+            df (pd.DataFrame): Input dataframe containing 'ID' and 'model_output'.
+        
+        Returns:
+            pd.DataFrame: Transformed dataframe with majority vote for each 'ID'.
+        """
+        
+        # Function to get the majority vote
+        def majority_vote(group):
+            # Drop NaN values and get the most common value
+            group_non_nan = group.dropna()
+            if not group_non_nan.empty:
+                return group_non_nan.mode().iloc[0]  # Return the mode, the most frequent value
+            else:
+                return pd.NA  # Return NaN if all values are NaN
+        
+        majority_votes = df.groupby('ID')['model_output'].transform(majority_vote)
+
+        # Filter rows where 'model_output' matches the majority vote
+        df_filtered = df[df['model_output'] == majority_votes]
+        
+        # Drop duplicates based on 'ID' to keep only one row per 'ID'
+        df_filtered = df_filtered.drop_duplicates(subset='ID')
+
+        return df_filtered
+        
