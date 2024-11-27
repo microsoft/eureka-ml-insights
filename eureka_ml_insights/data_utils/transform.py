@@ -208,7 +208,7 @@ class ShuffleColumns(MultiColumnTransform):
 
 
 @dataclass
-class ColumnMatchMap(MultiColumnTransform):
+class ColumnMatchMap(DFTransformBase):
     """Creates a new column indicating the name of the column that matches the value in the key column for each row.
     E.g. for a row, if value of key_col matches value of 'A' column, new_col will contain the value 'A'."""
 
@@ -222,6 +222,13 @@ class ColumnMatchMap(MultiColumnTransform):
             if row[col] == row[self.key_col]:
                 return col
         return None  # If no match is found (optional)
+    
+    def validate(self, df: pd.DataFrame):
+        """Check that all columns to be transformed are present actually in the data frame."""
+        extra_columns = set(self.columns + [self.key_col]) - set(df.columns)
+        if extra_columns:
+            msg = ", ".join(sorted(extra_columns))
+            raise ValueError(f"The following columns are not present in the data frame: {msg}")
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """For each row in df, shuffle values across these columns."""
