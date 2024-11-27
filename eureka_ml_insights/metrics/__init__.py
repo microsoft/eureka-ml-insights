@@ -10,7 +10,6 @@ from .metrics_base import (
     SubstringExistsMatch,
 )
 from .mmmu_metrics import MMMUMetric
-from .aime_metrics import AIME_NumericMatch
 from .reports import (
     Aggregator,
     AverageAggregator,
