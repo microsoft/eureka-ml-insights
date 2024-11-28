@@ -3,7 +3,7 @@ from typing import Any
 
 from eureka_ml_insights.core import EvalReporting, Inference, PromptProcessing
 from eureka_ml_insights.data_utils import (
-    ColumnMatchMap,
+    ColumnMatchMapTransform,
     CopyColumn,
     DataReader,
     HFDataReader,
@@ -11,7 +11,7 @@ from eureka_ml_insights.data_utils import (
     MMDataLoader,
     RegexTransform,
     SequenceTransform,
-    ShuffleColumns,
+    ShuffleColumnsTransform,
 )
 from eureka_ml_insights.metrics import CountAggregator, ExactMatch
 
@@ -50,9 +50,9 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                             CopyColumn(column_name_src="Incorrect Answer 1", column_name_dst="B"),
                             CopyColumn(column_name_src="Incorrect Answer 2", column_name_dst="C"),
                             CopyColumn(column_name_src="Incorrect Answer 3", column_name_dst="D"),
-                            ShuffleColumns(columns=["A", "B", "C", "D"]),
+                            ShuffleColumnsTransform(columns=["A", "B", "C", "D"]),
                             # finds answer choice that "Correct Answer" is mapped to, and stores it in "ground_truth"
-                            ColumnMatchMap(
+                            ColumnMatchMapTransform(
                                 new_col="ground_truth", key_col="Correct Answer", columns=["A", "B", "C", "D"]
                             ),
                         ]

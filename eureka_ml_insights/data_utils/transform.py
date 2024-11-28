@@ -182,7 +182,7 @@ class MultiColumnTransform(DFTransformBase):
 
 
 @dataclass
-class ShuffleColumns(MultiColumnTransform):
+class ShuffleColumnsTransform(MultiColumnTransform):
     """
     For a set of columns, shuffles the values across each row of these columns.
     Values will be shuffled differently for each row. 
@@ -191,9 +191,7 @@ class ShuffleColumns(MultiColumnTransform):
     across different letter options (e.g. shuffle what choice maps to 'A' vs 'B' vs 'C').
     """
 
-    columns: List[str] | str
-
-    mappings = []
+    columns: List[str]
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """For each row in df, shuffle values across these columns."""
@@ -208,7 +206,7 @@ class ShuffleColumns(MultiColumnTransform):
 
 
 @dataclass
-class ColumnMatchMap(DFTransformBase):
+class ColumnMatchMapTransform(DFTransformBase):
     """Creates a new column indicating the name of the column that matches the value in the key column for each row.
     E.g. for a row, if value of key_col matches value of 'A' column, new_col will contain the value 'A'."""
 

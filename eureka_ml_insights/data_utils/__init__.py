@@ -22,7 +22,7 @@ from .transform import (
     AddColumn,
     AddColumnAndData,
     ASTEvalTransform,
-    ColumnMatchMap,
+    ColumnMatchMapTransform,
     ColumnRename,
     CopyColumn,
     DFTransformBase,
@@ -35,7 +35,7 @@ from .transform import (
     RunPythonTransform,
     SamplerTransform,
     SequenceTransform,
-    ShuffleColumns,
+    ShuffleColumnsTransform,
     TokenCounterTransform,
 )
 
@@ -71,7 +71,7 @@ __all__ = [
     ExtractAnswerGrid,
     ExtractAnswerSpatialMap,
     ExtractAnswerMaze,
-    ShuffleColumns,
-    ColumnMatchMap,
+    ShuffleColumnsTransform,
+    ColumnMatchMapTransform,
     TokenCounterTransform,
 ]
