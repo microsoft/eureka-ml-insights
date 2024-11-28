@@ -207,8 +207,11 @@ class ShuffleColumnsTransform(MultiColumnTransform):
 
 @dataclass
 class ColumnMatchMapTransform(DFTransformBase):
-    """Creates a new column indicating the name of the column that matches the value in the key column for each row.
-    E.g. for a row, if value of key_col matches value of 'A' column, new_col will contain the value 'A'."""
+    """
+    Creates a new column indicating the name of the column that matches the value in the key column for each row.
+    E.g. for a row, if value of key_col matches value of 'A' column, new_col will contain the value 'A'.
+    Used to store the letter of the correct answer choice in MCQ benchmarks.
+    """
 
     key_col: str
     new_col: str

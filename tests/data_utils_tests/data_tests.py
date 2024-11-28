@@ -149,6 +149,7 @@ class TestMMDataLoader(unittest.TestCase):
                 self.assertTrue(isinstance(model_inputs[1][0], Image.Image))
 
 class TestShuffleColumns(unittest.TestCase):
+    """Testing the ShuffleColumnsTransform used in MCQ benchmarks to shuffle answer choices."""
     def setUp(self):
         self.df = pd.DataFrame(
                     {
@@ -194,6 +195,10 @@ class TestShuffleColumns(unittest.TestCase):
             pd.testing.assert_series_equal(self.df[col], transformed_df_2[col], check_exact=True)
 
 class TestColMatchMap(unittest.TestCase):
+    """
+    Testing the ColumnMatchMapTransform used in MCQ benchmarks to store the letter of the correct
+    answer choice.
+    """
     def setUp(self):
         # Seed the random number generator for reproducibility
         np.random.seed(42)
