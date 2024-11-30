@@ -76,6 +76,8 @@ from .vision_language.spatial_map import (
     SPATIAL_MAP_TEXTONLY_PIPELINE,
 )
 
+from .nphard_tsp import NPHARD_TSP_PIPELINE
+
 __all__ = [
     PipelineConfig,
     ModelConfig,
@@ -132,5 +134,6 @@ __all__ = [
     IFEval_Nondeterminism,
     Kitab_Nondeterminism,
     AIME_PIPELINE,
+    NPHARD_TSP_PIPELINE,
     create_logdir,
 ]
