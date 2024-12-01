@@ -15,15 +15,11 @@ from eureka_ml_insights.data_utils.transform import ColumnRename, SamplerTransfo
 from eureka_ml_insights.metrics.ba_calendar_metrics import BACalendarMetric
 from eureka_ml_insights.metrics.reports import (
     AverageAggregator,
-    BiLevelAverageAggregator,
     NAFilteredAverageAggregator,
-    TwoColumnSumAverageAggregator,
 )
 
 from .config import (
     AggregatorConfig,
-    DataJoinConfig,
-    DataProcessingConfig,
     DataSetConfig,
     EvalReportingConfig,
     InferenceConfig,
@@ -44,7 +40,7 @@ class Calendar_Schedule_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 DataReader, 
                 { 
-                    "path": os.path.join("../local_benchmark_data/Natasha_benchmarks/datasets/datasets/", "ba_calendar.jsonl"),
+                    "path": os.path.join("../local_benchmark_data/Natasha_benchmarks/datasets/datasets/", "ba_calendar_wkey.jsonl"),
                     "transform": SequenceTransform([
                         ColumnRename(name_mapping={"task_prompt": "prompt"}),
                         SamplerTransform(random_seed=5, sample_count=10),
@@ -64,6 +60,7 @@ class Calendar_Schedule_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
+            # max_concurrent=4,
         )
 
         # Configure the evaluation and reporting component for evaluation and dataset level aggregation
@@ -74,7 +71,6 @@ class Calendar_Schedule_PIPELINE(ExperimentConfig):
                 {
                     "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
                     "format": ".jsonl",
-                    # "transform": ColumnRename(name_mapping={"model_output": "response"}),
                 },
             ),
             metric_config=MetricConfig(BACalendarMetric),
@@ -84,8 +80,9 @@ class Calendar_Schedule_PIPELINE(ExperimentConfig):
                     {
                         "column_names": [
                             "BACalendarMetric_all_correct",
+                            "BACalendarMetric_fraction_passed"
                         ],
-                        "filename_base": "BaCal_AllCorrect_Aggregated",
+                        "filename_base": "BaCal_OverallMetrics_Aggregated",
                     },
                 ),
                 AggregatorConfig(

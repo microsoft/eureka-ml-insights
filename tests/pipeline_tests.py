@@ -247,6 +247,19 @@ class TEST_IFEval_PIPELINE(IFEval_PIPELINE):
             ]
         )
         return config
+    
+# class TEST_BA_Calendar_PIPELINE(IFEval_PIPELINE):
+#     # Test config the IFEval benchmark with TestModel and TestDataLoader
+#     def configure_pipeline(self):
+#         config = super().configure_pipeline(model_config=ModelConfig(GenericTestModel, {}))
+#         self.data_processing_comp.data_reader_config.init_args["transform"] = SequenceTransform(
+#             [
+#                 RunPythonTransform("df['instruction_id_list_copy'] = df.loc[:, 'instruction_id_list']"),
+#                 RunPythonTransform("df = df.explode(['instruction_id_list_copy'])"),
+#                 SamplerTransform(sample_count=N_ITER, random_seed=99, stratify_by="instruction_id_list_copy"),
+#             ]
+#         )
+#         return config
 
 
 class TEST_TOXIGEN_PIPELINE(ToxiGen_Discriminative_PIPELINE):

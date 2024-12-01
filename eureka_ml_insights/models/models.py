@@ -230,7 +230,7 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
             }
         except ValueError:
             self.bearer_token_provider = get_bearer_token_provider(
-                AzureCliCredential(), "https://cognitiveservices.azure.com/.default"
+                DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"
             )
             headers = {
                 "Content-Type": "application/json",

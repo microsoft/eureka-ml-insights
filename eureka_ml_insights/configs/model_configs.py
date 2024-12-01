@@ -93,6 +93,14 @@ GEMINI_SECRET_KEY_PARAMS = {
     "key_vault_url": None,
 }
 
+GEMINI_EXP_1114_PRO_CONFIG = ModelConfig(
+    GeminiModel,
+    {
+        "model_name": "gemini-exp-1114",
+        "secret_key_params": GEMINI_SECRET_KEY_PARAMS,
+    },
+)
+
 GEMINI_V15_PRO_CONFIG = ModelConfig(
     GeminiModel,
     {
@@ -111,8 +119,7 @@ GEMINI_V1_PRO_CONFIG = ModelConfig(
 
 # Claude models
 CLAUDE_SECRET_KEY_PARAMS = {
-    # "key_name": "your_claude_secret_key_name",
-    "key_name": "aif-eval-claude",
+    "key_name": "your_claude_secret_key_name",
     "local_keys_path": "keys/keys.json",
     "key_vault_url": None,
 }
