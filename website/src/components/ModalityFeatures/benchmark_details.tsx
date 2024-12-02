@@ -16,8 +16,6 @@ const BenchmarkDetails = ({benchmark, config}: {benchmark: string, config: Eurek
         if (!benchmark) return;  // Ensure benchmark is not null  
         if (!config) return;  // Ensure config is not null
 
-        console.log(config);
-        console.log(config.benchmarks);
         const benchmarkObject = config.benchmarks.find((d) => d.name === benchmark);  
         setBenchmarkDescription(benchmarkObject ? benchmarkObject.benchmarkDescription : '');  
         setCapabilityImportance(benchmarkObject ? benchmarkObject.capabilityImportance : '');

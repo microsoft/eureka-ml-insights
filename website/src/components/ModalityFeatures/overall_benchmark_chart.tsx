@@ -88,9 +88,11 @@ const OverallBenchmarkChart = ({benchmark, config}: {benchmark: string, config: 
     }
 
     return (
-        <div style={{width: '100%', paddingBottom: '4em', display:'flex', justifyContent:'center'}}>
+        <div style={{width: '100%', paddingBottom: '4em', display:'flex', flexWrap: 'wrap', justifyContent:'center'}}>
             {chartOptions.map((options, index) => (  
-                <HighchartsReact key={index} highcharts={Highcharts} options={options} />  
+                <div key={index} style={{ flex: '1 1 0', minWidth: '300px', padding: '1em' }}> 
+                    <HighchartsReact key={index} highcharts={Highcharts} options={options} />  
+                </div>
             ))} 
         </div>
     )

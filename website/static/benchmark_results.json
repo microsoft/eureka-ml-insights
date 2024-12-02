@@ -1,5 +1,5 @@
 {
-  "Geometric Reasoning": {
+  "Geometric Reasoning (GeoMeter)": {
     "experiments": [
       {
         "title": "Depth and Height",
@@ -66,7 +66,7 @@
       }
     ]
   },
-  "MMMU": {
+  "Multimodel Question Answering (MMMU)": {
     "experiments": [
       {
         "title": "Categories",
@@ -794,13 +794,20 @@
       }
     ]
   },
-  "IFEval": {
+  "Instruction Following (IFEval)": {
     "experiments": [
       {
         "title": "Instruction Following",
         "categories": [
-          "IFEvalMetric_strict_follow_all_instructions",
-          "IFEvalMetric_loose_follow_all_instructions"
+          "change_case",
+          "combination",
+          "detectable_content",
+          "detectable_format",
+          "keywords",
+          "language",
+          "length_constraints",
+          "punctuation",
+          "startend"
         ],
         "series": [
           {
@@ -809,64 +816,127 @@
               {
                 "name": "Claude-3-Opus",
                 "scores": [
-                  81.9,
-                  88.5
+                  85.4,
+                  93.8,
+                  100.0,
+                  89.8,
+                  85.3,
+                  100.0,
+                  76.2,
+                  90.9,
+                  86.6
                 ]
               },
               {
                 "name": "Claude-3_5-Sonnet",
                 "scores": [
-                  81.3,
-                  89.1
+                  87.6,
+                  89.2,
+                  100.0,
+                  84.1,
+                  86.5,
+                  93.5,
+                  81.1,
+                  89.4,
+                  86.6
                 ]
               },
               {
                 "name": "Gemini-1_5-Pro",
                 "scores": [
-                  75.2,
-                  77.6
+                  82.0,
+                  90.8,
+                  92.5,
+                  91.1,
+                  79.1,
+                  67.7,
+                  66.4,
+                  92.4,
+                  89.6
                 ]
               },
               {
                 "name": "GPT-4-1106-Preview",
                 "scores": [
-                  75.2,
-                  80.4
+                  76.4,
+                  80.0,
+                  94.3,
+                  91.7,
+                  82.2,
+                  96.8,
+                  72.7,
+                  57.6,
+                  95.5
                 ]
               },
               {
                 "name": "GPT-4o-2024-05-13",
                 "scores": [
-                  81.3,
-                  86.9
+                  82.0,
+                  87.7,
+                  92.5,
+                  90.4,
+                  84.7,
+                  100.0,
+                  74.8,
+                  93.9,
+                  95.5
                 ]
               },
               {
                 "name": "Llama-3-70B",
                 "scores": [
-                  77.3,
-                  84.1
+                  86.5,
+                  80.0,
+                  94.3,
+                  88.5,
+                  79.8,
+                  71.0,
+                  73.4,
+                  95.5,
+                  98.5
                 ]
               },
               {
                 "name": "Llama-3_1-405B",
                 "scores": [
-                  83.5,
-                  88.4
+                  88.8,
+                  92.3,
+                  98.1,
+                  91.1,
+                  85.9,
+                  96.8,
+                  74.1,
+                  97.0,
+                  98.5
                 ]
               },
               {
                 "name": "Llama-3_1-70B",
                 "scores": [
-                  80.8,
-                  86.3
+                  87.6,
+                  87.7,
+                  98.1,
+                  90.4,
+                  85.3,
+                  93.5,
+                  70.6,
+                  97.0,
+                  94.0
                 ]
               },
               {
                 "name": "Mistral_Large_2_2407",
                 "scores": [
-                  77.3,
-                  82.1
+                  82.0,
+                  83.1,
+                  96.2,
+                  92.4,
+                  79.1,
+                  96.8,
+                  75.5,
+                  84.8,
+                  85.1
                 ]
               }
             ]
@@ -875,7 +945,7 @@
       }
     ]
   },
-  "FlenQA": {
+  "Long Context (FlenQA)": {
     "experiments": [
       {
         "title": "Context Size",
@@ -983,10 +1053,89 @@
             ]
           }
         ]
+      },
+      {
+        "title": "Paragraph Location",
+        "categories": [
+          "first",
+          "last",
+          "middle",
+          "random"
+        ],
+        "series": [
+          {
+            "title": "Paragraph Location",
+            "values": [
+              {
+                "name": "Claude-3-Opus",
+                "scores": [
+                  90.4,
+                  84.6,
+                  80.8,
+                  72.8
+                ]
+              },
+              {
+                "name": "Claude-3_5-Sonnet",
+                "scores": [
+                  91.6,
+                  89.5,
+                  81.4,
+                  75.4
+                ]
+              },
+              {
+                "name": "Gemini-1_5-Pro",
+                "scores": [
+                  84.6,
+                  93.9,
+                  87.6,
+                  84.8
+                ]
+              },
+              {
+                "name": "GPT-4-1106-Preview",
+                "scores": [
+                  95.1,
+                  96.2,
+                  91.5,
+                  88.0
+                ]
+              },
+              {
+                "name": "Llama-3_1-405B",
+                "scores": [
+                  98.4,
+                  97.5,
+                  96.3,
+                  94.1
+                ]
+              },
+              {
+                "name": "Llama-3_1-70B",
+                "scores": [
+                  97.4,
+                  96.2,
+                  92.7,
+                  89.3
+                ]
+              },
+              {
+                "name": "Mistral_Large_2_2407",
+                "scores": [
+                  90.5,
+                  85.3,
+                  81.6,
+                  81.9
+                ]
+              }
+            ]
+          }
+        ]
       }
     ]
   },
-  "Kitab": {
+  "Information Retrieval (Kitab)": {
     "experiments": [
       {
         "title": "No Context",
@@ -1653,7 +1802,7 @@
       }
     ]
   },
-  "Toxigen": {
+  "Toxicity Detection (Toxigen)": {
     "experiments": [
       {
         "title": "Discriminative (9k)",

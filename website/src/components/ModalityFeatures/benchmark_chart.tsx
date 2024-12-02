@@ -29,13 +29,17 @@ const BenchmarkChart = ({benchmark, experiment, config}: {benchmark: string, exp
         .then(benchmarkResults => {
             const selectedExperiment = benchmarkResults[benchmark]["experiments"].find((d: BenchmarkExperiment) => d.title === experiment);
             const chartOptionsArray = [];
+            let chartType = "column";
+            if (selectedExperiment.title === "Context Size") {
+                chartType = "line";
+            }
             for (const i in selectedExperiment.series) {
                 const series = [];
                 const selectedSeries = selectedExperiment.series[i];
                 for (const j in selectedSeries.values) {
                     series.push({
                         name: selectedSeries.values[j].name,
-                        type: 'column',
+                        type: chartType,
                         data: selectedSeries.values[j].scores,
                         color: config?.models?.find((d: ModelConfig) => d.model === selectedSeries.values[j].name)?.color || 'black',
                     });
@@ -43,7 +47,7 @@ const BenchmarkChart = ({benchmark, experiment, config}: {benchmark: string, exp
 
                 const tempChartOptions = {  
                     chart: {  
-                        type: 'column'
+                        type: chartType
                     },  
                     title: {  
                         text: selectedSeries.title,
@@ -80,9 +84,11 @@ const BenchmarkChart = ({benchmark, experiment, config}: {benchmark: string, exp
     }
 
     return (
-        <div style={{width: '100%', paddingBottom: '4em', display:'flex', justifyContent:'center'}}>
+        <div style={{width: '100%', paddingBottom: '4em', display:'flex', justifyContent:'center', flexDirection: 'column'}}>
             {chartOptions.map((options, index) => (  
-                <HighchartsReact key={index} highcharts={Highcharts} options={options} style={{ width: '100%'}} />  
+                <div key={index} style={{width: '100%'}}>
+                    <HighchartsReact key={index} highcharts={Highcharts} options={options} containerProps={{ style: { width: '100%', height: 'auto' } }}  style={{ width: '100%'}} />  
+                </div>
             ))} 
         </div>
     )

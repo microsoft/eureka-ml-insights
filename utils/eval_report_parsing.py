@@ -97,8 +97,8 @@ def create_benchmark_breakdown(release_directory_path, config):
     for benchmark in mapping:
         name = benchmark["name"]
         data[name] = {"experiments": []}
-        file_pattern = re.compile(benchmark["filePattern"], re.IGNORECASE)
         for experiment in benchmark["experiments"]:
+            file_pattern = re.compile(experiment["filePattern"], re.IGNORECASE)
             experiment_json = {
                 "title": experiment["title"],
                 "categories": [],
@@ -124,14 +124,16 @@ def create_benchmark_breakdown(release_directory_path, config):
                         model_scores = {}
                         for run in runs:
                             try:
-                                # if name == "Long Context QA Longest Context (3K)":
-                                #     file_pattern = re.compile(r'^.*by_ctx_size_normalized.*\.json$', re.IGNORECASE)
-                                report = [f for f in os.listdir(os.path.join(release_directory_path, *path, model_family, model, run, 'eval_report')) if file_pattern.match(f)]
+                                report_folder = 'eval_report'
+                                if graph["title"] == "Instruction Following":
+                                    report_folder = 'instruction_level_eval_report'
+
+                                report = [f for f in os.listdir(os.path.join(release_directory_path, *path, model_family, model, run, report_folder)) if file_pattern.match(f)]
                                 if len(report) == 0:
                                     continue
                                 else:
                                     report = report[0]
-                                file_path = os.path.join(release_directory_path, *path, model_family, model, run, 'eval_report', report)
+                                file_path = os.path.join(release_directory_path, *path, model_family, model, run, report_folder, report)
                                 with open(file_path, 'r') as f:
                                     file_contents = f.read()
                                     scores = json.loads(file_contents)
@@ -150,7 +152,7 @@ def create_benchmark_breakdown(release_directory_path, config):
                                         if type(scores[category]) == float:
                                             score = scores[category]
                                         else:
-                                            if name == "Geometric Reasoning": # geometric reasoning reports count instead of percentage
+                                            if name == "Geometric Reasoning (GeoMeter)": # geometric reasoning reports count instead of percentage
                                                 none = 0
                                                 if "none" in scores and (scores["none"] == scores["none"]): # check for NaN
                                                     none = scores["none"]
@@ -160,6 +162,7 @@ def create_benchmark_breakdown(release_directory_path, config):
                                         model_scores[category].append(score)
                                 break
                             except FileNotFoundError:
+                                print("Error finding " + file_path)
                                 continue
                             
                         if model == 'GPT-4o_2024_05_13_450K':
@@ -171,6 +174,9 @@ def create_benchmark_breakdown(release_directory_path, config):
                         if model == "GPT-4":
                             model = "GPT-4-1106-Preview"
 
+                        if len(model_scores) == 0:
+                            print("No scores found for model: " + model + " in experiment: " + experiment_json["title"])
+                            continue
                         scores = []
                         for category in experiment_json["categories"]:
                             scores.append(round(math.fsum(model_scores[category])  * 100.0 / len(model_scores[category]), 1))

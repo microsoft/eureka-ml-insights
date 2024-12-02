@@ -22,7 +22,6 @@ const ModalityBreakdown = ({modality}: {modality: string}) => {
          .then(fetchedData => 
             {
                 const benchmarks = fetchedData.benchmarks.filter((benchmark) => benchmark.modality === modality.toLowerCase());
-                console.log(benchmarks);
                 const models = fetchedData.model_list;
                 const model_families = fetchedData.model_families;
                 const capabilities = fetchedData.capability_mapping;  
