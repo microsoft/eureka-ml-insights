@@ -64,7 +64,7 @@ Answer type: Open-ended
 
 	Example for "single"
 
-		{"images": ["val\\potted plant\\left\\ruin\\0000097_Places365_val_00018147.jpg"], "prompt": "What objects are in this image?", "ground_truth": "potted plant"}
+		{"images": ["val\\potted plant\\left\\ruin\\0000097_Places365_val_00018147.jpg"], "prompt": "What objects are in the red box in this image?", "ground_truth": "potted plant"}
 
 	Example for "pairs":
 
