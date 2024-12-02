@@ -6,6 +6,7 @@ from typing import Dict, List
 
 import pandas as pd
 import tiktoken
+import numpy as np
 
 
 @dataclass
@@ -306,14 +307,15 @@ class TokenCounterTransform(MultiColumnTransform):
 
 @dataclass
 class MajorityVoteTransform:
-    """Applies the majority vote transformation to the 'model_output' column per 'ID'."""
+    """Applies the majority vote transformation to the specified model output column per ID."""
     
-    # No need for additional parameters as the logic is fixed for majority vote.
+    model_output_col: str = "model_output"  # Default column name for model outputs
+    id_col: str = "ID"  # Default column name for IDs
     
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Transforms the dataframe by calculating the majority vote of 'model_output' per 'ID'.
-        If the 'model_output' is NaN, it will be handled appropriately.
+        If the 'model_output' is NaN, it will be droped in the majority vote.
 
         Args:
             df (pd.DataFrame): Input dataframe containing 'ID' and 'model_output'.
@@ -329,14 +331,18 @@ class MajorityVoteTransform:
             if not group_non_nan.empty:
                 return group_non_nan.mode().iloc[0]  # Return the mode, the most frequent value
             else:
-                return pd.NA  # Return NaN if all values are NaN
-                
-        df['majority_vote'] = df.groupby('ID')['model_output'].transform(majority_vote)
-
-        df_not_na = df[df['model_output'].notna()]
-        df_not_na = df_not_na[df_not_na['model_output'] == df_not_na['majority_vote']]
+                return np.nan # pd.NA  # Return NaN if all values are NaN
         
-        df_is_na = df[df['majority_vote'].isna()]
-        df_filtered = pd.concat([df_not_na,df_is_na],axis=0)
-        df_filtered = df_filtered.drop_duplicates(subset='ID')
+        # Custom function to get the first value, regardless of NA
+        def first_in_group(group):
+            return group.iloc[0]  # Return the first element
+        
+        # Perform aggregation
+        other_columns = [col for col in df.columns if col != self.id_col and col != self.model_output_col]
+
+        df_filtered = df.groupby(self.id_col).agg(
+            {self.model_output_col: majority_vote,  # Aggregating 'model_output' using majority vote
+             **{col: first_in_group for col in other_columns}  # Keeping all other columns with the 'first' function
+            }).reset_index()
+
         return df_filtered
