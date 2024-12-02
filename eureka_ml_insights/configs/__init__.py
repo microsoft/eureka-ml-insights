@@ -12,6 +12,7 @@ from .config import (
     PromptProcessingConfig,
 )
 from .dna import DNA_PIPELINE
+from .drop import Drop_Experiment_Pipeline
 from .experiment_config import ExperimentConfig, create_logdir
 from .flenqa import FlenQA_Experiment_Pipeline
 from .geometer import GEOMETER_PIPELINE
@@ -116,6 +117,7 @@ __all__ = [
     IFEval_PIPELINE,
     FlenQA_Experiment_Pipeline,
     GPQA_Experiment_Pipeline,
+    Drop_Experiment_Pipeline,
     GEOMETER_PIPELINE,
     MMMU_BASELINE_PIPELINE,
     KITAB_ONE_BOOK_CONSTRAINT_PIPELINE,

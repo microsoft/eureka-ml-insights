@@ -83,7 +83,7 @@ class MMMU_BASELINE_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            CopyColumn(column_name_src="task", column_name_dst="category"),
+                            CopyColumn(column_name_src="__hf_task", column_name_dst="category"),
                             MapStringsTransform(
                                 columns=["category"],
                                 mapping=MMMUTaskToCategories,

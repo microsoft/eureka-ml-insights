@@ -50,6 +50,6 @@ class MMMU_Nondeterminism(MMMU_BASELINE_PIPELINE):
         config = super().configure_pipeline(**kwargs)
         # Downsample the data and repeat each prompt 3 time
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms.extend(
-            [SamplerTransform(random_seed=42, sample_count=5, stratify_by="task"), MultiplyTransform(n_repeats=3)]
+            [SamplerTransform(random_seed=42, sample_count=5, stratify_by="__hf_task"), MultiplyTransform(n_repeats=3)]
         )
         return config
