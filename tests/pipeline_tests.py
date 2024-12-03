@@ -28,6 +28,7 @@ from eureka_ml_insights.configs import (
     SPATIAL_MAP_TEXTONLY_PIPELINE,
     SPATIAL_REASONING_SINGLE_PIPELINE,
     VISUAL_PROMPTING_SINGLE_PIPELINE,
+    GPQA_Experiment_Pipeline,
     Drop_Experiment_Pipeline,
     IFEval_PIPELINE,
     MetricConfig,
@@ -281,12 +282,24 @@ class TEST_MMMU_PIPELINE(MMMU_BASELINE_PIPELINE):
         self.data_processing_comp.data_reader_config.init_args["split"] = "dev"
         self.data_processing_comp.data_reader_config.init_args["tasks"] = ["Math"]
 
-        self.inference_comp.data_loader_config.class_name = TestMMDataLoader
+        self.inference_comp.data_loader_config.class_name = TestDataLoader
         self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
 
 
+class TEST_GPQA_PIPELINE(GPQA_Experiment_Pipeline):
+    # Test config the GPQA benchmark with TestModel and TestDataLoader
+    def configure_pipeline(self):
+        config = super().configure_pipeline(model_config=ModelConfig(GenericTestModel, {}))
+        self.inference_comp.data_loader_config.class_name = TestDataLoader
+        self.inference_comp.data_loader_config.init_args = {
+            "path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl"),
+            "n_iter": N_ITER,
+        }
+        return config
+      
 class TEST_DROP_PIPELINE(Drop_Experiment_Pipeline):
+    # Test config the Drop benchmark with TestModel and TestDataLoader
     def configure_pipeline(self):
         config = super().configure_pipeline(model_config=ModelConfig(GenericTestModel, {}))
         self.inference_comp.data_loader_config.class_name = TestDataLoader
@@ -456,6 +469,11 @@ class TOXIGEN_GEN_PipelineTest(PipelineTest, unittest.TestCase):
 class KITAB_ONE_BOOK_CONSTRAINT_PIPELINE_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_KITAB_ONE_BOOK_CONSTRAINT_PIPELINE().pipeline_config
+
+@unittest.skipIf("skip_tests_with_missing_ds" in os.environ, "Missing public dataset. TODO: revert")
+class GPQA_PipelineTest(PipelineTest, unittest.TestCase):
+    def get_config(self):
+        return TEST_GPQA_PIPELINE().pipeline_config
 
 
 class DROP_PipelineTest(PipelineTest, unittest.TestCase):

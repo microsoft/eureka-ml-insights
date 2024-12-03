@@ -19,6 +19,8 @@ from eureka_ml_insights.data_utils import (
     RunPythonTransform,
     SequenceTransform,
     TokenCounterTransform,
+    ShuffleColumnsTransform,
+    ColumnMatchMapTransform
 )
 
 
@@ -146,6 +148,86 @@ class TestMMDataLoader(unittest.TestCase):
             for _, model_inputs in self.data_loader:
                 self.assertTrue(isinstance(model_inputs[1][0], Image.Image))
 
+class TestShuffleColumns(unittest.TestCase):
+    """Testing the ShuffleColumnsTransform used in MCQ benchmarks to shuffle answer choices."""
+    def setUp(self):
+        self.df = pd.DataFrame(
+                    {
+                        "A": [1, 2, 3, 4, 5],
+                        "B": ["a", "b", "c", "d", "e"],
+                        "C": [-10, -20, -30, -40, -50],
+                        "D": ["hi", "how", "are", "you", "?"],
+                    }
+                )
+        self.shuffle_transform = ShuffleColumnsTransform(columns=["A", "B", "C"])
+
+    def test_shuffle_columns_values(self):
+        # Apply the transformation twice
+        np.random.seed(42)
+        transformed_df_1 = self.shuffle_transform.transform(self.df.copy())
+        np.random.seed(0)
+        transformed_df_2 = self.shuffle_transform.transform(self.df.copy())
+
+        # Columns that should remain unchanged
+        unshuffled_columns = [col for col in self.df.columns if col not in self.shuffle_transform.columns]
+
+        # Ensure each row has the same set of values in the shuffled columns after both transformations
+        for _, row in self.df.iterrows():
+            original_values = set(row[self.shuffle_transform.columns])
+
+            # Get the transformed row values for both shuffles
+            transformed_values_1 = set(transformed_df_1.loc[row.name, self.shuffle_transform.columns])
+            transformed_values_2 = set(transformed_df_2.loc[row.name, self.shuffle_transform.columns])
+
+            # Check that each transformed row has the same set of values as the original
+            self.assertEqual(original_values, transformed_values_1)
+            self.assertEqual(original_values, transformed_values_2)
+
+            # Verify that the order is different between the two shuffles
+            self.assertNotEqual(
+                tuple(transformed_df_1.loc[row.name, self.shuffle_transform.columns]),
+                tuple(transformed_df_2.loc[row.name, self.shuffle_transform.columns]),
+            )
+
+        # Ensure unshuffled columns remain the same in both transformations
+        for col in unshuffled_columns:
+            pd.testing.assert_series_equal(self.df[col], transformed_df_1[col], check_exact=True)
+            pd.testing.assert_series_equal(self.df[col], transformed_df_2[col], check_exact=True)
+
+class TestColMatchMap(unittest.TestCase):
+    """
+    Testing the ColumnMatchMapTransform used in MCQ benchmarks to store the letter of the correct
+    answer choice.
+    """
+    def setUp(self):
+        # Seed the random number generator for reproducibility
+        np.random.seed(42)
+
+        # Sample DataFrame
+        self.values = [
+            {
+                "df": pd.DataFrame(
+                    {
+                        "A": [1, 2, 3, 4, "e"],
+                        "B": ["a", "b", "c", "d", "e"],
+                        "C": ["a", -20, -30, "d", -50],
+                        "D": ["hi", "b", "c", "you", "?"],
+                    }
+                ),
+                "cols": ["A", "C", "D"],
+                "key_col": "B",
+                "ground_truth": ["C", "D", "D", "C", "A"],
+            }
+        ]
+
+    def test_col_match_map(self):
+        for val in self.values:
+            self.col_match_map_transform = ColumnMatchMapTransform(
+                key_col=val["key_col"], new_col="ground_truth", columns=val["cols"]
+            )
+            df = val["df"]
+            df = self.col_match_map_transform.transform(df)
+            self.assertEqual(list(df["ground_truth"]), val["ground_truth"])
 
 if __name__ == "__main__":
     unittest.main()
