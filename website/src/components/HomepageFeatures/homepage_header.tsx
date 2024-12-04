@@ -2,7 +2,7 @@ import { Button, Col, Row } from "antd";
 import Heading from '@theme/Heading';
 import styles from './homepage_header.module.css';
 
-function HomepageHeader(mainPage: boolean) {
+function HomepageHeader() {
     return (
       <header className={styles.hero} style={{paddingTop: '2em', paddingBottom: '4em'}}>  
         <div className="container">  

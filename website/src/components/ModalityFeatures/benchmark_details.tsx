@@ -1,7 +1,7 @@
 import React from "react";
 import { DownOutlined } from '@ant-design/icons';
-import { BenchmarkGraph, EurekaConfig, Experiment } from "../types";
-import { Button, Dropdown, Menu, MenuProps, message, Row, Space } from "antd";
+import { EurekaConfig, Experiment } from "../types";
+import { Dropdown, MenuProps, Row } from "antd";
 import BenchmarkChart from "./benchmark_chart";
 import OverallBenchmarkChart from "./overall_benchmark_chart";
 

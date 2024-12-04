@@ -35,7 +35,7 @@ export default function Home(): JSX.Element {
           <div className={styles.splashSvg}/>
           <div className="container" style={{position: 'relative'}}>
             <div className={styles.heroContent}>
-              <HomepageHeader mainPage={true}/>
+              <HomepageHeader/>
               <StatsBar config={config}/>
             </div>
           </div>
