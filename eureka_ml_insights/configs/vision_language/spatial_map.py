@@ -9,10 +9,11 @@ from eureka_ml_insights.data_utils import (
     DataLoader,
     DataReader,
     ExtractAnswerSpatialMap,
+    ExtractQuestionOptions,
     PrependStringTransform,
     SequenceTransform,
 )
-from eureka_ml_insights.metrics import CaseInsensitiveMatch, CountAggregator
+from eureka_ml_insights.metrics import CaseInsensitiveOrMatch, CountAggregator
 
 from ..config import (
     AggregatorConfig,
@@ -82,24 +83,27 @@ class SPATIAL_MAP_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
+                            ExtractQuestionOptions(
+                                    prompt_column_name="prompt",
+                                    extracted_options_column_name="target_options_answers",
+                            ),
                             ColumnRename(name_mapping={"model_output": "model_output_raw"}),
                             ExtractAnswerSpatialMap(
                                 answer_column_name="model_output_raw",
                                 extracted_answer_column_name="model_output",
-                                question_type_column_name="question_type",
-                                model_name=model_config.init_args['model_name'], # passing the model name for model-specific answer extraction
+                                extracted_options_column_name="target_options_answers",
                             ),
                         ],
                     ),
                 },
             ),
-            metric_config=MetricConfig(CaseInsensitiveMatch),
+            metric_config=MetricConfig(CaseInsensitiveOrMatch),
             aggregator_configs=[
-                AggregatorConfig(CountAggregator, {"column_names": ["CaseInsensitiveMatch_result"], "normalize": True}),
+                AggregatorConfig(CountAggregator, {"column_names": ["CaseInsensitiveOrMatch_result"], "normalize": True}),
                 AggregatorConfig(
                     CountAggregator,
                     {
-                        "column_names": ["CaseInsensitiveMatch_result"],
+                        "column_names": ["CaseInsensitiveOrMatch_result"],
                         "group_by": "task",
                         "normalize": True,
                     },

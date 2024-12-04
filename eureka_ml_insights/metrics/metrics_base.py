@@ -144,12 +144,38 @@ class ExactMatch(ClassicMetric):
         else:
             return "incorrect"
 
+class ExactOrMatch(ExactMatch):
+    """This class checks for a case-insensitive, but otherwise exact match, and returns the or of them."""
+
+    def __evaluate__(self, answer_texts, target_text, is_valid):
+
+        if not is_valid:
+            return "none"
+
+        results = []
+        for answer_text in answer_texts:
+            res = super().__evaluate__(str(answer_text), str(target_text), is_valid)
+            results.append(res)
+
+        corrects = [x=="correct" for x in results]
+
+        if (any(corrects)):
+            return "correct"
+        else:
+            return "incorrect"
 
 class CaseInsensitiveMatch(ExactMatch):
     """This class checks for a case-insensitive, but otherwise exact match."""
 
     def __evaluate__(self, answer_text, target_text, is_valid):
         return super().__evaluate__(str(answer_text).lower(), str(target_text).lower(), is_valid)
+
+class CaseInsensitiveOrMatch(ExactOrMatch):
+    """This class checks for a case-insensitive, but otherwise exact or match."""
+
+    def __evaluate__(self, answer_texts, target_text, is_valid):
+        answer_texts = [str(answer_text).lower() for answer_text in answer_texts]
+        return super().__evaluate__(answer_texts, str(target_text).lower(), is_valid)
 
 
 class IdentityMetric(Metric):

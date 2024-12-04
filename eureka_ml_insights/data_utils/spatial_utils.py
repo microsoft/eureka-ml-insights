@@ -157,22 +157,22 @@ def extract_answer_from_text_grid(text, question_type):
     return None  # Return None if no numbers are found
 
 
-def extract_answer_from_text_map(text, question_type, model_name):
+def extract_answer_from_text_map(model_output_raw, options):
     """
-    Extracts the answer from the text based on specific patterns,
-    and as a fallback, extracts the first number if no patterns match.
-    The code is from: https://github.com/alvinmingwisc/spatial_reason_vlm/tree/main/eval,
-    and included with minimal modifications.
+    Extracts the answer from the text based on known model output patterns.
+    Searches for botha letter and whole word answer and returns both as they are not
+    always consistent.
 
     Args:
     - text (str): The text containing the model's answer.
-    - question_type (str): The text containing the question type.
-    - model_name (str): The model name.
 
     Returns:
-    - str or None: The extracted answer, or None if no answer could be extracted.
+    - str or None: The extracted answers, or empty strings if no answer could be extracted.
     """
-    # Mapping of textual numbers to their numeric equivalents
+
+    # replace common subsitutions for numbers in model outputs
+    model_output_raw = model_output_raw.replace("no objects", "0 objects")
+
     number_mapping = {
         "zero": 0,
         "no": 0,
@@ -187,127 +187,57 @@ def extract_answer_from_text_map(text, question_type, model_name):
         "nine": 9,
     }
 
-    dirs = ["southeast", "northeast", "northwest", "southwest"]
-    dir_pattern = rf"\b({'|'.join(dirs)})\b"
+    for k, v in number_mapping.items():
+        model_output_raw =  re.sub(rf"\b{k}\b", str(v), model_output_raw, re.IGNORECASE)
 
-    if text is None:
-        return None
+    # get dict of options from options string
+    options_dict = {x.split(".")[0].strip():x.split(".")[1].strip() for x in options}
 
-    question_id = int(re.search("[0-9]", re.search("Q[0-9]", question_type).group()).group())
+    model_output_parsed_letter = ""
+    model_output_parsed = ""
 
-    if question_id == 0:
-        direction_match = re.search(r"\b[A-D]\.\s*(" + "|".join(dirs) + r")\b", text, re.IGNORECASE)
-        if direction_match:
-            return direction_match.group(1).lower()
+    # "Concise Asnwer" is a common GPT-4o pattern
+    if "Concise Answer" in model_output_raw:
+        pattern_letter = r"^\**Concise Answer:\**\s+(\w)\. (\w+)"
+        matches = re.search(pattern_letter, model_output_raw, re.IGNORECASE)
+        if matches:
+            match_option = matches.group(1)
+            model_output_parsed_letter = options_dict[match_option]
 
-        match = re.search(dir_pattern, text, re.IGNORECASE)
-        if match:
-            return match.group(1)
-        return None
-
-    elif question_id == 1:
-        match = re.search(
-            rf"^([\w\s\'\']+?)\s+is\s+(?:located\s+|in\s+the\s+|located\s+to\s+the\s+)({dir_pattern})",
-            text,
-            re.IGNORECASE,
-        )
-
-        if match:
-            string = match.group(1)
-            return string
-
-        match = re.search(r"\b[A-D]\.\s*(.*)", text)  # problem with extracting .
-
-        if match:
-            string = match.group(1)
-            string = remove_redundancy(string)
-            string = extract_before_is(string)
-            return string
-
-        match = re.search(r"\b([ABCD][.,]|[(][abcdABCD][)])\s*(.*?)(?=\sis\b|\.|,|<|$)", text)
-        if match:
-            answer = match.group(1).strip()
-            # Remove trailing punctuation if any
-            answer = re.sub(r"[\.,\?!<]+$", "", answer)
-            return answer
-
-        match = re.search(
-            rf"Therefore, the object in the {dir_pattern} of [\w\s\'\']+ is ([\w\s\'\']+)", text, re.IGNORECASE
-        )
-        if match:
-            string = match.group(2)
-            return string
-
-        if "claude" in model_name.lower():
-            match = re.search(rf"^([\w\s\'\']+?)\s+is\s+(to\s+the\s+)({dir_pattern})", text, re.IGNORECASE)
-            if match:
-                string = match.group(1)
-                return string
-
-        if "gemini" in model_name.lower():
-            patterns = [
-                rf"\*\*Concise Answer:\*\*\n([\w\s\'\']+?)\s+is\s+(?:located\s+|in\s+the\s+|in\s+|located\s+to\s+the\s+)({dir_pattern})",
-                rf"\*\*Answer:\*\*\s+([\w\s\'\']+?)\s+is\s+in\s+the\s+({dir_pattern})\s+of\s+([\w\s\'\']+)",
-                r"\*\*Answer:\*\*\n([\w\s\'\']+)",
-                r"\*\*Answer\*\*:\s+([\w\s\'\']+)",
-                r"\*\*Answer:\*\*\s+([\w\s\'\']+)",
-            ]
-
-            for pattern in patterns:
-                match = re.search(pattern, text, re.IGNORECASE)
-                if match:
-                    return match.group(1)
-
-        if "gpt-4o" in model_name.lower() or "gpt4o" in model_name.lower():
-            match = re.search(
-                rf"Concise Answer:\s+([\w\s\'\']+?)\s+is\s+(?:located\s+|in\s+the\s+|in\s+|located\s+to\s+the\s+)({dir_pattern})",
-                text,
-                re.IGNORECASE,
-            )
-            if match:
-                string = match.group(1)
-                return string
-
-        # If no match, check for an answer following "is", with specific end markers defined
-        match = re.search(r"\bis\b\s+(.*?)(?=\.|,|<|$)", text)
-        if match:
-            answer = match.group(1).strip()
-            # Remove trailing punctuation if any
-            answer = re.sub(r"[\.,\?!<]+$", "", answer)
-            return answer
-
-        return None  # Return None if no match is found
-
-    elif question_id == 2:
-        match = re.search(r"\b[A-D]\.\s*(\d+)", text)  # match number only
-        if match:
-            return match.group(1)
-        # Create a list to store all found numbers along with their positions
-        found_numbers = []
-
-        # Check for textual numbers and their positions
-        for text_num, num in number_mapping.items():
-            for match in re.finditer(rf"\b{text_num}\b", text, re.IGNORECASE):
-                found_numbers.append((match.start(), num))
-
-        # Check for digit sequences and their positions, specifically ignoring list markers at the start
-        # Exclude numbers following "\n\n" and directly followed by ". "
-        text = re.sub(r"^\n\n\d+\.\s", "", text)  # Remove the leading list marker if it exists
-
-        for match in re.finditer(r"\d+", text):
-            found_numbers.append((match.start(), int(match.group(0))))
-
-        # Sort found numbers by their positions (smallest position first)
-        if found_numbers:
-            found_numbers.sort(key=lambda x: x[0])
-            # Return the number associated with the earliest position
-            return str(found_numbers[0][1])
-        return None
+        pattern_phrase = r"\**Concise Answer:\**\s+([^\n]+)"
+        model_output_answer_line = re.search(pattern_phrase, model_output_raw, re.IGNORECASE).group(1)
+        
+        answers = [v for k, v in options_dict.items()]
+        answers_pattern = rf"\b({'|'.join(answers)})\b"
+        answers_match = re.search(answers_pattern, model_output_answer_line, re.IGNORECASE)
+    
+        if answers_match:
+            model_output_parsed =  answers_match.group(1)
 
     else:
-        raise ValueError(f"Question ID {question_id} is not supported.")
+        pattern_letter = r'answer is:*\s*\**([\w\d]+)[\s:.]*'
+    
+        # first look for a single letter answer
+        matches = re.search(pattern_letter, model_output_raw, re.IGNORECASE)
+        if matches:
+            match_option = matches.group(1)
+            if match_option in options_dict:
+                model_output_parsed_letter = options_dict[match_option]
+            else:
+                model_output_parsed_letter = match_option
 
-    return None  # Return None if no numbers are found
+        # next look if any of the options names are present in the first sentance
+
+        model_output_answer_line = model_output_raw.splitlines()[0]        
+
+        answers = [v for k, v in options_dict.items()]
+        answers_pattern = rf"\b({'|'.join(answers)})\b"
+        answers_match = re.search(answers_pattern, model_output_answer_line, re.IGNORECASE)
+    
+        if answers_match:
+            model_output_parsed =  answers_match.group(1)
+
+    return [model_output_parsed, model_output_parsed_letter]
 
 
 def extract_answer_from_text_maze(text, question_type):
@@ -443,6 +373,34 @@ class ExtractAnswer(DFTransformBase):
         )
         return df
 
+@dataclass
+class ExtractQuestionOptions(DFTransformBase):
+    """This class is for extracting the option list from a prompt."""
+
+    prompt_column_name: str
+    extracted_options_column_name: str
+
+    def _extract_options_from_text_map(self, prompt):
+        """
+        Extracts the options list from the text.
+
+        Args:
+        - text (str): The text containing the prompt.
+
+        Returns:
+        - str or None: The extracted list of options.
+        """
+
+        # get list of options from prompt
+        prompt_lines = prompt.splitlines()
+        matches = [i for i, x in enumerate(prompt_lines) if "Available options:" in x]
+        options = prompt_lines[matches[0]+1:matches[0]+5]
+
+        return options
+
+    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        df[self.extracted_options_column_name] = df[self.prompt_column_name].apply(self._extract_options_from_text_map)
+        return df
 
 @dataclass
 class ExtractAnswerGrid(ExtractAnswer):
@@ -459,17 +417,18 @@ class ExtractAnswerGrid(ExtractAnswer):
 
 
 @dataclass
-class ExtractAnswerSpatialMap(ExtractAnswer):
+class ExtractAnswerSpatialMap(DFTransformBase):
     """This class is an answer extractor for the SPATIAL_MAP benchmark."""
 
     answer_column_name: str
     extracted_answer_column_name: str
-    question_type_column_name: str
-    model_name: str
+    extracted_options_column_name: str
 
-    @abstractmethod
-    def _parse_answer_function(self, answer_text, question_type):
-        return extract_answer_from_text_map(answer_text, question_type, self.model_name)
+    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        df[self.extracted_answer_column_name] = df.apply(
+            lambda x: extract_answer_from_text_map(x[self.answer_column_name], x[self.extracted_options_column_name]), axis=1
+        )
+        return df
 
 
 @dataclass

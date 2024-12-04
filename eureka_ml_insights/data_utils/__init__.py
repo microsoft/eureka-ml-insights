@@ -17,6 +17,7 @@ from .spatial_utils import (
     ExtractAnswerGrid,
     ExtractAnswerMaze,
     ExtractAnswerSpatialMap,
+    ExtractQuestionOptions,
 )
 from .transform import (
     AddColumn,
