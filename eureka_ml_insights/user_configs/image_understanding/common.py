@@ -2,7 +2,7 @@ import os
 
 from eureka_ml_insights.data_utils import DataReader, MMDataLoader
 
-from ..config import DataSetConfig
+from eureka_ml_insights.configs import DataSetConfig
 
 
 class LOCAL_DATA_PIPELINE:

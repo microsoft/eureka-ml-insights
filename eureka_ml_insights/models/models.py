@@ -11,7 +11,7 @@ import anthropic
 import tiktoken
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 
-from eureka_ml_insights.data_utils import GetKey
+from eureka_ml_insights.secret_management import get_secret
 
 
 @dataclass
@@ -77,10 +77,10 @@ class KeyBasedAuthMixIn:
         """
         This method is used to get the api_key for the models that require key-based authentication.
         Either api_key (str) or secret_key_params (dict) must be provided.
-        if api_key is not directly provided, secret_key_params must be provided to get the api_key using GetKey method.
+        if api_key is not directly provided, secret_key_params must be provided to get the api_key using get_secret method.
         """
         if self.api_key is None:
-            self.api_key = GetKey(**self.secret_key_params)
+            self.api_key = get_secret(**self.secret_key_params)
         return self.api_key
 
 
@@ -393,7 +393,9 @@ class AzureOpenAIClientMixIn:
     def get_client(self):
         from openai import AzureOpenAI
 
-        token_provider = get_bearer_token_provider(DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default")
+        token_provider = get_bearer_token_provider(
+            DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"
+        )
         return AzureOpenAI(
             azure_endpoint=self.url,
             api_version=self.api_version,
@@ -972,3 +974,21 @@ class ClaudeModel(EndpointModel, KeyBasedAuthMixIn):
 
     def handle_request_error(self, e):
         return False
+
+
+@dataclass
+class TestModel(Model):
+    # This class is used for testing purposes only. It only waits for a specified time and returns a response.
+    response_time: float = 0.1
+    model_output: str = "This is a test response."
+
+    def __post_init__(self):
+        self.n_output_tokens = self.count_tokens()
+
+    def generate(self, text_prompt, **kwargs):
+        return {
+            "model_output": self.model_output,
+            "is_valid": True,
+            "response_time": self.response_time,
+            "n_output_tokens": self.n_output_tokens,
+        }
