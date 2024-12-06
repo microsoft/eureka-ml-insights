@@ -14,9 +14,9 @@ from datasets import load_dataset
 from PIL import Image
 from tqdm import tqdm
 
-from eureka_ml_insights.core import NumpyEncoder
+from eureka_ml_insights.secret_management import get_secret
 
-from .secret_key_utils import GetKey
+from .encoders import NumpyEncoder
 from .transform import DFTransformBase
 
 log = logging.getLogger("data_reader")
@@ -216,14 +216,14 @@ class AzureDataAuthenticator:
         One of the two arguments must be provided.
         args:
             query_string: str, query string to authenticate with Azure Blob Storage.
-            secret_key_params: dict, dictionary containing the paramters to call GetKey with.
+            secret_key_params: dict, dictionary containing the paramters to call get_secret with.
         """
         self.query_string = query_string
         self.secret_key_params = secret_key_params
         if self.query_string is None and self.secret_key_params is None:
             raise ValueError("Either provide query_string or secret_key_params to load data from Azure.")
         if self.query_string is None:
-            self.query_string = GetKey(**secret_key_params)
+            self.query_string = get_secret(**secret_key_params)
 
 
 class AzureMMDataLoader(MMDataLoader):

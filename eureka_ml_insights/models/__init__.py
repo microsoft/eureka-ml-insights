@@ -13,6 +13,7 @@ from .models import (
     MistralServerlessAzureRestEndpointModel,
     Phi3HFModel,
     RestEndpointModel,
+    TestModel,
 )
 
 __all__ = [
@@ -30,4 +31,5 @@ __all__ = [
     LlamaServerlessAzureRestEndpointModel,
     LLaVAModel,
     RestEndpointModel,
+    TestModel,
 ]

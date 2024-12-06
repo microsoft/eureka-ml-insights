@@ -11,17 +11,17 @@ import time
 import numpy as np
 import requests
 from azure.ai.textanalytics import TextAnalyticsClient
-from azure.identity import DefaultAzureCredential
 from azure.core.credentials import AzureKeyCredential
 from azure.core.exceptions import (
     HttpResponseError,
     ServiceRequestError,
     ServiceResponseError,
 )
+from azure.identity import DefaultAzureCredential
 from fuzzywuzzy import fuzz
 
-from eureka_ml_insights.data_utils import GetKey, kitab_utils
 from eureka_ml_insights.metrics import CompositeMetric
+from eureka_ml_insights.secret_management import get_secret
 
 
 class KitabMetric(CompositeMetric):
@@ -40,10 +40,10 @@ class KitabMetric(CompositeMetric):
         )
         # requires an Azure Cognitive Services Endpoint
         # (ref: https://learn.microsoft.com/en-us/azure/ai-services/language-service/)
-        self.key = GetKey(
-            key_name = azure_lang_service_config["secret_key_params"].get("key_name", None),
-            local_keys_path = azure_lang_service_config["secret_key_params"].get("local_keys_path", None),
-            key_vault_url = azure_lang_service_config["secret_key_params"].get("key_vault_url", None),
+        self.key = get_secret(
+            key_name=azure_lang_service_config["secret_key_params"].get("key_name", None),
+            local_keys_path=azure_lang_service_config["secret_key_params"].get("local_keys_path", None),
+            key_vault_url=azure_lang_service_config["secret_key_params"].get("key_vault_url", None),
         )
         self.endpoint = azure_lang_service_config["url"]
         self.text_analytics_credential = self.get_verified_credential()
@@ -51,19 +51,14 @@ class KitabMetric(CompositeMetric):
     def get_verified_credential(self):
         model_version = "latest"
         try:
-            text_analytics_client = TextAnalyticsClient(
-                endpoint=self.endpoint, credential=AzureKeyCredential(self.key)
-            )
+            text_analytics_client = TextAnalyticsClient(endpoint=self.endpoint, credential=AzureKeyCredential(self.key))
             text_analytics_client.recognize_entities(["New York City"], model_version=model_version)
             return AzureKeyCredential(self.key)
         except Exception as e:
             logging.info(f"Failed to create the TextAnalyticsClient using AzureKeyCredential")
             logging.info("The error is caused by: {}".format(e))
         try:
-            text_analytics_client = TextAnalyticsClient(
-                endpoint=self.endpoint, credential=DefaultAzureCredential()
-
-            )
+            text_analytics_client = TextAnalyticsClient(endpoint=self.endpoint, credential=DefaultAzureCredential())
             text_analytics_client.recognize_entities(["New York City"], model_version=model_version)
             return DefaultAzureCredential()
         except Exception as e:
@@ -112,17 +107,13 @@ class KitabMetric(CompositeMetric):
         all_books = []
         raw_unmapped = []
 
-        mapped_books = [
-            self.process_title(book) for book in ast.literal_eval(row["mapped_books"])
-        ] 
+        mapped_books = [self.process_title(book) for book in ast.literal_eval(row["mapped_books"])]
         model_books = (
             [self.process_title(book) for book in row["model_books"]]
             if isinstance(row["model_books"], list)
             else [self.process_title(book) for book in row["model_books"]["titles"]]
         )
-        all_books = [
-            self.process_title(self.process_all_books(book)) for book in ast.literal_eval(row["all_books"])
-        ]  
+        all_books = [self.process_title(self.process_all_books(book)) for book in ast.literal_eval(row["all_books"])]
         raw_books = [self.process_title(book) for book in ast.literal_eval(row["raw_books"])]
 
         len(model_books)
@@ -468,9 +459,7 @@ class KitabMetric(CompositeMetric):
                     text_analytics_client = TextAnalyticsClient(
                         endpoint=self.endpoint, credential=self.text_analytics_credential, api_version="2023-04-01"
                     )
-                    result = text_analytics_client.recognize_entities(
-                        input_texts, model_version="2023-04-15-preview"
-                    )
+                    result = text_analytics_client.recognize_entities(input_texts, model_version="2023-04-15-preview")
 
                     error_flag = any([review.is_error for review in result])
                     result = [review for review in result if not review.is_error]

@@ -20,7 +20,7 @@ from eureka_ml_insights.data_utils.mmmu_utils import (
 )
 from eureka_ml_insights.metrics import CountAggregator, MMMUMetric
 
-from .config import (
+from eureka_ml_insights.configs import(
     AggregatorConfig,
     DataSetConfig,
     EvalReportingConfig,
