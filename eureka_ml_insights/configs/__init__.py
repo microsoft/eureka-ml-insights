@@ -18,6 +18,15 @@ from .flenqa import FlenQA_Experiment_Pipeline
 from .geometer import GEOMETER_PIPELINE
 from .gpqa import GPQA_Experiment_Pipeline
 from .ifeval import IFEval_PIPELINE
+from .aime import (
+    AIME_PIPELINE, 
+    AIME_PIPELINE5Run, 
+    AIME_PIPELINE16Run, 
+    AIME_PIPELINE32Run, 
+    AIME_PIPELINE64Run, 
+    AIME_PIPELINE128Run, 
+    AIME_PIPELINE256Run
+)
 from .image_understanding.object_detection import (
     OBJECT_DETECTION_PAIRS_LOCAL_PIPELINE,
     OBJECT_DETECTION_PAIRS_PIPELINE,

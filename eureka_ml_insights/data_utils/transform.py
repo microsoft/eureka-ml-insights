@@ -7,6 +7,7 @@ from typing import Dict, List
 import numpy as np
 import pandas as pd
 import tiktoken
+import numpy as np
 
 
 @dataclass
@@ -335,6 +336,7 @@ class ASTEvalTransform(MultiColumnTransform):
         return list_strings
 
 
+
 @dataclass
 class TokenCounterTransform(MultiColumnTransform):
     """
@@ -360,3 +362,45 @@ class TokenCounterTransform(MultiColumnTransform):
             token_count_column = f"{column}_token_count"
             df[token_count_column] = token_count
         return df
+
+@dataclass
+class MajorityVoteTransform:
+    """Applies the majority vote transformation to the specified model output column per ID."""
+    
+    model_output_col: str = "model_output"  # Default column name for model outputs
+    id_col: str = "ID"  # Default column name for IDs
+    
+    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Transforms the dataframe by calculating the majority vote of 'model_output' per 'ID'.
+        If the 'model_output' is NaN, it will be droped in the majority vote.
+
+        Args:
+            df (pd.DataFrame): Input dataframe containing 'ID' and 'model_output'.
+        
+        Returns:
+            pd.DataFrame: Transformed dataframe with majority vote for each 'ID'.
+        """
+        
+        # Function to get the majority vote
+        def majority_vote(group):
+            # Drop NaN values and get the most common value
+            group_non_nan = group.dropna()
+            if not group_non_nan.empty:
+                return group_non_nan.mode().iloc[0]  # Return the mode, the most frequent value
+            else:
+                return np.nan # pd.NA  # Return NaN if all values are NaN
+        
+        # Custom function to get the first value, regardless of NA
+        def first_in_group(group):
+            return group.iloc[0]  # Return the first element
+        
+        # Perform aggregation
+        other_columns = [col for col in df.columns if col != self.id_col and col != self.model_output_col]
+
+        df_filtered = df.groupby(self.id_col).agg(
+            {self.model_output_col: majority_vote,  # Aggregating 'model_output' using majority vote
+             **{col: first_in_group for col in other_columns}  # Keeping all other columns with the 'first' function
+            }).reset_index()
+
+        return df_filtered
