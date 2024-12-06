@@ -178,9 +178,9 @@ def extract_answer_from_text_map_and_maze(model_output_raw, options):
     if not model_output_raw:
         return [model_output_parsed, model_output_parsed_letter]
 
-    model_output_raw = model_output_raw.replace("no objects", "0 objects")
-    model_output_raw = model_output_raw.replace("not", "no")
-    model_output_raw = model_output_raw.replace("should be", "is")
+    model_output_raw =  re.sub(r"\bno objects\b", "0 objects", model_output_raw, re.IGNORECASE)
+    model_output_raw =  re.sub(r"\bnot\b", "no", model_output_raw, re.IGNORECASE)
+    model_output_raw =  re.sub(r"\bshould be\b", "is", model_output_raw, re.IGNORECASE)
 
     number_mapping = {
         "zero": 0,           
@@ -198,29 +198,46 @@ def extract_answer_from_text_map_and_maze(model_output_raw, options):
     for k, v in number_mapping.items():
         model_output_raw =  re.sub(rf"\b{k}\b", str(v), model_output_raw, re.IGNORECASE)
 
- # get dict of options from options string
+    # get dict of options from options string
     options_dict = {x.split(".")[0].strip().lower():x.split(".")[1].strip().lower() for x in options}
 
-    # "Concise Answer" is a common GPT-4o pattern
-    if "Concise Answer:".lower() in model_output_raw.lower():
-        pattern_letter = r"^\**Concise Answer:\**\s+(\w)\. (\w+)"
+
+    model_output_parsed_letter = ""
+    model_output_parsed = ""
+            
+    answers = [v for k, v in options_dict.items()]
+    answers_pattern = rf"\b({'|'.join(answers)})\b"
+
+    if "Answer:".lower() in model_output_raw.lower():
+        pattern_letter = r"^\**Answer:\**\s+(\w)\. (\w+)"
         matches = re.search(pattern_letter, model_output_raw, re.IGNORECASE)
         if matches:
             match_option = matches.group(1).lower()
-            model_output_parsed_letter = options_dict[match_option]
+            if match_option in options_dict:
+                model_output_parsed_letter = options_dict[match_option]
+            else:
+                model_output_parsed_letter = match_option
 
-        pattern_phrase = r"\**Concise Answer:\**\s+([^\n]+)"
-        model_output_answer_line = re.search(pattern_phrase, model_output_raw, re.IGNORECASE).group(1)
+        pattern_phrase = r"Answer:\**\s+([^\n]+)"
+        matches = re.search(pattern_phrase, model_output_raw, re.IGNORECASE)
+        if matches:
+            model_output_answer_line = matches.group(1)
         
-        answers = [v for k, v in options_dict.items()]
-        answers_pattern = rf"\b({'|'.join(answers)})\b"
-        answers_match = re.search(answers_pattern, model_output_answer_line, re.IGNORECASE)
+            answers_match = re.search(answers_pattern, model_output_answer_line, re.IGNORECASE)
     
-        if answers_match:
-            model_output_parsed =  answers_match.group(1)
+            if answers_match:
+                model_output_parsed =  answers_match.group(1)
+            else:
+                letters = [k for k, v in options_dict.items()]
+                letters_pattern = rf"\b({'|'.join(letters)})\b"
+                letters_pattern_match = re.search(letters_pattern, model_output_answer_line, re.IGNORECASE)
 
-    else:
-        pattern_letter = r'answer is:*\s*\**([\w\d]+)[\s:.]*'
+                if letters_pattern_match:
+                    match_option =  letters_pattern_match.group(1).lower()
+                    model_output_parsed_letter = options_dict[match_option]
+
+    elif "answer is".lower() in model_output_raw.lower():
+        pattern_letter = r'answer is:*\s*\**([\w\d]+)[\s:.]*\**'
     
         # first look for a single letter answer
         matches = re.search(pattern_letter, model_output_raw, re.IGNORECASE)
@@ -231,16 +248,16 @@ def extract_answer_from_text_map_and_maze(model_output_raw, options):
             else:
                 model_output_parsed_letter = match_option
 
-        # next look if any of the options names are present in the first sentance
+    # next look if any of the options names are present in the first sentance
 
-        model_output_answer_line = model_output_raw.splitlines()[0]        
+    model_output_answer_line = model_output_raw.splitlines()[0]        
 
-        answers = [v for k, v in options_dict.items()]
-        answers_pattern = rf"\b({'|'.join(answers)})\b"
-        answers_match = re.search(answers_pattern, model_output_answer_line, re.IGNORECASE)
+    answers = [v for k, v in options_dict.items()]
+    answers_pattern = rf"\b({'|'.join(answers)})\b"
+    answers_match = re.search(answers_pattern, model_output_answer_line, re.IGNORECASE)
     
-        if answers_match:
-            model_output_parsed =  answers_match.group(1)
+    if answers_match:
+        model_output_parsed =  answers_match.group(1)
 
     return [model_output_parsed, model_output_parsed_letter]
 
