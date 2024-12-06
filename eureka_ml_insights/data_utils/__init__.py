@@ -15,8 +15,7 @@ from .prompt_processing import JinjaPromptTemplate
 from .secret_key_utils import GetKey
 from .spatial_utils import (
     ExtractAnswerGrid,
-    ExtractAnswerMaze,
-    ExtractAnswerSpatialMap,
+    ExtractAnswerSpatialMapAndMaze,
     ExtractQuestionOptions,
 )
 from .transform import (
@@ -70,8 +69,7 @@ __all__ = [
     PrependStringTransform,
     GetKey,
     ExtractAnswerGrid,
-    ExtractAnswerSpatialMap,
-    ExtractAnswerMaze,
+    ExtractAnswerSpatialMapAndMaze,
     ShuffleColumnsTransform,
     ColumnMatchMapTransform,
     TokenCounterTransform,

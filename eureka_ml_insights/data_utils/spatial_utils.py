@@ -157,7 +157,7 @@ def extract_answer_from_text_grid(text, question_type):
     return None  # Return None if no numbers are found
 
 
-def extract_answer_from_text_map(model_output_raw, options):
+def extract_answer_from_text_map_and_maze(model_output_raw, options):
     """
     Extracts the answer from the text based on known model output patterns.
     Searches for botha letter and whole word answer and returns both as they are not
@@ -170,12 +170,20 @@ def extract_answer_from_text_map(model_output_raw, options):
     - str or None: The extracted answers, or empty strings if no answer could be extracted.
     """
 
-    # replace common subsitutions for numbers in model outputs
+    # replace common subsitutions in model outputs
+
+    model_output_parsed_letter = ""
+    model_output_parsed = ""
+
+    if not model_output_raw:
+        return [model_output_parsed, model_output_parsed_letter]
+
     model_output_raw = model_output_raw.replace("no objects", "0 objects")
+    model_output_raw = model_output_raw.replace("not", "no")
+    model_output_raw = model_output_raw.replace("should be", "is")
 
     number_mapping = {
-        "zero": 0,
-        "no": 0,
+        "zero": 0,           
         "one": 1,
         "two": 2,
         "three": 3,
@@ -190,18 +198,15 @@ def extract_answer_from_text_map(model_output_raw, options):
     for k, v in number_mapping.items():
         model_output_raw =  re.sub(rf"\b{k}\b", str(v), model_output_raw, re.IGNORECASE)
 
-    # get dict of options from options string
-    options_dict = {x.split(".")[0].strip():x.split(".")[1].strip() for x in options}
+ # get dict of options from options string
+    options_dict = {x.split(".")[0].strip().lower():x.split(".")[1].strip().lower() for x in options}
 
-    model_output_parsed_letter = ""
-    model_output_parsed = ""
-
-    # "Concise Asnwer" is a common GPT-4o pattern
-    if "Concise Answer" in model_output_raw:
+    # "Concise Answer" is a common GPT-4o pattern
+    if "Concise Answer:".lower() in model_output_raw.lower():
         pattern_letter = r"^\**Concise Answer:\**\s+(\w)\. (\w+)"
         matches = re.search(pattern_letter, model_output_raw, re.IGNORECASE)
         if matches:
-            match_option = matches.group(1)
+            match_option = matches.group(1).lower()
             model_output_parsed_letter = options_dict[match_option]
 
         pattern_phrase = r"\**Concise Answer:\**\s+([^\n]+)"
@@ -220,7 +225,7 @@ def extract_answer_from_text_map(model_output_raw, options):
         # first look for a single letter answer
         matches = re.search(pattern_letter, model_output_raw, re.IGNORECASE)
         if matches:
-            match_option = matches.group(1)
+            match_option = matches.group(1).lower()
             if match_option in options_dict:
                 model_output_parsed_letter = options_dict[match_option]
             else:
@@ -417,7 +422,7 @@ class ExtractAnswerGrid(ExtractAnswer):
 
 
 @dataclass
-class ExtractAnswerSpatialMap(DFTransformBase):
+class ExtractAnswerSpatialMapAndMaze(DFTransformBase):
     """This class is an answer extractor for the SPATIAL_MAP benchmark."""
 
     answer_column_name: str
@@ -426,19 +431,6 @@ class ExtractAnswerSpatialMap(DFTransformBase):
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         df[self.extracted_answer_column_name] = df.apply(
-            lambda x: extract_answer_from_text_map(x[self.answer_column_name], x[self.extracted_options_column_name]), axis=1
+            lambda x: extract_answer_from_text_map_and_maze(x[self.answer_column_name], x[self.extracted_options_column_name]), axis=1
         )
         return df
-
-
-@dataclass
-class ExtractAnswerMaze(ExtractAnswer):
-    """This class is an answer extractor for the MAZE benchmark."""
-
-    answer_column_name: str
-    extracted_answer_column_name: str
-    question_type_column_name: str
-
-    @abstractmethod
-    def _parse_answer_function(self, answer_text, question_type):
-        return extract_answer_from_text_maze(answer_text, question_type)

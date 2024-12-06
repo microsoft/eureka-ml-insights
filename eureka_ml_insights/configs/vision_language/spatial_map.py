@@ -8,7 +8,7 @@ from eureka_ml_insights.data_utils import (
     ColumnRename,
     DataLoader,
     DataReader,
-    ExtractAnswerSpatialMap,
+    ExtractAnswerSpatialMapAndMaze,
     ExtractQuestionOptions,
     PrependStringTransform,
     SequenceTransform,
@@ -88,7 +88,7 @@ class SPATIAL_MAP_PIPELINE(ExperimentConfig):
                                     extracted_options_column_name="target_options_answers",
                             ),
                             ColumnRename(name_mapping={"model_output": "model_output_raw"}),
-                            ExtractAnswerSpatialMap(
+                            ExtractAnswerSpatialMapAndMaze(
                                 answer_column_name="model_output_raw",
                                 extracted_answer_column_name="model_output",
                                 extracted_options_column_name="target_options_answers",
