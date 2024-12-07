@@ -160,11 +160,12 @@ def extract_answer_from_text_grid(text, question_type):
 def extract_answer_from_text_map_and_maze(model_output_raw, options):
     """
     Extracts the answer from the text based on known model output patterns.
-    Searches for botha letter and whole word answer and returns both as they are not
+    Searches for both a letter and whole word answer and returns both as they are not
     always consistent.
 
     Args:
-    - text (str): The text containing the model's answer.
+    - model_output_raw (str): The text containing the model's answer.
+    - options (str): The list of options.
 
     Returns:
     - str or None: The extracted answers, or empty strings if no answer could be extracted.
@@ -248,7 +249,7 @@ def extract_answer_from_text_map_and_maze(model_output_raw, options):
             else:
                 model_output_parsed_letter = match_option
 
-    # next look if any of the options names are present in the first sentance
+    # next look if any of the options names are present in the first line
 
     model_output_answer_line = model_output_raw.splitlines()[0]        
 
@@ -440,7 +441,7 @@ class ExtractAnswerGrid(ExtractAnswer):
 
 @dataclass
 class ExtractAnswerSpatialMapAndMaze(DFTransformBase):
-    """This class is an answer extractor for the SPATIAL_MAP benchmark."""
+    """This class is an answer extractor for the SPATIAL_MAP and MAZE benchmark."""
 
     answer_column_name: str
     extracted_answer_column_name: str
