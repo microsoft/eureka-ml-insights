@@ -1,5 +1,5 @@
 from .data_join import DataJoin
-from .data_processing import DataProcessing, NumpyEncoder
+from .data_processing import DataProcessing
 from .eval_reporting import EvalReporting
 from .inference import Inference
 from .pipeline import Component, Pipeline
@@ -12,6 +12,5 @@ __all__ = [
     "EvalReporting",
     "DataProcessing",
     "PromptProcessing",
-    "NumpyEncoder",
     "DataJoin",
 ]

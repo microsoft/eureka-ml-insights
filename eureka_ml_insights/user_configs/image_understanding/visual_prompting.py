@@ -4,20 +4,21 @@ from eureka_ml_insights.configs.experiment_config import ExperimentConfig
 from eureka_ml_insights.core import EvalReporting, Inference, PromptProcessing
 from eureka_ml_insights.data_utils import (
     HFDataReader,
-    HFJsonReader,
     MMDataLoader,
     ColumnRename,
-    CopyColumn,
     DataReader,
     PrependStringTransform,
     SequenceTransform,
 )
+from eureka_ml_insights.data_utils.spatial_utils import (
+    LowerCaseNoPunctuationConvertNumbers,
+)
 from eureka_ml_insights.metrics import (
-    CocoDetectionAggregator,
-    CocoObjectDetectionMetric,
+    CountAggregator,
+    ObjectRecognitionMetric,
 )
 
-from ..config import (
+from eureka_ml_insights.configs import (
     AggregatorConfig,
     DataSetConfig,
     EvalReportingConfig,
@@ -28,7 +29,7 @@ from ..config import (
 )
 from .common import LOCAL_DATA_PIPELINE
 
-"""This file contains example user defined configuration classes for the object detection task.
+"""This file contains example user defined configuration classes for the visual prompting task.
 In order to define a new configuration, a new class must be created that directly or indirectly
  inherits from ExperimentConfig and the configure_pipeline method should be implemented.
 You can inherit from one of the existing user defined classes below and override the necessary
@@ -41,9 +42,9 @@ Pass the name of the class to the main.py script to run the pipeline.
 """
 
 
-class OBJECT_DETECTION_PAIRS_PIPELINE(ExperimentConfig):
+class VISUAL_PROMPTING_PAIRS_PIPELINE(ExperimentConfig):
     """
-    This defines an ExperimentConfig pipeline for the object detection dataset, pairs condition.
+    This defines an ExperimentConfig pipeline for the visual prompting dataset, pairs condition.
     There is no model_config by default and the model config must be passed in via command lime.
     """
 
@@ -56,7 +57,7 @@ class OBJECT_DETECTION_PAIRS_PIPELINE(ExperimentConfig):
                 {
                     "path": "microsoft/IMAGE_UNDERSTANDING",
                     "split": "val",
-                    "tasks": "object_detection_pairs",
+                    "tasks": "visual_prompting_pairs",
                 },
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
@@ -76,12 +77,6 @@ class OBJECT_DETECTION_PAIRS_PIPELINE(ExperimentConfig):
             resume_from=resume_from,
         )
 
-        target_coco_json_reader = HFJsonReader(
-            repo_id="microsoft/IMAGE_UNDERSTANDING",
-            repo_type="dataset",
-            filename="object_detection_pairs/coco_instances.json",            
-        )
-
         # Configure the evaluation and reporting component.
         self.evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
@@ -90,19 +85,17 @@ class OBJECT_DETECTION_PAIRS_PIPELINE(ExperimentConfig):
                 {
                     "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
                     "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            LowerCaseNoPunctuationConvertNumbers(columns=["model_output"]),
+                        ]
+                    ),
                 },
             ),
-            metric_config=MetricConfig(
-                CocoObjectDetectionMetric,
-                {"target_coco_json_reader": target_coco_json_reader},
-            ),
+            metric_config=MetricConfig(ObjectRecognitionMetric),
             aggregator_configs=[
                 AggregatorConfig(
-                    CocoDetectionAggregator,
-                    {
-                        "column_names": ["CocoObjectDetectionMetric_result"],
-                        "target_coco_json_reader": target_coco_json_reader,
-                    },
+                    CountAggregator, {"column_names": ["ObjectRecognitionMetric_result"], "normalize": True}
                 ),
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
@@ -112,34 +105,24 @@ class OBJECT_DETECTION_PAIRS_PIPELINE(ExperimentConfig):
         return PipelineConfig([self.data_processing_comp, self.inference_comp, self.evalreporting_comp], self.log_dir)
 
 
-class OBJECT_DETECTION_SINGLE_PIPELINE(OBJECT_DETECTION_PAIRS_PIPELINE):
-    """This class extends OBJECT_DETECTION_PAIRS_PIPELINE to use the single object condition."""
+class VISUAL_PROMPTING_SINGLE_PIPELINE(VISUAL_PROMPTING_PAIRS_PIPELINE):
+    """This class extends VISUAL_PROMPTING_PAIRS_PIPELINE to use the single object condition."""
 
     def configure_pipeline(self, model_config, resume_from=None):
         config = super().configure_pipeline(model_config, resume_from)
         self.data_processing_comp.data_reader_config.init_args["tasks"] = (
-            "object_detection_single"
+            "visual_prompting_single"
         )
-
-        target_coco_json_reader = HFJsonReader(
-            repo_id="microsoft/IMAGE_UNDERSTANDING",
-            repo_type="dataset",
-            filename="object_detection_single/coco_instances.json",
-        )
-
-        self.evalreporting_comp.metric_config.init_args["target_coco_json_reader"] = target_coco_json_reader
-        self.evalreporting_comp.aggregator_configs[0].init_args["target_coco_json_reader"] = target_coco_json_reader
-
         return config
 
 
-class OBJECT_DETECTION_PAIRS_LOCAL_PIPELINE(LOCAL_DATA_PIPELINE, OBJECT_DETECTION_PAIRS_PIPELINE):
+class VISUAL_PROMPTING_PAIRS_LOCAL_PIPELINE(LOCAL_DATA_PIPELINE, VISUAL_PROMPTING_PAIRS_PIPELINE):
     def configure_pipeline(self, model_config, resume_from=None):
         local_path = "/home/neel/data/spatial_understanding"
         return super().configure_pipeline(model_config, resume_from, local_path)
 
 
-class OBJECT_DETECTION_SINGLE_LOCAL_PIPELINE(LOCAL_DATA_PIPELINE, OBJECT_DETECTION_SINGLE_PIPELINE):
+class VISUAL_PROMPTING_SINGLE_LOCAL_PIPELINE(LOCAL_DATA_PIPELINE, VISUAL_PROMPTING_SINGLE_PIPELINE):
     def configure_pipeline(self, model_config, resume_from=None):
         local_path = "/home/neel/data/spatial_understanding"
         return super().configure_pipeline(model_config, resume_from, local_path)

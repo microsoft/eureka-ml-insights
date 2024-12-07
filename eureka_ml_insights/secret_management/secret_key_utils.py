@@ -9,7 +9,7 @@ from azure.keyvault.secrets import SecretClient
 logging.basicConfig(level=logging.INFO, format="%(filename)s - %(funcName)s - %(message)s")
 
 
-def GetKey(key_name: str, local_keys_path:Optional[str]=None, key_vault_url:Optional[str]=None) -> Optional[str]:
+def get_secret(key_name: str, local_keys_path:Optional[str]=None, key_vault_url:Optional[str]=None) -> Optional[str]:
     """This function retrieves a key from key vault or if it is locally cached in a file.
     args:
         key_name: str, the name of the key to retrieve.
@@ -129,4 +129,4 @@ def get_cached_keys_dict(local_keys_path: str) -> Dict[str, str]:
 if __name__ == "__main__":
     key_name = "aifeval-datasets"
     key_vault_url = "https://aifeval.vault.azure.net/"
-    GetKey(key_name, key_vault_url=key_vault_url)
+    get_secret(key_name, key_vault_url=key_vault_url)

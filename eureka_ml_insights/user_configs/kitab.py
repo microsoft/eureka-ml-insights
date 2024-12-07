@@ -22,7 +22,7 @@ from eureka_ml_insights.data_utils.kitab_utils import (
 from eureka_ml_insights.metrics import AverageAggregator
 from eureka_ml_insights.metrics.kitab_metrics import KitabMetric
 
-from .config import (
+from eureka_ml_insights.configs import(
     AggregatorConfig,
     DataProcessingConfig,
     DataSetConfig,
@@ -33,7 +33,7 @@ from .config import (
     PipelineConfig,
     PromptProcessingConfig,
 )
-from .experiment_config import ExperimentConfig
+from eureka_ml_insights.configs import ExperimentConfig
 
 # Example template for an Azure Language Service config
 # required for running entity recognition for evaluating human and city name

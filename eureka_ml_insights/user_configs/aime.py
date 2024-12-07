@@ -16,7 +16,7 @@ from eureka_ml_insights.data_utils.data import DataLoader
 from eureka_ml_insights.metrics.metrics_base import ExactMatch
 from eureka_ml_insights.metrics.reports import CountAggregator
 
-from .config import (
+from eureka_ml_insights.configs import (
     AggregatorConfig,
     DataProcessingConfig,
     DataSetConfig,
@@ -27,7 +27,7 @@ from .config import (
     PipelineConfig,
     PromptProcessingConfig,
 )
-from .experiment_config import ExperimentConfig
+from eureka_ml_insights.configs import ExperimentConfig
 
 
 class AIME_PIPELINE(ExperimentConfig):

@@ -8,12 +8,14 @@ from eureka_ml_insights.data_utils import (
     ColumnRename,
     DataLoader,
     DataReader,
-    ExtractAnswerGrid,
+    ExtractAnswerSpatialMapAndMaze,
+    ExtractQuestionOptions,
     PrependStringTransform,
     SequenceTransform,
 )
-from eureka_ml_insights.metrics import CaseInsensitiveMatch, CountAggregator
-from ..config import (
+from eureka_ml_insights.metrics import CaseInsensitiveOrMatch, CountAggregator
+
+from eureka_ml_insights.configs import (
     AggregatorConfig,
     DataSetConfig,
     EvalReportingConfig,
@@ -24,7 +26,7 @@ from ..config import (
     PromptProcessingConfig,
 )
 
-"""This file contains example user defined configuration classes for the grid counting task.
+"""This file contains example user defined configuration classes for the spatial map task.
 In order to define a new configuration, a new class must be created that directly or indirectly
  inherits from UserDefinedConfig and the user_init method should be implemented.
 You can inherit from one of the existing user defined classes below and override the necessary
@@ -37,9 +39,9 @@ Pass the name of the class to the main.py script to run the pipeline.
 """
 
 
-class SPATIAL_GRID_PIPELINE(ExperimentConfig):
+class SPATIAL_MAP_PIPELINE(ExperimentConfig):
     """This method is used to define an eval pipeline with inference and metric report components,
-    on the grid counting dataset."""
+    on the spatial map dataset."""
 
     def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
         # Configure the data processing component.
@@ -50,7 +52,7 @@ class SPATIAL_GRID_PIPELINE(ExperimentConfig):
                 {
                     "path": "microsoft/VISION_LANGUAGE",
                     "split": "val",
-                    "tasks": "spatial_grid",
+                    "tasks": "spatial_map",
                 },
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
@@ -71,6 +73,7 @@ class SPATIAL_GRID_PIPELINE(ExperimentConfig):
         )
 
         # Configure the evaluation and reporting component.
+        # NOTE: This component uses model-specific answer extraction that is customized for GPT-4o, Claude, and Gemini models
         self.evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
             data_reader_config=DataSetConfig(
@@ -80,24 +83,27 @@ class SPATIAL_GRID_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
+                            ExtractQuestionOptions(
+                                    prompt_column_name="prompt",
+                                    extracted_options_column_name="target_options_answers",
+                            ),
                             ColumnRename(name_mapping={"model_output": "model_output_raw"}),
-                            ExtractAnswerGrid(
+                            ExtractAnswerSpatialMapAndMaze(
                                 answer_column_name="model_output_raw",
                                 extracted_answer_column_name="model_output",
-                                question_type_column_name="question_type",
-                                mode="animal",
+                                extracted_options_column_name="target_options_answers",
                             ),
                         ],
                     ),
                 },
             ),
-            metric_config=MetricConfig(CaseInsensitiveMatch),
+            metric_config=MetricConfig(CaseInsensitiveOrMatch),
             aggregator_configs=[
-                AggregatorConfig(CountAggregator, {"column_names": ["CaseInsensitiveMatch_result"], "normalize": True}),
+                AggregatorConfig(CountAggregator, {"column_names": ["CaseInsensitiveOrMatch_result"], "normalize": True}),
                 AggregatorConfig(
                     CountAggregator,
                     {
-                        "column_names": ["CaseInsensitiveMatch_result"],
+                        "column_names": ["CaseInsensitiveOrMatch_result"],
                         "group_by": "task",
                         "normalize": True,
                     },
@@ -110,20 +116,20 @@ class SPATIAL_GRID_PIPELINE(ExperimentConfig):
         return PipelineConfig([self.data_processing_comp, self.inference_comp, self.evalreporting_comp], self.log_dir)
 
 
-class SPATIAL_GRID_TEXTONLY_PIPELINE(SPATIAL_GRID_PIPELINE):
-    """This class extends SPATIAL_GRID_PIPELINE to use text only data."""
+class SPATIAL_MAP_TEXTONLY_PIPELINE(SPATIAL_MAP_PIPELINE):
+    """This class extends SPATIAL_MAP_PIPELINE to use text only data."""
 
     def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
         config = super().configure_pipeline(model_config, resume_from)
         self.data_processing_comp.data_reader_config.init_args["tasks"] = (
-            "spatial_grid_text_only"
+            "spatial_map_text_only"
         )
         return config
 
 
-class SPATIAL_GRID_REPORTING_PIPELINE(SPATIAL_GRID_PIPELINE):
+class SPATIAL_MAP_REPORTING_PIPELINE(SPATIAL_MAP_PIPELINE):
     """This method is used to define an eval pipeline with only a metric report component,
-    on the grid counting dataset."""
+    on the spatial map dataset."""
 
     def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
         super().configure_pipeline(model_config, resume_from)

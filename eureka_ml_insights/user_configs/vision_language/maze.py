@@ -8,14 +8,14 @@ from eureka_ml_insights.data_utils import (
     ColumnRename,
     DataLoader,
     DataReader,
-    ExtractAnswerSpatialMapAndMaze,
     ExtractQuestionOptions,
+    ExtractAnswerSpatialMapAndMaze,
     PrependStringTransform,
     SequenceTransform,
 )
 from eureka_ml_insights.metrics import CaseInsensitiveOrMatch, CountAggregator
 
-from ..config import (
+from eureka_ml_insights.configs import (
     AggregatorConfig,
     DataSetConfig,
     EvalReportingConfig,
@@ -26,7 +26,7 @@ from ..config import (
     PromptProcessingConfig,
 )
 
-"""This file contains example user defined configuration classes for the spatial map task.
+"""This file contains example user defined configuration classes for the maze task.
 In order to define a new configuration, a new class must be created that directly or indirectly
  inherits from UserDefinedConfig and the user_init method should be implemented.
 You can inherit from one of the existing user defined classes below and override the necessary
@@ -39,9 +39,9 @@ Pass the name of the class to the main.py script to run the pipeline.
 """
 
 
-class SPATIAL_MAP_PIPELINE(ExperimentConfig):
+class MAZE_PIPELINE(ExperimentConfig):
     """This method is used to define an eval pipeline with inference and metric report components,
-    on the spatial map dataset."""
+    on the spatial reasoning dataset."""
 
     def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
         # Configure the data processing component.
@@ -52,7 +52,7 @@ class SPATIAL_MAP_PIPELINE(ExperimentConfig):
                 {
                     "path": "microsoft/VISION_LANGUAGE",
                     "split": "val",
-                    "tasks": "spatial_map",
+                    "tasks": "maze",
                 },
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
@@ -73,7 +73,6 @@ class SPATIAL_MAP_PIPELINE(ExperimentConfig):
         )
 
         # Configure the evaluation and reporting component.
-        # NOTE: This component uses model-specific answer extraction that is customized for GPT-4o, Claude, and Gemini models
         self.evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
             data_reader_config=DataSetConfig(
@@ -116,20 +115,20 @@ class SPATIAL_MAP_PIPELINE(ExperimentConfig):
         return PipelineConfig([self.data_processing_comp, self.inference_comp, self.evalreporting_comp], self.log_dir)
 
 
-class SPATIAL_MAP_TEXTONLY_PIPELINE(SPATIAL_MAP_PIPELINE):
-    """This class extends SPATIAL_MAP_PIPELINE to use text only data."""
+class MAZE_TEXTONLY_PIPELINE(MAZE_PIPELINE):
+    """This class extends MAZE_PIPELINE to use text only data."""
 
     def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
         config = super().configure_pipeline(model_config, resume_from)
         self.data_processing_comp.data_reader_config.init_args["tasks"] = (
-            "spatial_map_text_only"
+            "maze_text_only"
         )
         return config
 
 
-class SPATIAL_MAP_REPORTING_PIPELINE(SPATIAL_MAP_PIPELINE):
+class MAZE_REPORTING_PIPELINE(MAZE_PIPELINE):
     """This method is used to define an eval pipeline with only a metric report component,
-    on the spatial map dataset."""
+    on the maze dataset."""
 
     def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
         super().configure_pipeline(model_config, resume_from)
