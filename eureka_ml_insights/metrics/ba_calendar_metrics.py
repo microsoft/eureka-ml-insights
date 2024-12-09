@@ -1,3 +1,7 @@
+# This file was authored by BenchAgents authors and is being reused under the MIT license.
+# All code in this file is directly copied from the original source repository.
+# https://github.com/microsoft/benchagents
+
 import ast
 import json
 import re
