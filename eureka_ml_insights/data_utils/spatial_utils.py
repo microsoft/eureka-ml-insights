@@ -405,7 +405,7 @@ class ExtractQuestionOptions(DFTransformBase):
 
     def _extract_options_from_text_map(self, prompt):
         """
-        Extracts the options list from the text.
+        Extracts the multiple-choice options list from the text.
 
         Args:
         - text (str): The text containing the prompt.

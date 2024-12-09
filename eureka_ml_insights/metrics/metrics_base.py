@@ -145,7 +145,7 @@ class ExactMatch(ClassicMetric):
             return "incorrect"
 
 class ExactOrMatch(ExactMatch):
-    """This class checks for a case-insensitive, but otherwise exact match, and returns the or of them."""
+    """This class checks for a case-sensitive, but otherwise exact match, and returns the or of them."""
 
     def __evaluate__(self, answer_texts, target_text, is_valid):
 
