@@ -60,28 +60,11 @@ def filter_slots_by_constraints(time_slots, constraints, day):
         filtered_slots.append(slot)
     return filtered_slots
 
-# def convert_to_bool(value):
-#     if isinstance(value, str):
-#         if value == 'True':
-#             return True
-#         elif value == 'False':
-#             return False
-#         elif value == 'na':
-#             return np.nan
-#     elif isinstance(value, (bool, np.bool_)):
-#         return value
-#     elif pd.isna(value):  # Safely handle NaNs
-#         return np.nan
-#     return value
-
-# ask_true_false returns a tuple bool, str where the bool is the answer and the str is the justification
-
 class BACalendarMetric(CompositeMetric):
     """
-    Composite metric for evaluating if a response follows instructions.
+    Composite metric for evaluating if a response for each criteria.
 
-    This metric evaluates if a given response follows the provided instructions.
-    It calculates both strict and loose evaluation scores based on the response's adherence to the instructions.
+    This metric evaluates if a given response follows the provided constraints.
     """
 
     def __init__(self):
@@ -98,20 +81,19 @@ class BACalendarMetric(CompositeMetric):
         solution = instance['model_output']
         solution = solution.strip('"').strip('`').strip('\n')
         if not is_formatted(solution):
-            result['format_programmatic'] = 1 #should be 0
+            result['format_programmatic'] = 1
         result.update(self.check_availability_programmatic(instance, solution))
         result.update(self.check_meeting_duration_programmatic(instance, solution))
         result.update(self.check_buffer_time_programmatic(instance, solution))
         result.update(self.check_no_weekends_programmatic(instance, solution))
         result.update(self.check_time_restrictions_programmatic(instance, solution))
-        result.update(self.check_specific_times_programmatic(instance, solution))  # Added programmatic specific times check
-        result.update(self.check_priority_programmatic(instance, solution))  # Added model-based priority check
+        result.update(self.check_specific_times_programmatic(instance, solution))
+        result.update(self.check_priority_programmatic(instance, solution))
         all_correct = 1
         passed_constraints = []
         for key, value in result.items():
             if value == 0:
                 all_correct = 0
-            # if value != 'NA':
             x = value
             if x != 'NA' and pd.notna(x) and isinstance(x, int):
                 passed_constraints.append(value)

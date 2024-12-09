@@ -10,6 +10,7 @@ from eureka_ml_insights.core.eval_reporting import EvalReporting
 from eureka_ml_insights.data_utils.data import (
     DataLoader,
     DataReader,
+    HFDataReader,
 )
 from eureka_ml_insights.data_utils.transform import ColumnRename, SamplerTransform, SequenceTransform
 from eureka_ml_insights.metrics.ba_calendar_metrics import BACalendarMetric
@@ -38,12 +39,12 @@ class Calendar_Schedule_PIPELINE(ExperimentConfig):
             component_type=PromptProcessing,
             prompt_template_path=os.path.join(os.path.dirname(__file__), "../prompt_templates/ba_calendar_templates/calendar_scheduling.jinja"),
             data_reader_config=DataSetConfig(
-                DataReader, 
-                { 
-                    "path": os.path.join("../local_benchmark_data/Natasha_benchmarks/datasets/datasets/", "ba_calendar_wkey.jsonl"),
+                HFDataReader,
+                {
+                    "path": "microsoft/ba-calendar",
+                    "split": "test",
                     "transform": SequenceTransform([
                         ColumnRename(name_mapping={"task_prompt": "prompt"}),
-                        SamplerTransform(random_seed=5, sample_count=10),
                     ]),
                 },
             ),

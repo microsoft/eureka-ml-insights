@@ -6,6 +6,8 @@ from pathlib import Path
 
 import jsonlines
 
+from eureka_ml_insights.configs.ba_calendar import Calendar_Schedule_PIPELINE
+
 # setup loggers
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
@@ -248,18 +250,19 @@ class TEST_IFEval_PIPELINE(IFEval_PIPELINE):
         )
         return config
     
-# class TEST_BA_Calendar_PIPELINE(IFEval_PIPELINE):
-#     # Test config the IFEval benchmark with TestModel and TestDataLoader
-#     def configure_pipeline(self):
-#         config = super().configure_pipeline(model_config=ModelConfig(GenericTestModel, {}))
-#         self.data_processing_comp.data_reader_config.init_args["transform"] = SequenceTransform(
-#             [
-#                 RunPythonTransform("df['instruction_id_list_copy'] = df.loc[:, 'instruction_id_list']"),
-#                 RunPythonTransform("df = df.explode(['instruction_id_list_copy'])"),
-#                 SamplerTransform(sample_count=N_ITER, random_seed=99, stratify_by="instruction_id_list_copy"),
-#             ]
-#         )
-#         return config
+class TEST_BA_Calendar_PIPELINE(Calendar_Schedule_PIPELINE):
+    # Test config the BA Calendar benchmark with TestModel and TestDataLoader
+    def configure_pipeline(self):
+        config = super().configure_pipeline(model_config=ModelConfig(GenericTestModel, {}))
+        self.data_processing_comp.data_reader_config.init_args["transform"].transforms.extend(
+            [
+                RunPythonTransform("df = df.explode(['selected_constraints'])"),
+                SamplerTransform(sample_count=N_ITER, random_seed=99, stratify_by="selected_constraints"),
+            ]
+        )
+        self.inference_comp.data_loader_config.class_name = TestDataLoader
+        self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
+        return config
 
 
 class TEST_TOXIGEN_PIPELINE(ToxiGen_Discriminative_PIPELINE):
@@ -420,6 +423,29 @@ class IFEval_PipelineTest(PipelineTest, unittest.TestCase):
             self.test_pipeline.evalreporting_comp,
             self.test_pipeline.instruction_level_evalreporting_comp,
         ]
+
+    def test_outputs_exist(self) -> None:
+        logging.info("Running test_outputs_exist test in PipelineTest")
+        self.assertTrue(any("transformed_data.jsonl" in str(file) for file in self.files))
+        if self.data_reader_config.prompt_template_path:
+            self.assertTrue(any("processed_prompts.jsonl" in str(file) for file in self.files))
+        self.assertTrue(any("inference_result.jsonl" in str(file) for file in self.files))
+        if self.eval_config.metric_config is not None:
+            self.assertTrue(any("metric_results.jsonl" in str(file) for file in self.files))
+        n_aggregators = len([config for eval_config in self.eval_configs for config in eval_config.aggregator_configs])
+        n_aggregator_files = len([file for file in self.files if "aggregator" in str(file)])
+        self.assertEqual(n_aggregators, n_aggregator_files)
+
+@unittest.skipIf("skip_tests_with_missing_ds" in os.environ, "Missing public dataset. TODO: revert")
+class BA_Calendar_PipelineTest(PipelineTest, unittest.TestCase):
+    def get_config(self):
+        self.test_pipeline = TEST_BA_Calendar_PIPELINE()
+        self.config = self.test_pipeline.pipeline_config
+        return self.config
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.eval_configs = [self.test_pipeline.evalreporting_comp]
 
     def test_outputs_exist(self) -> None:
         logging.info("Running test_outputs_exist test in PipelineTest")
