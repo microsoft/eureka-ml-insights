@@ -68,7 +68,7 @@ class GPT4ToxiGenRegexGenerative(DFTransformBase):
         df[[self.model_output_column, "is_valid"]] = df[self.model_output_column].apply(
             lambda x: pd.Series([parse_output(x, delimiters, True)[0], parse_output(x, delimiters, True)[1]])
         )
-        df[[self.gt_column, self.category]] = df["split"].apply(
+        df[[self.gt_column, self.category]] = df["__hf_split"].apply(
             lambda x: pd.Series([label_category_map(x)[0], label_category_map(x)[1]])
         )
         df[self.merged_group] = df[self.category] + "_" + df[self.gt_column]

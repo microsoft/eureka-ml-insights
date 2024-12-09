@@ -3,7 +3,7 @@
 import argparse
 import logging
 
-from eureka_ml_insights import configs
+from eureka_ml_insights import user_configs as configs
 from eureka_ml_insights.configs import model_configs
 from eureka_ml_insights.core import Pipeline
 

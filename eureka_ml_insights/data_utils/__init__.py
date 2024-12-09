@@ -11,8 +11,8 @@ from .data import (
     MMDataLoader,
     TXTWriter,
 )
+from .encoders import NumpyEncoder
 from .prompt_processing import JinjaPromptTemplate
-from .secret_key_utils import GetKey
 from .spatial_utils import (
     ExtractAnswerGrid,
     ExtractAnswerMaze,
@@ -22,6 +22,7 @@ from .transform import (
     AddColumn,
     AddColumnAndData,
     ASTEvalTransform,
+    ColumnMatchMapTransform,
     ColumnRename,
     CopyColumn,
     DFTransformBase,
@@ -34,6 +35,7 @@ from .transform import (
     RunPythonTransform,
     SamplerTransform,
     SequenceTransform,
+    ShuffleColumnsTransform,
     TokenCounterTransform,
 )
 
@@ -65,9 +67,11 @@ __all__ = [
     RegexTransform,
     ASTEvalTransform,
     PrependStringTransform,
-    GetKey,
     ExtractAnswerGrid,
     ExtractAnswerSpatialMap,
     ExtractAnswerMaze,
+    ShuffleColumnsTransform,
+    ColumnMatchMapTransform,
     TokenCounterTransform,
+    NumpyEncoder,
 ]

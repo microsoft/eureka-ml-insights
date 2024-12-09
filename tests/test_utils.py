@@ -16,7 +16,7 @@ class TestModel:
 
     def generate(self, text_prompt, query_images=None):
         time.sleep(0.1)
-        return {"model_output": "model output", "is_valid": True}
+        return {"model_output": "model output", "is_valid": True, "response_time": 0, "n_output_tokens": 0}
 
 
 class TestHFDataReader(HFDataReader):

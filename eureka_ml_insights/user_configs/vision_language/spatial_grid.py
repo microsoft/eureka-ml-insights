@@ -3,35 +3,30 @@ import os
 from eureka_ml_insights.configs.experiment_config import ExperimentConfig
 from eureka_ml_insights.core import EvalReporting, Inference, PromptProcessing
 from eureka_ml_insights.data_utils import (
-    HFDataReader,
+    HFDataReader,    
     MMDataLoader,
     ColumnRename,
+    DataLoader,
     DataReader,
+    ExtractAnswerGrid,
     PrependStringTransform,
     SequenceTransform,
 )
-from eureka_ml_insights.data_utils.spatial_utils import (
-    LowerCaseNoPunctuationConvertNumbers,
-)
-from eureka_ml_insights.metrics import (
-    CountAggregator,
-    ObjectRecognitionMetric,
-)
-
-from ..config import (
+from eureka_ml_insights.metrics import CaseInsensitiveMatch, CountAggregator
+from eureka_ml_insights.configs import (
     AggregatorConfig,
     DataSetConfig,
     EvalReportingConfig,
     InferenceConfig,
     MetricConfig,
+    ModelConfig,
     PipelineConfig,
     PromptProcessingConfig,
 )
-from .common import LOCAL_DATA_PIPELINE
 
-"""This file contains example user defined configuration classes for the object recognition task.
+"""This file contains example user defined configuration classes for the grid counting task.
 In order to define a new configuration, a new class must be created that directly or indirectly
- inherits from ExperimentConfig and the configure_pipeline method should be implemented.
+ inherits from UserDefinedConfig and the user_init method should be implemented.
 You can inherit from one of the existing user defined classes below and override the necessary
 attributes to reduce the amount of code you need to write.
 
@@ -42,22 +37,20 @@ Pass the name of the class to the main.py script to run the pipeline.
 """
 
 
-class OBJECT_RECOGNITION_PAIRS_PIPELINE(ExperimentConfig):
-    """
-    This defines an ExperimentConfig pipeline for the object recognition dataset, pairs condition.
-    There is no model_config by default and the model config must be passed in via command lime.
-    """
+class SPATIAL_GRID_PIPELINE(ExperimentConfig):
+    """This method is used to define an eval pipeline with inference and metric report components,
+    on the grid counting dataset."""
 
-    def configure_pipeline(self, model_config, resume_from=None):
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
         # Configure the data processing component.
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
             data_reader_config=DataSetConfig(
                 HFDataReader,
                 {
-                    "path": "microsoft/IMAGE_UNDERSTANDING",
+                    "path": "microsoft/VISION_LANGUAGE",
                     "split": "val",
-                    "tasks": "object_recognition_pairs",
+                    "tasks": "spatial_grid",
                 },
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
@@ -87,15 +80,27 @@ class OBJECT_RECOGNITION_PAIRS_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            LowerCaseNoPunctuationConvertNumbers(columns=["model_output"]),
-                        ]
+                            ColumnRename(name_mapping={"model_output": "model_output_raw"}),
+                            ExtractAnswerGrid(
+                                answer_column_name="model_output_raw",
+                                extracted_answer_column_name="model_output",
+                                question_type_column_name="question_type",
+                                mode="animal",
+                            ),
+                        ],
                     ),
                 },
             ),
-            metric_config=MetricConfig(ObjectRecognitionMetric),
+            metric_config=MetricConfig(CaseInsensitiveMatch),
             aggregator_configs=[
+                AggregatorConfig(CountAggregator, {"column_names": ["CaseInsensitiveMatch_result"], "normalize": True}),
                 AggregatorConfig(
-                    CountAggregator, {"column_names": ["ObjectRecognitionMetric_result"], "normalize": True}
+                    CountAggregator,
+                    {
+                        "column_names": ["CaseInsensitiveMatch_result"],
+                        "group_by": "task",
+                        "normalize": True,
+                    },
                 ),
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
@@ -105,24 +110,22 @@ class OBJECT_RECOGNITION_PAIRS_PIPELINE(ExperimentConfig):
         return PipelineConfig([self.data_processing_comp, self.inference_comp, self.evalreporting_comp], self.log_dir)
 
 
-class OBJECT_RECOGNITION_SINGLE_PIPELINE(OBJECT_RECOGNITION_PAIRS_PIPELINE):
-    """This class extends OBJECT_RECOGNITION_PAIRS_PIPELINE to use the single object condition."""
+class SPATIAL_GRID_TEXTONLY_PIPELINE(SPATIAL_GRID_PIPELINE):
+    """This class extends SPATIAL_GRID_PIPELINE to use text only data."""
 
-    def configure_pipeline(self, model_config, resume_from=None):
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
         config = super().configure_pipeline(model_config, resume_from)
         self.data_processing_comp.data_reader_config.init_args["tasks"] = (
-            "object_recognition_single"
+            "spatial_grid_text_only"
         )
         return config
 
 
-class OBJECT_RECOGNITION_PAIRS_LOCAL_PIPELINE(LOCAL_DATA_PIPELINE, OBJECT_RECOGNITION_PAIRS_PIPELINE):
-    def configure_pipeline(self, model_config, resume_from=None):
-        local_path = "/home/neel/data/spatial_understanding"
-        return super().configure_pipeline(model_config, resume_from, local_path)
+class SPATIAL_GRID_REPORTING_PIPELINE(SPATIAL_GRID_PIPELINE):
+    """This method is used to define an eval pipeline with only a metric report component,
+    on the grid counting dataset."""
 
-
-class OBJECT_RECOGNITION_SINGLE_LOCAL_PIPELINE(LOCAL_DATA_PIPELINE, OBJECT_RECOGNITION_SINGLE_PIPELINE):
-    def configure_pipeline(self, model_config, resume_from=None):
-        local_path = "/home/neel/data/spatial_understanding"
-        return super().configure_pipeline(model_config, resume_from, local_path)
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
+        super().configure_pipeline(model_config, resume_from)
+        self.evalreporting_comp.data_reader_config.init_args["path"] = resume_from
+        return PipelineConfig([self.evalreporting_comp], self.log_dir)

@@ -3,34 +3,31 @@ import os
 from eureka_ml_insights.configs.experiment_config import ExperimentConfig
 from eureka_ml_insights.core import EvalReporting, Inference, PromptProcessing
 from eureka_ml_insights.data_utils import (
-    HFDataReader,
-    HFJsonReader,
+    HFDataReader,    
     MMDataLoader,
     ColumnRename,
-    CopyColumn,
+    DataLoader,
     DataReader,
+    ExtractAnswerSpatialMap,
     PrependStringTransform,
     SequenceTransform,
 )
-from eureka_ml_insights.metrics import (
-    CocoDetectionAggregator,
-    CocoObjectDetectionMetric,
-)
+from eureka_ml_insights.metrics import CaseInsensitiveMatch, CountAggregator
 
-from ..config import (
+from eureka_ml_insights.configs import (
     AggregatorConfig,
     DataSetConfig,
     EvalReportingConfig,
     InferenceConfig,
     MetricConfig,
+    ModelConfig,
     PipelineConfig,
     PromptProcessingConfig,
 )
-from .common import LOCAL_DATA_PIPELINE
 
-"""This file contains example user defined configuration classes for the object detection task.
+"""This file contains example user defined configuration classes for the spatial map task.
 In order to define a new configuration, a new class must be created that directly or indirectly
- inherits from ExperimentConfig and the configure_pipeline method should be implemented.
+ inherits from UserDefinedConfig and the user_init method should be implemented.
 You can inherit from one of the existing user defined classes below and override the necessary
 attributes to reduce the amount of code you need to write.
 
@@ -41,22 +38,20 @@ Pass the name of the class to the main.py script to run the pipeline.
 """
 
 
-class OBJECT_DETECTION_PAIRS_PIPELINE(ExperimentConfig):
-    """
-    This defines an ExperimentConfig pipeline for the object detection dataset, pairs condition.
-    There is no model_config by default and the model config must be passed in via command lime.
-    """
+class SPATIAL_MAP_PIPELINE(ExperimentConfig):
+    """This method is used to define an eval pipeline with inference and metric report components,
+    on the spatial map dataset."""
 
-    def configure_pipeline(self, model_config, resume_from=None):
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
         # Configure the data processing component.
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
             data_reader_config=DataSetConfig(
                 HFDataReader,
                 {
-                    "path": "microsoft/IMAGE_UNDERSTANDING",
+                    "path": "microsoft/VISION_LANGUAGE",
                     "split": "val",
-                    "tasks": "object_detection_pairs",
+                    "tasks": "spatial_map",
                 },
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
@@ -76,13 +71,8 @@ class OBJECT_DETECTION_PAIRS_PIPELINE(ExperimentConfig):
             resume_from=resume_from,
         )
 
-        target_coco_json_reader = HFJsonReader(
-            repo_id="microsoft/IMAGE_UNDERSTANDING",
-            repo_type="dataset",
-            filename="object_detection_pairs/coco_instances.json",            
-        )
-
         # Configure the evaluation and reporting component.
+        # NOTE: This component uses model-specific answer extraction that is customized for GPT-4o, Claude, and Gemini models
         self.evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
             data_reader_config=DataSetConfig(
@@ -90,18 +80,28 @@ class OBJECT_DETECTION_PAIRS_PIPELINE(ExperimentConfig):
                 {
                     "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
                     "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            ColumnRename(name_mapping={"model_output": "model_output_raw"}),
+                            ExtractAnswerSpatialMap(
+                                answer_column_name="model_output_raw",
+                                extracted_answer_column_name="model_output",
+                                question_type_column_name="question_type",
+                                model_name=model_config.init_args['model_name'], # passing the model name for model-specific answer extraction
+                            ),
+                        ],
+                    ),
                 },
             ),
-            metric_config=MetricConfig(
-                CocoObjectDetectionMetric,
-                {"target_coco_json_reader": target_coco_json_reader},
-            ),
+            metric_config=MetricConfig(CaseInsensitiveMatch),
             aggregator_configs=[
+                AggregatorConfig(CountAggregator, {"column_names": ["CaseInsensitiveMatch_result"], "normalize": True}),
                 AggregatorConfig(
-                    CocoDetectionAggregator,
+                    CountAggregator,
                     {
-                        "column_names": ["CocoObjectDetectionMetric_result"],
-                        "target_coco_json_reader": target_coco_json_reader,
+                        "column_names": ["CaseInsensitiveMatch_result"],
+                        "group_by": "task",
+                        "normalize": True,
                     },
                 ),
             ],
@@ -112,34 +112,22 @@ class OBJECT_DETECTION_PAIRS_PIPELINE(ExperimentConfig):
         return PipelineConfig([self.data_processing_comp, self.inference_comp, self.evalreporting_comp], self.log_dir)
 
 
-class OBJECT_DETECTION_SINGLE_PIPELINE(OBJECT_DETECTION_PAIRS_PIPELINE):
-    """This class extends OBJECT_DETECTION_PAIRS_PIPELINE to use the single object condition."""
+class SPATIAL_MAP_TEXTONLY_PIPELINE(SPATIAL_MAP_PIPELINE):
+    """This class extends SPATIAL_MAP_PIPELINE to use text only data."""
 
-    def configure_pipeline(self, model_config, resume_from=None):
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
         config = super().configure_pipeline(model_config, resume_from)
         self.data_processing_comp.data_reader_config.init_args["tasks"] = (
-            "object_detection_single"
+            "spatial_map_text_only"
         )
-
-        target_coco_json_reader = HFJsonReader(
-            repo_id="microsoft/IMAGE_UNDERSTANDING",
-            repo_type="dataset",
-            filename="object_detection_single/coco_instances.json",
-        )
-
-        self.evalreporting_comp.metric_config.init_args["target_coco_json_reader"] = target_coco_json_reader
-        self.evalreporting_comp.aggregator_configs[0].init_args["target_coco_json_reader"] = target_coco_json_reader
-
         return config
 
 
-class OBJECT_DETECTION_PAIRS_LOCAL_PIPELINE(LOCAL_DATA_PIPELINE, OBJECT_DETECTION_PAIRS_PIPELINE):
-    def configure_pipeline(self, model_config, resume_from=None):
-        local_path = "/home/neel/data/spatial_understanding"
-        return super().configure_pipeline(model_config, resume_from, local_path)
+class SPATIAL_MAP_REPORTING_PIPELINE(SPATIAL_MAP_PIPELINE):
+    """This method is used to define an eval pipeline with only a metric report component,
+    on the spatial map dataset."""
 
-
-class OBJECT_DETECTION_SINGLE_LOCAL_PIPELINE(LOCAL_DATA_PIPELINE, OBJECT_DETECTION_SINGLE_PIPELINE):
-    def configure_pipeline(self, model_config, resume_from=None):
-        local_path = "/home/neel/data/spatial_understanding"
-        return super().configure_pipeline(model_config, resume_from, local_path)
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
+        super().configure_pipeline(model_config, resume_from)
+        self.evalreporting_comp.data_reader_config.init_args["path"] = resume_from
+        return PipelineConfig([self.evalreporting_comp], self.log_dir)

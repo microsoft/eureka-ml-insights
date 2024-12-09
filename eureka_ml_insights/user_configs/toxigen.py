@@ -25,7 +25,7 @@ from eureka_ml_insights.metrics import (
     ExactMatch,
 )
 
-from .config import (
+from eureka_ml_insights.configs import(
     AggregatorConfig,
     DataProcessingConfig,
     DataSetConfig,
@@ -35,8 +35,8 @@ from .config import (
     PipelineConfig,
     PromptProcessingConfig,
 )
-from .experiment_config import ExperimentConfig
-from .model_configs import OAI_GPT4_1106_PREVIEW_CONFIG
+from eureka_ml_insights.configs import ExperimentConfig
+from eureka_ml_insights.configs.model_configs import OAI_GPT4_1106_PREVIEW_CONFIG
 
 """This class specifies the config for running Toxigen discriminative benchmark."""
 

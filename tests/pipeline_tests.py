@@ -6,7 +6,7 @@ from pathlib import Path
 
 import jsonlines
 
-from eureka_ml_insights.configs.ba_calendar import Calendar_Schedule_PIPELINE
+from eureka_ml_insights.user_configs.ba_calendar import Calendar_Schedule_PIPELINE
 
 # setup loggers
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -14,7 +14,14 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 path = str(Path(Path(__file__).parent.absolute()).parent.absolute())  # noqa
 sys.path.insert(0, path)  # noqa
 
-from eureka_ml_insights.configs import (
+from eureka_ml_insights.configs import MetricConfig, ModelConfig
+from eureka_ml_insights.core import Pipeline
+from eureka_ml_insights.data_utils.transform import (
+    RunPythonTransform,
+    SamplerTransform,
+    SequenceTransform,
+)
+from eureka_ml_insights.user_configs import (
     AIME_PIPELINE,
     DNA_PIPELINE,
     GEOMETER_PIPELINE,
@@ -30,16 +37,11 @@ from eureka_ml_insights.configs import (
     SPATIAL_MAP_TEXTONLY_PIPELINE,
     SPATIAL_REASONING_SINGLE_PIPELINE,
     VISUAL_PROMPTING_SINGLE_PIPELINE,
+    Drop_Experiment_Pipeline,
+    GPQA_Experiment_Pipeline,
     IFEval_PIPELINE,
-    MetricConfig,
-    ModelConfig,
     ToxiGen_Discriminative_PIPELINE,
-)
-from eureka_ml_insights.core import Pipeline
-from eureka_ml_insights.data_utils.transform import (
-    RunPythonTransform,
-    SamplerTransform,
-    SequenceTransform,
+    ToxiGen_Generative_PIPELINE,
 )
 from tests.test_utils import (
     DetectionTestModel,
@@ -276,6 +278,18 @@ class TEST_TOXIGEN_PIPELINE(ToxiGen_Discriminative_PIPELINE):
         return config
 
 
+class TEST_TOXIGEN_GEN_PIPELINE(ToxiGen_Generative_PIPELINE):
+    def configure_pipeline(self):
+        config = super().configure_pipeline(model_config=ModelConfig(GenericTestModel, {}))
+        self.inference_comp.data_loader_config.class_name = TestDataLoader
+        self.inference_comp.data_loader_config.init_args = {
+            "path": os.path.join(self.data_pre_processing.output_dir, "transformed_data.jsonl"),
+            "n_iter": N_ITER,
+        }
+        self.eval_inference_comp.model_config = ModelConfig(ToxiGenTestModel, {})
+        return config
+
+
 class TEST_MMMU_PIPELINE(MMMU_BASELINE_PIPELINE):
     # Test config the MMMU benchmark with MultipleChoiceTestModel and TestMMDataLoader
     def configure_pipeline(self, resume_from=None):
@@ -284,8 +298,32 @@ class TEST_MMMU_PIPELINE(MMMU_BASELINE_PIPELINE):
         self.data_processing_comp.data_reader_config.init_args["split"] = "dev"
         self.data_processing_comp.data_reader_config.init_args["tasks"] = ["Math"]
 
-        self.inference_comp.data_loader_config.class_name = TestMMDataLoader
+        self.inference_comp.data_loader_config.class_name = TestDataLoader
         self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
+        return config
+
+
+class TEST_GPQA_PIPELINE(GPQA_Experiment_Pipeline):
+    # Test config the GPQA benchmark with TestModel and TestDataLoader
+    def configure_pipeline(self):
+        config = super().configure_pipeline(model_config=ModelConfig(GenericTestModel, {}))
+        self.inference_comp.data_loader_config.class_name = TestDataLoader
+        self.inference_comp.data_loader_config.init_args = {
+            "path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl"),
+            "n_iter": N_ITER,
+        }
+        return config
+
+
+class TEST_DROP_PIPELINE(Drop_Experiment_Pipeline):
+    # Test config the Drop benchmark with TestModel and TestDataLoader
+    def configure_pipeline(self):
+        config = super().configure_pipeline(model_config=ModelConfig(GenericTestModel, {}))
+        self.inference_comp.data_loader_config.class_name = TestDataLoader
+        self.inference_comp.data_loader_config.init_args = {
+            "path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl"),
+            "n_iter": N_ITER,
+        }
         return config
 
 
@@ -465,9 +503,25 @@ class TOXIGEN_PipelineTest(PipelineTest, unittest.TestCase):
         return TEST_TOXIGEN_PIPELINE().pipeline_config
 
 
+class TOXIGEN_GEN_PipelineTest(PipelineTest, unittest.TestCase):
+    def get_config(self):
+        return TEST_TOXIGEN_GEN_PIPELINE().pipeline_config
+
+
 class KITAB_ONE_BOOK_CONSTRAINT_PIPELINE_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_KITAB_ONE_BOOK_CONSTRAINT_PIPELINE().pipeline_config
+
+
+@unittest.skipIf("skip_tests_with_missing_ds" in os.environ, "Missing public dataset. TODO: revert")
+class GPQA_PipelineTest(PipelineTest, unittest.TestCase):
+    def get_config(self):
+        return TEST_GPQA_PIPELINE().pipeline_config
+
+
+class DROP_PipelineTest(PipelineTest, unittest.TestCase):
+    def get_config(self):
+        return TEST_DROP_PIPELINE().pipeline_config
 
 
 class AIME_PipelineTest(PipelineTest, unittest.TestCase):
