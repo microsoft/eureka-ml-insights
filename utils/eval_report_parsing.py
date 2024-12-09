@@ -21,6 +21,15 @@ def coallate_results(release_directory_path, config):
             "capabilities": [ ]
         }
     }
+
+    model_list = [model["model"] for model in config["model_list"]]
+
+    # these models have different names in some of the report folders
+    model_list.append("GPT-4o_2024_05_13_450K")
+    model_list.append("GPT-4o_2024_05_13")
+    model_list.append("LLaVA-34B")
+    model_list.append("GPT-4")
+
     for capability in mapping:
         name = capability["capability"]
         modality = capability["modality"]
@@ -33,6 +42,8 @@ def coallate_results(release_directory_path, config):
                 continue
             models = os.listdir(os.path.join(release_directory_path, *capability["path"], model_family))
             for model in models:
+                if model not in model_list:
+                    continue
                 if capability["run"] == "average":
                     runs = os.listdir(os.path.join(release_directory_path, *capability["path"], model_family, model))
                 else:
@@ -54,11 +65,20 @@ def coallate_results(release_directory_path, config):
                                 scores = scores[0]
                             for metric in capability["metric"]:
                                 scores = scores[metric]
-                            sum += scores
+                            if type(scores) == float:
+                                sum += scores
+                            else:
+                                sum += scores["correct"]
+                            # sum += scores
                         num += 1
                         break
                     except FileNotFoundError:
                         continue
+                    except Exception as e:
+                        print("Error processing file: " + file_path)
+                        print(e)
+                        continue
+
                 if model == 'GPT-4o_2024_05_13_450K':
                     model = 'GPT-4o-2024-05-13'
                 if model == 'GPT-4o_2024_05_13':
@@ -191,7 +211,7 @@ def create_benchmark_breakdown(release_directory_path, config):
 
 
 # Example usage
-release_directory_path = '\\release'
+release_directory_path = '/release'
 config_path = 'website/static/config.json'
 
 coallate_results(release_directory_path, json.load(open(config_path)))

@@ -7,48 +7,6 @@
         "models": [
           {
             "name": "Claude-3-Opus",
-            "score": 50.5
-          },
-          {
-            "name": "Claude-3_5-Sonnet",
-            "score": 55.3
-          },
-          {
-            "name": "Gemini-1_5-Pro",
-            "score": 41.3
-          },
-          {
-            "name": "GPT-4-1106-Preview",
-            "score": 47.0
-          },
-          {
-            "name": "GPT-4o-2024-05-13",
-            "score": 53.7
-          },
-          {
-            "name": "Llama-3-70B",
-            "score": 37.4
-          },
-          {
-            "name": "Llama-3_1-405B",
-            "score": 54.9
-          },
-          {
-            "name": "Llama-3_1-70B",
-            "score": 44.2
-          },
-          {
-            "name": "Mistral_Large_2_2407",
-            "score": 36.3
-          }
-        ]
-      },
-      {
-        "name": "Information Retrieval Fact Precision",
-        "description": "Task: Retrieving long-form information from the model's parametric knowledge or from given input context with filtering constraints. Capability importance: All information retrieval tasks involve some form of constraint that defines the retrieval query. However, other simpler IR benchmarks only test for short-form generation (finding a single fact) and for a single con-straint. Being able to answer more complex queries is relevant to advanced search and information finding. State-of-the-art: Constrained retrieval from parametric knowledge is still prone to major irrelevance and fact fabrication with constraint satisfaction being less than 60%. Constrained retrieval from given input context is significantly better in overall, but for queries with more than one constraint constraint satisfaction and completeness drop to less than 70% and 60% respectively.",
-        "models": [
-          {
-            "name": "Claude-3-Opus",
             "score": 18.7
           },
           {
@@ -82,6 +40,48 @@
           {
             "name": "Mistral_Large_2_2407",
             "score": 17.6
+          }
+        ]
+      },
+      {
+        "name": "Information Retrieval Fact Precision",
+        "description": "Task: Retrieving long-form information from the model's parametric knowledge or from given input context with filtering constraints. Capability importance: All information retrieval tasks involve some form of constraint that defines the retrieval query. However, other simpler IR benchmarks only test for short-form generation (finding a single fact) and for a single con-straint. Being able to answer more complex queries is relevant to advanced search and information finding. State-of-the-art: Constrained retrieval from parametric knowledge is still prone to major irrelevance and fact fabrication with constraint satisfaction being less than 60%. Constrained retrieval from given input context is significantly better in overall, but for queries with more than one constraint constraint satisfaction and completeness drop to less than 70% and 60% respectively.",
+        "models": [
+          {
+            "name": "Claude-3-Opus",
+            "score": 50.5
+          },
+          {
+            "name": "Claude-3_5-Sonnet",
+            "score": 55.3
+          },
+          {
+            "name": "Gemini-1_5-Pro",
+            "score": 41.3
+          },
+          {
+            "name": "GPT-4-1106-Preview",
+            "score": 47.0
+          },
+          {
+            "name": "GPT-4o-2024-05-13",
+            "score": 53.7
+          },
+          {
+            "name": "Llama-3-70B",
+            "score": 37.4
+          },
+          {
+            "name": "Llama-3_1-405B",
+            "score": 54.9
+          },
+          {
+            "name": "Llama-3_1-70B",
+            "score": 44.2
+          },
+          {
+            "name": "Mistral_Large_2_2407",
+            "score": 36.3
           }
         ]
       },

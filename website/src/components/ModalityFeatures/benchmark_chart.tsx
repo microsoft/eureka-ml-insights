@@ -68,7 +68,7 @@ const BenchmarkChart = ({benchmark, experiment, config}: {benchmark: string, exp
                     series: series,
                     credits: {
                         enabled: false
-                    }  
+                    }
                 };
                 chartOptionsArray.push(tempChartOptions);
             }
