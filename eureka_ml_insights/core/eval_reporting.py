@@ -2,9 +2,9 @@
 import json
 import os
 
+from eureka_ml_insights.data_utils import NumpyEncoder
 from eureka_ml_insights.metrics import Reporter
 
-from .data_processing import NumpyEncoder
 from .pipeline import Component
 
 

@@ -3,18 +3,19 @@ from typing import Any
 
 from eureka_ml_insights.core import EvalReporting, Inference, PromptProcessing
 from eureka_ml_insights.data_utils import (
+    ColumnMatchMapTransform,
     CopyColumn,
     DataReader,
     HFDataReader,
     ImputeNA,
     MMDataLoader,
     RegexTransform,
-    RunPythonTransform,
     SequenceTransform,
+    ShuffleColumnsTransform,
 )
-from eureka_ml_insights.metrics import AverageAggregator, MaxTokenF1ScoreMetric
+from eureka_ml_insights.metrics import CountAggregator, ExactMatch
 
-from .config import (
+from eureka_ml_insights.configs import(
     AggregatorConfig,
     DataSetConfig,
     EvalReportingConfig,
@@ -24,13 +25,13 @@ from .config import (
     PipelineConfig,
     PromptProcessingConfig,
 )
-from .experiment_config import ExperimentConfig
+from eureka_ml_insights.configs import ExperimentConfig
 
-"""This file contains user defined configuration classes for the geometric reasoning task on geometer dataset.
+"""This file contains user defined configuration classes for the geometric reasoning task on the GPQA dataset.
 """
 
 
-class Drop_Experiment_Pipeline(ExperimentConfig):
+class GPQA_Experiment_Pipeline(ExperimentConfig):
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
@@ -40,24 +41,30 @@ class Drop_Experiment_Pipeline(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 HFDataReader,
                 {
-                    "path": "ucinlp/drop",
-                    "split": "validation",
+                    "path": "Idavidrein/gpqa",
+                    "tasks": "gpqa_diamond",
+                    "split": "train",
                     "transform": SequenceTransform(
                         [
-                            RunPythonTransform(
-                                python_code="df['ground_truth'] = df['answers_spans'].apply(lambda x: x['spans'])"
-                            )
+                            CopyColumn(column_name_src="Correct Answer", column_name_dst="A"),
+                            CopyColumn(column_name_src="Incorrect Answer 1", column_name_dst="B"),
+                            CopyColumn(column_name_src="Incorrect Answer 2", column_name_dst="C"),
+                            CopyColumn(column_name_src="Incorrect Answer 3", column_name_dst="D"),
+                            ShuffleColumnsTransform(columns=["A", "B", "C", "D"]),
+                            # finds answer choice that "Correct Answer" is mapped to, and stores it in "ground_truth"
+                            ColumnMatchMapTransform(
+                                new_col="ground_truth", key_col="Correct Answer", columns=["A", "B", "C", "D"]
+                            ),
                         ]
                     ),
                 },
             ),
             prompt_template_path=os.path.join(
                 os.path.dirname(__file__),
-                "../prompt_templates/drop_templates/basic.jinja",
+                "../prompt_templates/gpqa_templates/basic.jinja",
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
         )
-
         # Configure the inference component
         self.inference_comp = InferenceConfig(
             component_type=Inference,
@@ -69,8 +76,7 @@ class Drop_Experiment_Pipeline(ExperimentConfig):
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
         )
-
-        # # Configure the evaluation and reporting component.
+        # Configure the evaluation and reporting component.
         self.evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
             data_reader_config=DataSetConfig(
@@ -86,7 +92,7 @@ class Drop_Experiment_Pipeline(ExperimentConfig):
                             ),
                             RegexTransform(
                                 columns="model_output",
-                                prompt_pattern=r"My answer is (.+)",
+                                prompt_pattern=r"My answer is (\w)(?=\s|\W|$)",
                                 case=True,
                             ),
                             ImputeNA(columns="model_output", value=""),
@@ -94,12 +100,9 @@ class Drop_Experiment_Pipeline(ExperimentConfig):
                     ),
                 },
             ),
-            metric_config=MetricConfig(MaxTokenF1ScoreMetric),
+            metric_config=MetricConfig(ExactMatch),
             aggregator_configs=[
-                AggregatorConfig(
-                    AverageAggregator,
-                    {"column_names": ["MaxTokenF1ScoreMetric_result"]},
-                )
+                AggregatorConfig(CountAggregator, {"column_names": ["ExactMatch_result"], "normalize": True})
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
         )

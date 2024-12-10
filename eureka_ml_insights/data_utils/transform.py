@@ -4,6 +4,7 @@ from abc import abstractmethod
 from dataclasses import dataclass, field
 from typing import Dict, List
 
+import numpy as np
 import pandas as pd
 import tiktoken
 import numpy as np
@@ -178,6 +179,63 @@ class MultiColumnTransform(DFTransformBase):
         self.validate(df)
         for column in self.columns:
             df[column] = df[column].apply(self._transform)
+        return df
+
+
+@dataclass
+class ShuffleColumnsTransform(MultiColumnTransform):
+    """
+    For a set of columns, shuffles the values across each row of these columns.
+    Values will be shuffled differently for each row. 
+
+    This class is meant to be used in MCQ benchmarks to shuffle answer choices
+    across different letter options (e.g. shuffle what choice maps to 'A' vs 'B' vs 'C').
+    """
+
+    columns: List[str]
+
+    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        """For each row in df, shuffle values across these columns."""
+        self.validate(df)
+
+        def shuffle_row(row):
+            row[self.columns] = np.random.permutation(row[self.columns].values)
+            return row
+
+        df = df.apply(shuffle_row, axis=1)
+        return df
+
+
+@dataclass
+class ColumnMatchMapTransform(DFTransformBase):
+    """
+    Creates a new column indicating the name of the column that matches the value in the key column for each row.
+    E.g. for a row, if value of key_col matches value of 'A' column, new_col will contain the value 'A'.
+    Used to store the letter of the correct answer choice in MCQ benchmarks.
+    """
+
+    key_col: str
+    new_col: str
+    columns: List[str]
+
+    # Function to find matching column
+    def _find_matching_column(self, row):
+        for col in self.columns:
+            if row[col] == row[self.key_col]:
+                return col
+        return None  # If no match is found (optional)
+    
+    def validate(self, df: pd.DataFrame):
+        """Check that all columns to be transformed are present actually in the data frame."""
+        extra_columns = set(self.columns + [self.key_col]) - set(df.columns)
+        if extra_columns:
+            msg = ", ".join(sorted(extra_columns))
+            raise ValueError(f"The following columns are not present in the data frame: {msg}")
+
+    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        """For each row in df, shuffle values across these columns."""
+        self.validate(df)
+        df[self.new_col] = df.apply(self._find_matching_column, axis=1)
         return df
 
 

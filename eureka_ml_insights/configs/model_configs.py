@@ -13,6 +13,7 @@ from eureka_ml_insights.models import (
     LLaVAModel,
     MistralServerlessAzureRestEndpointModel,
     RestEndpointModel,
+    TestModel,
 )
 
 from .config import ModelConfig
@@ -20,6 +21,10 @@ from .config import ModelConfig
 # For models that require secret keys, you can store the keys in a json file and provide the path to the file
 # in the secret_key_params dictionary. OR you can provide the key name and key vault URL to fetch the key from Azure Key Vault.
 # You don't need to provide both the key_vault_url and local_keys_path. You can provide one of them based on your setup.
+
+
+# Test model
+TEST_MODEL_CONFIG = ModelConfig(TestModel, {})
 
 # OpenAI models
 

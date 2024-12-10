@@ -16,28 +16,6 @@
   }
 }
 
-.buttons {
-  align-items: center;
-  justify-content: center;
-  padding: 1em 1.5em !important;
-  font-size: 1.1em;
-  outline: black;
-  outline-color: black;
-}
-
-.buttons.fullReportButton {
-  margin-right: .8em;
-  background-color: black;
-  color: white;
-}
-
-.hero {  
-  position: relative;  
-  display: flex;  
-  align-items: center;  
-  justify-content: center;  
-}  
-
 .heroContainer {  
   position: relative;  
 }  
