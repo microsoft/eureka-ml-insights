@@ -91,7 +91,7 @@ class EndpointModel(Model):
     num_retries: int = 3
 
     @abstractmethod
-    def create_request(self, text_prompt, query_images=None, system_message=None):
+    def create_request(self, text_prompt, **kwargs):
         raise NotImplementedError
 
     @abstractmethod
@@ -99,7 +99,7 @@ class EndpointModel(Model):
         # must return the model output and the response time
         raise NotImplementedError
 
-    def generate(self, query_text, query_images=None, system_message=None):
+    def generate(self, query_text, query_images=None, system_message=None, previous_messages=None):
         """
         Calls the endpoint to generate the model response.
         args:
@@ -111,7 +111,7 @@ class EndpointModel(Model):
                                   and any other relevant information returned by the model.
         """
         response_dict = {}
-        request = self.create_request(query_text, query_images=query_images, system_message=system_message)
+        request = self.create_request(query_text, query_images=query_images, system_message=system_message, previous_messages=previous_messages)
         attempts = 0
         while attempts < self.num_retries:
             try:
@@ -159,15 +159,17 @@ class RestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
     presence_penalty: float = 0
     do_sample: bool = True
 
-    def create_request(self, text_prompt, query_images=None, system_message=None):
+    def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
+        """Creates a request for the model."""
+        messages = []
+        if system_message:
+            messages.append({"role": "system", "content": system_message})
+        if previous_messages:
+            messages.extend(previous_messages)
+        messages.append({"role": "user", "content": text_prompt})
         data = {
             "input_data": {
-                "input_string": [
-                    {
-                        "role": "user",
-                        "content": text_prompt,
-                    }
-                ],
+                "input_string": messages,
                 "parameters": {
                     "temperature": self.temperature,
                     "top_p": self.top_p,
@@ -176,12 +178,8 @@ class RestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
                 },
             }
         }
-        if system_message:
-            data["input_data"]["input_string"] = [{"role": "system", "content": system_message}] + data["input_data"][
-                "input_string"
-            ]
         if query_images:
-            raise NotImplementedError("Images are not supported for GCR endpoints yet.")
+            raise NotImplementedError("Images are not supported for RestEndpointModel endpoints yet.")
 
         body = str.encode(json.dumps(data))
         # The azureml-model-deployment header will force the request to go to a specific deployment.
@@ -238,7 +236,7 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
             }
 
     @abstractmethod
-    def create_request(self, text_prompt, query_images=None, system_message=None):
+    def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
         # Exact model parameters are model-specific.
         # The method cannot be implemented unless the model being deployed is known.
         raise NotImplementedError
@@ -278,13 +276,18 @@ class LlamaServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
     skip_special_tokens: str = "false"
     ignore_eos: str = "false"
 
-    def create_request(self, text_prompt, query_images=None, *args, **kwargs):
-        user_content = {"role": "user", "content": text_prompt}
+    def create_request(self, text_prompt, query_images=None, **kwargs):
+        messages = []
+        if system_message:
+            messages.append({"role": "system", "content": system_message})
+        if kwargs.get("previous_messages"):
+            messages.extend(kwargs.get("previous_messages"))
+        user_content = text_prompt
         if query_images:
             if len(query_images) > 1:
                 raise ValueError("Llama vision model does not support more than 1 image.")
             encoded_images = self.base64encode(query_images)
-            user_content["content"] = [
+            user_content = [
                 {"type": "text", "text": text_prompt},
                 {
                     "type": "image_url",
@@ -293,9 +296,11 @@ class LlamaServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
                     },
                 },
             ]
+        messages.append({"role": "user", "content": user_content})
+
 
         data = {
-            "messages": [user_content],
+            "messages": messages,
             "max_tokens": self.max_tokens,
             "temperature": self.temperature,
             "top_p": self.top_p,
@@ -328,6 +333,7 @@ class MistralServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
         super().__post_init__()
 
     def create_request(self, text_prompt, *args, **kwargs):
+        
         data = {
             "messages": [{"role": "user", "content": text_prompt}],
             "max_tokens": self.max_tokens,
@@ -348,10 +354,12 @@ class OpenAICommonRequestResponseMixIn:
     This mixin class defines the request and response handling for most OpenAI models.
     """
 
-    def create_request(self, prompt, query_images=None, system_message=None):
+    def create_request(self, prompt, query_images=None, system_message=None, *args, **kwargs):
         messages = []
         if system_message:
             messages.append({"role": "system", "content": system_message})
+        if kwargs.get("messages"):
+            messages.extend(kwargs.get("messages"))
         user_content = {"role": "user", "content": prompt}
         if query_images:
             encoded_images = self.base64encode(query_images)
@@ -461,8 +469,18 @@ class DirectOpenAIModel(OpenAICommonRequestResponseMixIn, DirectOpenAIClientMixI
 
 
 class OpenAIO1RequestResponseMixIn:
+    
     def create_request(self, prompt, *args, **kwargs):
-        messages = [{"role": "user", "content": prompt}]
+        if kwargs.get("system_message"):
+            # system messages are not supported for OAI reasoning models
+            # https://platform.openai.com/docs/guides/reasoning
+            logging.warning("System messages are not supported for OAI reasoning models.")
+        
+        messages = []   
+        if kwargs.get("messages"):
+            messages.extend(kwargs.get("messages"))
+
+        messages.append({"role": "user", "content": prompt})
         return {"messages": messages}
 
     def get_response(self, request):
