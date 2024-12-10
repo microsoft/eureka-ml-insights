@@ -3,6 +3,8 @@ import os
 from eureka_ml_insights.configs.experiment_config import ExperimentConfig
 from eureka_ml_insights.core import EvalReporting, Inference, PromptProcessing
 from eureka_ml_insights.data_utils import (
+    AddColumnAndData,
+    ASTEvalTransform,
     HFDataReader,
     MMDataLoader,
     ColumnRename,
@@ -15,10 +17,10 @@ from eureka_ml_insights.data_utils.spatial_utils import (
 )
 from eureka_ml_insights.metrics import (
     CountAggregator,
-    ObjectRecognitionMetric,
+    SpatialAndLayoutReasoningMetric,
 )
 
-from ..config import (
+from eureka_ml_insights.configs import (
     AggregatorConfig,
     DataSetConfig,
     EvalReportingConfig,
@@ -29,7 +31,7 @@ from ..config import (
 )
 from .common import LOCAL_DATA_PIPELINE
 
-"""This file contains example user defined configuration classes for the visual prompting task.
+"""This file contains example user defined configuration classes for the spatial reasoning task.
 In order to define a new configuration, a new class must be created that directly or indirectly
  inherits from ExperimentConfig and the configure_pipeline method should be implemented.
 You can inherit from one of the existing user defined classes below and override the necessary
@@ -42,9 +44,9 @@ Pass the name of the class to the main.py script to run the pipeline.
 """
 
 
-class VISUAL_PROMPTING_PAIRS_PIPELINE(ExperimentConfig):
+class SPATIAL_REASONING_PAIRS_PIPELINE(ExperimentConfig):
     """
-    This defines an ExperimentConfig pipeline for the visual prompting dataset, pairs condition.
+    This defines an ExperimentConfig pipeline for the spatial reasoning  dataset, pairs condition.
     There is no model_config by default and the model config must be passed in via command lime.
     """
 
@@ -57,7 +59,7 @@ class VISUAL_PROMPTING_PAIRS_PIPELINE(ExperimentConfig):
                 {
                     "path": "microsoft/IMAGE_UNDERSTANDING",
                     "split": "val",
-                    "tasks": "visual_prompting_pairs",
+                    "tasks": "spatial_reasoning_lrtb_pairs",
                 },
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
@@ -87,15 +89,23 @@ class VISUAL_PROMPTING_PAIRS_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            LowerCaseNoPunctuationConvertNumbers(columns=["model_output"]),
+                            AddColumnAndData("target_options", "['left', 'right', 'above', 'below']"),
+                            ASTEvalTransform(columns=["target_options"]),
+                            LowerCaseNoPunctuationConvertNumbers(
+                                columns=["ground_truth", "model_output", "target_options"]
+                            ),
                         ]
                     ),
                 },
             ),
-            metric_config=MetricConfig(ObjectRecognitionMetric),
+            metric_config=MetricConfig(SpatialAndLayoutReasoningMetric),
             aggregator_configs=[
                 AggregatorConfig(
-                    CountAggregator, {"column_names": ["ObjectRecognitionMetric_result"], "normalize": True}
+                    CountAggregator, {"column_names": ["SpatialAndLayoutReasoningMetric_result"], "normalize": True}
+                ),
+                AggregatorConfig(
+                    CountAggregator,
+                    {"column_names": ["SpatialAndLayoutReasoningMetric_result"], "group_by": "ground_truth"},
                 ),
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
@@ -105,24 +115,27 @@ class VISUAL_PROMPTING_PAIRS_PIPELINE(ExperimentConfig):
         return PipelineConfig([self.data_processing_comp, self.inference_comp, self.evalreporting_comp], self.log_dir)
 
 
-class VISUAL_PROMPTING_SINGLE_PIPELINE(VISUAL_PROMPTING_PAIRS_PIPELINE):
-    """This class extends VISUAL_PROMPTING_PAIRS_PIPELINE to use the single object condition."""
+class SPATIAL_REASONING_SINGLE_PIPELINE(SPATIAL_REASONING_PAIRS_PIPELINE):
+    """This class extends SPATIAL_REASONING_PAIRS_PIPELINE to use the single object condition."""
 
     def configure_pipeline(self, model_config, resume_from=None):
-        config = super().configure_pipeline(model_config, resume_from)
+        config = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         self.data_processing_comp.data_reader_config.init_args["tasks"] = (
-            "visual_prompting_single"
+            "spatial_reasoning_lrtb_single"
         )
+        self.evalreporting_comp.data_reader_config.init_args["transform"].transforms[
+            0
+        ].data = "['left', 'right', 'top', 'bottom']"
         return config
 
 
-class VISUAL_PROMPTING_PAIRS_LOCAL_PIPELINE(LOCAL_DATA_PIPELINE, VISUAL_PROMPTING_PAIRS_PIPELINE):
+class SPATIAL_REASONING_PAIRS_LOCAL_PIPELINE(LOCAL_DATA_PIPELINE, SPATIAL_REASONING_PAIRS_PIPELINE):
     def configure_pipeline(self, model_config, resume_from=None):
         local_path = "/home/neel/data/spatial_understanding"
         return super().configure_pipeline(model_config, resume_from, local_path)
 
 
-class VISUAL_PROMPTING_SINGLE_LOCAL_PIPELINE(LOCAL_DATA_PIPELINE, VISUAL_PROMPTING_SINGLE_PIPELINE):
+class SPATIAL_REASONING_SINGLE_LOCAL_PIPELINE(LOCAL_DATA_PIPELINE, SPATIAL_REASONING_SINGLE_PIPELINE):
     def configure_pipeline(self, model_config, resume_from=None):
         local_path = "/home/neel/data/spatial_understanding"
         return super().configure_pipeline(model_config, resume_from, local_path)

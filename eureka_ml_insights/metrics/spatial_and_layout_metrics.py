@@ -5,12 +5,8 @@ import re
 import nltk
 from pycocotools.coco import COCO
 
-from eureka_ml_insights.data_utils import JsonReader
-from eureka_ml_insights.metrics.metrics_base import (
-    ClassicMetric,
-    DetectionMetric,
-    MultipleChoiceMetric,
-)
+from ..data_utils.data import JsonReader
+from .metrics_base import ClassicMetric, DetectionMetric, MultipleChoiceMetric
 
 
 def download_nltk_resources():

@@ -3,24 +3,21 @@ import os
 from eureka_ml_insights.configs.experiment_config import ExperimentConfig
 from eureka_ml_insights.core import EvalReporting, Inference, PromptProcessing
 from eureka_ml_insights.data_utils import (
-    AddColumnAndData,
-    ASTEvalTransform,
     HFDataReader,
+    HFJsonReader,
     MMDataLoader,
     ColumnRename,
+    CopyColumn,
     DataReader,
     PrependStringTransform,
     SequenceTransform,
 )
-from eureka_ml_insights.data_utils.spatial_utils import (
-    LowerCaseNoPunctuationConvertNumbers,
-)
 from eureka_ml_insights.metrics import (
-    CountAggregator,
-    SpatialAndLayoutReasoningMetric,
+    CocoDetectionAggregator,
+    CocoObjectDetectionMetric,
 )
 
-from ..config import (
+from eureka_ml_insights.configs import (
     AggregatorConfig,
     DataSetConfig,
     EvalReportingConfig,
@@ -31,7 +28,7 @@ from ..config import (
 )
 from .common import LOCAL_DATA_PIPELINE
 
-"""This file contains example user defined configuration classes for the spatial reasoning task.
+"""This file contains example user defined configuration classes for the object detection task.
 In order to define a new configuration, a new class must be created that directly or indirectly
  inherits from ExperimentConfig and the configure_pipeline method should be implemented.
 You can inherit from one of the existing user defined classes below and override the necessary
@@ -44,9 +41,9 @@ Pass the name of the class to the main.py script to run the pipeline.
 """
 
 
-class SPATIAL_REASONING_PAIRS_PIPELINE(ExperimentConfig):
+class OBJECT_DETECTION_PAIRS_PIPELINE(ExperimentConfig):
     """
-    This defines an ExperimentConfig pipeline for the spatial reasoning  dataset, pairs condition.
+    This defines an ExperimentConfig pipeline for the object detection dataset, pairs condition.
     There is no model_config by default and the model config must be passed in via command lime.
     """
 
@@ -59,7 +56,7 @@ class SPATIAL_REASONING_PAIRS_PIPELINE(ExperimentConfig):
                 {
                     "path": "microsoft/IMAGE_UNDERSTANDING",
                     "split": "val",
-                    "tasks": "spatial_reasoning_lrtb_pairs",
+                    "tasks": "object_detection_pairs",
                 },
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
@@ -79,6 +76,12 @@ class SPATIAL_REASONING_PAIRS_PIPELINE(ExperimentConfig):
             resume_from=resume_from,
         )
 
+        target_coco_json_reader = HFJsonReader(
+            repo_id="microsoft/IMAGE_UNDERSTANDING",
+            repo_type="dataset",
+            filename="object_detection_pairs/coco_instances.json",            
+        )
+
         # Configure the evaluation and reporting component.
         self.evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
@@ -87,25 +90,19 @@ class SPATIAL_REASONING_PAIRS_PIPELINE(ExperimentConfig):
                 {
                     "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
                     "format": ".jsonl",
-                    "transform": SequenceTransform(
-                        [
-                            AddColumnAndData("target_options", "['left', 'right', 'above', 'below']"),
-                            ASTEvalTransform(columns=["target_options"]),
-                            LowerCaseNoPunctuationConvertNumbers(
-                                columns=["ground_truth", "model_output", "target_options"]
-                            ),
-                        ]
-                    ),
                 },
             ),
-            metric_config=MetricConfig(SpatialAndLayoutReasoningMetric),
+            metric_config=MetricConfig(
+                CocoObjectDetectionMetric,
+                {"target_coco_json_reader": target_coco_json_reader},
+            ),
             aggregator_configs=[
                 AggregatorConfig(
-                    CountAggregator, {"column_names": ["SpatialAndLayoutReasoningMetric_result"], "normalize": True}
-                ),
-                AggregatorConfig(
-                    CountAggregator,
-                    {"column_names": ["SpatialAndLayoutReasoningMetric_result"], "group_by": "ground_truth"},
+                    CocoDetectionAggregator,
+                    {
+                        "column_names": ["CocoObjectDetectionMetric_result"],
+                        "target_coco_json_reader": target_coco_json_reader,
+                    },
                 ),
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
@@ -115,27 +112,34 @@ class SPATIAL_REASONING_PAIRS_PIPELINE(ExperimentConfig):
         return PipelineConfig([self.data_processing_comp, self.inference_comp, self.evalreporting_comp], self.log_dir)
 
 
-class SPATIAL_REASONING_SINGLE_PIPELINE(SPATIAL_REASONING_PAIRS_PIPELINE):
-    """This class extends SPATIAL_REASONING_PAIRS_PIPELINE to use the single object condition."""
+class OBJECT_DETECTION_SINGLE_PIPELINE(OBJECT_DETECTION_PAIRS_PIPELINE):
+    """This class extends OBJECT_DETECTION_PAIRS_PIPELINE to use the single object condition."""
 
     def configure_pipeline(self, model_config, resume_from=None):
-        config = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
+        config = super().configure_pipeline(model_config, resume_from)
         self.data_processing_comp.data_reader_config.init_args["tasks"] = (
-            "spatial_reasoning_lrtb_single"
+            "object_detection_single"
         )
-        self.evalreporting_comp.data_reader_config.init_args["transform"].transforms[
-            0
-        ].data = "['left', 'right', 'top', 'bottom']"
+
+        target_coco_json_reader = HFJsonReader(
+            repo_id="microsoft/IMAGE_UNDERSTANDING",
+            repo_type="dataset",
+            filename="object_detection_single/coco_instances.json",
+        )
+
+        self.evalreporting_comp.metric_config.init_args["target_coco_json_reader"] = target_coco_json_reader
+        self.evalreporting_comp.aggregator_configs[0].init_args["target_coco_json_reader"] = target_coco_json_reader
+
         return config
 
 
-class SPATIAL_REASONING_PAIRS_LOCAL_PIPELINE(LOCAL_DATA_PIPELINE, SPATIAL_REASONING_PAIRS_PIPELINE):
+class OBJECT_DETECTION_PAIRS_LOCAL_PIPELINE(LOCAL_DATA_PIPELINE, OBJECT_DETECTION_PAIRS_PIPELINE):
     def configure_pipeline(self, model_config, resume_from=None):
         local_path = "/home/neel/data/spatial_understanding"
         return super().configure_pipeline(model_config, resume_from, local_path)
 
 
-class SPATIAL_REASONING_SINGLE_LOCAL_PIPELINE(LOCAL_DATA_PIPELINE, SPATIAL_REASONING_SINGLE_PIPELINE):
+class OBJECT_DETECTION_SINGLE_LOCAL_PIPELINE(LOCAL_DATA_PIPELINE, OBJECT_DETECTION_SINGLE_PIPELINE):
     def configure_pipeline(self, model_config, resume_from=None):
         local_path = "/home/neel/data/spatial_understanding"
         return super().configure_pipeline(model_config, resume_from, local_path)

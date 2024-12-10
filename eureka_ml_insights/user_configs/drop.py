@@ -14,7 +14,7 @@ from eureka_ml_insights.data_utils import (
 )
 from eureka_ml_insights.metrics import AverageAggregator, MaxTokenF1ScoreMetric
 
-from .config import (
+from eureka_ml_insights.configs import (
     AggregatorConfig,
     DataSetConfig,
     EvalReportingConfig,
@@ -24,7 +24,7 @@ from .config import (
     PipelineConfig,
     PromptProcessingConfig,
 )
-from .experiment_config import ExperimentConfig
+from eureka_ml_insights.configs import ExperimentConfig
 
 """This file contains user defined configuration classes for the geometric reasoning task on geometer dataset.
 """

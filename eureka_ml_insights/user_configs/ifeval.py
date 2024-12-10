@@ -20,7 +20,7 @@ from eureka_ml_insights.metrics.reports import (
     TwoColumnSumAverageAggregator,
 )
 
-from .config import (
+from eureka_ml_insights.configs import(
     AggregatorConfig,
     DataProcessingConfig,
     DataSetConfig,
@@ -31,7 +31,7 @@ from .config import (
     PipelineConfig,
     PromptProcessingConfig,
 )
-from .experiment_config import ExperimentConfig
+from eureka_ml_insights.configs import ExperimentConfig
 
 
 class IFEval_PIPELINE(ExperimentConfig):

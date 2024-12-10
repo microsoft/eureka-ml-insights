@@ -18,7 +18,7 @@ from eureka_ml_insights.data_utils.dna_utils import DNAParseLabel
 from eureka_ml_insights.data_utils.transform import AddColumn
 from eureka_ml_insights.metrics.reports import CountAggregator
 
-from .config import (
+from eureka_ml_insights.configs import (
     AggregatorConfig,
     DataProcessingConfig,
     DataSetConfig,
@@ -28,8 +28,8 @@ from .config import (
     PipelineConfig,
     PromptProcessingConfig,
 )
-from .experiment_config import ExperimentConfig
-from .model_configs import OAI_GPT4_1106_PREVIEW_CONFIG
+from eureka_ml_insights.configs import ExperimentConfig
+from eureka_ml_insights.configs.model_configs import OAI_GPT4_1106_PREVIEW_CONFIG
 
 
 class DNA_PIPELINE(ExperimentConfig):
