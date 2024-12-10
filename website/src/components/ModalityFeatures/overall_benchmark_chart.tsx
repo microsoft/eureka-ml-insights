@@ -5,10 +5,6 @@ import HighchartsReact from "highcharts-react-official";
 import Exporting from "highcharts/modules/exporting";  
 import ExportData from "highcharts/modules/export-data";  
 
-// Initialize the modules  
-Exporting(Highcharts);  
-ExportData(Highcharts);  
-
 const OverallBenchmarkChart = ({benchmark, config}: {benchmark: string, config: EurekaConfig}) => {
     const [isLoading, setIsLoading] = useState(true);  
     const [highchartsLoading, setHighchartsLoading] = useState(true);  
@@ -19,6 +15,8 @@ const OverallBenchmarkChart = ({benchmark, config}: {benchmark: string, config: 
           const HC_more = await import('highcharts/highcharts-more');  
           HC_more.default(Highcharts);  
           setHighchartsLoading(false);
+          Exporting(Highcharts);  
+          ExportData(Highcharts);  
         };  
         loadHighchartsMore();
       }, []); 

@@ -10,10 +10,6 @@ import Heading from '@theme/Heading';
 import { useHistory } from '@docusaurus/router';
 import Link from '@docusaurus/Link';
 
-// Initialize the modules  
-Exporting(Highcharts);  
-ExportData(Highcharts);  
-
 const OverallVisualization = ({config}: {config: EurekaConfig}) => {
     if (!config) {  
         // config is still null, probably still fetching data
@@ -28,6 +24,8 @@ const OverallVisualization = ({config}: {config: EurekaConfig}) => {
           const HC_more = await import('highcharts/highcharts-more');  
           HC_more.default(Highcharts);  
           setHighchartsLoading(false);
+          Exporting(Highcharts);  
+          ExportData(Highcharts);  
         };  
         loadHighchartsMore();
       }, []); 
