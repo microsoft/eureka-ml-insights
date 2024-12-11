@@ -13,7 +13,6 @@ from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 
 from eureka_ml_insights.secret_management import get_secret
 
-
 @dataclass
 class Model(ABC):
     """This class is used to define the structure of a model class.
@@ -218,6 +217,7 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
     url: str = None
     model_name: str = None
     stream: bool = False
+    auth_scope: str = "https://cognitiveservices.azure.com/.default"
 
     def __post_init__(self):
         try:
@@ -233,7 +233,7 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
             }
         except ValueError:
             self.bearer_token_provider = get_bearer_token_provider(
-                DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"
+                DefaultAzureCredential(), self.auth_scope
             )
             self.headers = {
                 "Content-Type": "application/json",
@@ -288,8 +288,8 @@ class LlamaServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
 
     def create_request(self, text_prompt, query_images=None, **kwargs):
         messages = []
-        if system_message:
-            messages.append({"role": "system", "content": system_message})
+        if kwargs.get("system_message"):
+            messages.append({"role": "system", "content": kwargs.get("system_message")})
         if kwargs.get("previous_messages"):
             messages.extend(kwargs.get("previous_messages"))
         user_content = text_prompt
@@ -342,10 +342,17 @@ class MistralServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
             self.top_p = 1
         super().__post_init__()
 
-    def create_request(self, text_prompt, *args, **kwargs):
-        
+    def create_request(self, text_prompt, query_images=None, system_message=None, **kwargs):
+        messages = []
+        if system_message:
+            messages.append({"role": "system", "content": system_message})
+        if kwargs.get("previous_messages"):
+            messages.extend(kwargs.get("previous_messages"))
+        if query_images:
+            raise NotImplementedError("Images are not supported for MistralServerlessAzureRestEndpointModel endpoints.")
+        messages.append({"role": "user", "content": text_prompt})
         data = {
-            "messages": [{"role": "user", "content": text_prompt}],
+            "messages": messages,
             "max_tokens": self.max_tokens,
             "temperature": self.temperature,
             "top_p": self.top_p,
@@ -368,12 +375,12 @@ class OpenAICommonRequestResponseMixIn:
         messages = []
         if system_message:
             messages.append({"role": "system", "content": system_message})
-        if kwargs.get("messages"):
-            messages.extend(kwargs.get("messages"))
-        user_content = {"role": "user", "content": prompt}
+        if kwargs.get("previous_messages"):
+            messages.extend(kwargs.get("previous_messages"))
+        user_content = prompt
         if query_images:
             encoded_images = self.base64encode(query_images)
-            user_content["content"] = [
+            user_content = [
                 {"type": "text", "text": prompt},
                 {
                     "type": "image_url",
@@ -382,7 +389,7 @@ class OpenAICommonRequestResponseMixIn:
                     },
                 },
             ]
-        messages.append(user_content)
+        messages.append({"role": "user", "content": user_content})
         return {"messages": messages}
 
     def get_response(self, request):
@@ -412,7 +419,7 @@ class AzureOpenAIClientMixIn:
         from openai import AzureOpenAI
 
         token_provider = get_bearer_token_provider(
-            DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"
+            DefaultAzureCredential(), self.auth_scope
         )
         return AzureOpenAI(
             azure_endpoint=self.url,
@@ -457,6 +464,7 @@ class AzureOpenAIModel(OpenAICommonRequestResponseMixIn, AzureOpenAIClientMixIn,
     presence_penalty: float = 0
     seed: int = 0
     api_version: str = "2023-06-01-preview"
+    auth_scope: str = "https://cognitiveservices.azure.com/.default"
 
     def __post_init__(self):
         self.client = self.get_client()
@@ -487,10 +495,9 @@ class OpenAIO1RequestResponseMixIn:
             # system messages are not supported for OAI reasoning models
             # https://platform.openai.com/docs/guides/reasoning
             logging.warning("System messages are not supported for OAI reasoning models.")
-        
         messages = []   
-        if kwargs.get("messages"):
-            messages.extend(kwargs.get("messages"))
+        if kwargs.get("previous_messages"):
+            messages.extend(kwargs.get("previous_messages"))
 
         messages.append({"role": "user", "content": prompt})
         return {"messages": messages}
@@ -546,6 +553,8 @@ class AzureOpenAIO1Model(OpenAIO1RequestResponseMixIn, AzureOpenAIClientMixIn, E
     frequency_penalty: float = 0
     presence_penalty: float = 0
     api_version: str = "2023-06-01-preview"
+    auth_scope: str = "https://cognitiveservices.azure.com/.default"
+
 
     def __post_init__(self):
         self.client = self.get_client()
@@ -578,7 +587,7 @@ class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
             max_output_tokens=self.max_tokens, temperature=self.temperature, top_p=self.top_p
         )
 
-    def create_request(self, text_prompt, query_images=None, system_message=None):
+    def create_request(self, text_prompt, query_images=None, system_message=None, **kwargs):
         import google.generativeai as genai
 
         self.model = genai.GenerativeModel(self.model_name, system_instruction=system_message)
@@ -960,14 +969,15 @@ class ClaudeModel(EndpointModel, KeyBasedAuthMixIn):
             timeout=self.timeout,
         )
 
-    def create_request(self, prompt, query_images=None, system_message=None):
+    def create_request(self, prompt, query_images=None, system_message=None, **kwargs):
         messages = []
 
-        user_content = {"role": "user", "content": prompt}
-
+        user_content = prompt
+        if kwargs.get("previous_messages"):
+            messages.extend(kwargs.get("previous_messages"))
         if query_images:
             encoded_images = self.base64encode(query_images)
-            user_content["content"] = [
+            user_content = [
                 {"type": "text", "text": prompt},
                 {
                     "type": "image",
@@ -978,7 +988,7 @@ class ClaudeModel(EndpointModel, KeyBasedAuthMixIn):
                     },
                 },
             ]
-        messages.append(user_content)
+        messages.append({"role": "user", "content": user_content})
 
         if system_message:
             return {"messages": messages, "system": system_message}
