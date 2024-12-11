@@ -2,12 +2,13 @@ from .f1score_metrics import MaxTokenF1ScoreMetric
 from .geomtric_reasoning_metrics import GeoMCQMetric
 from .metrics_base import (
     CaseInsensitiveMatch,
-    CaseInsensitiveOrMatch,
     ClassicMetric,
     CompositeMetric,
     ExactMatch,
     IdentityMetric,
     Metric,
+    MultiCandidateAnyExactMatch,
+    MultiCandidateAnyCaseInsensitiveMatch,
     SubstringExistsMatch,
 )
 from .mmmu_metrics import MMMUMetric

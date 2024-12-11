@@ -69,6 +69,7 @@ __all__ = [
     PrependStringTransform,
     ExtractAnswerGrid,
     ExtractAnswerSpatialMapAndMaze,
+    ExtractQuestionOptions,
     ShuffleColumnsTransform,
     ColumnMatchMapTransform,
     TokenCounterTransform,

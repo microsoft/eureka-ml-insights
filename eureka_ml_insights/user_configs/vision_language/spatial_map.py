@@ -13,7 +13,7 @@ from eureka_ml_insights.data_utils import (
     PrependStringTransform,
     SequenceTransform,
 )
-from eureka_ml_insights.metrics import CaseInsensitiveOrMatch, CountAggregator
+from eureka_ml_insights.metrics import MultiCandidateAnyCaseInsensitiveMatch, CountAggregator
 
 from eureka_ml_insights.configs import (
     AggregatorConfig,
@@ -97,7 +97,7 @@ class SPATIAL_MAP_PIPELINE(ExperimentConfig):
                     ),
                 },
             ),
-            metric_config=MetricConfig(CaseInsensitiveOrMatch),
+            metric_config=MetricConfig(MultiCandidateAnyCaseInsensitiveMatch),
             aggregator_configs=[
                 AggregatorConfig(CountAggregator, {"column_names": ["CaseInsensitiveOrMatch_result"], "normalize": True}),
                 AggregatorConfig(
