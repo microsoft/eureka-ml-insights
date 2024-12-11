@@ -452,13 +452,13 @@
     {
       "model_family": "Llama",
       "model": "Llama-3-70B",
-      "color": "#058801",
+      "color": "#71A920",
       "modality": ["language"]
     },
     {
       "model_family": "Llama",
       "model": "Llama-3_1-405B",
-      "color": "#71A920",
+      "color": "#058801",
       "modality": ["language"]
     },
     {
@@ -470,13 +470,13 @@
     {
       "model_family": "GPT",
       "model": "GPT-4-1106-Preview",
-      "color": "#E3008C",
+      "color": "#ED78CC",
       "modality": ["language"]
     },
     {
       "model_family": "GPT",
       "model": "GPT-4o-2024-05-13",
-      "color": "#ED78CC",
+      "color": "#E3008C",
       "modality": ["vision", "language"]
     },
     {
@@ -500,7 +500,7 @@
     {
       "model_family": "Llava",
       "model": "Llava-1_6-34B",
-      "color": "#E86B24",
+      "color": "#9D65C9",
       "modality": ["language"]
     }
   ]
