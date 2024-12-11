@@ -188,7 +188,7 @@
         {
           "title": "Context Size",
           "filePattern": ".*ExactMatch_result_grouped_by_ctx_size.*",
-          "experimentDescription": "Input lengths in FlenQA range from 250 to 3000 tokens. Each prompt is padded with paragraphs sampled from other instances of the same task, or paragraphs sampled from Book Corpus, with key information presented at various locations in the context (at the beginning, at the end, in the middle, or at random locations).",
+          "experimentDescription": "This benchmark measures the accuracy of True/False LLM responses compared to the ground truth. Input lengths range from 250 to 3000 tokens. Each prompt is padded with paragraphs sampled from other instances of the same task, or paragraphs sampled from Book Corpus, with key information presented at various locations in the context:  at the beginning of the context (first), at the end of the context (last), in the middle of the context (middle), or at random locations (random). In the first three settings the key paragraphs are next to each other but in the random setting they are separated.",
           "series": [
             {
               "title": "Context Size",
