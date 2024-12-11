@@ -51,7 +51,7 @@ The following table summarizes the benchmarks included in Eureka-Bench, their mo
 | Kitab <br> 34217                | Text -> Text | Information Retrieval        | [Kitab.zip](https://aifeval.z5.web.core.windows.net/eureka-bench-logs/Kitab.zip) |[kitab.py](eureka_ml_insights/user_configs/kitab.py)|  
 | Toxigen <br> 10500              | Text -> Text | Toxicity Detection <br> Safe Language Generation         | [ToxiGen.zip](https://aifeval.z5.web.core.windows.net/eureka-bench-logs/ToxiGen.zip) |[toxigen.py](eureka_ml_insights/user_configs/toxigen.py)|
 
-Note: The benchmarks on Image Understanding and Vision Language Understanding will be available soon on HuggingFace. Please stay tuned.
+Note: The benchmarks on Image Understanding will be available soon on HuggingFace. Please stay tuned.
 
 For non-determinism evaluations using the above benchmarks, we provide pipelines in [nondeterminism.py](eureka_ml_insights/user_configs/nondeterminism.py) 
 
@@ -88,9 +88,9 @@ To reproduce the results of a pre-defined experiment pipeline, you can run the f
 
 For example, to run the `FlenQA_Experiment_Pipeline` experiment pipeline defined in `eureka_ml_insights/user_configs/flenqa.py` using the OpenAI GPT4 1106 Preview model, you can run the following command:
 
-```python main.py --exp_config FlenQA_Experiment_Pipeline --model_config OAI_GPT4_1106_PREVIEW_CONFIG --exp_logdir gpt4_1106_preveiw```
+```python main.py --exp_config FlenQA_Experiment_Pipeline --model_config OAI_GPT4_1106_PREVIEW_CONFIG --exp_logdir gpt4_1106_preview```
 
-The results of the experiment will be saved in a directory under `logs/FlenQA_Experiment_Pipeline/gpt4_1106_preveiw`. For each experiment you run with these configurations, a new directory will be created using the date and time of the experiment run. 
+The results of the experiment will be saved in a directory under `logs/FlenQA_Experiment_Pipeline/gpt4_1106_preview`. For each experiment you run with these configurations, a new directory will be created using the date and time of the experiment run. 
 For other available experiment pipelines and model configurations, see the `eureka_ml_insights/user_configs` and `eureka_ml_insights/configs` directories, respectively. In [model_configs.py](eureka_ml_insights/configs/model_configs.py) you can configure the model classes to use your API keys, Key Vault urls, endpoints, and other model-specific configurations.
 
 ## 🗺️ Overview of Experiment Pipelines
