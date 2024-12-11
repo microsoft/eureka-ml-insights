@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { CapabilityScores, ModelScore, ModelConfig, EurekaConfig } from '../components/types';
 import Highcharts, { SeriesOptionsType } from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
-import { Button, Col, Row } from 'antd';
+import Exporting from "highcharts/modules/exporting";  
+import ExportData from "highcharts/modules/export-data";  
+import { Col, Row } from 'antd';
 import styles from './homepage_header.module.css';
 import Heading from '@theme/Heading';
 import { useHistory } from '@docusaurus/router';
@@ -22,6 +24,8 @@ const OverallVisualization = ({config}: {config: EurekaConfig}) => {
           const HC_more = await import('highcharts/highcharts-more');  
           HC_more.default(Highcharts);  
           setHighchartsLoading(false);
+          Exporting(Highcharts);  
+          ExportData(Highcharts);  
         };  
         loadHighchartsMore();
       }, []); 
@@ -168,9 +172,21 @@ const OverallVisualization = ({config}: {config: EurekaConfig}) => {
                             <HighchartsReact highcharts={Highcharts} options={languageChartOptions}/>
                         </div>
                         <div style={{display: 'flex', justifyContent: 'center'}}>
-                            <Button shape='round' className={`${styles.buttons}`} style={{outline: "black"}}>
-                                <Link to="/eureka-ml-insights/Language"><strong>Explore Language Results</strong></Link>
-                            </Button>
+                            <Link 
+                              to="/eureka-ml-insights/Language" 
+                              className={`${styles.buttons}`} 
+                              style={{ 
+                                border: "1px solid gray", 
+                                borderRadius: '3em', 
+                                padding: '1em 1em', 
+                                height: '2em',
+                                color: 'black', 
+                                textDecoration: 'none', 
+                                display: 'inline-flex', 
+                                textAlign: 'center' 
+                            }}> 
+                                <strong>Explore Language Results</strong>  
+                            </Link>  
                         </div>
                     </Col>
                     <Col xs={24} md={12} style={{ minWidth: '40em'}}>
@@ -178,9 +194,21 @@ const OverallVisualization = ({config}: {config: EurekaConfig}) => {
                             <HighchartsReact highcharts={Highcharts} options={multimodalChartOptions}/>
                         </div>
                         <div style={{display: 'flex', justifyContent: 'center'}}>
-                            <Button shape='round' className={`${styles.buttons}`} style={{outline: "black"}}>
-                                <Link to="/eureka-ml-insights/Multimodal"><strong>Explore Multimodal Results</strong></Link>
-                            </Button>
+                            <Link 
+                              to="/eureka-ml-insights/Multimodal" 
+                              className={`${styles.buttons}`} 
+                              style={{ 
+                                border: "1px solid gray", 
+                                borderRadius: '3em', 
+                                padding: '1em 1em', 
+                                height: '2em',
+                                color: 'black', 
+                                textDecoration: 'none', 
+                                display: 'inline-flex', 
+                                textAlign: 'center' 
+                            }}>  
+                                <strong>Explore Multimodal Results</strong>  
+                            </Link>  
                         </div>
                     </Col>
                 </Row>

@@ -188,7 +188,7 @@
         {
           "title": "Context Size",
           "filePattern": ".*ExactMatch_result_grouped_by_ctx_size.*",
-          "experimentDescription": "Input lengths in FlenQA range from 250 to 3000 tokens. Each prompt is padded with paragraphs sampled from other instances of the same task, or paragraphs sampled from Book Corpus, with key information presented at various locations in the context (at the beginning, at the end, in the middle, or at random locations).",
+          "experimentDescription": "This benchmark measures the accuracy of True/False LLM responses compared to the ground truth. Input lengths range from 250 to 3000 tokens. Each prompt is padded with paragraphs sampled from other instances of the same task, or paragraphs sampled from Book Corpus, with key information presented at various locations in the context:  at the beginning of the context (first), at the end of the context (last), in the middle of the context (middle), or at random locations (random). In the first three settings the key paragraphs are next to each other but in the random setting they are separated.",
           "series": [
             {
               "title": "Context Size",
@@ -220,7 +220,7 @@
         {
           "title": "No Context",
           "filePattern": ".*by.*",
-          "experimentDescription": "NO-CONTEXT: Testing factuality and constraint satisfaction abilities of the model based on its own parametric knowledge.",
+          "experimentDescription": "NO-CONTEXT: Testing factuality and constraint satisfaction abilities of the model based on its own parametric knowledge. Satisfaction rate (fact precision): The percentage of books in a model output that satisfy all given book constraints (except the authorship, which is captured in information irrelevance). The higher the score, the better. Completeness (fact recall): The percentage of books from the ground truth list of books that satisfy all query constraints and that are also mentioned in the model output. The higher the score, the better.",
           "series": [
             {
               "title": "Satisfaction Rate",
@@ -237,7 +237,7 @@
         {
         "title": "Self Context",
         "filePattern": ".*by.*",
-        "experimentDescription": "SELF-CONTEXT: Similar to With Context, but the context is generated from the model itself as part of its own chain of thought (i.e. generate all books first, and then apply the query constraints).",
+        "experimentDescription": "SELF-CONTEXT: Similar to With Context, but the context is generated from the model itself as part of its own chain of thought (i.e. generate all books first, and then apply the query constraints). Satisfaction rate (fact precision): The percentage of books in a model output that satisfy all given book constraints (except the authorship, which is captured in information irrelevance). The higher the score, the better. Completeness (fact recall): The percentage of books from the ground truth list of books that satisfy all query constraints and that are also mentioned in the model output. The higher the score, the better.",
         "series": [
           {
             "title": "Satisfaction Rate",
@@ -254,7 +254,7 @@
       {
         "title": "With Context",
         "filePattern": ".*by.*",
-        "experimentDescription": "WITH-CONTEXT: Testing factuality and constraint satisfaction abilities of the model when perfect context is provided, i.e. grounding in a RAG-style setting",
+        "experimentDescription": "WITH-CONTEXT: Testing factuality and constraint satisfaction abilities of the model when perfect context is provided, i.e. grounding in a RAG-style setting. Satisfaction rate (fact precision): The percentage of books in a model output that satisfy all given book constraints (except the authorship, which is captured in information irrelevance). The higher the score, the better. Completeness (fact recall): The percentage of books from the ground truth list of books that satisfy all query constraints and that are also mentioned in the model output. The higher the score, the better.",
         "series": [
           {
             "title": "Satisfaction Rate",
@@ -296,7 +296,7 @@
       "benchmark": "Information Retrieval (Kitab)",
       "modality": "language",
       "path": ["kitab", "ONE_BOOK_CONSTRAINT_PIPELINE"],
-      "metric": ["KitabMetric_satisfied_rate"],
+      "metric": ["KitabMetric_completeness"],
       "run": "average",
       "description": "Task: Retrieving long-form information from the model's parametric knowledge or from given input context with filtering constraints. Capability importance: All information retrieval tasks involve some form of constraint that defines the retrieval query. However, other simpler IR benchmarks only test for short-form generation (finding a single fact) and for a single con-straint. Being able to answer more complex queries is relevant to advanced search and information finding. State-of-the-art: Constrained retrieval from parametric knowledge is still prone to major irrelevance and fact fabrication with constraint satisfaction being less than 60%. Constrained retrieval from given input context is significantly better in overall, but for queries with more than one constraint constraint satisfaction and completeness drop to less than 70% and 60% respectively."
     },
@@ -305,7 +305,7 @@
       "benchmark": "Information Retrieval (Kitab)",
       "modality": "language",
       "path": ["kitab", "ONE_BOOK_CONSTRAINT_PIPELINE"],
-      "metric": ["KitabMetric_completeness"],
+      "metric": ["KitabMetric_satisfied_rate"],
       "run": "average",
       "description": "Task: Retrieving long-form information from the model's parametric knowledge or from given input context with filtering constraints. Capability importance: All information retrieval tasks involve some form of constraint that defines the retrieval query. However, other simpler IR benchmarks only test for short-form generation (finding a single fact) and for a single con-straint. Being able to answer more complex queries is relevant to advanced search and information finding. State-of-the-art: Constrained retrieval from parametric knowledge is still prone to major irrelevance and fact fabrication with constraint satisfaction being less than 60%. Constrained retrieval from given input context is significantly better in overall, but for queries with more than one constraint constraint satisfaction and completeness drop to less than 70% and 60% respectively."
     },
