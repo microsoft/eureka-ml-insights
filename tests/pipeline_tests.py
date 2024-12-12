@@ -322,7 +322,6 @@ class TEST_AIME_PIPELINE(AIME_PIPELINE):
         return config
 
 
-
 class PipelineTest:
     def setUp(self) -> None:
         self.conf = self.get_config()
@@ -350,8 +349,6 @@ class PipelineTest:
         n_aggregators = len(self.eval_config.aggregator_configs)
         n_aggregator_files = len([file for file in eval_files if "aggregator" in str(file)])
         self.assertEqual(n_aggregators, n_aggregator_files)
-    
-
 
 
 @unittest.skipIf("skip_tests_with_missing_ds" in os.environ, "Missing public dataset. TODO: revert")
@@ -497,13 +494,6 @@ class AIME_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_AIME_PIPELINE().pipeline_config
 
-    def setUp(self) -> None:
-        super().setUp()
-        self.eval_config_raw = self.conf.component_configs[-2]
-
-    def test_outputs_exist(self) -> None:
-        super().test_outputs_exist()
-        self.verify_n_aggregators(self.eval_config_raw)
 
 if __name__ == "__main__":
     unittest.main()

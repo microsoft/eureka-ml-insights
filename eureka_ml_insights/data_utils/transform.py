@@ -383,6 +383,7 @@ class MajorityVoteTransform:
             pd.DataFrame: Transformed dataframe with majority vote for each 'ID'.
         """
         # Step 1: Group by 'ID' and calculate the majority vote within each group
-        df[self.majority_vote_col] = df.groupby(self.id_col)[self.model_output_col].transform(lambda x: x.mode()[0])
+        df[self.majority_vote_col] = df.groupby(self.id_col)[self.model_output_col].transform(
+        lambda x: x.dropna().mode()[0] if not x.dropna().mode().empty else pd.NA)
 
         return df
