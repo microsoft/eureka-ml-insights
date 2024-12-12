@@ -17,7 +17,6 @@ from azure.core.exceptions import (
     ServiceRequestError,
     ServiceResponseError,
 )
-from azure.identity import DefaultAzureCredential
 from fuzzywuzzy import fuzz
 
 from eureka_ml_insights.metrics import CompositeMetric
@@ -38,12 +37,14 @@ class KitabMetric(CompositeMetric):
             "https://huggingface.co/datasets/microsoft/kitab/raw/main/code/utils/gpt_4_name_data_processed.csv",
             temp_path_names,
         )
+        self.credential_func = azure_lang_service_config["secret_key_params"].get("credential_func", lambda _: None)
         # requires an Azure Cognitive Services Endpoint
         # (ref: https://learn.microsoft.com/en-us/azure/ai-services/language-service/)
         self.key = get_secret(
             key_name=azure_lang_service_config["secret_key_params"].get("key_name", None),
             local_keys_path=azure_lang_service_config["secret_key_params"].get("local_keys_path", None),
             key_vault_url=azure_lang_service_config["secret_key_params"].get("key_vault_url", None),
+            credential_func=self.credential_func
         )
         self.endpoint = azure_lang_service_config["url"]
         self.text_analytics_credential = self.get_verified_credential()
@@ -58,11 +59,11 @@ class KitabMetric(CompositeMetric):
             logging.info(f"Failed to create the TextAnalyticsClient using AzureKeyCredential")
             logging.info("The error is caused by: {}".format(e))
         try:
-            text_analytics_client = TextAnalyticsClient(endpoint=self.endpoint, credential=DefaultAzureCredential())
+            text_analytics_client = TextAnalyticsClient(endpoint=self.endpoint, credential=self.credential_func())
             text_analytics_client.recognize_entities(["New York City"], model_version=model_version)
-            return DefaultAzureCredential()
+            return self.credential_func()
         except Exception as e:
-            logging.info(f"Failed to create the TextAnalyticsClient using DefaultAzureCredential")
+            logging.info(f"Failed to create the TextAnalyticsClient using provided credential func")
             logging.info("The error is caused by: {}".format(e))
         return None
 

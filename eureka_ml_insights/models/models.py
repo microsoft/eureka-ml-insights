@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 import anthropic
 import tiktoken
-from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+from azure.identity import get_bearer_token_provider
 
 from eureka_ml_insights.secret_management import get_secret
 
@@ -222,6 +222,8 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
     stream: bool = False
 
     def __post_init__(self):
+        if self.secret_key_params is None:
+            raise ValueError("secret_key_params must be provided.")
         try:
             super().__post_init__()
             self.headers = {
@@ -235,7 +237,7 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
             }
         except ValueError:
             self.bearer_token_provider = get_bearer_token_provider(
-                DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"
+                self.secret_key_params["credential_func"](), "https://cognitiveservices.azure.com/.default"
             )
             self.headers = {
                 "Content-Type": "application/json",
@@ -400,11 +402,15 @@ class OpenAICommonRequestResponseMixIn:
 class AzureOpenAIClientMixIn:
     """This mixin provides some methods to interact with Azure OpenAI models."""
 
+    def __post_init__(self):
+        if self.secret_key_params is None:
+            raise ValueError("secret_key_params must be provided.")
+
     def get_client(self):
         from openai import AzureOpenAI
 
         token_provider = get_bearer_token_provider(
-            DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"
+            self.secret_key_params["credential_func"](), "https://cognitiveservices.azure.com/.default"
         )
         return AzureOpenAI(
             azure_endpoint=self.url,
