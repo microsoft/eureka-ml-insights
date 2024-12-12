@@ -1,4 +1,13 @@
-from .aime import AIME_PIPELINE
+from .aime import (
+AIME_PIPELINE, 
+AIME_PIPELINE5Run, 
+AIME_PIPELINE16Run, 
+AIME_PIPELINE32Run, 
+AIME_PIPELINE64Run, 
+AIME_PIPELINE256Run,
+AIME_PIPELINE512Run,
+AIME_PIPELINE1024Run,
+)
 from .dna import DNA_PIPELINE
 from .drop import Drop_Experiment_Pipeline
 from .flenqa import FlenQA_Experiment_Pipeline
@@ -110,4 +119,11 @@ __all__ = [
     IFEval_Nondeterminism,
     Kitab_Nondeterminism,
     AIME_PIPELINE,
+    AIME_PIPELINE5Run, 
+    AIME_PIPELINE16Run, 
+    AIME_PIPELINE32Run, 
+    AIME_PIPELINE64Run, 
+    AIME_PIPELINE256Run,
+    AIME_PIPELINE512Run,
+    AIME_PIPELINE1024Run,
 ]

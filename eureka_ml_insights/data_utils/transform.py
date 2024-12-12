@@ -7,6 +7,7 @@ from typing import Dict, List
 import numpy as np
 import pandas as pd
 import tiktoken
+import numpy as np
 
 
 @dataclass
@@ -335,6 +336,7 @@ class ASTEvalTransform(MultiColumnTransform):
         return list_strings
 
 
+
 @dataclass
 class TokenCounterTransform(MultiColumnTransform):
     """
@@ -359,4 +361,29 @@ class TokenCounterTransform(MultiColumnTransform):
             token_count = df[column].apply(lambda x: len(encoding.encode(x)))
             token_count_column = f"{column}_token_count"
             df[token_count_column] = token_count
+        return df
+
+@dataclass
+class MajorityVoteTransform:
+    """Applies the majority vote transformation to the specified model output column per ID."""
+    
+    model_output_col: str = "model_output"  # Default column name for model outputs
+    id_col: str = "ID"  # Default column name for IDs
+    majority_vote_col: str = 'majority_vote'
+    
+    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Transforms the dataframe by calculating the majority vote of 'model_output' per 'ID'.
+        If the 'model_output' is NaN, it will be droped in the majority vote.
+
+        Args:
+            df (pd.DataFrame): Input dataframe containing 'ID' and 'model_output'.
+        
+        Returns:
+            pd.DataFrame: Transformed dataframe with majority vote for each 'ID'.
+        """
+        # Step 1: Group by 'ID' and calculate the majority vote within each group
+        df[self.majority_vote_col] = df.groupby(self.id_col)[self.model_output_col].transform(
+        lambda x: x.dropna().mode()[0] if not x.dropna().mode().empty else pd.NA)
+
         return df
