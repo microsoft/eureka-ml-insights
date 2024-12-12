@@ -64,7 +64,7 @@ class AIME_PIPELINE(ExperimentConfig):
                 },
             ),
             prompt_template_path=os.path.join(
-                os.path.dirname(__file__), "../prompt_templates/aime_templates/Template_1a.jinja"
+                os.path.dirname(__file__), "../prompt_templates/aime_templates/Template_1clean.jinja"
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
         )
