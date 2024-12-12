@@ -18,20 +18,42 @@
 </p>
 This repository contains the code for the Eureka ML Insights framework. The framework is designed to help researchers and practitioners run reproducible evaluations of generative models using a variety of benchmarks and metrics efficiently. The framework allows the user to define custom pipelines for data processing, inference, and evaluation, and provides a set of pre-defined evaluation pipelines for key benchmarks.
 
+## Table of Contents
+- [Eureka ML Insights Framework](#eureka-ml-insights-framework)
+  - [Table of Contents](#table-of-contents)
+  - [Benchmarks](#benchmarks)
+  - [Installation](#installation)
+    - [📦 Installing with pip + editable for development](#-installing-with-pip--editable-for-development)
+    - [📦 Generate wheel package to share with others](#-generate-wheel-package-to-share-with-others)
+    - [🐍Installing with Conda](#installing-with-conda)
+  - [🚀 Quick start](#-quick-start)
+  - [🗺️ Overview of Experiment Pipelines](#️-overview-of-experiment-pipelines)
+    - [⚒️ Utility Classes Used in Components](#️-utility-classes-used-in-components)
+    - [🪛 Configuring the Data Processing Component](#-configuring-the-data-processing-component)
+    - [🪛 Configuring the Prompt Processing Component](#-configuring-the-prompt-processing-component)
+    - [🪛 Configuring the Inference Component](#-configuring-the-inference-component)
+    - [🪛 Configuring the Evaluation Reporting Component](#-configuring-the-evaluation-reporting-component)
+- [✋ How to contribute:](#-how-to-contribute)
+- [✒️ Citation](#️-citation)
+- [Responsible AI Considerations](#responsible-ai-considerations)
+
+## Benchmarks
+The following table summarizes the benchmarks included in Eureka-Bench, their modalities, capabilities, and the corresponding experiment pipelines. The logs for each benchmark are available for download at the links provided in the table.
+
 | Benchmark <br> #prompts       | Modality  | Capability           |Logs| Pipeline Config |
 |-------------------------------|---------------|----------------------|------|-----|
-| GeoMeter <br> 1086            | Image -> Text | Geometric Reasoning  | [GeoMeter.zip](https://aifeval.z5.web.core.windows.net/eureka-bench-logs/GeoMeter.zip) | [geometer.py](eureka_ml_insights/configs/geometer.py) |
-| MMMU <br> 900                 | Image -> Text | Multimodal QA        | [MMMU.zip](https://aifeval.z5.web.core.windows.net/eureka-bench-logs/MMMU.zip) |[mmmu.py](eureka_ml_insights/configs/mmmu.py)|
-| Image Understanding <br> 10249| Image -> Text | Object Recognition <br> Object Detection <br> Visual Prompting <br> Spatial Reasoning | [IMAGE_UNDERSTANDING.zip](https://aifeval.z5.web.core.windows.net/eureka-bench-logs/IMAGE_UNDERSTANDING.zip) | [object_recognition.py](eureka_ml_insights/configs/spatial_understanding/object_recognition.py) <br> [object_detection.py](eureka_ml_insights/configs/spatial_understanding/object_detection.py) <br> [visual_prompting.py](eureka_ml_insights/configs/spatial_understanding/visual_prompting.py) <br> [spatial_reasoning.py](eureka_ml_insights/configs/spatial_understanding/spatial_reasoning.py) |
-| Vision Language <br> 13500    | Image -> Text | Spatial Understanding <br> Navigation <br> Counting| [VISION_LANGUAGE.zip](https://aifeval.z5.web.core.windows.net/eureka-bench-logs/VISION_LANGUAGE.zip) |[spatial_map.py](eureka_ml_insights/configs/vision_language/spatial_map.py) <br> [maze.py](eureka_ml_insights/configs/vision_language/maze.py) <br> [spatial_grid.py](eureka_ml_insights/configs/vision_language/spatial_grid.py)|
-| IFEval <br> 541                 | Text -> Text | Instruction Following        | [IFEval.zip](https://aifeval.z5.web.core.windows.net/eureka-bench-logs/IFEval.zip) |[ifeval.py](eureka_ml_insights/configs/ifeval.py)|
-| FlenQA <br> 12000               | Text -> Text | Long Context Multi-hop QA | [FlenQA.zip](https://aifeval.z5.web.core.windows.net/eureka-bench-logs/FlenQA.zip) |[flenQA.py](eureka_ml_insights/configs/flenqa.py)|
-| Kitab <br> 34217                | Text -> Text | Information Retrieval        | [Kitab.zip](https://aifeval.z5.web.core.windows.net/eureka-bench-logs/Kitab.zip) |[kitab.py](eureka_ml_insights/configs/kitab.py)|  
-| Toxigen <br> 10500              | Text -> Text | Toxicity Detection <br> Safe Language Generation         | [ToxiGen.zip](https://aifeval.z5.web.core.windows.net/eureka-bench-logs/ToxiGen.zip) |[toxigen.py](eureka_ml_insights/configs/toxigen.py)|
+| GeoMeter <br> 1086            | Image -> Text | Geometric Reasoning  | [GeoMeter.zip](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/resolve/main/GeoMeter.zip) | [geometer.py](eureka_ml_insights/user_configs/geometer.py) |
+| MMMU <br> 900                 | Image -> Text | Multimodal QA        | [MMMU.zip](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/resolve/main/MMMU.zip) |[mmmu.py](eureka_ml_insights/user_configs/mmmu.py)|
+| Image Understanding <br> 10249| Image -> Text | Object Recognition <br> Object Detection <br> Visual Prompting <br> Spatial Reasoning | [IMAGE_UNDERSTANDING.zip](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/resolve/main/IMAGE_UNDERSTANDING.zip) | [object_recognition.py](eureka_ml_insights/user_configs/spatial_understanding/object_recognition.py) <br> [object_detection.py](eureka_ml_insights/user_configs/spatial_understanding/object_detection.py) <br> [visual_prompting.py](eureka_ml_insights/user_configs/spatial_understanding/visual_prompting.py) <br> [spatial_reasoning.py](eureka_ml_insights/user_configs/spatial_understanding/spatial_reasoning.py) |
+| Vision Language <br> 13500    | Image -> Text | Spatial Understanding <br> Navigation <br> Counting| [VISION_LANGUAGE.zip](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/resolve/main/VISION_LANGUAGE.zip) |[spatial_map.py](eureka_ml_insights/user_configs/vision_language/spatial_map.py) <br> [maze.py](eureka_ml_insights/user_configs/vision_language/maze.py) <br> [spatial_grid.py](eureka_ml_insights/user_configs/vision_language/spatial_grid.py)|
+| IFEval <br> 541                 | Text -> Text | Instruction Following        | [IFEval.zip](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/resolve/main/IFEval.zip) |[ifeval.py](eureka_ml_insights/user_configs/ifeval.py)|
+| FlenQA <br> 12000               | Text -> Text | Long Context Multi-hop QA | [FlenQA.zip](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/resolve/main/FlenQA.zip) |[flenQA.py](eureka_ml_insights/user_configs/flenqa.py)|
+| Kitab <br> 34217                | Text -> Text | Information Retrieval        | [Kitab.zip](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/resolve/main/Kitab.zip) |[kitab.py](eureka_ml_insights/user_configs/kitab.py)|  
+| Toxigen <br> 10500              | Text -> Text | Toxicity Detection <br> Safe Language Generation         | [ToxiGen.zip](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/resolve/main/ToxiGen.zip) |[toxigen.py](eureka_ml_insights/user_configs/toxigen.py)|
 
-Note: The benchmarks on Image Understanding and Vision Language Understanding will be available soon on HuggingFace. Please stay tuned.
+Note: The benchmarks on Image Understanding will be available soon on HuggingFace. Please stay tuned.
 
-For non-determinism evaluations using the above benchmarks, we provide pipelines in [nondeterminism.py](eureka_ml_insights/configs/nondeterminism.py) 
+For non-determinism evaluations using the above benchmarks, we provide pipelines in [nondeterminism.py](eureka_ml_insights/user_configs/nondeterminism.py) 
 
 ## Installation
 To get started, clone this repository to your local machine and navigate to the project directory.
@@ -64,16 +86,16 @@ To reproduce the results of a pre-defined experiment pipeline, you can run the f
 
 ```python main.py --exp_config exp_config_name --model_config model_config_name --exp_logdir your_log_dir```
 
-For example, to run the `FlenQA_Experiment_Pipeline` experiment pipeline defined in `eureka_ml_insights/configs/flenqa.py` using the OpenAI GPT4 1106 Preview model, you can run the following command:
+For example, to run the `FlenQA_Experiment_Pipeline` experiment pipeline defined in `eureka_ml_insights/user_configs/flenqa.py` using the OpenAI GPT4 1106 Preview model, you can run the following command:
 
-```python main.py --exp_config FlenQA_Experiment_Pipeline --model_config OAI_GPT4_1106_PREVIEW_CONFIG --exp_logdir gpt4_1106_preveiw```
+```python main.py --exp_config FlenQA_Experiment_Pipeline --model_config OAI_GPT4_1106_PREVIEW_CONFIG --exp_logdir gpt4_1106_preview```
 
-The results of the experiment will be saved in a directory under `logs/FlenQA_Experiment_Pipeline/gpt4_1106_preveiw`. For each experiment you run with these configurations, a new directory will be created using the date and time of the experiment run. 
-For other available experiment pipelines and model configurations, see the `eureka_ml_insights/configs` directory. In [model_configs.py](eureka_ml_insights/configs/model_configs.py) you can configure the model classes to use your API keys, Keu Vault urls, endpoints, and other model-specific configurations.
+The results of the experiment will be saved in a directory under `logs/FlenQA_Experiment_Pipeline/gpt4_1106_preview`. For each experiment you run with these configurations, a new directory will be created using the date and time of the experiment run. 
+For other available experiment pipelines and model configurations, see the `eureka_ml_insights/user_configs` and `eureka_ml_insights/configs` directories, respectively. In [model_configs.py](eureka_ml_insights/configs/model_configs.py) you can configure the model classes to use your API keys, Key Vault urls, endpoints, and other model-specific configurations.
 
 ## 🗺️ Overview of Experiment Pipelines
 ![Components](./docs/figures/transparent_uml.png)
-Experiment pipelines define the sequence of components that are run to process data, run inference, and evaluate the model outputs. You can find examples of experiment pipeline configurations in the `configs` directory. To create a new experiment configuration, you need to define a class that inherits from `ExperimentConfig` and implements the `configure_pipeline` method. In the `configure_pipeline` method you define the Pipeline config (arrangement of Components) for your Experiment. Once your class is ready, add it to `configs/__init__.py` import list.
+Experiment pipelines define the sequence of components that are run to process data, run inference, and evaluate the model outputs. You can find examples of experiment pipeline configurations in the `user_configs` directory. To create a new experiment configuration, you need to define a class that inherits from `ExperimentConfig` and implements the `configure_pipeline` method. In the `configure_pipeline` method you define the Pipeline config (arrangement of Components) for your Experiment. Once your class is ready, add it to `user_configs/__init__.py` import list.
 
 
 Your Pipeline can use any of the available Components which can be found under the `core` directory:
@@ -84,17 +106,17 @@ Your Pipeline can use any of the available Components which can be found under t
 - `DataJoin`: you can use this component to join two sources of data, for example to join the model outputs with the ground truth data for evaluation.
 
 Note that:
-- You can inherit from one of the existing experiment config classes and override the necessary attributes to reduce the amount of code you need to write. You can find examples of this in [spatial_reasoning.py](eureka_ml_insights/configs/spatial_understanding/spatial_reasoning.py).
+- You can inherit from one of the existing experiment config classes and override the necessary attributes to reduce the amount of code you need to write. You can find examples of this in [spatial_reasoning.py](eureka_ml_insights/user_configs/image_understanding/spatial_reasoning.py).
 - Your pipeline does not need to use all of the components. You can use only the components you need. And you can use the components multiple times in the pipeline.
 - Make sure the input of each component matches the output of the previous component in the pipeline. The components are run sequentially in the order they are defined in the pipeline configuration.
 - For standard scenarios you do not need to implement new components for your pipeline, but you do need to configure the existing components to use the correct utility classes (i.e. models, data readers, metrics, etc.) for your scenario.
 
 ### ⚒️ Utility Classes Used in Components
-Utility classes include Models, Metrics, DataLoaders, DataReaders, etc. The components in your pipeline need to use the correct utility classes for your scenario. For example, to evaluate an OpenAI model on a dataset that is available on HuggingFace, you need to use the [`HFDataReader`](eureka_ml_insights/data_utils/data.py) data reader and the [`OpenAIModelsOAI`](eureka_ml_insights/models/models.py) model class. In standard scenarios do not need to implement new components for your pipeline, but you do need to configure the existing components to work with the correct utility classes. If you need a functionality that is not provided by the existing utility classes, you can implement a new utility class and use it in your pipeline.
+Utility classes include Models, Metrics, DataLoaders, DataReaders, etc. The components in your pipeline need to use the correct utility classes for your scenario. For example, to evaluate an OpenAI model on a dataset that is available on HuggingFace, you need to use the [`HFDataReader`](eureka_ml_insights/data_utils/data.py) data reader and the [`AzureOpenAIModel`](eureka_ml_insights/models/models.py) (or alternatively, `DirectOpenAIModel`) model class. In standard scenarios do not need to implement new components for your pipeline, but you do need to configure the existing components to work with the correct utility classes. If you need a functionality that is not provided by the existing utility classes, you can implement a new utility class and use it in your pipeline.
 
 In general, to find out what utility classes and other attributes need to be configured for a component, you can look at the component's corresponding Config dataclass in `configs/config.py`. For example, if you are configuring the `DataProcessing` component, you can look at the `DataProcessingConfig` dataclass in `configs/config.py`.
 
-Utility classes are also configurable by providing the name of the class and the initialization arguments. For example see ModelConfig in `configs/config.py` that can be initialized with the model class name and the model initialization arguments.
+Utility classes are also configurable. You can do so by providing the name of the class and the initialization arguments. For example see ModelConfig in `configs/config.py` that can be initialized with the model class name and the model initialization arguments. For example, you can see examples of configuring Model classes in `configs/model_configs.py`. 
 
 Our current components use the following utility classes: `DataReader`, `DataLoader`, `Model`, `Metric`, `Aggregator`. You can use the existing utility classes or implement new ones as needed to configure your components.
 
@@ -118,7 +140,7 @@ In addition to the attributes of the DataProcessing component, the PromptProcess
 - `data_loader_config`: Configuration of the data_loader class to use for inference. You can find the available data classes in `data_utils/data.py`.
 - `output_dir`: This is the folder name where the model outputs will be saved. This folder will automatically be created under the experiment log directory and the model outputs will be saved in a file called `inference_result.jsonl`.
 
-### 🪛 Configuring the Evaluation Reporting  Component
+### 🪛 Configuring the Evaluation Reporting Component
 - `data_reader_config`: Configuration object for the DataReader that is used to load the data into a pandas dataframe. This is the same type of utility class used in the DataProcessing component.
 - `metric_config`: a MetricConfig object to specify the metric class to use for evaluation. You can find the available metrics in `metrics/`. If you need to implement new metric classes, add them to this directory.
 - `aggregator_configs`/`visualizer_configs`: List of configs for aggregators/visualizers to apply to the metric results. These classes that take metric results and aggragate/analyze/vizualize them and save them. You can find the available aggregators and visualizers in `metrics/reports.py`.
@@ -134,7 +156,7 @@ For more information see the [Code of Conduct FAQ](https://opensource.microsoft.
 
 To contribute to the framework:
 - please create a new branch.
-- Implement your pipeline configuration class under `configs`, as well as any utility classes that your pipeline requires.
+- Implement your pipeline configuration class under `user_configs`, as well as any utility classes that your pipeline requires.
 - Please add end-to-end tests for your contributions in the `tests` directory.
 - Please add unit tests for any new utility classes you implement in the `tests` directory.
 - Please add documentation to your classes and methods in form of docstrings.
