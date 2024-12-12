@@ -590,6 +590,10 @@ class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
     def create_request(self, text_prompt, query_images=None, system_message=None, **kwargs):
         import google.generativeai as genai
 
+        # Gemini 1.0 Pro does not support system messages
+        if model_name == "gemini-1.0-pro":
+            self.model = genai.GenerativeModel(self.model_name)
+        
         self.model = genai.GenerativeModel(self.model_name, system_instruction=system_message)
         if query_images:
             return [text_prompt] + query_images
