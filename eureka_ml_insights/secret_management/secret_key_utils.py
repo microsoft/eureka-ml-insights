@@ -68,13 +68,13 @@ def get_key_from_azure(key_name: str, key_vault_url: str, credential_func=lambda
     """
     logging.getLogger("azure").setLevel(logging.ERROR)
     try:
-        logging.info(f"Trying to get the key from Azure Key Vault {key_vault_url} using provided func")
+        logging.info("Trying to get the key from Azure Key Vault using provided func")
         credential = credential_func(additionally_allowed_tenants=["*"])
         client = SecretClient(vault_url=key_vault_url, credential=credential)
         retrieved_key = client.get_secret(key_name)
         return retrieved_key.value
     except Exception as e:
-        logging.info(f"Failed to get the key from Azure Key Vault {key_vault_url} using provided func")
+        logging.info("Failed to get the key from Azure Key Vault using provided func")
         logging.info("The error is caused by: {}".format(e))
         return None
 
