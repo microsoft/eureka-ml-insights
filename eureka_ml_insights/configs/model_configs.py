@@ -16,6 +16,8 @@ from eureka_ml_insights.models import (
     TestModel,
 )
 
+from azure.identity import DefaultAzureCredential
+
 from .config import ModelConfig
 
 # For models that require secret keys, you can store the keys in a json file and provide the path to the file
@@ -32,6 +34,7 @@ OPENAI_SECRET_KEY_PARAMS = {
     "key_name": "your_openai_secret_key_name",
     "local_keys_path": "keys/keys.json",
     "key_vault_url": None,
+    "credential_func": DefaultAzureCredential,
 }
 
 OAI_O1_PREVIEW_CONFIG = ModelConfig(
@@ -96,6 +99,7 @@ GEMINI_SECRET_KEY_PARAMS = {
     "key_name": "your_gemini_secret_key_name",
     "local_keys_path": "keys/keys.json",
     "key_vault_url": None,
+    "credential_func": DefaultAzureCredential,
 }
 
 GEMINI_V15_PRO_CONFIG = ModelConfig(
@@ -119,6 +123,7 @@ CLAUDE_SECRET_KEY_PARAMS = {
     "key_name": "your_claude_secret_key_name",
     "local_keys_path": "keys/keys.json",
     "key_vault_url": None,
+    "credential_func": DefaultAzureCredential,
 }
 
 CLAUDE_3_OPUS_CONFIG = ModelConfig(
@@ -168,6 +173,7 @@ LLAMA3_1_70B_INSTRUCT_CONFIG = ModelConfig(
             "key_name": "your_llama_secret_key_name",
             "local_keys_path": "keys/keys.json",
             "key_vault_url": None,
+            "credential_func": DefaultAzureCredential,
         },
         "model_name": "meta-llama-3-1-70b-instruct",
     },
@@ -181,6 +187,7 @@ LLAMA3_1_405B_INSTRUCT_CONFIG = ModelConfig(
             "key_name": "your_llama_secret_key_name",
             "local_keys_path": "keys/keys.json",
             "key_vault_url": None,
+            "credential_func": DefaultAzureCredential,
         },
         "model_name": "Meta-Llama-3-1-405B-Instruct",
     },
@@ -195,6 +202,7 @@ AIF_NT_MISTRAL_LARGE_2_2407_CONFIG = ModelConfig(
             "key_name": "your_mistral_secret_key_name",
             "local_keys_path": "keys/keys.json",
             "key_vault_url": None,
+            "credential_func": DefaultAzureCredential,
         },
         "model_name": "Mistral-large-2407",
     },

@@ -3,13 +3,12 @@ import logging
 import os
 from typing import Dict, Optional
 
-from azure.identity import DefaultAzureCredential, DeviceCodeCredential
 from azure.keyvault.secrets import SecretClient
 
 logging.basicConfig(level=logging.INFO, format="%(filename)s - %(funcName)s - %(message)s")
 
 
-def get_secret(key_name: str, local_keys_path:Optional[str]=None, key_vault_url:Optional[str]=None) -> Optional[str]:
+def get_secret(key_name: str, local_keys_path:Optional[str]=None, key_vault_url:Optional[str]=None, credential_func=lambda _: None) -> Optional[str]:
     """This function retrieves a key from key vault or if it is locally cached in a file.
     args:
         key_name: str, the name of the key to retrieve.
@@ -41,7 +40,7 @@ def get_secret(key_name: str, local_keys_path:Optional[str]=None, key_vault_url:
                 f"Key [{key_name}] not found in local keys file [{local_keys_path}] and key_vault_url is not provided."
             )
         else:
-            key_value = get_key_from_azure(key_name, key_vault_url)
+            key_value = get_key_from_azure(key_name, key_vault_url, credential_func=credential_func)
 
     # if the key still wasn't found, raise an error
     if key_value is None:
@@ -59,7 +58,7 @@ def get_secret(key_name: str, local_keys_path:Optional[str]=None, key_vault_url:
     return key_value
 
 
-def get_key_from_azure(key_name: str, key_vault_url: str) -> Optional[str]:
+def get_key_from_azure(key_name: str, key_vault_url: str, credential_func=lambda _: None) -> Optional[str]:
     """This function retrieves a key from azure key vault.
     args:
         key_name: str, the name of the key to retrieve.
@@ -69,23 +68,14 @@ def get_key_from_azure(key_name: str, key_vault_url: str) -> Optional[str]:
     """
     logging.getLogger("azure").setLevel(logging.ERROR)
     try:
-        logging.info(f"Trying to get the key from Azure Key Vault {key_vault_url} using DefaultAzureCredential")
-        credential = DefaultAzureCredential(additionally_allowed_tenants=["*"])
+        logging.info(f"Trying to get the key from Azure Key Vault {key_vault_url} using provided func")
+        credential = credential_func(additionally_allowed_tenants=["*"])
         client = SecretClient(vault_url=key_vault_url, credential=credential)
         retrieved_key = client.get_secret(key_name)
         return retrieved_key.value
     except Exception as e:
-        logging.info(f"Failed to get the key from Azure Key Vault {key_vault_url} using DefaultAzureCredential")
+        logging.info(f"Failed to get the key from Azure Key Vault {key_vault_url} using provided func")
         logging.info("The error is caused by: {}".format(e))
-    try:
-        logging.info(f"Trying to get the key from Azure Key Vault {key_vault_url} using DeviceCodeCredential")
-        credential = DeviceCodeCredential(additionally_allowed_tenants=["*"])
-        client = SecretClient(vault_url=key_vault_url, credential=credential)
-        retrieved_key = client.get_secret(key_name)
-        return retrieved_key.value
-    except Exception as e:
-        logging.error("Failed to get the key from Azure Key Vault using DeviceCodeCredential")
-        logging.error("The error is caused by: {}".format(e))
         return None
 
 
