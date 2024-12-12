@@ -42,16 +42,16 @@ The following table summarizes the benchmarks included in Eureka-Bench, their mo
 
 | Benchmark <br> #prompts       | Modality  | Capability           |Logs| Pipeline Config |
 |-------------------------------|---------------|----------------------|------|-----|
-| GeoMeter <br> 1086            | Image -> Text | Geometric Reasoning  | [GeoMeter.zip](https://aifeval.z5.web.core.windows.net/eureka-bench-logs/GeoMeter.zip) | [geometer.py](eureka_ml_insights/user_configs/geometer.py) |
-| MMMU <br> 900                 | Image -> Text | Multimodal QA        | [MMMU.zip](https://aifeval.z5.web.core.windows.net/eureka-bench-logs/MMMU.zip) |[mmmu.py](eureka_ml_insights/user_configs/mmmu.py)|
-| Image Understanding <br> 10249| Image -> Text | Object Recognition <br> Object Detection <br> Visual Prompting <br> Spatial Reasoning | [IMAGE_UNDERSTANDING.zip](https://aifeval.z5.web.core.windows.net/eureka-bench-logs/IMAGE_UNDERSTANDING.zip) | [object_recognition.py](eureka_ml_insights/user_configs/spatial_understanding/object_recognition.py) <br> [object_detection.py](eureka_ml_insights/user_configs/spatial_understanding/object_detection.py) <br> [visual_prompting.py](eureka_ml_insights/user_configs/spatial_understanding/visual_prompting.py) <br> [spatial_reasoning.py](eureka_ml_insights/user_configs/spatial_understanding/spatial_reasoning.py) |
-| Vision Language <br> 13500    | Image -> Text | Spatial Understanding <br> Navigation <br> Counting| [VISION_LANGUAGE.zip](https://aifeval.z5.web.core.windows.net/eureka-bench-logs/VISION_LANGUAGE.zip) |[spatial_map.py](eureka_ml_insights/user_configs/vision_language/spatial_map.py) <br> [maze.py](eureka_ml_insights/user_configs/vision_language/maze.py) <br> [spatial_grid.py](eureka_ml_insights/user_configs/vision_language/spatial_grid.py)|
-| IFEval <br> 541                 | Text -> Text | Instruction Following        | [IFEval.zip](https://aifeval.z5.web.core.windows.net/eureka-bench-logs/IFEval.zip) |[ifeval.py](eureka_ml_insights/user_configs/ifeval.py)|
-| FlenQA <br> 12000               | Text -> Text | Long Context Multi-hop QA | [FlenQA.zip](https://aifeval.z5.web.core.windows.net/eureka-bench-logs/FlenQA.zip) |[flenQA.py](eureka_ml_insights/user_configs/flenqa.py)|
-| Kitab <br> 34217                | Text -> Text | Information Retrieval        | [Kitab.zip](https://aifeval.z5.web.core.windows.net/eureka-bench-logs/Kitab.zip) |[kitab.py](eureka_ml_insights/user_configs/kitab.py)|  
-| Toxigen <br> 10500              | Text -> Text | Toxicity Detection <br> Safe Language Generation         | [ToxiGen.zip](https://aifeval.z5.web.core.windows.net/eureka-bench-logs/ToxiGen.zip) |[toxigen.py](eureka_ml_insights/user_configs/toxigen.py)|
+| GeoMeter <br> 1086            | Image -> Text | Geometric Reasoning  | [GeoMeter.zip](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/resolve/main/GeoMeter.zip) | [geometer.py](eureka_ml_insights/user_configs/geometer.py) |
+| MMMU <br> 900                 | Image -> Text | Multimodal QA        | [MMMU.zip](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/resolve/main/MMMU.zip) |[mmmu.py](eureka_ml_insights/user_configs/mmmu.py)|
+| Image Understanding <br> 10249| Image -> Text | Object Recognition <br> Object Detection <br> Visual Prompting <br> Spatial Reasoning | [IMAGE_UNDERSTANDING.zip](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/resolve/main/IMAGE_UNDERSTANDING.zip) | [object_recognition.py](eureka_ml_insights/user_configs/image_understanding/object_recognition.py) <br> [object_detection.py](eureka_ml_insights/user_configs/image_understanding/object_detection.py) <br> [visual_prompting.py](eureka_ml_insights/user_configs/image_understanding/visual_prompting.py) <br> [spatial_reasoning.py](eureka_ml_insights/user_configs/image_understanding/spatial_reasoning.py) |
+| Vision Language <br> 13500    | Image -> Text | Spatial Understanding <br> Navigation <br> Counting| [VISION_LANGUAGE.zip](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/resolve/main/VISION_LANGUAGE.zip) |[spatial_map.py](eureka_ml_insights/user_configs/vision_language/spatial_map.py) <br> [maze.py](eureka_ml_insights/user_configs/vision_language/maze.py) <br> [spatial_grid.py](eureka_ml_insights/user_configs/vision_language/spatial_grid.py)|
+| IFEval <br> 541                 | Text -> Text | Instruction Following        | [IFEval.zip](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/resolve/main/IFEval.zip) |[ifeval.py](eureka_ml_insights/user_configs/ifeval.py)|
+| FlenQA <br> 12000               | Text -> Text | Long Context Multi-hop QA | [FlenQA.zip](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/resolve/main/FlenQA.zip) |[flenQA.py](eureka_ml_insights/user_configs/flenqa.py)|
+| Kitab <br> 34217                | Text -> Text | Information Retrieval        | [Kitab.zip](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/resolve/main/Kitab.zip) |[kitab.py](eureka_ml_insights/user_configs/kitab.py)|  
+| Toxigen <br> 10500              | Text -> Text | Toxicity Detection <br> Safe Language Generation         | [ToxiGen.zip](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/resolve/main/ToxiGen.zip) |[toxigen.py](eureka_ml_insights/user_configs/toxigen.py)|
 
-Note: The benchmarks on Image Understanding and Vision Language Understanding will be available soon on HuggingFace. Please stay tuned.
+Note: The benchmarks on Image Understanding will be available soon on HuggingFace. Please stay tuned.
 
 For non-determinism evaluations using the above benchmarks, we provide pipelines in [nondeterminism.py](eureka_ml_insights/user_configs/nondeterminism.py) 
 
@@ -88,9 +88,9 @@ To reproduce the results of a pre-defined experiment pipeline, you can run the f
 
 For example, to run the `FlenQA_Experiment_Pipeline` experiment pipeline defined in `eureka_ml_insights/user_configs/flenqa.py` using the OpenAI GPT4 1106 Preview model, you can run the following command:
 
-```python main.py --exp_config FlenQA_Experiment_Pipeline --model_config OAI_GPT4_1106_PREVIEW_CONFIG --exp_logdir gpt4_1106_preveiw```
+```python main.py --exp_config FlenQA_Experiment_Pipeline --model_config OAI_GPT4_1106_PREVIEW_CONFIG --exp_logdir gpt4_1106_preview```
 
-The results of the experiment will be saved in a directory under `logs/FlenQA_Experiment_Pipeline/gpt4_1106_preveiw`. For each experiment you run with these configurations, a new directory will be created using the date and time of the experiment run. 
+The results of the experiment will be saved in a directory under `logs/FlenQA_Experiment_Pipeline/gpt4_1106_preview`. For each experiment you run with these configurations, a new directory will be created using the date and time of the experiment run. 
 For other available experiment pipelines and model configurations, see the `eureka_ml_insights/user_configs` and `eureka_ml_insights/configs` directories, respectively. In [model_configs.py](eureka_ml_insights/configs/model_configs.py) you can configure the model classes to use your API keys, Key Vault urls, endpoints, and other model-specific configurations.
 
 ## 🗺️ Overview of Experiment Pipelines

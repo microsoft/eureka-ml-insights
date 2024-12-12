@@ -1,17 +1,16 @@
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
-import { Layout as AntdLayout, Menu, Select} from "antd";
+import { Layout as AntdLayout, Menu} from "antd";
 import Layout from '@theme/Layout';
 import React from "react";
 import { EurekaConfig } from "../types";
 import Sider from "antd/es/layout/Sider";
 import { Header } from "antd/es/layout/layout";
 import Link from "@docusaurus/Link";
-import { ArrowLeftCircleIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
+import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import BenchmarkDetails from "./benchmark_details";
 import styles from './modality_breakdown.module.css';
 
 const ModalityBreakdown = ({modality}: {modality: string}) => {
-    const {siteConfig} = useDocusaurusContext();
     const [config, setConfig] = React.useState<EurekaConfig | null>(null);
     const [items, setItems] = React.useState<MenuItem[]>([]);
     const [selectedBenchmark, setSelectedBenchmark] = React.useState(null);  

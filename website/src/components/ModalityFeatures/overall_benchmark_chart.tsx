@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { ModelScore, EurekaConfig, CapabilityScores, ModelConfig } from "../types";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
+import Exporting from "highcharts/modules/exporting";  
+import ExportData from "highcharts/modules/export-data";  
 
 const OverallBenchmarkChart = ({benchmark, config}: {benchmark: string, config: EurekaConfig}) => {
     const [isLoading, setIsLoading] = useState(true);  
@@ -13,6 +15,8 @@ const OverallBenchmarkChart = ({benchmark, config}: {benchmark: string, config: 
           const HC_more = await import('highcharts/highcharts-more');  
           HC_more.default(Highcharts);  
           setHighchartsLoading(false);
+          Exporting(Highcharts);  
+          ExportData(Highcharts);  
         };  
         loadHighchartsMore();
       }, []); 
@@ -58,7 +62,7 @@ const OverallBenchmarkChart = ({benchmark, config}: {benchmark: string, config: 
                         text: d.name,
                     },  
                     xAxis: {  
-                        categories: categories,
+                        categories: [d.name + " Score"]
                     },  
                     yAxis: {  
                         min: 0,
