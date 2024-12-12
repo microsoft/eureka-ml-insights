@@ -20,6 +20,7 @@ from eureka_ml_insights.data_utils import (
     SequenceTransform,
     TokenCounterTransform,
     ShuffleColumnsTransform,
+    MajorityVoteTransform,
     ColumnMatchMapTransform
 )
 
@@ -86,7 +87,13 @@ class TestDataTransform(unittest.TestCase):
         self.assertListEqual(list(result["B"]), ["a", "b", "c", "a", "b", "c"])
         self.assertEqual(len(result["A"]), len(self.df) * n_repeats)
 
-
+    def test_majorityvote_transform(self):
+        df1 = pd.DataFrame({"ID": [1,1,1,2,2,2], "model_output": [100,100,99,5,4,1]})
+        transform = MajorityVoteTransform(
+        )
+        result = transform.transform(df1)
+        self.assertListEqual(list(result),list(pd.DataFrame({"ID": [1,1,1,2,2,2], "model_output": [100,100,99,1,5,5],"majority_vote":[100,100,100,5,5,5]})))
+        
 class TestTokenCounterTransform(unittest.TestCase):
     def setUp(self):
         self.df = pd.DataFrame({"A": ["tiktoken is great!"], "B": ["antidisestablishmentarianism"]})

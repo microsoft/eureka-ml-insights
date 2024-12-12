@@ -369,6 +369,7 @@ class MajorityVoteTransform:
     
     model_output_col: str = "model_output"  # Default column name for model outputs
     id_col: str = "ID"  # Default column name for IDs
+    majority_vote_col: str = 'majority_vote'
     
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -381,26 +382,7 @@ class MajorityVoteTransform:
         Returns:
             pd.DataFrame: Transformed dataframe with majority vote for each 'ID'.
         """
-        
-        # Function to get the majority vote
-        def majority_vote(group):
-            # Drop NaN values and get the most common value
-            group_non_nan = group.dropna()
-            if not group_non_nan.empty:
-                return group_non_nan.mode().iloc[0]  # Return the mode, the most frequent value
-            else:
-                return np.nan # pd.NA  # Return NaN if all values are NaN
-        
-        # Custom function to get the first value, regardless of NA
-        def first_in_group(group):
-            return group.iloc[0]  # Return the first element
-        
-        # Perform aggregation
-        other_columns = [col for col in df.columns if col != self.id_col and col != self.model_output_col]
+        # Step 1: Group by 'ID' and calculate the majority vote within each group
+        df[self.majority_vote_col] = df.groupby(self.id_col)[self.model_output_col].transform(lambda x: x.mode()[0])
 
-        df_filtered = df.groupby(self.id_col).agg(
-            {self.model_output_col: majority_vote,  # Aggregating 'model_output' using majority vote
-             **{col: first_in_group for col in other_columns}  # Keeping all other columns with the 'first' function
-            }).reset_index()
-
-        return df_filtered
+        return df
