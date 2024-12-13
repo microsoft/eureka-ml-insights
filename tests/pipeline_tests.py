@@ -467,13 +467,9 @@ class AIME_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_AIME_PIPELINE().pipeline_config
 
-    def setUp(self) -> None:
-        super().setUp()
-        self.eval_config_raw = self.conf.component_configs[-3]
-
     def test_outputs_exist(self) -> None:
         super().test_outputs_exist()
-        self.verify_n_aggregators(self.eval_config_raw)
+        self.verify_n_aggregators(self.conf.component_configs[-3])
 
 
 
