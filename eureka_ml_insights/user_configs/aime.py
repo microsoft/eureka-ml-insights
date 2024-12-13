@@ -20,7 +20,7 @@ from eureka_ml_insights.data_utils import (
 from eureka_ml_insights.data_utils.aime_utils import AIMEExtractAnswer
 from eureka_ml_insights.data_utils.data import DataLoader
 from eureka_ml_insights.metrics.metrics_base import ExactMatch
-from eureka_ml_insights.metrics.reports import CountAggregator
+from eureka_ml_insights.metrics.reports import CountAggregator, BiLevelCountAggregator
 
 from eureka_ml_insights.configs import (
     AggregatorConfig,
@@ -59,12 +59,14 @@ class AIME_PIPELINE(ExperimentConfig):
                                     "Answer": "ground_truth",
                                 }
                             ),  
-                        ],
+                            SamplerTransform( random_seed=1, sample_count=2),
+                    ],
                     ),
+                    
                 },
             ),
             prompt_template_path=os.path.join(
-                os.path.dirname(__file__), "../prompt_templates/aime_templates/Template_1a.jinja"
+                os.path.dirname(__file__), "../prompt_templates/aime_templates/Template_1clean.jinja"
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
         )
@@ -79,7 +81,7 @@ class AIME_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
-            max_concurrent = 1,
+            max_concurrent = 10,
 
         )
         # post process the response to extract the answer
@@ -133,31 +135,64 @@ class AIME_PIPELINE(ExperimentConfig):
         )
         
         # Aggregate the results by a majority vote 
+        # First, let us perform majority_vote
+        self.data_post_processing_addmv = DataProcessingConfig(
+            component_type=DataProcessing,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            ColumnRename(
+                                name_mapping={
+                                    "model_output": "raw_output",
+                                }
+                            ),
+                            AddColumn("model_output"),
+                            AIMEExtractAnswer("raw_output", "model_output"),
+                            MajorityVoteTransform(),
+                            ColumnRename(
+                                name_mapping={
+                                    "model_output": "model_output_onerun",
+                                    "majority_vote": "model_output",
+                                }
+                            ),
+                            
+                        ]
+                    ),
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "data_addmv_output"),
+        )
+        # Second, compute eaxct match
         self.postevalprocess_comp = EvalReportingConfig(
             component_type=EvalReporting,
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                 "path": os.path.join(self.evalreporting_comp.output_dir, "metric_results.jsonl"),
-                 "format": ".jsonl",
-                 "transform":MajorityVoteTransform(),
+                    "path": os.path.join(self.data_post_processing_addmv.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
                 },
             ),
             metric_config=MetricConfig(ExactMatch),
             aggregator_configs=[
                 AggregatorConfig(
-                    CountAggregator,
+                    BiLevelCountAggregator,
                     {
                         "column_names": [
                             "ExactMatch_result",
                         ],
-                        "group_by": "Year",
-                        "filename_base": "ExactMatch_GroupBy",
+                        "first_groupby":"ID",
+                        "filename_base": "MajorityVote",
+                        'normalize':True,
                     },
                 ),
             ],
             output_dir=os.path.join(self.log_dir, "eval_report_majorityVote"),
-        )       
+        )
+        
 
         # Configure the pipeline
         return PipelineConfig(
@@ -167,6 +202,7 @@ class AIME_PIPELINE(ExperimentConfig):
                 self.data_post_processing,
            
                 self.evalreporting_comp,
+                self.data_post_processing_addmv,
                 self.postevalprocess_comp,
             ],
             self.log_dir,
