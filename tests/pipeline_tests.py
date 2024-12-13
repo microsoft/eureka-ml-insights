@@ -340,7 +340,7 @@ class PipelineTest:
             self.assertTrue(any("processed_prompts.jsonl" in str(file) for file in self.files))
         self.assertTrue(any("inference_result.jsonl" in str(file) for file in self.files))
         self.verify_n_aggregators(self.eval_config)
-        
+
     def verify_n_aggregators(self, eval_config) -> None:
         eval_files = list(Path(self.eval_config.output_dir).rglob("*"))
         self.eval_config = eval_config

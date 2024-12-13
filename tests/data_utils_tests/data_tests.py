@@ -7,10 +7,12 @@ import pandas as pd
 from PIL import Image
 
 from eureka_ml_insights.data_utils import (
+    ColumnMatchMapTransform,
     ColumnRename,
     HFDataReader,
     ImputeNA,
     JinjaPromptTemplate,
+    MajorityVoteTransform,
     MapStringsTransform,
     MMDataLoader,
     MultiplyTransform,
@@ -18,10 +20,8 @@ from eureka_ml_insights.data_utils import (
     ReplaceStringsTransform,
     RunPythonTransform,
     SequenceTransform,
-    TokenCounterTransform,
     ShuffleColumnsTransform,
-    MajorityVoteTransform,
-    ColumnMatchMapTransform
+    TokenCounterTransform,
 )
 
 
@@ -88,12 +88,25 @@ class TestDataTransform(unittest.TestCase):
         self.assertEqual(len(result["A"]), len(self.df) * n_repeats)
 
     def test_majorityvote_transform(self):
-        df1 = pd.DataFrame({"ID": [1,1,1,2,2,2], "model_output": [100,100,99,5,4,1]})
-        transform = MajorityVoteTransform(
+        df1 = pd.DataFrame(
+            {"data_point_id": [1, 1, 1, 2, 2, 2, 3, 3, 3], "model_output": [100, 100, 99, 5, 4, 1, 2, np.nan, np.nan]}
         )
+        transform = MajorityVoteTransform()
         result = transform.transform(df1)
-        self.assertListEqual(list(result),list(pd.DataFrame({"ID": [1,1,1,2,2,2], "model_output": [100,100,99,1,5,5],"majority_vote":[100,100,100,5,5,5]})))
-        
+        self.assertListEqual(
+            list(result),
+            list(
+                pd.DataFrame(
+                    {
+                        "data_point_id": [1, 1, 1, 2, 2, 2, 3, 3, 3],
+                        "model_output": [100, 100, 99, 1, 5, 5, 2, np.nan, np.nan],
+                        "majority_vote": [100, 100, 100, 5, 5, 5, 2, 2, 2],
+                    }
+                )
+            ),
+        )
+
+
 class TestTokenCounterTransform(unittest.TestCase):
     def setUp(self):
         self.df = pd.DataFrame({"A": ["tiktoken is great!"], "B": ["antidisestablishmentarianism"]})
@@ -155,17 +168,19 @@ class TestMMDataLoader(unittest.TestCase):
             for _, model_inputs in self.data_loader:
                 self.assertTrue(isinstance(model_inputs[1][0], Image.Image))
 
+
 class TestShuffleColumns(unittest.TestCase):
     """Testing the ShuffleColumnsTransform used in MCQ benchmarks to shuffle answer choices."""
+
     def setUp(self):
         self.df = pd.DataFrame(
-                    {
-                        "A": [1, 2, 3, 4, 5],
-                        "B": ["a", "b", "c", "d", "e"],
-                        "C": [-10, -20, -30, -40, -50],
-                        "D": ["hi", "how", "are", "you", "?"],
-                    }
-                )
+            {
+                "A": [1, 2, 3, 4, 5],
+                "B": ["a", "b", "c", "d", "e"],
+                "C": [-10, -20, -30, -40, -50],
+                "D": ["hi", "how", "are", "you", "?"],
+            }
+        )
         self.shuffle_transform = ShuffleColumnsTransform(columns=["A", "B", "C"])
 
     def test_shuffle_columns_values(self):
@@ -201,11 +216,13 @@ class TestShuffleColumns(unittest.TestCase):
             pd.testing.assert_series_equal(self.df[col], transformed_df_1[col], check_exact=True)
             pd.testing.assert_series_equal(self.df[col], transformed_df_2[col], check_exact=True)
 
+
 class TestColMatchMap(unittest.TestCase):
     """
     Testing the ColumnMatchMapTransform used in MCQ benchmarks to store the letter of the correct
     answer choice.
     """
+
     def setUp(self):
         # Seed the random number generator for reproducibility
         np.random.seed(42)
@@ -235,6 +252,7 @@ class TestColMatchMap(unittest.TestCase):
             df = val["df"]
             df = self.col_match_map_transform.transform(df)
             self.assertEqual(list(df["ground_truth"]), val["ground_truth"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -7,7 +7,6 @@ from typing import Dict, List
 import numpy as np
 import pandas as pd
 import tiktoken
-import numpy as np
 
 
 @dataclass
@@ -186,7 +185,7 @@ class MultiColumnTransform(DFTransformBase):
 class ShuffleColumnsTransform(MultiColumnTransform):
     """
     For a set of columns, shuffles the values across each row of these columns.
-    Values will be shuffled differently for each row. 
+    Values will be shuffled differently for each row.
 
     This class is meant to be used in MCQ benchmarks to shuffle answer choices
     across different letter options (e.g. shuffle what choice maps to 'A' vs 'B' vs 'C').
@@ -224,7 +223,7 @@ class ColumnMatchMapTransform(DFTransformBase):
             if row[col] == row[self.key_col]:
                 return col
         return None  # If no match is found (optional)
-    
+
     def validate(self, df: pd.DataFrame):
         """Check that all columns to be transformed are present actually in the data frame."""
         extra_columns = set(self.columns + [self.key_col]) - set(df.columns)
@@ -336,7 +335,6 @@ class ASTEvalTransform(MultiColumnTransform):
         return list_strings
 
 
-
 @dataclass
 class TokenCounterTransform(MultiColumnTransform):
     """
@@ -363,27 +361,29 @@ class TokenCounterTransform(MultiColumnTransform):
             df[token_count_column] = token_count
         return df
 
+
 @dataclass
 class MajorityVoteTransform:
     """Applies the majority vote transformation to the specified model output column per ID."""
-    
+
     model_output_col: str = "model_output"  # Default column name for model outputs
-    id_col: str = "ID"  # Default column name for IDs
-    majority_vote_col: str = 'majority_vote'
-    
+    id_col: str = "data_point_id"  # Default column name for IDs
+    majority_vote_col: str = "majority_vote"
+
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Transforms the dataframe by calculating the majority vote of 'model_output' per 'ID'.
+        Transforms the dataframe by calculating the majority vote of model_output_col per id_col.
         If the 'model_output' is NaN, it will be droped in the majority vote.
 
         Args:
-            df (pd.DataFrame): Input dataframe containing 'ID' and 'model_output'.
-        
+            df (pd.DataFrame): Input dataframe containing model_output_col and id_col.
+
         Returns:
-            pd.DataFrame: Transformed dataframe with majority vote for each 'ID'.
+            pd.DataFrame: Transformed dataframe with majority vote for each id_col.
         """
         # Step 1: Group by 'ID' and calculate the majority vote within each group
         df[self.majority_vote_col] = df.groupby(self.id_col)[self.model_output_col].transform(
-        lambda x: x.dropna().mode()[0] if not x.dropna().mode().empty else pd.NA)
+            lambda x: x.dropna().mode()[0] if not x.dropna().mode().empty else pd.NA
+        )
 
         return df
