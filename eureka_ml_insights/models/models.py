@@ -295,7 +295,8 @@ class LlamaServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
         user_content = text_prompt
         if query_images:
             if len(query_images) > 1:
-                raise ValueError("Llama vision model does not support more than 1 image.")
+                logging.warning("Llama vision model does not support more than 1 image.")
+                return None
             encoded_images = self.base64encode(query_images)
             user_content = [
                 {"type": "text", "text": text_prompt},
