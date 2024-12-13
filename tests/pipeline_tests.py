@@ -340,7 +340,7 @@ class PipelineTest:
             self.assertTrue(any("processed_prompts.jsonl" in str(file) for file in self.files))
         self.assertTrue(any("inference_result.jsonl" in str(file) for file in self.files))
         self.verify_n_aggregators(self.eval_config)
-
+        
     def verify_n_aggregators(self, eval_config) -> None:
         eval_files = list(Path(self.eval_config.output_dir).rglob("*"))
         self.eval_config = eval_config
@@ -438,6 +438,32 @@ class DNA_PipelineTest(PipelineTest, unittest.TestCase):
             )
 
 
+class IFEval_PipelineTest(PipelineTest, unittest.TestCase):
+    def get_config(self):
+        self.test_pipeline = TEST_IFEval_PIPELINE()
+        self.config = self.test_pipeline.pipeline_config
+        return self.config
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.eval_configs = [
+            self.test_pipeline.evalreporting_comp,
+            self.test_pipeline.instruction_level_evalreporting_comp,
+        ]
+
+    def test_outputs_exist(self) -> None:
+        logging.info("Running test_outputs_exist test in PipelineTest")
+        self.assertTrue(any("transformed_data.jsonl" in str(file) for file in self.files))
+        if self.data_reader_config.prompt_template_path:
+            self.assertTrue(any("processed_prompts.jsonl" in str(file) for file in self.files))
+        self.assertTrue(any("inference_result.jsonl" in str(file) for file in self.files))
+        if self.eval_config.metric_config is not None:
+            self.assertTrue(any("metric_results.jsonl" in str(file) for file in self.files))
+        n_aggregators = len([config for eval_config in self.eval_configs for config in eval_config.aggregator_configs])
+        n_aggregator_files = len([file for file in self.files if "aggregator" in str(file)])
+        self.assertEqual(n_aggregators, n_aggregator_files)
+
+
 class TOXIGEN_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_TOXIGEN_PIPELINE().pipeline_config
@@ -467,6 +493,15 @@ class DROP_PipelineTest(PipelineTest, unittest.TestCase):
 class AIME_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_AIME_PIPELINE().pipeline_config
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.eval_config_raw = self.conf.component_configs[-3]
+
+    def test_outputs_exist(self) -> None:
+        super().test_outputs_exist()
+        self.verify_n_aggregators(self.eval_config_raw)
+
 
 
 if __name__ == "__main__":
