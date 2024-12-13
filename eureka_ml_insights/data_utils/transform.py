@@ -364,7 +364,7 @@ class TokenCounterTransform(MultiColumnTransform):
 
 @dataclass
 class MajorityVoteTransform:
-    """Applies the majority vote transformation to the specified model output column per ID."""
+    """Applies the majority vote transformation to the specified model output column per id_col."""
 
     model_output_col: str = "model_output"  # Default column name for model outputs
     id_col: str = "data_point_id"  # Default column name for IDs
@@ -373,7 +373,7 @@ class MajorityVoteTransform:
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Transforms the dataframe by calculating the majority vote of model_output_col per id_col.
-        If the 'model_output' is NaN, it will be droped in the majority vote.
+        If the 'model_output' is NaN, it will be droped before calculating the majority vote.
 
         Args:
             df (pd.DataFrame): Input dataframe containing model_output_col and id_col.
