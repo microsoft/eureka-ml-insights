@@ -35,6 +35,8 @@ from eureka_ml_insights.configs import(
 )
 from eureka_ml_insights.configs import ExperimentConfig
 
+from azure.identity import DefaultAzureCredential
+
 # Example template for an Azure Language Service config
 # required for running entity recognition for evaluating human and city name
 AZURE_LANG_SERVICE_CONFIG = {
@@ -43,6 +45,7 @@ AZURE_LANG_SERVICE_CONFIG = {
         "key_name": "your_azure_lang_service_secret_key_name",
         "local_keys_path": "keys/keys.json",
         "key_vault_url": None,
+        "credential_func": DefaultAzureCredential,
     },
 }
 

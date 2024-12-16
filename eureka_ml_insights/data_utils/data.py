@@ -8,7 +8,6 @@ from typing import List, Optional
 
 import jsonlines
 import pandas as pd
-from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobClient, ContainerClient
 from datasets import load_dataset
 from PIL import Image
@@ -234,6 +233,7 @@ class AzureMMDataLoader(MMDataLoader):
         path,
         account_url,
         blob_container,
+        credential_func:callable=lambda _: None,
         total_lines=None,
         image_column_names=None,
         image_column_search_regex="image",
@@ -260,7 +260,7 @@ class AzureMMDataLoader(MMDataLoader):
         self.container_client = ContainerClient(
             account_url=self.account_url,
             container_name=self.blob_container,
-            credential=DefaultAzureCredential(),
+            credential=credential_func(),
             logger=self.logger,
         )
 
@@ -312,13 +312,13 @@ class JsonReader(DataReaderBase):
 class AzureBlobReader:
     """Reads an Azure storage blob from a full URL to a str"""
 
-    def read_azure_blob(self, blob_url) -> str:
+    def read_azure_blob(self, blob_url, credential_func:callable=lambda _: None) -> str:
         """
         Reads an Azure storage blob..
         args:
             blob_url: str, The Azure storage blob full URL.
         """
-        blob_client = BlobClient.from_blob_url(blob_url, credential=DefaultAzureCredential(), logger=self.logger)
+        blob_client = BlobClient.from_blob_url(blob_url, credential=credential_func(), logger=self.logger)
         # real all the bytes from the blob
         file = blob_client.download_blob().readall()
         file = file.decode("utf-8")
@@ -336,6 +336,7 @@ class AzureJsonReader(JsonReader, AzureBlobReader):
         account_url: str,
         blob_container: str,
         blob_name: str,
+        credential_func:callable=lambda _: None,
     ):
         """
         Initializes an AzureJsonReader.
@@ -346,10 +347,11 @@ class AzureJsonReader(JsonReader, AzureBlobReader):
         """
         self.blob_url = f"{account_url}/{blob_container}/{blob_name}"
         super().__init__(self.blob_url)
+        self.credential_func = credential_func
         self.logger = AzureStorageLogger().get_logger()
 
     def read(self) -> dict:
-        file = super().read_azure_blob(self.blob_url)
+        file = super().read_azure_blob(self.blob_url, credential_func=self.credential_func)
         if self.format == ".json":
             data = json.loads(file)
         elif self.format == ".jsonl":
@@ -464,6 +466,7 @@ class AzureDataReader(DataReader, AzureBlobReader):
         account_url: str,
         blob_container: str,
         blob_name: str,
+        credential_func:callable = lambda _: None,
         format: str = None,
         transform: Optional[DFTransformBase] = None,
         **kwargs,
@@ -480,10 +483,11 @@ class AzureDataReader(DataReader, AzureBlobReader):
         """
         self.blob_url = f"{account_url}/{blob_container}/{blob_name}"
         super().__init__(self.blob_url, format, transform, **kwargs)
+        self.credential_func = credential_func
         self.logger = AzureStorageLogger().get_logger()
 
     def _load_dataset(self) -> pd.DataFrame:
-        file = super().read_azure_blob(self.blob_url)
+        file = super().read_azure_blob(self.blob_url, credential_func=self.credential_func)
         if self.format == ".jsonl":
             jlr = jsonlines.Reader(file.splitlines())
             df = pd.DataFrame(jlr.iter(skip_empty=True, skip_invalid=True))

@@ -9,6 +9,7 @@ from eureka_ml_insights.data_utils import (
 )
 from eureka_ml_insights.metrics import ClassicMetric, CompositeMetric
 
+from azure.identity import DefaultAzureCredential
 
 class TestModel:
     def __init__(self, model_name="generic_test_model"):
@@ -265,5 +266,5 @@ class TestMMDataLoader(EarlyStoppableIterable, MMDataLoader):
 
 class TestAzureMMDataLoader(EarlyStoppableIterable, AzureMMDataLoader):
     def __init__(self, path, n_iter, account_url, blob_container, image_column_names=None):
-        super().__init__(path, account_url, blob_container, image_column_names=image_column_names)
+        super().__init__(path, account_url, blob_container, credential_func=DefaultAzureCredential, image_column_names=image_column_names)
         self.n_iter = n_iter
