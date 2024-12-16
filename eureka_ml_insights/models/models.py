@@ -98,7 +98,7 @@ class EndpointModel(Model):
         # must return the model output and the response time
         raise NotImplementedError
 
-    def generate(self, query_text, query_images=None, system_message=None, previous_messages=None):
+    def generate(self, query_text, **kwargs):
         """
         Calls the endpoint to generate the model response.
         args:
@@ -110,7 +110,7 @@ class EndpointModel(Model):
                                   and any other relevant information returned by the model.
         """
         response_dict = {}
-        request = self.create_request(query_text, query_images=query_images, system_message=system_message, previous_messages=previous_messages)
+        request = self.create_request(query_text, **kwargs)
         attempts = 0
         while attempts < self.num_retries:
             try:
@@ -286,12 +286,12 @@ class LlamaServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
     skip_special_tokens: bool = False
     ignore_eos: bool = False
 
-    def create_request(self, text_prompt, query_images=None, **kwargs):
+    def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
         messages = []
-        if kwargs.get("system_message"):
-            messages.append({"role": "system", "content": kwargs.get("system_message")})
-        if kwargs.get("previous_messages"):
-            messages.extend(kwargs.get("previous_messages"))
+        if system_message:
+            messages.append({"role": "system", "content": system_message})
+        if previous_messages:
+            messages.extend(previous_messages)
         user_content = text_prompt
         if query_images:
             if len(query_images) > 1:
@@ -342,12 +342,12 @@ class MistralServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
             self.top_p = 1
         super().__post_init__()
 
-    def create_request(self, text_prompt, query_images=None, system_message=None, **kwargs):
+    def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
         messages = []
         if system_message:
             messages.append({"role": "system", "content": system_message})
-        if kwargs.get("previous_messages"):
-            messages.extend(kwargs.get("previous_messages"))
+        if previous_messages:
+            messages.extend(previous_messages)
         if query_images:
             raise NotImplementedError("Images are not supported for MistralServerlessAzureRestEndpointModel endpoints.")
         messages.append({"role": "user", "content": text_prompt})
@@ -371,12 +371,12 @@ class OpenAICommonRequestResponseMixIn:
     This mixin class defines the request and response handling for most OpenAI models.
     """
 
-    def create_request(self, prompt, query_images=None, system_message=None, *args, **kwargs):
+    def create_request(self, prompt, query_images=None, system_message=None, previous_messages=None):
         messages = []
         if system_message:
             messages.append({"role": "system", "content": system_message})
-        if kwargs.get("previous_messages"):
-            messages.extend(kwargs.get("previous_messages"))
+        if previous_messages:
+            messages.extend(previous_messages)
         user_content = prompt
         if query_images:
             encoded_images = self.base64encode(query_images)
@@ -490,14 +490,14 @@ class DirectOpenAIModel(OpenAICommonRequestResponseMixIn, DirectOpenAIClientMixI
 
 class OpenAIO1RequestResponseMixIn:
     
-    def create_request(self, prompt, *args, **kwargs):
-        if kwargs.get("system_message"):
+    def create_request(self, prompt, query_images=None, system_message=None, previous_messages=None):
+        if system_message:
             # system messages are not supported for OAI reasoning models
             # https://platform.openai.com/docs/guides/reasoning
             logging.warning("System messages are not supported for OAI reasoning models.")
         messages = []   
-        if kwargs.get("previous_messages"):
-            messages.extend(kwargs.get("previous_messages"))
+        if previous_messages:
+            messages.extend(previous_messages)
 
         messages.append({"role": "user", "content": prompt})
         return {"messages": messages}
@@ -587,14 +587,16 @@ class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
             max_output_tokens=self.max_tokens, temperature=self.temperature, top_p=self.top_p
         )
 
-    def create_request(self, text_prompt, query_images=None, system_message=None, **kwargs):
+    def create_request(self, text_prompt, query_images=None, system_message=None):
         import google.generativeai as genai
 
-        # Gemini 1.0 Pro does not support system messages
-        if model_name == "gemini-1.0-pro":
+        if self.model_name == "gemini-1.0-pro":
+            if system_message:
+                logging.warning("System messages are not supported for Gemini 1.0 Pro.")
             self.model = genai.GenerativeModel(self.model_name)
+        else:
+            self.model = genai.GenerativeModel(self.model_name, system_instruction=system_message)
         
-        self.model = genai.GenerativeModel(self.model_name, system_instruction=system_message)
         if query_images:
             return [text_prompt] + query_images
         else:
@@ -973,12 +975,12 @@ class ClaudeModel(EndpointModel, KeyBasedAuthMixIn):
             timeout=self.timeout,
         )
 
-    def create_request(self, prompt, query_images=None, system_message=None, **kwargs):
+    def create_request(self, prompt, query_images=None, system_message=None, previous_messages=None):
         messages = []
 
         user_content = prompt
-        if kwargs.get("previous_messages"):
-            messages.extend(kwargs.get("previous_messages"))
+        if previous_messages:
+            messages.extend(previous_messages)
         if query_images:
             encoded_images = self.base64encode(query_images)
             user_content = [
