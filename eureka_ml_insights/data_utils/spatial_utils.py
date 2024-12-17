@@ -260,7 +260,7 @@ def extract_answer_from_text_map_and_maze(model_output_raw, options):
     if answers_match:
         model_output_parsed =  answers_match.group(1)
 
-    return [model_output_parsed, model_output_parsed_letter]
+    return model_output_parsed + " or " + model_output_parsed_letter
 
 
 def extract_answer_from_text_maze(text, question_type):

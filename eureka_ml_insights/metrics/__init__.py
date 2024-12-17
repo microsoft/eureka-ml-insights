@@ -7,8 +7,6 @@ from .metrics_base import (
     ExactMatch,
     IdentityMetric,
     Metric,
-    MultiCandidateAnyExactMatch,
-    MultiCandidateAnyCaseInsensitiveMatch,
     SubstringExistsMatch,
 )
 from .mmmu_metrics import MMMUMetric

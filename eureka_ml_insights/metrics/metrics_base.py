@@ -144,50 +144,12 @@ class ExactMatch(ClassicMetric):
         else:
             return "incorrect"
 
-class MultiCandidateAnyExactMatch(ExactMatch):
-    """
-    This class checks for a case-sensitive match for a list of answers from the model output, 
-    and returns the or of the list of metric results.
-
-    This is required for answers to multiple-choice questions.  As many models sometimes give the letter answer 
-    and sometimes the full word answer. This allows one to consider the answer correct if either one was correct.
-    """
-
-    def __evaluate__(self, answer_texts, target_text, is_valid):
-
-        if not is_valid:
-            return "none"
-
-        results = []
-        for answer_text in answer_texts:
-            res = super().__evaluate__(str(answer_text), str(target_text), is_valid)
-            results.append(res)
-
-        corrects = [x=="correct" for x in results]
-
-        if (any(corrects)):
-            return "correct"
-        else:
-            return "incorrect"
 
 class CaseInsensitiveMatch(ExactMatch):
     """This class checks for a case-insensitive, but otherwise exact match."""
 
     def __evaluate__(self, answer_text, target_text, is_valid):
         return super().__evaluate__(str(answer_text).lower(), str(target_text).lower(), is_valid)
-
-class MultiCandidateAnyCaseInsensitiveMatch(MultiCandidateAnyExactMatch):
-    """
-    This class checks for a case-insensitive match for a list of answers from the model output, 
-    and returns the or of the list of metric results.
-
-    This is required for answers to multiple-choice questions.  As many models sometimes give the letter answer 
-    and sometimes the full word answer. This allows one to consider the answer correct if either one was correct.
-    """
-
-    def __evaluate__(self, answer_texts, target_text, is_valid):
-        answer_texts = [str(answer_text).lower() for answer_text in answer_texts]
-        return super().__evaluate__(answer_texts, str(target_text).lower(), is_valid)
 
 
 class IdentityMetric(Metric):
