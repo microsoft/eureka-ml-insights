@@ -15,8 +15,8 @@ from .encoders import NumpyEncoder
 from .prompt_processing import JinjaPromptTemplate
 from .spatial_utils import (
     ExtractAnswerGrid,
-    ExtractAnswerMaze,
-    ExtractAnswerSpatialMap,
+    ExtractAnswerSpatialMapAndMaze,
+    ExtractQuestionOptions,
 )
 from .transform import (
     AddColumn,
@@ -69,8 +69,8 @@ __all__ = [
     ASTEvalTransform,
     PrependStringTransform,
     ExtractAnswerGrid,
-    ExtractAnswerSpatialMap,
-    ExtractAnswerMaze,
+    ExtractAnswerSpatialMapAndMaze,
+    ExtractQuestionOptions,
     ShuffleColumnsTransform,
     ColumnMatchMapTransform,
     TokenCounterTransform,
