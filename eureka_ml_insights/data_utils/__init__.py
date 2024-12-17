@@ -36,6 +36,7 @@ from .transform import (
     SamplerTransform,
     SequenceTransform,
     ShuffleColumnsTransform,
+    MajorityVoteTransform,
     TokenCounterTransform,
 )
 
@@ -73,5 +74,6 @@ __all__ = [
     ShuffleColumnsTransform,
     ColumnMatchMapTransform,
     TokenCounterTransform,
+    MajorityVoteTransform,
     NumpyEncoder,
 ]
