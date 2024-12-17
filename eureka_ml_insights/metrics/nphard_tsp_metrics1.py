@@ -83,18 +83,16 @@ class NPHardMetric(Metric):
         optimal_tour_curr=x["optimal_tour"]
         weight_matrix_curr=x["weight_matrix"]
         ground_truth_curr=x["ground_truth"]
-        tour=x["model_output"]
+        model_output_curr=x["model_output"]
 
 
-        # model_output_curr=x["model_output"]
-        # final_answer_element, reasoning_element = self.parse_xml_to_dict(model_output_curr)
-        # tour_distance = ast.literal_eval(final_answer_element.text)['TotalDistance']
+        final_answer_element, reasoning_element = self.parse_xml_to_dict(model_output_curr)
+        tour_distance = ast.literal_eval(final_answer_element.text)['TotalDistance']
 
-        # tour_string = ast.literal_eval(final_answer_element.text)['Path']
-        # tour = list(map(int, tour_string.split('->')))
+        tour_string = ast.literal_eval(final_answer_element.text)['Path']
+        tour = list(map(int, tour_string.split('->')))
 
-        # print("final tour sring: ", tour_string)
-
+        print("final tour sring: ", tour_string)
         print("final tour: ", tour)
 
         cities = [str(i) for i in range(len(weight_matrix_curr))]

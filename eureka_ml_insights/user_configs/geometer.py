@@ -23,7 +23,7 @@ from eureka_ml_insights.configs import(
 )
 from eureka_ml_insights.configs import ExperimentConfig
 
-"""This file contains user defined configuration classes for the geometric reasoning task on geometer dataset.
+"""This file contains user defined configuration classes for the geometric reasoning task on geometer dataset. 
 """
 
 class GEOMETER_PIPELINE(ExperimentConfig):

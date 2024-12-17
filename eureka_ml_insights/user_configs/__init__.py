@@ -73,7 +73,11 @@ from .vision_language.spatial_map import (
     SPATIAL_MAP_TEXTONLY_PIPELINE,
 )
 
-from .nphard_tsp import NPHARD_TSP_PIPELINE
+from .nphard_tsp import (
+    NPHARD_TSP_PIPELINE,
+    NPHARD_TSP_PIPELINE2Run,
+)
+
 
 __all__ = [
     OBJECT_DETECTION_PAIRS_PIPELINE,
@@ -129,4 +133,5 @@ __all__ = [
     AIME_PIPELINE512Run,
     AIME_PIPELINE1024Run,
     NPHARD_TSP_PIPELINE,
+    NPHARD_TSP_PIPELINE2Run,
 ]
