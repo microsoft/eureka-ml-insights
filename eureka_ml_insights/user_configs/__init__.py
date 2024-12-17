@@ -7,6 +7,7 @@ from .aime import (
     AIME_PIPELINE256Run,
     AIME_PIPELINE512Run,
     AIME_PIPELINE1024Run,
+    AIME_PIPELINETag,
 )
 from .dna import DNA_PIPELINE
 from .drop import Drop_Experiment_Pipeline

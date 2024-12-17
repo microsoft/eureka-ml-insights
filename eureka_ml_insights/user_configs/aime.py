@@ -23,6 +23,7 @@ from eureka_ml_insights.data_utils import (
     MajorityVoteTransform,
     MultiplyTransform,
     SequenceTransform,
+    SamplerTransform,
 )
 from eureka_ml_insights.data_utils.aime_utils import AIMEExtractAnswer
 from eureka_ml_insights.data_utils.data import DataLoader
@@ -311,4 +312,23 @@ class AIME_PIPELINE1024Run(AIME_PIPELINE):
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
             MultiplyTransform(n_repeats=1024)
         )
+        return pipeline
+
+
+class AIME_PIPELINETag(AIME_PIPELINE):
+    """This class specifies the config for running AIME benchmark 5 repeated times"""
+
+    def configure_pipeline(
+        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
+    ) -> PipelineConfig:
+        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
+        self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
+            SamplerTransform(random_seed=0,
+                             sample_count=10,
+                              )
+        )
+        # data preprocessing
+        self.data_processing_comp.prompt_template_path=os.path.join(
+                os.path.dirname(__file__), "../prompt_templates/aime_templates/Template_tag1.jinja"
+            )
         return pipeline
