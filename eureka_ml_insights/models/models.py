@@ -681,7 +681,7 @@ class HuggingFaceModel(Model):
         import numpy as np
         import torch
 
-        device = "cpu"
+        device = "cpu"        
 
         if torch.cuda.is_available():
             utilizations = []
@@ -692,6 +692,9 @@ class HuggingFaceModel(Model):
             gpu_index = np.argmin(utilizations)
 
             device = f"cuda:{gpu_index}"
+
+            if self.multi_gpu:
+                device = f"cuda"
 
         logging.info(f"Using device {device} for model self hosting")
 
@@ -771,6 +774,7 @@ class LLaVAHuggingFaceModel(HuggingFaceModel):
 
     quantize: bool = False
     use_flash_attn: bool = False
+    multi_gpu: bool = False
 
     def __post_init__(self):
         super().__post_init__()
