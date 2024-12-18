@@ -12,7 +12,7 @@ class AIMEExtractAnswer(DFTransformBase):
     model_answer_column: str
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        df[self.model_answer_column] = df[self.model_output_column].apply(self.parse_output_answerparse_output_answer)
+        df[self.model_answer_column] = df[self.model_output_column].apply(self.parse_output_answer)
         return df
 
     @staticmethod
