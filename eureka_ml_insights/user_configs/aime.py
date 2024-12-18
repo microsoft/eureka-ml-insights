@@ -123,10 +123,10 @@ class AIME_PIPELINE(ExperimentConfig):
                     CountAggregator,
                     {
                         "column_names": [
-                            "ExactMatch_result",
+                            "NumericMatch_result",
                         ],
                         "group_by": "Year",
-                        "filename_base": "ExactMatch_GroupBy",
+                        "filename_base": "NumericMatch_GroupBy",
                     },
                 ),
             ],
@@ -180,7 +180,7 @@ class AIME_PIPELINE(ExperimentConfig):
                     BiLevelCountAggregator,
                     {
                         "column_names": [
-                            "ExactMatch_result",
+                            "NumericMatch_result",
                         ],
                         "first_groupby": "ID",
                         "filename_base": "MajorityVote",
