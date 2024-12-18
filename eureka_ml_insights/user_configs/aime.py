@@ -23,7 +23,6 @@ from eureka_ml_insights.data_utils import (
     MajorityVoteTransform,
     MultiplyTransform,
     SequenceTransform,
-    SamplerTransform,
 )
 from eureka_ml_insights.data_utils.aime_utils import AIMEExtractAnswer
 from eureka_ml_insights.data_utils.data import DataLoader
