@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 import pandas as pd
 
-from eureka_ml_insights.data_utils import DFTransformBase
+from .transform import DFTransformBase
 
 MMMUCategories = {
     "Art and Design": ["Art", "Art_Theory", "Design", "Music"],
