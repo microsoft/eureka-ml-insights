@@ -112,6 +112,7 @@ class EndpointModel(Model):
         """
         response_dict = {}
         request = self.create_request(query_text, query_images=query_images, system_message=system_message)
+
         attempts = 0
         while attempts < self.num_retries:
             try:
@@ -120,7 +121,7 @@ class EndpointModel(Model):
                     response_dict.update(meta_response)
                 self.is_valid = True
                 break
-            except Exception as e:
+            except Exception as e:                
                 logging.warning(f"Attempt {attempts+1}/{self.num_retries} failed: {e}")
                 do_return = self.handle_request_error(e)
                 if do_return:
@@ -254,6 +255,10 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
         raise NotImplementedError
 
     def get_response(self, request):
+
+        if isinstance(request, dict) and "error" in request:            
+            raise RuntimeError(request["error"])
+
         start_time = time.time()
         response = urllib.request.urlopen(request)
         end_time = time.time()
@@ -264,6 +269,13 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
             return {"usage": res["usage"]}
 
     def handle_request_error(self, e):
+
+        if isinstance(e, RuntimeError):  # Handle custom error
+            logging.error(f"Custom error during request handling: {e}")
+            self.response = str(e)  # Set the error message
+            self.is_valid = False
+            return True  # Signal to exit the retry loop
+
         if isinstance(e, urllib.error.HTTPError):
             logging.info("The request failed with status code: " + str(e.code))
             # Print the headers - they include the request ID and the timestamp, which are useful for debugging.
@@ -288,12 +300,12 @@ class LlamaServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
     skip_special_tokens: bool = False
     ignore_eos: bool = False
 
-    def create_request(self, text_prompt, query_images=None, *args, **kwargs):
-        user_content = {"role": "user", "content": text_prompt}
+    def create_request(self, text_prompt, query_images=None, *args, **kwargs):        
+        user_content = {"role": "user", "content": text_prompt}        
         if query_images:
-            if len(query_images) > 1:
+            if len(query_images) > 1:                                
                 logging.warning("Llama vision model does not support more than 1 image.")
-                return None
+                return {"error": "Too many images provided. Llama vision model supports only 1 image."}                
             encoded_images = self.base64encode(query_images)
             user_content["content"] = [
                 {"type": "text", "text": text_prompt},
