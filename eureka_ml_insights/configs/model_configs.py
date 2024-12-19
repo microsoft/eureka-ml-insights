@@ -186,6 +186,28 @@ LLAMA3_1_405B_INSTRUCT_CONFIG = ModelConfig(
     },
 )
 
+AIF_NT_LLAMA3_2_90B_VISION_INSTRUCT_CONFIG = ModelConfig(
+    LlamaServerlessAzureRestEndpointModel,
+    {
+        "url": "https://Llama-3-2-90B-Vision-Instruct-ev.eastus2.models.ai.azure.com/chat/completions",
+        "secret_key_params": {
+            "key_name": "aif-nt-meta-llama-3-2-90b-Instruct-1",
+            "local_keys_path": "keys/aifeval-vault-azure-net.json",
+        },
+    },
+)
+
+AIF_NT_LLAMA3_2_90B_VISION_INSTRUCT_CONFIG_2 = ModelConfig(
+    LlamaServerlessAzureRestEndpointModel,
+    {
+        "url": "https://Llama-3-2-90B-Vision-Instruct-2.eastus2.models.ai.azure.com/chat/completions",
+        "secret_key_params": {
+            "key_name": "aif-nt-meta-llama-3-2-90b-Instruct-2",
+            "local_keys_path": "keys/aifeval-vault-azure-net.json",
+        },
+    },
+)
+
 # Mistral Endpoints
 AIF_NT_MISTRAL_LARGE_2_2407_CONFIG = ModelConfig(
     MistralServerlessAzureRestEndpointModel,
