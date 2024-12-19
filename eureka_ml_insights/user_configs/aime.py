@@ -26,9 +26,7 @@ from eureka_ml_insights.data_utils import (
 )
 from eureka_ml_insights.data_utils.aime_utils import AIMEExtractAnswer
 from eureka_ml_insights.data_utils.data import DataLoader
-from eureka_ml_insights.metrics.metrics_base import ExactMatch
 from eureka_ml_insights.metrics.aime_metrics import NumericMatch
-
 from eureka_ml_insights.metrics.reports import (
     BiLevelCountAggregator,
     CountAggregator,
@@ -323,15 +321,11 @@ class AIME_PIPELINETag(AIME_PIPELINE):
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
-        '''
-        self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
-            SamplerTransform(random_seed=0,
-                             sample_count=10,
-                              )
-        )
-        '''
         # data preprocessing
-        self.data_processing_comp.prompt_template_path=os.path.join(
-                os.path.dirname(__file__), "../prompt_templates/aime_templates/Template_tag1.jinja"
-            )
+        self.data_processing_comp.prompt_template_path = os.path.join(
+            os.path.dirname(__file__), "../prompt_templates/aime_templates/Template_tag1.jinja"
+        )
+        # Each query is tagged with one or more topics from arithmetic, algebra, counting, geometry, number theory, and probability and other.
+        # These topics follow the description on the official website: https://artofproblemsolving.com/wiki/index.php/American_Invitational_Mathematics_Examination?srsltid=AfmBOooSIQ8ua5aJX00ZtYCKDuOAB4I4c-YE9zr1xYZ86fq8x5RL2sEg.
+        # In their own words, "The AIME tests mathematical problem solving with arithmetic, algebra, counting, geometry, number theory, and probability and other secondary school math topics"
         return pipeline
