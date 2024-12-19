@@ -17,7 +17,6 @@ class NPHARDTSPExtractAnswer(DFTransformBase):
         df[self.model_answer_column] = df[self.model_output_column].apply(parse_xml_to_dict)
         return df
 
-# def parse_output_answer(response):
 
 def parse_xml_to_dict(xml_string):
     # Parse the XML string
@@ -27,7 +26,11 @@ def parse_xml_to_dict(xml_string):
     tour_string = ast.literal_eval(final_answer_element.text)['Path']
     tour = list(map(int, tour_string.split('->')))
 
-    return tour
+    tour_string = ','.join(map(str, tour))
+
+    return tour_string
+
+    # return tour
 
 
 

@@ -80,11 +80,14 @@ class NPHardMetric(Metric):
         if not is_valid_curr:
             return "none"
         
+        # breakpoint()
+
         optimal_tour_curr=x["optimal_tour"]
         weight_matrix_curr=x["weight_matrix"]
         ground_truth_curr=x["ground_truth"]
-        tour=x["model_output"]
+        tour_string=x["model_output"]
 
+        tour = list(map(int, tour_string.split(',')))
 
         # model_output_curr=x["model_output"]
         # final_answer_element, reasoning_element = self.parse_xml_to_dict(model_output_curr)
@@ -97,10 +100,10 @@ class NPHardMetric(Metric):
 
         print("final tour: ", tour)
 
-        cities = [str(i) for i in range(len(weight_matrix_curr))]
+        cities = [i for i in range(len(weight_matrix_curr))]
 
         is_valid, total_tsp_path_length = self.__is_valid_tsp_path(tour, cities, weight_matrix_curr)
-        print(is_valid, total_tsp_path_length)
+        print(is_valid, total_tsp_path_length, ground_truth_curr)
 
         ### incorrect if path is invalid or total_path_length is not same as ground truth path length
 
