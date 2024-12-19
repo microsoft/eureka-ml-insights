@@ -80,23 +80,12 @@ class NPHardMetric(Metric):
         if not is_valid_curr:
             return "none"
         
-        # breakpoint()
-
         optimal_tour_curr=x["optimal_tour"]
         weight_matrix_curr=x["weight_matrix"]
         ground_truth_curr=x["ground_truth"]
         tour_string=x["model_output"]
 
         tour = list(map(int, tour_string.split(',')))
-
-        # model_output_curr=x["model_output"]
-        # final_answer_element, reasoning_element = self.parse_xml_to_dict(model_output_curr)
-        # tour_distance = ast.literal_eval(final_answer_element.text)['TotalDistance']
-
-        # tour_string = ast.literal_eval(final_answer_element.text)['Path']
-        # tour = list(map(int, tour_string.split('->')))
-
-        # print("final tour sring: ", tour_string)
 
         print("final tour: ", tour)
 
@@ -114,65 +103,3 @@ class NPHardMetric(Metric):
             return "incorrect"
 
         return "correct"
-
-
-
-
-
-    # def __evaluate__(self, x):
-    #     is_valid_curr=x["is_valid"]
-
-    #     if not is_valid_curr:
-    #         return "none"
-        
-    #     optimal_tour_curr=x["optimal_tour"]
-    #     weight_matrix_curr=x["weight_matrix"]
-    #     ground_truth_curr=x["ground_truth"]
-    #     model_output_curr=x["model_output"]
-
-
-    #     final_answer_element, reasoning_element = self.parse_xml_to_dict(answer_text)
-    #     # tour_distance = ast.literal_eval(final_answer_element.text)['TotalDistance']
-
-    #     # tour_string = ast.literal_eval(final_answer_element.text)['Path']
-    #     # tour = list(map(int, tour_string.split('->')))
-
-    #     # print("final tour sring: ", tour_string)
-    #     # print("final tour: ", tour)
-
-
-
-    #     # # Example usage
-    #     # cities = ["A", "B", "C", "D"]
-    #     # distance_matrix = [
-    #     #     [0, 10, 15, 20],  # Distances from A
-    #     #     [10, 0, 35, 25],  # Distances from B
-    #     #     [15, 35, 0, 30],  # Distances from C
-    #     #     [20, 25, 30, 0],  # Distances from D
-    #     # ]
-    #     # valid_path = ["A", "B", "C", "D", "A"]
-    #     # invalid_path = ["A", "B", "C", "C", "A"]
-
-    #     # is_valid, total_tsp_path_length = self.__is_valid_tsp_path(valid_path, cities, distance_matrix)
-    #     # print(is_valid, total_tsp_path_length)
-
-    #     # is_valid, total_tsp_path_length = self.__is_valid_tsp_path(invalid_path, cities, distance_matrix)
-    #     # print(is_valid, total_tsp_path_length)
-
-    #     # tour=[0,1,2,0]
-    #     # distance_matrix=[0,1,2]
-    #     # successful_tsp="incorrect"
-    #     # # Check if tour is a cycle
-    #     # if tour[0] != tour[-1]:            
-    #     #     return "incorrect"
-        
-    #     # # Check if all cities are visited
-    #     # if len(tour) != len(distance_matrix) + 1:
-    #     #     return "incorrect"
-        
-    #     # # Check if all cities are visited only once
-    #     # if len(tour) != len(distance_matrix) + 1:
-    #     #     return "incorrect"
-
-    #     return "correct"
-    #     # return super().__evaluate__(tour_distance, target_text, is_valid)

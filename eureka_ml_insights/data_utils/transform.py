@@ -370,10 +370,7 @@ class MajorityVoteTransform:
     id_col: str = "data_point_id"  # Default column name for IDs
     majority_vote_col: str = "majority_vote"
 
-    # breakpoint()
-
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        # breakpoint() 
 
         """
         Transforms the dataframe by calculating the majority vote of model_output_col per id_col.
