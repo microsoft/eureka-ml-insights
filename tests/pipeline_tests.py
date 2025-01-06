@@ -6,7 +6,6 @@ from pathlib import Path
 
 import jsonlines
 
-from eureka_ml_insights.user_configs.ba_calendar import Calendar_Schedule_PIPELINE
 
 # setup loggers
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -42,6 +41,7 @@ from eureka_ml_insights.user_configs import (
     IFEval_PIPELINE,
     ToxiGen_Discriminative_PIPELINE,
     ToxiGen_Generative_PIPELINE,
+    Calendar_Schedule_PIPELINE,
 )
 from tests.test_utils import (
     DetectionTestModel,
