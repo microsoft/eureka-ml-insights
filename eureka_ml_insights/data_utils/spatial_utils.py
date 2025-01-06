@@ -5,10 +5,7 @@ from typing import List
 
 import pandas as pd
 
-from eureka_ml_insights.data_utils.transform import (
-    DFTransformBase,
-    MultiColumnTransform,
-)
+from .transform import DFTransformBase, MultiColumnTransform
 
 
 @dataclass

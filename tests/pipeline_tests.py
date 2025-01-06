@@ -355,10 +355,15 @@ class PipelineTest:
         if self.data_reader_config.prompt_template_path:
             self.assertTrue(any("processed_prompts.jsonl" in str(file) for file in self.files))
         self.assertTrue(any("inference_result.jsonl" in str(file) for file in self.files))
+        self.verify_n_aggregators(self.eval_config)
+        
+    def verify_n_aggregators(self, eval_config) -> None:
+        eval_files = list(Path(self.eval_config.output_dir).rglob("*"))
+        self.eval_config = eval_config
         if self.eval_config.metric_config is not None:
-            self.assertTrue(any("metric_results.jsonl" in str(file) for file in self.files))
+            self.assertTrue(any("metric_results.jsonl" in str(file) for file in eval_files))
         n_aggregators = len(self.eval_config.aggregator_configs)
-        n_aggregator_files = len([file for file in self.files if "aggregator" in str(file)])
+        n_aggregator_files = len([file for file in eval_files if "aggregator" in str(file)])
         self.assertEqual(n_aggregators, n_aggregator_files)
 
 
@@ -448,7 +453,6 @@ class DNA_PipelineTest(PipelineTest, unittest.TestCase):
                 )
             )
 
-
 class IFEval_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         self.test_pipeline = TEST_IFEval_PIPELINE()
@@ -497,7 +501,6 @@ class BA_Calendar_PipelineTest(PipelineTest, unittest.TestCase):
         n_aggregator_files = len([file for file in self.files if "aggregator" in str(file)])
         self.assertEqual(n_aggregators, n_aggregator_files)
 
-
 class TOXIGEN_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_TOXIGEN_PIPELINE().pipeline_config
@@ -527,6 +530,11 @@ class DROP_PipelineTest(PipelineTest, unittest.TestCase):
 class AIME_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_AIME_PIPELINE().pipeline_config
+
+    def test_outputs_exist(self) -> None:
+        super().test_outputs_exist()
+        self.verify_n_aggregators(self.conf.component_configs[-3])
+
 
 
 if __name__ == "__main__":
