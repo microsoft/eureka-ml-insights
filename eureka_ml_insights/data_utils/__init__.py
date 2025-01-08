@@ -1,3 +1,4 @@
+from .aime_utils import AIMEExtractAnswer
 from .data import (
     AzureDataReader,
     AzureJsonReader,
@@ -36,10 +37,12 @@ from .transform import (
     SamplerTransform,
     SequenceTransform,
     ShuffleColumnsTransform,
+    MajorityVoteTransform,
     TokenCounterTransform,
 )
 
 __all__ = [
+    AIMEExtractAnswer,
     JsonLinesWriter,
     JsonReader,
     HFJsonReader,
@@ -73,5 +76,6 @@ __all__ = [
     ShuffleColumnsTransform,
     ColumnMatchMapTransform,
     TokenCounterTransform,
+    MajorityVoteTransform,
     NumpyEncoder,
 ]
