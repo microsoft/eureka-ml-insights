@@ -26,7 +26,7 @@ class Model(ABC):
     n_output_tokens: int = None
 
     @abstractmethod
-    def generate(self, text_prompt, **kwargs):
+    def generate(self, text_prompt, *args, **kwargs):
         raise NotImplementedError
 
     def count_tokens(self):
@@ -90,7 +90,7 @@ class EndpointModel(Model):
     num_retries: int = 3
 
     @abstractmethod
-    def create_request(self, text_prompt, **kwargs):
+    def create_request(self, text_prompt, *args, **kwargs):
         raise NotImplementedError
 
     @abstractmethod
@@ -98,7 +98,7 @@ class EndpointModel(Model):
         # must return the model output and the response time
         raise NotImplementedError
 
-    def generate(self, query_text, **kwargs):
+    def generate(self, query_text, *args, **kwargs):
         """
         Calls the endpoint to generate the model response.
         args:
@@ -110,7 +110,7 @@ class EndpointModel(Model):
                                   and any other relevant information returned by the model.
         """
         response_dict = {}
-        request = self.create_request(query_text, **kwargs)
+        request = self.create_request(query_text, *args, **kwargs)
         attempts = 0
         while attempts < self.num_retries:
             try:
@@ -495,6 +495,10 @@ class OpenAIO1RequestResponseMixIn:
             # system messages are not supported for OAI reasoning models
             # https://platform.openai.com/docs/guides/reasoning
             logging.warning("System messages are not supported for OAI reasoning models.")
+
+        if query_images and self.model_name == "o1-preview":
+            logging.warning("Images are not supported by OpenAI O1 preview model.")
+        
         messages = []   
         if previous_messages:
             messages.extend(previous_messages)
