@@ -1,0 +1,20 @@
+Benchmark Name: Google-Proof Q&A Benchmark
+Paper Title:  GPQA: A Graduate-Level Google-Proof Q&A Benchmark
+Paper Link: https://arxiv.org/abs/2311.12022
+Dataset Link: https://huggingface.co/datasets/Idavidrein/gpqa
+Repository Link: https://github.com/idavidrein/gpqa
+
+A challenging dataset of 448 multiple-choice questions written by domain experts in biology, physics, and chemistry. The questions are high-quality and extremely difficult: experts who have or are pursuing PhDs in the corresponding domains reach 65% accuracy (74% when discounting clear mistakes the experts identified in retrospect), while highly skilled non-expert validators only reach 34% accuracy, despite spending on average over 30 minutes with unrestricted access to the web (i.e., the questions are "Google-proof"). In the current implementation, we use only the gpqa_diamond subset.
+
+What are the experimental design setup dimensions 
+(e.g. settings, prompt templates, dataset subsets) for this benchmark? 
+This is a multiple choice setup where the model is presented with four options and has to pick one. There is no option to abstain. We use two prompt templates, with and without CoT.
+
+What are the evaluation disaggregation pivots/attributes to run metrics for?
+Results can be disaggregated by Subdomain (13 values) or otherwise High-level domain (3 values: Biology, Chemistry, and Physics).
+
+What are the metrics used for evaluation?
+Accuracy in the multiple choice solution as defined by the exact match of the string.
+
+Any modifications done from original version?
+N/A
