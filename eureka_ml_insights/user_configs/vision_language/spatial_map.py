@@ -9,6 +9,8 @@ from eureka_ml_insights.data_utils import (
     DataLoader,
     DataReader,
     ExtractAnswerSpatialMap,
+    MajorityVoteTransform,
+    MultiplyTransform,
     PrependStringTransform,
     SequenceTransform,
 )
@@ -52,6 +54,7 @@ class SPATIAL_MAP_PIPELINE(ExperimentConfig):
                     "path": "microsoft/VISION_LANGUAGE",
                     "split": "val",
                     "tasks": "spatial_map",
+                    "transform": MultiplyTransform(n_repeats=5),
                 },
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
@@ -88,6 +91,13 @@ class SPATIAL_MAP_PIPELINE(ExperimentConfig):
                                 extracted_answer_column_name="model_output",
                                 question_type_column_name="question_type",
                                 model_name=model_config.init_args['model_name'], # passing the model name for model-specific answer extraction
+                            ),
+                            MajorityVoteTransform(id_col="uid"),
+                            ColumnRename(
+                                name_mapping={
+                                    "model_output": "model_output_onerun",
+                                    "majority_vote": "model_output",
+                                }
                             ),
                         ],
                     ),
