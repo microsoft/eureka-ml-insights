@@ -73,6 +73,16 @@ class NPHardMetric(Metric):
         print("Valid TSP path.")
         return True, path_length
 
+    def __is_tour_present(optimal_tour_curr, tour_string):
+        # Remove the enclosing characters and convert the optimal tour to a list of tuples
+        optimal_tour_list = eval(optimal_tour_curr.strip('.'))
+
+        # Convert each tuple in optimal_tour_list to a comma-separated string
+        optimal_tour_strings = [','.join(map(str, tour)) for tour in optimal_tour_list]
+
+        # Check if tour_string is in the list of optimal tour strings
+        return tour_string in optimal_tour_strings
+
 
     def __evaluate__(self, x):
         is_valid_curr=x["is_valid"]
@@ -80,6 +90,8 @@ class NPHardMetric(Metric):
         if not is_valid_curr:
             return "none"
         
+        # breakpoint()
+
         optimal_tour_curr=x["optimal_tour"]
         weight_matrix_curr=x["weight_matrix"]
         ground_truth_curr=x["ground_truth"]
@@ -100,6 +112,11 @@ class NPHardMetric(Metric):
             return "incorrect"
         
         if total_tsp_path_length != ground_truth_curr:
+            return "incorrect"
+
+        is_tour_present = self.__is_tour_present(optimal_tour_curr, tour_string)
+
+        if not is_tour_present:
             return "incorrect"
 
         return "correct"
