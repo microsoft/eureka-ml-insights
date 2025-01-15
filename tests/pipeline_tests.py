@@ -215,7 +215,7 @@ class TEST_GEOMETRIC_REASONING_PIPELINE(GEOMETER_PIPELINE):
         data_processing_comp = config.component_configs[0]
         data_processing_comp.data_reader_config.class_name = TestHFDataReader
         inference_comp = config.component_configs[1]
-        inference_comp.data_loader_config.class_name = TestDataLoader
+        inference_comp.data_loader_config.class_name = TestMMDataLoader
         inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
 
@@ -298,7 +298,7 @@ class TEST_MMMU_PIPELINE(MMMU_BASELINE_PIPELINE):
         self.data_processing_comp.data_reader_config.init_args["split"] = "dev"
         self.data_processing_comp.data_reader_config.init_args["tasks"] = ["Math"]
 
-        self.inference_comp.data_loader_config.class_name = TestDataLoader
+        self.inference_comp.data_loader_config.class_name = TestMMDataLoader
         self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
 

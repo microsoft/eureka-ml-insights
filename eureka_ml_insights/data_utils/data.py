@@ -302,8 +302,8 @@ class JsonReader(DataReaderBase):
             with open(self.path, mode="r") as reader:
                 data = json.load(reader)
         elif self.format == ".jsonl":
-            with jsonlines.open(self.data_path, mode="r") as reader:
-                data = list(data)
+            with jsonlines.open(self.path, mode="r") as reader:
+                data = list(reader)
         else:
             raise ValueError("JsonReader currently only supports json and jsonl format.")
         return data
