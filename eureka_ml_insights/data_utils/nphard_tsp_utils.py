@@ -35,10 +35,30 @@ def convert_city_path(path):
 
     return numeric_path
 
+def ensure_root_tags(xml_string):
+    """
+    Ensure the XML string starts with <root> and ends with </root>.
+
+    Parameters:
+        xml_string (str): The input XML string.
+
+    Returns:
+        str: The XML string enclosed with <root> and </root> if not already present.
+    """
+    if not xml_string.startswith("<root>"):
+        xml_string = "<root>" + xml_string
+
+    if not xml_string.endswith("</root>"):
+        xml_string = xml_string + "</root>"
+
+    return xml_string
+
 def parse_xml_to_dict(xml_string):
     # Parse the XML string
     # breakpoint()
-    root = ET.fromstring(xml_string)
+    result_xml_string = ensure_root_tags(xml_string)
+    print(result_xml_string)
+    root = ET.fromstring(result_xml_string)
     final_answer_element = root.find('final_answer')
 
     tour_string = ast.literal_eval(final_answer_element.text)['Path']

@@ -64,7 +64,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),            
             resume_from=resume_from,
-            # resume_from="/home/vivineet/projects/evaluation/NPHardEval/TSP/eureka-ml-insights/logs/NPHARD_TSP_PIPELINE2Run/nphard_tsp_level_03_small/2025-01-14-12-29-12.577458/inference_result/inference_result.jsonl", #resume_from,
+            # resume_from="/home/vivineet/projects/evaluation/NPHardEval/TSP/eureka-ml-insights/logs/NPHARD_TSP_PIPELINE1Run/nphard_tsp_level_1_num15/2025-01-14-17-24-10.217540/inference_result/inference_result.jsonl", #resume_from,
             max_concurrent=1,
         )
 
