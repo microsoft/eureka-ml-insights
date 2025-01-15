@@ -92,7 +92,7 @@ class SPATIAL_MAP_PIPELINE(ExperimentConfig):
                                 question_type_column_name="question_type",
                                 model_name=model_config.init_args['model_name'], # passing the model name for model-specific answer extraction
                             ),
-                            MajorityVoteTransform(id_col="uid"),
+                            MajorityVoteTransform(id_col="id"),
                             ColumnRename(
                                 name_mapping={
                                     "model_output": "model_output_onerun",
