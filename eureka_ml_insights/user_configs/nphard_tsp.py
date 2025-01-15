@@ -174,7 +174,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
         )
 
 
-class NPHARD_TSP_PIPELINE2Run(NPHARD_TSP_PIPELINE):
+class NPHARD_TSP_PIPELINE1Run(NPHARD_TSP_PIPELINE):
     """This class specifies the config for running AIME benchmark 5 repeated times"""
 
     def configure_pipeline(
@@ -184,6 +184,20 @@ class NPHARD_TSP_PIPELINE2Run(NPHARD_TSP_PIPELINE):
         # data preprocessing
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
             MultiplyTransform(n_repeats=1)
+        )
+        return pipeline
+
+
+class NPHARD_TSP_PIPELINE2Run(NPHARD_TSP_PIPELINE):
+    """This class specifies the config for running AIME benchmark 5 repeated times"""
+
+    def configure_pipeline(
+        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
+    ) -> PipelineConfig:
+        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
+        # data preprocessing
+        self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
+            MultiplyTransform(n_repeats=2)
         )
         return pipeline
     
