@@ -13,7 +13,7 @@ import pandas as pd
 from eureka_ml_insights.metrics.metrics_base import CompositeMetric
 
 # Helper functions
-def is_formatted(solution):
+def check_time_slot_format(solution):
     pattern = r"^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday) ([0-9]|[01]\d|2[0-3]):[0-5]\d-([0-9]|[01]\d|2[0-3]):[0-5]\d$"
     return bool(re.match(pattern, solution))
 
@@ -84,7 +84,7 @@ class BACalendarMetric(CompositeMetric):
         result = {}
         solution = instance['model_output']
         solution = solution.strip('"').strip('`').strip('\n')
-        if not is_formatted(solution):
+        if check_time_slot_format(solution):
             result['format_programmatic'] = 1
         result.update(self.check_availability_programmatic(instance, solution))
         result.update(self.check_meeting_duration_programmatic(instance, solution))
@@ -98,8 +98,7 @@ class BACalendarMetric(CompositeMetric):
         for key, value in result.items():
             if value == 0:
                 all_correct = 0
-            x = value
-            if x != 'NA' and pd.notna(x) and isinstance(x, int):
+            if value != 'NA' and pd.notna(value) and isinstance(value, int):
                 passed_constraints.append(value)
         result['all_correct'] = all_correct
         result['fraction_passed'] = np.mean(passed_constraints)
@@ -109,7 +108,7 @@ class BACalendarMetric(CompositeMetric):
         run_tests=True
         if solution == self.no_solution_response:
             run_tests=False
-        if not is_formatted(solution):
+        if not check_time_slot_format(solution):
             run_tests=False
         return run_tests
 
@@ -245,7 +244,7 @@ class BACalendarMetric(CompositeMetric):
             buffer_time = constraints['buffer_time_before_and_after_meeting']
         else:
             buffer_time = 0
-        for day in params['days_of_week']: # update this post cleaning up data!
+        for day in params['days_of_week']: # TODO: revisit this post data release to ensure consistency
             common_time_slots = None
             availability = json.loads(metadata['availability'].replace("'", '"'))
             for participant, schedule in availability.items():

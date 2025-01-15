@@ -41,7 +41,7 @@ from eureka_ml_insights.user_configs import (
     IFEval_PIPELINE,
     ToxiGen_Discriminative_PIPELINE,
     ToxiGen_Generative_PIPELINE,
-    Calendar_Schedule_PIPELINE,
+    BA_Calendar_PIPELINE,
 )
 from tests.test_utils import (
     DetectionTestModel,
@@ -252,7 +252,7 @@ class TEST_IFEval_PIPELINE(IFEval_PIPELINE):
         )
         return config
     
-class TEST_BA_Calendar_PIPELINE(Calendar_Schedule_PIPELINE):
+class TEST_BA_Calendar_PIPELINE(BA_Calendar_PIPELINE):
     # Test config the BA Calendar benchmark with TestModel and TestDataLoader
     def configure_pipeline(self):
         config = super().configure_pipeline(model_config=ModelConfig(GenericTestModel, {}))

@@ -110,6 +110,19 @@ class SumAggregator(NumericalAggregator):
         sums = {col: gb[col].sum().to_dict() for col in self.column_names}
         self.aggregated_result = sums
 
+class MaxAggregator(NumericalAggregator):
+    """
+    This class aggregates data by taking the max of the values."""
+
+    def _aggregate(self, data):
+        sums = {col: data[col].max() for col in self.column_names}
+        self.aggregated_result = sums
+
+    def _aggregate_grouped(self, data):
+        gb = data.groupby(self.group_by)
+        sums = {col: gb[col].max().to_dict() for col in self.column_names}
+        self.aggregated_result = sums
+
 
 class AverageAggregator(NumericalAggregator):
 
@@ -127,30 +140,6 @@ class AverageAggregator(NumericalAggregator):
             gb = data.groupby(self.group_by)
             averages = {col: round(gb[col].mean(), 3).to_dict() for col in self.column_names}
         self.aggregated_result = averages
-
-class NAFilteredAverageAggregator(AverageAggregator):
-    def __init__(self, column_name, output_dir, group_by=None, ignore_non_numeric=False, filename_base=None, **kwargs):
-        """
-        args:
-            column_name: column name to filter and aggregate
-            output_dir: str. directory to save the report
-            group_by: str. or list of str. column(s) to group by before aggregating
-            ignore_non_numeric: bool. if True ignore non-numeric values for average aggregator
-            filename_base: str. optional base string to be used in the file name for the report. If not None, the report filename will concatenate the class name, datetime, and filename_base.
-        """
-
-        self.column_name = column_name
-        self.group_by = group_by
-        self.output_dir = output_dir
-        self.aggregated_result = None
-        self.ignore_non_numeric = ignore_non_numeric
-        self.filename_base = filename_base
-        super().__init__([column_name], output_dir, group_by, ignore_non_numeric, filename_base, **kwargs)
-
-    def aggregate(self, data):
-        filtered_data = data[data[self.column_name] != "NA"].copy()
-        super().aggregate(filtered_data)
-
 
 class AverageSTDDevAggregator(NumericalAggregator):
 
@@ -223,6 +212,45 @@ class BiLevelAverageAggregator(AverageAggregator):
         # aggregate the rest of the columns by 'first'
         gb = data.groupby(self.first_groupby)
         agg_map = {col: "mean" for col in self.column_names}
+        agg_map.update(
+            {col: "first" for col in data.columns if col not in self.column_names and col != self.first_groupby}
+        )
+
+        first_result = gb.aggregate(agg_map).reset_index()
+        if self.second_groupby:
+            # take the average and std of the first level aggregation for each group in the second groupby
+            gb = first_result.groupby(self.second_groupby)
+            agg_map = {col: ["mean", "std"] for col in self.column_names}
+            # flatten the multi-level column index
+            second_result = gb.agg(agg_map).reset_index()
+            second_result.columns = [f"{col}_{agg}" if agg else col for col, agg in second_result.columns]
+            self.aggregated_result = second_result.to_dict(orient="records")
+        else:
+            # take the average and std of the first level aggregation
+            self.aggregated_result = []
+            for col in self.column_names:
+                col_mean = first_result[col].mean()
+                col_std = first_result[col].std()
+                self.aggregated_result.append({col: {"mean": col_mean, "std": col_std}})
+
+class BiLevelMaxAggregator(Aggregator):
+    """
+    This class aggregates the data in two levels. It first groups the data by the first_groupby column and
+    aggregates the data by taking the max of the column_names. It It then groups the result by the
+    second_groupby column and aggregates the it again by taking the mean and standard deviation of
+    the column_names.
+    """
+
+    def __init__(self, column_names, first_groupby, output_dir, second_groupby=None, **kwargs):
+        super().__init__(column_names, output_dir, group_by=None, **kwargs)
+        self.first_groupby = first_groupby
+        self.second_groupby = second_groupby
+
+    def _aggregate(self, data):
+        # take the average of the column for each group in the first groupby,
+        # aggregate the rest of the columns by 'first'
+        gb = data.groupby(self.first_groupby)
+        agg_map = {col: "max" for col in self.column_names}
         agg_map.update(
             {col: "first" for col in data.columns if col not in self.column_names and col != self.first_groupby}
         )
@@ -319,6 +347,38 @@ class TwoColumnSumAverageAggregator(NumericalAggregator):
         gb = data.groupby(self.group_by)
         divided_result = (gb[self.numerator_column_name].sum() / gb[self.denominator_column_name].sum()).to_dict()
         self.aggregated_result = {"ratio": divided_result}
+
+class NAFilteredAggregator(Aggregator):
+    def __init__(self, agg_class, column_names, output_dir, group_by=None, ignore_non_numeric=False, filename_base=None, **kwargs):
+        """
+        Aggregator that filters out "NA" values before aggregating the data.
+        args:
+            agg_class: Aggregator class to use for aggregation
+            column_names: column names to filter and aggregate
+            output_dir: str. directory to save the report
+            group_by: str. or list of str. column(s) to group by before aggregating
+            ignore_non_numeric: bool. if True ignore non-numeric values for average aggregator
+            filename_base: str. optional base string to be used in the file name for the report. If not None, the report filename will concatenate the class name, datetime, and filename_base.
+        """
+
+        self.base_aggregator = agg_class(column_names, output_dir, group_by, ignore_non_numeric, filename_base, **kwargs)
+        self.column_names = column_names
+        self.group_by = group_by
+        self.output_dir = output_dir
+        self.aggregated_result = None
+        self.ignore_non_numeric = ignore_non_numeric
+        self.filename_base = filename_base
+        # super().__init__(self.input_column_names, output_dir, group_by, ignore_non_numeric, filename_base, **kwargs)
+
+    def aggregate(self, data):
+        agg_results = {}
+        for col in self.column_names:
+            # workaround to process one column at a time
+            filtered_data = data[data[col] != "NA"].copy()
+            self.base_aggregator.column_names = [col]
+            self.base_aggregator.aggregate(filtered_data)
+            agg_results.update(self.base_aggregator.aggregated_result)
+        self.aggregated_result = agg_results
 
 
 class CocoDetectionAggregator(Aggregator):

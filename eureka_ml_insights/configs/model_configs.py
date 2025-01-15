@@ -98,14 +98,6 @@ GEMINI_SECRET_KEY_PARAMS = {
     "key_vault_url": None,
 }
 
-GEMINI_EXP_1114_PRO_CONFIG = ModelConfig(
-    GeminiModel,
-    {
-        "model_name": "gemini-exp-1114",
-        "secret_key_params": GEMINI_SECRET_KEY_PARAMS,
-    },
-)
-
 GEMINI_V15_PRO_CONFIG = ModelConfig(
     GeminiModel,
     {

@@ -9,7 +9,10 @@ from .aime import (
     AIME_PIPELINE512Run,
     AIME_PIPELINE1024Run,
 )
-from .ba_calendar import Calendar_Schedule_PIPELINE
+from .ba_calendar import (
+        BA_Calendar_PIPELINE,
+        BA_Calendar_Parallel_PIPELINE,
+)
 from .dna import DNA_PIPELINE
 from .drop import Drop_Experiment_Pipeline
 from .flenqa import FlenQA_Experiment_Pipeline
@@ -114,7 +117,8 @@ __all__ = [
     KITAB_TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT,
     GPT35_KITAB_ONE_BOOK_CONSTRAINT_PIPELINE,
     DNA_PIPELINE,
-    Calendar_Schedule_PIPELINE,
+    BA_Calendar_PIPELINE,
+    BA_Calendar_Parallel_PIPELINE,
     ToxiGen_Discriminative_PIPELINE,
     ToxiGen_Generative_PIPELINE,
     Geo_Nondeterminism,
