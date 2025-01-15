@@ -8,6 +8,7 @@ from eureka_ml_insights.core import (
 
 from eureka_ml_insights.core.data_processing import DataProcessing
 from eureka_ml_insights.core.eval_reporting import EvalReporting
+from eureka_ml_insights.data_utils.ba_calendar_utils import BA_Calendar_ExtractAnswer
 from eureka_ml_insights.data_utils.data import (
     DataLoader,
     DataReader,
@@ -42,7 +43,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
         # data preprocessing
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
-            prompt_template_path=os.path.join(os.path.dirname(__file__), "../prompt_templates/ba_calendar_templates/calendar_scheduling_brief.jinja"),
+            prompt_template_path=os.path.join(os.path.dirname(__file__), "../prompt_templates/ba_calendar_templates/calendar_scheduling_cot.jinja"),
             data_reader_config=DataSetConfig(
                 HFDataReader,
                 {
@@ -52,7 +53,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                        ColumnRename(name_mapping={"task_prompt": "prompt"}),
                        MultiplyTransform(n_repeats=1),
                    ]),
-                },
+                }
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
         )
@@ -78,6 +79,17 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                 {
                     "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
                     "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            ColumnRename(
+                                name_mapping={
+                                    "model_output": "raw_output",
+                                }
+                            ),
+                            AddColumn("model_output"),
+                            BA_Calendar_ExtractAnswer("raw_output", "model_output"),
+                        ]
+                    ),
                 },
             ),
             metric_config=MetricConfig(BACalendarMetric),
@@ -110,6 +122,21 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                         "group_by": "data_repeat_id",
                     },
                 ),
+            ],
+            output_dir=os.path.join(self.log_dir, "eval_report"),
+        )
+
+        # Aggregate the results by best of n
+        self.bon_evalreporting_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.evalreporting_comp.output_dir, "metric_results.jsonl"),
+                    "format": ".jsonl",
+                },
+            ),
+            aggregator_configs=[
                 AggregatorConfig(
                     BiLevelMaxAggregator,
                     {
@@ -142,34 +169,27 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                 
 
             ],
-            output_dir=os.path.join(self.log_dir, "eval_report"),
+            output_dir=os.path.join(self.log_dir, "bestofn_eval_report"),
         )
 
         # Aggregate the results by a majority vote
-        # First, let us perform majority_vote
         self.data_post_processing_addmv = DataProcessingConfig(
             component_type=DataProcessing,
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+                    "path": os.path.join(self.evalreporting_comp.output_dir, "metric_results.jsonl"),
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
                             ColumnRename(
                                 name_mapping={
-                                    "model_output": "raw_output",
+                                    "model_output": "model_output_onerun",
                                 }
                             ),
                             AddColumn("model_output"),
-                            MajorityVoteTransform(model_output_col="raw_output"),
+                            MajorityVoteTransform(model_output_col="model_output_onerun"),
                             CopyColumn("majority_vote", "model_output"),
-                            ColumnRename(
-                                name_mapping={
-                                    "raw_output": "model_output_onerun",
-                                    "majority_vote": "model_output",
-                                }
-                            ),
                         ]
                     ),
                 },
@@ -231,6 +251,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                 self.data_processing_comp,
                 self.inference_comp,
                 self.evalreporting_comp,
+                self.bon_evalreporting_comp,
                 self.data_post_processing_addmv,
                 self.postevalprocess_comp
             ],
