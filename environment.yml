@@ -292,7 +292,7 @@ dependencies:
       - jupyterlab-server==2.27.1
       - kiwisolver==1.4.5
       - langdetect==1.0.9
-      - llava==1.2.2.post1
+      # - llava==1.2.2.post1
       - markdown-it-py==3.0.0
       - markdown2==2.4.13
       - matplotlib==3.8.3

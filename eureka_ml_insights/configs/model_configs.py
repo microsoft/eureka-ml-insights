@@ -29,8 +29,8 @@ TEST_MODEL_CONFIG = ModelConfig(TestModel, {})
 # OpenAI models
 
 OPENAI_SECRET_KEY_PARAMS = {
-    "key_name": "your_openai_secret_key_name",
-    "local_keys_path": "keys/keys.json",
+    "key_name": "openai",
+    "local_keys_path": "keys/aifeval-vault-azure-net.json",
     "key_vault_url": None,
 }
 
