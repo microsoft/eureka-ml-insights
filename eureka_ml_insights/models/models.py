@@ -491,19 +491,28 @@ class DirectOpenAIModel(OpenAICommonRequestResponseMixIn, DirectOpenAIClientMixI
 class OpenAIO1RequestResponseMixIn:
     
     def create_request(self, prompt, query_images=None, system_message=None, previous_messages=None):
-        if system_message:
-            # system messages are not supported for OAI reasoning models
-            # https://platform.openai.com/docs/guides/reasoning
-            logging.warning("System messages are not supported for OAI reasoning models.")
-
-        if query_images and self.model_name == "o1-preview":
-            logging.warning("Images are not supported by OpenAI O1 preview model.")
-        
         messages = []   
+        if system_message:
+            messages.append({"role": "developer", "content": system_message})        
         if previous_messages:
             messages.extend(previous_messages)
+        
+        user_content = prompt
+        if query_images and self.model_name == "o1-preview":
+            logging.warning("Images are not supported by OpenAI O1 preview model.")
+        elif query_images:
+            encoded_images = self.base64encode(query_images)
+            user_content = [
+                {"type": "text", "text": prompt},
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/png;base64,{encoded_images[0]}",
+                    },
+                },
+            ]
 
-        messages.append({"role": "user", "content": prompt})
+        messages.append({"role": "user", "content": user_content})
         return {"messages": messages}
 
     def get_response(self, request):
