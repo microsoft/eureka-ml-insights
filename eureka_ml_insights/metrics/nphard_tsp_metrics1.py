@@ -73,6 +73,20 @@ class NPHardMetric(Metric):
         print("Valid TSP path.")
         return True, path_length
 
+    def __is_tour_present(self, optimal_tour_curr, tour_string):
+        # Remove the enclosing characters and convert the optimal tour to a list of tuples
+        optimal_tour_list = eval(optimal_tour_curr.strip('.'))
+
+        # breakpoint()
+
+        # Convert each tuple in optimal_tour_list to a comma-separated string
+        # print(optimal_tour_list)       
+        # optimal_tour_strings = [','.join(map(str, tour)) for tour in optimal_tour_list]
+        optimal_tour_strings = [','.join(map(str, tour + (tour[0],))) for tour in optimal_tour_list]
+
+        # Check if tour_string is in the list of optimal tour strings
+        return tour_string in optimal_tour_strings
+
 
     def __evaluate__(self, x):
         is_valid_curr=x["is_valid"]
@@ -80,25 +94,22 @@ class NPHardMetric(Metric):
         if not is_valid_curr:
             return "none"
         
+        # breakpoint()
+
         optimal_tour_curr=x["optimal_tour"]
         weight_matrix_curr=x["weight_matrix"]
         ground_truth_curr=x["ground_truth"]
-        model_output_curr=x["model_output"]
+        tour_string=x["model_output"]
 
+        tour = list(map(int, tour_string.split(',')))
 
-        final_answer_element, reasoning_element = self.parse_xml_to_dict(model_output_curr)
-        tour_distance = ast.literal_eval(final_answer_element.text)['TotalDistance']
+        # print("final tour: ", tour)
+        # print("optimal_tour_curr: ", optimal_tour_curr)
 
-        tour_string = ast.literal_eval(final_answer_element.text)['Path']
-        tour = list(map(int, tour_string.split('->')))
-
-        print("final tour sring: ", tour_string)
-        print("final tour: ", tour)
-
-        cities = [str(i) for i in range(len(weight_matrix_curr))]
+        cities = [i for i in range(len(weight_matrix_curr))]
 
         is_valid, total_tsp_path_length = self.__is_valid_tsp_path(tour, cities, weight_matrix_curr)
-        print(is_valid, total_tsp_path_length)
+        print(is_valid, total_tsp_path_length, ground_truth_curr)
 
         ### incorrect if path is invalid or total_path_length is not same as ground truth path length
 
@@ -108,66 +119,32 @@ class NPHardMetric(Metric):
         if total_tsp_path_length != ground_truth_curr:
             return "incorrect"
 
+        # print("optimal_tour_curr2: ", optimal_tour_curr)
+        # print("tour_string: ", tour_string)
+
+
+        is_tour_present = self.__is_tour_present(optimal_tour_curr, tour_string)
+
+        # print("is_tour_present: ", is_tour_present)
+
+        if not is_tour_present:
+            return "incorrect"
+
         return "correct"
 
 
+    # def __is_tour_present(self, optimal_tour_curr, tour_string):
+    #     # Remove the enclosing characters and convert the optimal tour to a list of tuples
+    #     optimal_tour_list = eval(optimal_tour_curr.strip('.'))
 
+    #     # breakpoint()
 
+    #     # Convert each tuple in optimal_tour_list to a comma-separated string
+    #     print(optimal_tour_list)       
+    #     # if isinstance(optimal_tour_list[0], (tuple, list)):
+    #     optimal_tour_strings = [','.join(map(str, tour)) for tour in optimal_tour_list]
+    #     # else:
+    #         # optimal_tour_strings = ','.join(map(str, optimal_tour_list))
 
-    # def __evaluate__(self, x):
-    #     is_valid_curr=x["is_valid"]
-
-    #     if not is_valid_curr:
-    #         return "none"
-        
-    #     optimal_tour_curr=x["optimal_tour"]
-    #     weight_matrix_curr=x["weight_matrix"]
-    #     ground_truth_curr=x["ground_truth"]
-    #     model_output_curr=x["model_output"]
-
-
-    #     final_answer_element, reasoning_element = self.parse_xml_to_dict(answer_text)
-    #     # tour_distance = ast.literal_eval(final_answer_element.text)['TotalDistance']
-
-    #     # tour_string = ast.literal_eval(final_answer_element.text)['Path']
-    #     # tour = list(map(int, tour_string.split('->')))
-
-    #     # print("final tour sring: ", tour_string)
-    #     # print("final tour: ", tour)
-
-
-
-    #     # # Example usage
-    #     # cities = ["A", "B", "C", "D"]
-    #     # distance_matrix = [
-    #     #     [0, 10, 15, 20],  # Distances from A
-    #     #     [10, 0, 35, 25],  # Distances from B
-    #     #     [15, 35, 0, 30],  # Distances from C
-    #     #     [20, 25, 30, 0],  # Distances from D
-    #     # ]
-    #     # valid_path = ["A", "B", "C", "D", "A"]
-    #     # invalid_path = ["A", "B", "C", "C", "A"]
-
-    #     # is_valid, total_tsp_path_length = self.__is_valid_tsp_path(valid_path, cities, distance_matrix)
-    #     # print(is_valid, total_tsp_path_length)
-
-    #     # is_valid, total_tsp_path_length = self.__is_valid_tsp_path(invalid_path, cities, distance_matrix)
-    #     # print(is_valid, total_tsp_path_length)
-
-    #     # tour=[0,1,2,0]
-    #     # distance_matrix=[0,1,2]
-    #     # successful_tsp="incorrect"
-    #     # # Check if tour is a cycle
-    #     # if tour[0] != tour[-1]:            
-    #     #     return "incorrect"
-        
-    #     # # Check if all cities are visited
-    #     # if len(tour) != len(distance_matrix) + 1:
-    #     #     return "incorrect"
-        
-    #     # # Check if all cities are visited only once
-    #     # if len(tour) != len(distance_matrix) + 1:
-    #     #     return "incorrect"
-
-    #     return "correct"
-    #     # return super().__evaluate__(tour_distance, target_text, is_valid)
+    #     # Check if tour_string is in the list of optimal tour strings
+    #     return tour_string in optimal_tour_strings
