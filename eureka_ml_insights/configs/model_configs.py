@@ -4,6 +4,7 @@ You can also add your custom models here by following the same pattern as the ex
 
 from eureka_ml_insights.models import (
     AzureOpenAIO1Model,
+    AzureOpenAIModel,
     ClaudeModel,
     DirectOpenAIModel,
     DirectOpenAIO1Model,
@@ -88,6 +89,84 @@ OAI_GPT4O_MINI_2024_07_18_CONFIG = ModelConfig(
     {
         "model_name": "gpt-4o-mini-2024-07-18",
         "secret_key_params": OPENAI_SECRET_KEY_PARAMS,
+    },
+)
+
+#### TRAPI models ####
+
+
+# Azure OAI models
+## Azure OAI models -- TRAPI Models 
+## https://dev.azure.com/msresearch/MSR%20Engineering/_wiki/wikis/MSR-Engineering.wiki/13498/Deployment-Model-Information
+
+TRAPI_O1_CONFIG = ModelConfig(
+    AzureOpenAIO1Model,
+    {
+        "url": "https://trapi.research.microsoft.com/msraif/shared",
+        # o1 models only work with 2024-12-01-preview api version
+        "api_version": '2024-12-01-preview',
+        "model_name": "o1_2024-12-17",
+        "auth_scope": "api://trapi/.default"
+    },
+)
+
+# this endpoint is used by all GCR members, only use when the AIF endpoints are down or not available
+TRAPI_GCR_SHARED_O1_CONFIG = ModelConfig(
+    AzureOpenAIO1Model,
+    {
+        "url": "https://trapi.research.microsoft.com/gcr/shared",
+        # o1 models only work with 2024-12-01-preview api version
+        "api_version": '2024-12-01-preview',
+        "model_name": "o1_2024-12-17",
+        "auth_scope": "api://trapi/.default"
+    },
+)
+
+TRAPI_O1_PREVIEW_CONFIG = ModelConfig(
+    AzureOpenAIO1Model,
+    {
+        "url": "https://trapi.research.microsoft.com/msraif/shared",
+        "api_version": '2024-10-21',
+        "model_name": "o1-preview_2024-09-12",
+        "auth_scope": "api://trapi/.default"
+    },
+)
+
+TRAPI_GPT4O_2024_05_13_CONFIG = ModelConfig(
+    AzureOpenAIModel,
+    {
+        "url": "https://trapi.research.microsoft.com/msraif/shared",
+        "api_version": '2024-10-21',
+        "model_name": "gpt-4o_2024-08-06",
+        "auth_scope": "api://trapi/.default"
+    },
+)
+
+TRAPI_GPT4_VISION_PREVIEW_CONFIG = ModelConfig(
+    AzureOpenAIModel,
+    {
+        "url": "https://trapi.research.microsoft.com/msraif/shared",
+        "model_name": "gpt-4_vision-preview",
+        "auth_scope": "api://trapi/.default"
+    },
+)
+
+TRAPI_GPT4V_TURBO_2024_04_09_CONFIG = ModelConfig(
+    AzureOpenAIModel,
+    {
+        "url": "https://trapi.research.microsoft.com/msraif/shared",
+        "model_name": "gpt-4_turbo-2024-04-09",
+        "api_version": '2024-10-21',
+        "auth_scope": "api://trapi/.default"
+    },
+)
+
+TRAPI_GPT4_1106_PREVIEW_CONFIG = ModelConfig(
+    AzureOpenAIModel,
+    {
+        "url": "https://trapi.research.microsoft.com/msraif/shared",
+        "model_name": "gpt-4_1106-Preview",
+        "auth_scope": "api://trapi/.default"
     },
 )
 

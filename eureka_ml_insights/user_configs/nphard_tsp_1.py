@@ -142,8 +142,6 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             output_dir=os.path.join(self.log_dir, "data_addmv_output"),
         )
 
-        ### can move transforms from previous component to next one
-
         # Second, compute eaxct match
         self.postevalprocess_comp = EvalReportingConfig(
             component_type=EvalReporting,
@@ -156,7 +154,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             ),
             metric_config=MetricConfig(NPHardMetric),
             aggregator_configs=[
-                AggregatorConfig(CountAggregator, {"column_names": ["NPHardMetric_result"], "normalize": True}),
+                AggregatorConfig(CountAggregator, {"column_names": ["NPHardMetric_result"], "normalize": True}),                
             ],
             output_dir=os.path.join(self.log_dir, "eval_report_majorityVote"),
         )
@@ -174,10 +172,9 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             self.log_dir,
         )
 
-### take from kargs ###
 
 class NPHARD_TSP_PIPELINE_Runs(NPHARD_TSP_PIPELINE):
-    """This class specifies the config for running AIME benchmark n repeated times""" ## change this line
+    """This class specifies the config for running AIME benchmark 5 repeated times"""
 
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
