@@ -80,6 +80,8 @@ class Inference(Component):
 
             # perform a sample inference call to get the model output keys and validate the resume_from contents
             sample_response_dict = self.model.generate(*sample_model_input)
+            if not sample_response_dict["is_valid"]:
+                raise ValueError("Sample inference call for resume_from returned invalid results, please check the model configuration.") 
             # check if the inference response dictionary contains the same keys as the resume_from file
             eventual_keys = set(sample_response_dict.keys()) | set(sample_data_keys)
 
