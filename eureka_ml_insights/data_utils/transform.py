@@ -189,16 +189,19 @@ class ShuffleColumnsTransform(MultiColumnTransform):
 
     This class is meant to be used in MCQ benchmarks to shuffle answer choices
     across different letter options (e.g. shuffle what choice maps to 'A' vs 'B' vs 'C').
+    args:
+        columns: List[str]: the list of columns from the pandas frame to be reshuffled.
+        rng: np.random.Generator: the dedicated numpy generator for the shuffling. 
     """
 
     columns: List[str]
+    rng: np.random.Generator
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """For each row in df, shuffle values across these columns."""
         self.validate(df)
-
         def shuffle_row(row):
-            row[self.columns] = np.random.permutation(row[self.columns].values)
+            row[self.columns] = self.rng.permutation(row[self.columns].values)
             return row
 
         df = df.apply(shuffle_row, axis=1)

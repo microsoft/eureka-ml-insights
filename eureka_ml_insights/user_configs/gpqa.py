@@ -12,6 +12,8 @@ from eureka_ml_insights.data_utils import (
     RegexTransform,
     SequenceTransform,
     ShuffleColumnsTransform,
+    MultiplyTransform,
+    SamplerTransform
 )
 from eureka_ml_insights.metrics import CountAggregator, ExactMatch
 
@@ -23,9 +25,10 @@ from eureka_ml_insights.configs import(
     MetricConfig,
     ModelConfig,
     PipelineConfig,
-    PromptProcessingConfig,
+    PromptProcessingConfig
 )
 from eureka_ml_insights.configs import ExperimentConfig
+import numpy as np
 
 """This file contains user defined configuration classes for the geometric reasoning task on the GPQA dataset.
 """
@@ -36,6 +39,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
         # Configure the data processing component.
+        rng = np.random.default_rng(42)
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
             data_reader_config=DataSetConfig(
@@ -46,11 +50,12 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                     "split": "train",
                     "transform": SequenceTransform(
                         [
+                            SamplerTransform(random_seed=42, sample_count=5),
                             CopyColumn(column_name_src="Correct Answer", column_name_dst="A"),
                             CopyColumn(column_name_src="Incorrect Answer 1", column_name_dst="B"),
                             CopyColumn(column_name_src="Incorrect Answer 2", column_name_dst="C"),
                             CopyColumn(column_name_src="Incorrect Answer 3", column_name_dst="D"),
-                            ShuffleColumnsTransform(columns=["A", "B", "C", "D"]),
+                            ShuffleColumnsTransform(columns=["A", "B", "C", "D"], rng=rng),
                             # finds answer choice that "Correct Answer" is mapped to, and stores it in "ground_truth"
                             ColumnMatchMapTransform(
                                 new_col="ground_truth", key_col="Correct Answer", columns=["A", "B", "C", "D"]
@@ -102,7 +107,9 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
             ),
             metric_config=MetricConfig(ExactMatch),
             aggregator_configs=[
-                AggregatorConfig(CountAggregator, {"column_names": ["ExactMatch_result"], "normalize": True})
+                AggregatorConfig(CountAggregator, {"column_names": ["ExactMatch_result"], "normalize": True}),
+                AggregatorConfig(CountAggregator, {"column_names": ["ExactMatch_result"], "group_by": "Subdomain", "filename_base": "ExactMatch_GroupBy_Subdomain", "normalize": True}),
+                AggregatorConfig(CountAggregator, {"column_names": ["ExactMatch_result"], "group_by": "High-level domain", "filename_base": "ExactMatch_GroupBy_Year_High-level_domain", "normalize": True}),
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
         )
@@ -115,3 +122,16 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
             ],
             self.log_dir,
         )
+
+class GPQA_PIPELINE_5Run(GPQA_Experiment_Pipeline):
+    """This class specifies the config for running the GPQA benchmark 5 repeated times"""
+
+    def configure_pipeline(
+        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
+    ) -> PipelineConfig:
+        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
+        # data preprocessing
+        self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
+            MultiplyTransform(n_repeats=5)
+        )
+        return pipeline
