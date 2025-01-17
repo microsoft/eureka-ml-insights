@@ -19,8 +19,6 @@ from eureka_ml_insights.metrics.ba_calendar_metrics import BACalendarMetric
 from eureka_ml_insights.metrics.reports import (
     AverageAggregator,
     BiLevelMaxAggregator,
-    MaxAggregator,
-    NAFilteredAggregator,
 )
 
 from ..configs.config import (
@@ -99,17 +97,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                     {
                         "column_names": [
                             "BACalendarMetric_all_correct",
-                            "BACalendarMetric_fraction_passed"
-                        ],
-                        "filename_base": "BaCal_OverallMetrics_SeparateRuns",
-                        "group_by": "data_repeat_id",
-                    },
-                ),
-                AggregatorConfig(
-                    NAFilteredAggregator,
-                    {
-                        "agg_class": AverageAggregator,
-                        "column_names": [
+                            "BACalendarMetric_fraction_passed",
                             "BACalendarMetric_availability_programmatic_check",
                             "BACalendarMetric_meeting_duration_programmatic_check",
                             "BACalendarMetric_buffer_time_programmatic_check",
@@ -118,7 +106,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                             "BACalendarMetric_specific_times_programmatic_check",
                             "BACalendarMetric_priority_programmatic_check"
                         ],
-                        "filename_base": "BaCal_Constraint_Level_SeprateRuns",
+                        "filename_base": "BaCal_OverallMetrics_SeparateRuns",
                         "group_by": "data_repeat_id",
                     },
                 ),
@@ -142,18 +130,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                     {
                         "column_names": [
                             "BACalendarMetric_all_correct",
-                            "BACalendarMetric_fraction_passed"
-                        ],
-                        "first_groupby": "data_point_id",
-                        "filename_base": "BaCal_BestOfN_Aggregated",
-                        "normalize": True,
-                    },
-                ),
-                AggregatorConfig(
-                    NAFilteredAggregator,
-                    {
-                        "agg_class": MaxAggregator,
-                        "column_names": [
+                            "BACalendarMetric_fraction_passed",
                             "BACalendarMetric_availability_programmatic_check",
                             "BACalendarMetric_meeting_duration_programmatic_check",
                             "BACalendarMetric_buffer_time_programmatic_check",
@@ -162,18 +139,17 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                             "BACalendarMetric_specific_times_programmatic_check",
                             "BACalendarMetric_priority_programmatic_check"
                         ],
-                        "filename_base": "BaCal_Constraint_Level_BestOfN_Aggregated",
-                        "group_by": "data_repeat_id",
+                        "first_groupby": "data_point_id",
+                        "filename_base": "BaCal_BestOfN_Aggregated",
+                        "normalize": True,
                     },
                 ),
-                
-
             ],
             output_dir=os.path.join(self.log_dir, "bestofn_eval_report"),
         )
 
         # Aggregate the results by a majority vote
-        self.data_post_processing_addmv = DataProcessingConfig(
+        self.maj_vote_data_post_processing = DataProcessingConfig(
             component_type=DataProcessing,
             data_reader_config=DataSetConfig(
                 DataReader,
@@ -197,12 +173,12 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
             output_dir=os.path.join(self.log_dir, "data_majvote_output"),
         )
         # Second, compute eaxct match
-        self.postevalprocess_comp = EvalReportingConfig(
+        self.majvote_evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    "path": os.path.join(self.data_post_processing_addmv.output_dir, "transformed_data.jsonl"),
+                    "path": os.path.join(self.maj_vote_data_post_processing.output_dir, "transformed_data.jsonl"),
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
@@ -218,17 +194,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                     {
                         "column_names": [
                             "BACalendarMetric_all_correct",
-                            "BACalendarMetric_fraction_passed"
-                        ],
-                        "filename_base": "BaCal_MajVote_OverallMetrics_Aggregated",
-                        "group_by": "data_repeat_id",
-                    },
-                ),
-                AggregatorConfig(
-                    NAFilteredAggregator,
-                    {
-                        "agg_class": AverageAggregator,
-                        "column_names": [
+                            "BACalendarMetric_fraction_passed",
                             "BACalendarMetric_availability_programmatic_check",
                             "BACalendarMetric_meeting_duration_programmatic_check",
                             "BACalendarMetric_buffer_time_programmatic_check",
@@ -237,7 +203,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                             "BACalendarMetric_specific_times_programmatic_check",
                             "BACalendarMetric_priority_programmatic_check"
                         ],
-                        "filename_base": "BaCal_MajVote_Constraint_Level_Aggregated",
+                        "filename_base": "BaCal_MajVote_OverallMetrics_Aggregated",
                         "group_by": "data_repeat_id",
                     },
                 ),
@@ -252,8 +218,8 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                 self.inference_comp,
                 self.evalreporting_comp,
                 self.bon_evalreporting_comp,
-                self.data_post_processing_addmv,
-                self.postevalprocess_comp
+                self.maj_vote_data_post_processing,
+                self.majvote_evalreporting_comp
             ],
             self.log_dir,
         

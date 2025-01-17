@@ -348,12 +348,13 @@ class TwoColumnSumAverageAggregator(NumericalAggregator):
         divided_result = (gb[self.numerator_column_name].sum() / gb[self.denominator_column_name].sum()).to_dict()
         self.aggregated_result = {"ratio": divided_result}
 
-class NAFilteredAggregator(Aggregator):
-    def __init__(self, agg_class, column_names, output_dir, group_by=None, ignore_non_numeric=False, filename_base=None, **kwargs):
+class ValueFilteredAggregator(Aggregator):
+    def __init__(self, agg_class, value, column_names, output_dir, group_by=None, ignore_non_numeric=False, filename_base=None, **kwargs):
         """
-        Aggregator that filters out "NA" values before aggregating the data.
+        Aggregator that filters out a particular value before aggregating the data.
         args:
             agg_class: Aggregator class to use for aggregation
+            value: value to filter out
             column_names: column names to filter and aggregate
             output_dir: str. directory to save the report
             group_by: str. or list of str. column(s) to group by before aggregating
@@ -362,19 +363,19 @@ class NAFilteredAggregator(Aggregator):
         """
 
         self.base_aggregator = agg_class(column_names, output_dir, group_by, ignore_non_numeric, filename_base, **kwargs)
+        self.value = value
         self.column_names = column_names
         self.group_by = group_by
         self.output_dir = output_dir
         self.aggregated_result = None
         self.ignore_non_numeric = ignore_non_numeric
         self.filename_base = filename_base
-        # super().__init__(self.input_column_names, output_dir, group_by, ignore_non_numeric, filename_base, **kwargs)
 
     def aggregate(self, data):
         agg_results = {}
         for col in self.column_names:
             # workaround to process one column at a time
-            filtered_data = data[data[col] != "NA"].copy()
+            filtered_data = data[data[col] != self.value].copy()
             self.base_aggregator.column_names = [col]
             self.base_aggregator.aggregate(filtered_data)
             agg_results.update(self.base_aggregator.aggregated_result)

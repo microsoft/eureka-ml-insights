@@ -98,7 +98,7 @@ class BACalendarMetric(CompositeMetric):
         for key, value in result.items():
             if value == 0:
                 all_correct = 0
-            if value != 'NA' and pd.notna(value) and isinstance(value, int):
+            if value is not None and value != 'NA' and pd.notna(value) and isinstance(value, int):
                 passed_constraints.append(value)
         result['all_correct'] = all_correct
         result['fraction_passed'] = np.mean(passed_constraints)
@@ -114,7 +114,8 @@ class BACalendarMetric(CompositeMetric):
 
     def check_availability_programmatic(self, instance, solution):
         if not instance['constraints'].get('availability', True):
-            result = {'availability_programmatic_check': 'NA'}
+            # result = {'availability_programmatic_check': 'NA'}
+            result = {'availability_programmatic_check': None}
             return result
         
         if not self.is_formatted(solution):
@@ -144,7 +145,8 @@ class BACalendarMetric(CompositeMetric):
 
     def check_meeting_duration_programmatic(self, instance, solution):
         if not instance['constraints'].get('meeting_duration', True):
-            result = {'meeting_duration_programmatic_check': 'NA'}
+            # result = {'meeting_duration_programmatic_check': 'NA'}
+            result = {'meeting_duration_programmatic_check': None}
             return result
         
         if not self.is_formatted(solution):
@@ -162,7 +164,8 @@ class BACalendarMetric(CompositeMetric):
     def check_buffer_time_programmatic(self, instance, solution):
         buffer_time = instance['constraints'].get('buffer_time_before_and_after_meeting', True)
         if buffer_time is None or not buffer_time:
-            result = {'buffer_time_programmatic_check': 'NA'}
+            # result = {'buffer_time_programmatic_check': 'NA'}
+            result = {'buffer_time_programmatic_check': None}
             return result
         
         if not self.is_formatted(solution):
@@ -195,7 +198,8 @@ class BACalendarMetric(CompositeMetric):
 
     def check_no_weekends_programmatic(self, instance, solution):
         if not instance['constraints'].get('no_meetings_on_weekends', True):
-            return {'no_weekends_programmatic_check': 'NA'}
+            # return {'no_weekends_programmatic_check': 'NA'}
+            return {'no_weekends_programmatic_check': None}
         
         if not self.is_formatted(solution):
             return {'no_weekends_programmatic_check': 0}
@@ -207,7 +211,8 @@ class BACalendarMetric(CompositeMetric):
 
     def check_time_restrictions_programmatic(self, instance, solution):
         if not instance['constraints'].get('no_meetings_before', True) and not instance['constraints'].get('no_meetings_after', True):
-            return {'time_restrictions_programmatic_check': 'NA'}
+            # return {'time_restrictions_programmatic_check': 'NA'}
+            return {'time_restrictions_programmatic_check': None}
         
         if not self.is_formatted(solution):
             return {'time_restrictions_programmatic_check': 0}
@@ -231,7 +236,8 @@ class BACalendarMetric(CompositeMetric):
 
     def check_priority_programmatic(self, instance, solution):
         if not instance['constraints'].get('high_priority_meeting', False):
-            return {'priority_programmatic_check': 'NA'}
+            # return {'priority_programmatic_check': 'NA'}
+            return {'priority_programmatic_check': None}
         
         if not self.is_formatted(solution):
             return {'priority_programmatic_check': 0}
@@ -269,7 +275,8 @@ class BACalendarMetric(CompositeMetric):
 
     def check_specific_times_programmatic(self, instance, solution):
         if not instance['constraints'].get('no_meetings_during_specific_times', True):
-            return {'specific_times_programmatic_check': 'NA'}
+            # return {'specific_times_programmatic_check': 'NA'}
+            return {'specific_times_programmatic_check': None}
         
         if not self.is_formatted(solution):
             return {'specific_times_programmatic_check': 0}

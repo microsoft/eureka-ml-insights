@@ -487,7 +487,7 @@ class BA_Calendar_PipelineTest(PipelineTest, unittest.TestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        self.eval_configs = [self.test_pipeline.evalreporting_comp]
+        self.eval_configs = [self.test_pipeline.evalreporting_comp,self.test_pipeline.bon_evalreporting_comp, self.test_pipeline.majvote_evalreporting_comp]
 
     def test_outputs_exist(self) -> None:
         logging.info("Running test_outputs_exist test in PipelineTest")

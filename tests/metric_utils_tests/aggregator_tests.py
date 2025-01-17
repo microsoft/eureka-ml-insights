@@ -15,7 +15,7 @@ from eureka_ml_insights.metrics import (
     SumAggregator,
     TwoColumnSumAverageAggregator,
 )
-from eureka_ml_insights.metrics.reports import BiLevelMaxAggregator, MaxAggregator, NAFilteredAggregator
+from eureka_ml_insights.metrics.reports import BiLevelMaxAggregator, MaxAggregator, ValueFilteredAggregator
 
 PRECISION = 3
 
@@ -419,7 +419,7 @@ class TestSumAggregator(TestData, unittest.TestCase):
         self.assertTrue(os.path.exists(avg_agg.output_file))
 
 
-class NAFilteredAggregatorTestData:
+class ValueFilteredAggregatorTestData:
     def setUp(self):
         self.data = pd.DataFrame(
             {
@@ -430,18 +430,14 @@ class NAFilteredAggregatorTestData:
                 "col3": [5, 8, 'NA', 3, 'abc', 8, 3, 4, 5, 8, 4, 2],
                 "categorical_metric": ["x", "y", "z", "z", "y", "y", "z", "y", "x", "y", "y", "x"],
                 "group": ["a", "a", "b", "b", "a", "a", "b", "b", "a", "a", "b", "b"],
-                # [5, 6, 8, 5, 8, ]
-                # [2, 3, 3, 4, 2]
-                # [5, 8, 6, 8, 5, 8, ]
-                # [2, 3, 4, 2]
             }
         )
         self.output_dir = "output_dir"
         self.precision = PRECISION
 
-class TestNAFilteredAggregator(NAFilteredAggregatorTestData, unittest.TestCase):
+class TestValueFilteredAggregator(ValueFilteredAggregatorTestData, unittest.TestCase):
     def test_average_aggregator(self):
-        avg_agg = NAFilteredAggregator(AverageAggregator, ["col1", "col2"], self.output_dir)
+        avg_agg = ValueFilteredAggregator(AverageAggregator, "NA", ["col1", "col2"], self.output_dir)
         avg_agg.aggregate(self.data)
         x = [a for a in self.data["col1"] if a != 'NA']
         y = [a for a in self.data["col2"] if a != 'NA']
@@ -451,12 +447,12 @@ class TestNAFilteredAggregator(NAFilteredAggregatorTestData, unittest.TestCase):
         )
 
     def test_average_aggregator_input_validation(self):
-        avg_agg = NAFilteredAggregator(AverageAggregator, ["col3"], self.output_dir)
+        avg_agg = ValueFilteredAggregator(AverageAggregator, 'NA', ["col3"], self.output_dir)
         self.assertRaises(ValueError, avg_agg.aggregate, self.data)
 
     def test_average_aggregator_group_by(self):
-        self.output_dir = create_logdir("NAFilteredAggregatorTests")
-        avg_agg = NAFilteredAggregator(AverageAggregator, ["col1", "col2"], self.output_dir, group_by="group")
+        self.output_dir = create_logdir("ValueFilteredAggregatorTests")
+        avg_agg = ValueFilteredAggregator(AverageAggregator, 'NA', ["col1", "col2"], self.output_dir, group_by="group")
         avg_agg.aggregate(self.data)
         self.assertEqual(avg_agg.aggregated_result, {"col1": {"a": 6.4, "b": 2.8}, "col2": {"a": 6.667, "b": 2.75}})
         avg_agg.write_results()
