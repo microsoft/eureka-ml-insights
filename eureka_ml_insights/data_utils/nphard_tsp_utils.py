@@ -53,21 +53,63 @@ def ensure_root_tags(xml_string):
 
     return xml_string
 
+# def parse_xml_to_dict(xml_string):
+#     # Parse the XML string
+#     # breakpoint()
+#     result_xml_string = ensure_root_tags(xml_string)
+#     print(result_xml_string)
+#     root = ET.fromstring(result_xml_string)
+#     final_answer_element = root.find('final_answer')
+
+#     tour_string = ast.literal_eval(final_answer_element.text)['Path']
+
+#     if 'City' in tour_string:
+#         tour_string = convert_city_path(tour_string)
+
+#     tour = list(map(int, tour_string.split('->')))
+
+#     tour_string = ','.join(map(str, tour))
+
+#     return tour_string
+
 def parse_xml_to_dict(xml_string):
     # Parse the XML string
     # breakpoint()
+
+
     result_xml_string = ensure_root_tags(xml_string)
-    print(result_xml_string)
-    root = ET.fromstring(result_xml_string)
-    final_answer_element = root.find('final_answer')
+    # print(result_xml_string)
 
-    tour_string = ast.literal_eval(final_answer_element.text)['Path']
-
-    if 'City' in tour_string:
-        tour_string = convert_city_path(tour_string)
-
-    tour = list(map(int, tour_string.split('->')))
-
+    tour=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     tour_string = ','.join(map(str, tour))
+
+    try:
+        root = ET.fromstring(result_xml_string)
+
+        final_answer_element = root.find('final_answer')
+
+        tour_string = ast.literal_eval(final_answer_element.text)['Path']
+
+        if 'City' in tour_string:
+            tour_string = convert_city_path(tour_string)
+
+        tour = list(map(int, tour_string.split('->')))
+
+        tour_string = ','.join(map(str, tour))
+
+    except ET.ParseError as e:
+        # print(f"ParseError: {e}")
+        
+        # tour_string="0,0,0,0"
+        tour=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        tour_string = ','.join(map(str, tour))
+        print("utils: ", tour_string)
+        return tour_string
+        # tour_string='0,1,4,5,9,13,6,11,8,12,3,10,7,2,0'
+
+
+    print("utils: ", tour_string)
+    # tour=[0, 1, 4, 5, 9, 13, 6, 11, 8, 12, 3, 10, 7, 2, 0]
+    # tour_string = ','.join(map(str, tour))
 
     return tour_string

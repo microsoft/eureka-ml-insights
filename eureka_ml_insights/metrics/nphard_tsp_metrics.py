@@ -77,8 +77,14 @@ class NPHardMetric(Metric):
         # Remove the enclosing characters and convert the optimal tour to a list of tuples
         optimal_tour_list = eval(optimal_tour_curr.strip('.'))
 
+        # breakpoint()
+
         # Convert each tuple in optimal_tour_list to a comma-separated string
+        print(optimal_tour_list)       
+        # if isinstance(optimal_tour_list[0], (tuple, list)):
         optimal_tour_strings = [','.join(map(str, tour)) for tour in optimal_tour_list]
+        # else:
+            # optimal_tour_strings = ','.join(map(str, optimal_tour_list))
 
         # Check if tour_string is in the list of optimal tour strings
         return tour_string in optimal_tour_strings
@@ -118,6 +124,7 @@ class NPHardMetric(Metric):
         print("optimal_tour_curr2: ", optimal_tour_curr)
         print("tour_string: ", tour_string)
 
+        # breakpoint()
         is_tour_present = self.__is_tour_present(optimal_tour_curr, tour_string)
 
         if not is_tour_present:
