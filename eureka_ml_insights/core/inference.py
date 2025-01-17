@@ -139,6 +139,11 @@ class Inference(Component):
                 prev_model_tokens,
                 prev_model_time,
             )
+            # add remaining pre_inf_results_df columns to the data point
+            for col in pre_inf_results_df.columns:
+                if col not in data:
+                    data[col] = prev_results[col].values[0]
+
             return data
 
     def run(self):
