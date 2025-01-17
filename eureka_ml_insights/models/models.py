@@ -26,7 +26,7 @@ class Model(ABC):
     n_output_tokens: int = None
 
     @abstractmethod
-    def generate(self, text_prompt, **kwargs):
+    def generate(self, text_prompt, *args, **kwargs):
         raise NotImplementedError
 
     def count_tokens(self):
@@ -90,7 +90,7 @@ class EndpointModel(Model):
     num_retries: int = 3
 
     @abstractmethod
-    def create_request(self, text_prompt, **kwargs):
+    def create_request(self, text_prompt, *args, **kwargs):
         raise NotImplementedError
 
     @abstractmethod
@@ -98,7 +98,7 @@ class EndpointModel(Model):
         # must return the model output and the response time
         raise NotImplementedError
 
-    def generate(self, query_text, **kwargs):
+    def generate(self, query_text, *args, **kwargs):
         """
         Calls the endpoint to generate the model response.
         args:
@@ -110,7 +110,7 @@ class EndpointModel(Model):
                                   and any other relevant information returned by the model.
         """
         response_dict = {}
-        request = self.create_request(query_text, **kwargs)
+        request = self.create_request(query_text, *args, **kwargs)
         attempts = 0
         while attempts < self.num_retries:
             try:
@@ -491,15 +491,31 @@ class DirectOpenAIModel(OpenAICommonRequestResponseMixIn, DirectOpenAIClientMixI
 class OpenAIO1RequestResponseMixIn:
     
     def create_request(self, prompt, query_images=None, system_message=None, previous_messages=None):
-        if system_message:
-            # system messages are not supported for OAI reasoning models
-            # https://platform.openai.com/docs/guides/reasoning
-            logging.warning("System messages are not supported for OAI reasoning models.")
         messages = []   
+        if system_message:
+            # Developer messages are the new system messages: 
+            # Starting with o1-2024-12-17, o1 models support developer messages rather than system messages, 
+            # to align with the chain of command behavior described in the model spec.
+            messages.append({"role": "developer", "content": system_message})        
         if previous_messages:
             messages.extend(previous_messages)
+        
+        user_content = prompt
+        if query_images and self.model_name == "o1-preview":
+            logging.warning("Images are not supported by OpenAI O1 preview model.")
+        elif query_images:
+            encoded_images = self.base64encode(query_images)
+            user_content = [
+                {"type": "text", "text": prompt},
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/png;base64,{encoded_images[0]}",
+                    },
+                },
+            ]
 
-        messages.append({"role": "user", "content": prompt})
+        messages.append({"role": "user", "content": user_content})
         return {"messages": messages}
 
     def get_response(self, request):
