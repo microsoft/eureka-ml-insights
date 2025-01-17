@@ -1,8 +1,11 @@
 import ast
+
 from .metrics_base import ExactMatch, Metric
 import xml.etree.ElementTree as ET
 
+
 class NPHardMetric(Metric):
+# class NPHardMetric():
     """This class is a metric that requires a correct prediction to be only one of the valid multiple choice answers."""
 
     def __init__(self):
@@ -71,12 +74,19 @@ class NPHardMetric(Metric):
         return True, path_length
 
     def __is_tour_present(self, optimal_tour_curr, tour_string):
-
+        # Remove the enclosing characters and convert the optimal tour to a list of tuples
         optimal_tour_list = eval(optimal_tour_curr.strip('.'))
+
+        # breakpoint()
+
+        # Convert each tuple in optimal_tour_list to a comma-separated string
+        # print(optimal_tour_list)       
+        # optimal_tour_strings = [','.join(map(str, tour)) for tour in optimal_tour_list]
         optimal_tour_strings = [','.join(map(str, tour + (tour[0],))) for tour in optimal_tour_list]
 
         # Check if tour_string is in the list of optimal tour strings
         return tour_string in optimal_tour_strings
+
 
     def __evaluate__(self, x):
         is_valid_curr=x["is_valid"]
@@ -84,17 +94,24 @@ class NPHardMetric(Metric):
         if not is_valid_curr:
             return "none"
         
+        # breakpoint()
+
         optimal_tour_curr=x["optimal_tour"]
         weight_matrix_curr=x["weight_matrix"]
         ground_truth_curr=x["ground_truth"]
         tour_string=x["model_output"]
 
         tour = list(map(int, tour_string.split(',')))
+
+        # print("final tour: ", tour)
+        # print("optimal_tour_curr: ", optimal_tour_curr)
+
         cities = [i for i in range(len(weight_matrix_curr))]
 
         is_valid, total_tsp_path_length = self.__is_valid_tsp_path(tour, cities, weight_matrix_curr)
-        
-        ### incorrect if path is invalid or total_path_length or tour does not exist is not same as ground truth path length
+        print(is_valid, total_tsp_path_length, ground_truth_curr)
+
+        ### incorrect if path is invalid or total_path_length is not same as ground truth path length
 
         if not is_valid:
             return "incorrect"
@@ -102,9 +119,32 @@ class NPHardMetric(Metric):
         if total_tsp_path_length != ground_truth_curr:
             return "incorrect"
 
+        # print("optimal_tour_curr2: ", optimal_tour_curr)
+        # print("tour_string: ", tour_string)
+
+
         is_tour_present = self.__is_tour_present(optimal_tour_curr, tour_string)
+
+        # print("is_tour_present: ", is_tour_present)
 
         if not is_tour_present:
             return "incorrect"
 
         return "correct"
+
+
+    # def __is_tour_present(self, optimal_tour_curr, tour_string):
+    #     # Remove the enclosing characters and convert the optimal tour to a list of tuples
+    #     optimal_tour_list = eval(optimal_tour_curr.strip('.'))
+
+    #     # breakpoint()
+
+    #     # Convert each tuple in optimal_tour_list to a comma-separated string
+    #     print(optimal_tour_list)       
+    #     # if isinstance(optimal_tour_list[0], (tuple, list)):
+    #     optimal_tour_strings = [','.join(map(str, tour)) for tour in optimal_tour_list]
+    #     # else:
+    #         # optimal_tour_strings = ','.join(map(str, optimal_tour_list))
+
+    #     # Check if tour_string is in the list of optimal tour strings
+    #     return tour_string in optimal_tour_strings
