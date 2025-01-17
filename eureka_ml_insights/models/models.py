@@ -496,7 +496,6 @@ class OpenAIO1RequestResponseMixIn:
             # Developer messages are the new system messages: 
             # Starting with o1-2024-12-17, o1 models support developer messages rather than system messages, 
             # to align with the chain of command behavior described in the model spec.
-            # https://platform.openai.com/docs/guides/reasoning
             messages.append({"role": "developer", "content": system_message})        
         if previous_messages:
             messages.extend(previous_messages)
