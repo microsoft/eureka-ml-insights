@@ -1,7 +1,7 @@
 import os
 from typing import Any
 
-from eureka_ml_insights.core import EvalReporting, Inference, PromptProcessing
+from eureka_ml_insights.core import EvalReporting, Inference, PromptProcessing, DataProcessing
 from eureka_ml_insights.data_utils import (
     ColumnMatchMapTransform,
     CopyColumn,
@@ -13,9 +13,12 @@ from eureka_ml_insights.data_utils import (
     SequenceTransform,
     ShuffleColumnsTransform,
     MultiplyTransform,
-    SamplerTransform
+    SamplerTransform,
+    MajorityVoteTransform,
+    ColumnRename,
+    ReplaceStringsTransform
 )
-from eureka_ml_insights.metrics import CountAggregator, ExactMatch
+from eureka_ml_insights.metrics import CountAggregator, ExactMatch, BiLevelMaxAggregator
 
 from eureka_ml_insights.configs import(
     AggregatorConfig,
@@ -25,12 +28,13 @@ from eureka_ml_insights.configs import(
     MetricConfig,
     ModelConfig,
     PipelineConfig,
-    PromptProcessingConfig
+    PromptProcessingConfig,
+    DataProcessingConfig,
 )
 from eureka_ml_insights.configs import ExperimentConfig
 import numpy as np
 
-"""This file contains user defined configuration classes for the geometric reasoning task on the GPQA dataset.
+"""This file contains user defined configuration classes for the GPQA dataset.
 """
 
 
@@ -50,7 +54,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                     "split": "train",
                     "transform": SequenceTransform(
                         [
-                            SamplerTransform(random_seed=42, sample_count=5),
+                            # SamplerTransform(random_seed=42, sample_count=5),
                             CopyColumn(column_name_src="Correct Answer", column_name_dst="A"),
                             CopyColumn(column_name_src="Incorrect Answer 1", column_name_dst="B"),
                             CopyColumn(column_name_src="Incorrect Answer 2", column_name_dst="C"),
@@ -66,7 +70,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
             ),
             prompt_template_path=os.path.join(
                 os.path.dirname(__file__),
-                "../prompt_templates/gpqa_templates/basic.jinja",
+                "../prompt_templates/gpqa_templates/gpqa_cot.jinja",
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
         )
@@ -80,6 +84,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
+            max_concurrent=1
         )
         # Configure the evaluation and reporting component.
         self.evalreporting_comp = EvalReportingConfig(
@@ -97,10 +102,10 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                             ),
                             RegexTransform(
                                 columns="model_output",
-                                prompt_pattern=r"My answer is (\w)(?=\s|\W|$)",
+                                prompt_pattern=r"Final Answer: (\w)(?=\s|\W|$)",
                                 case=True,
                             ),
-                            ImputeNA(columns="model_output", value=""),
+                            ImputeNA(columns="model_output", value="")
                         ]
                     ),
                 },
@@ -113,12 +118,94 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
         )
+
+        # # Aggregate the results by best of n
+        # self.bon_evalreporting_comp = EvalReportingConfig(
+        #     component_type=EvalReporting,
+        #     data_reader_config=DataSetConfig(
+        #         DataReader,
+        #         {
+        #             "path": os.path.join(self.evalreporting_comp.output_dir, "metric_results.jsonl"),
+        #             "format": ".jsonl",
+        #             "transform": SequenceTransform(
+        #                 [
+        #                     CopyColumn(
+        #                         column_name_src="ExactMatch_result",
+        #                         column_name_dst="ExactMatch_result_numeric",
+        #                     ),
+        #                     ReplaceStringsTransform(columns=["ExactMatch_result_numeric"],mapping={'incorrect': '0', 'correct': '1', 'none': ''},case=False)
+        #                 ])
+        #         },
+        #     ),
+        #     aggregator_configs=[
+        #         AggregatorConfig(
+        #             BiLevelMaxAggregator,
+        #             {
+        #                 "column_names": [
+        #                     "ExactMatch_result_numeric"
+        #                 ],
+        #                 "first_groupby": "data_point_id",
+        #                 "filename_base": "BestOfN",
+        #                 "normalize": True,
+        #             },
+        #         ),
+        #         AggregatorConfig(
+        #             BiLevelMaxAggregator,
+        #             {
+        #                 "column_names": [
+        #                     "ExactMatch_result_numeric"
+        #                 ],
+        #                 "first_groupby": "data_point_id",
+        #                 "second_groupby": "Subdomain",
+        #                 "filename_base": "BestOfN_GroupBy_Subdomain",
+        #                 "normalize": True,
+        #             },
+        #         ),
+        #         AggregatorConfig(
+        #             BiLevelMaxAggregator,
+        #             {
+        #                 "column_names": [
+        #                     "ExactMatch_result_numeric"
+        #                 ],
+        #                 "first_groupby": "data_point_id",
+        #                 "second_groupby": "Subdomain",
+        #                 "filename_base": "BestOfN_GroupBy_Year_High-level_domain",
+        #                 "normalize": True,
+        #             },
+        #         ),
+        #     ],
+        #     output_dir=os.path.join(self.log_dir, "bestofn_eval_report"),
+        # )
+
+        # self.data_post_processing_mv = DataProcessingConfig(
+        #     component_type=DataProcessing,
+        #     data_reader_config=DataSetConfig(
+        #         DataReader,
+        #         {
+        #             "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+        #             "format": ".jsonl",
+        #             "transform": SequenceTransform(
+        #                 [
+        #                     MajorityVoteTransform(),
+        #                     ColumnRename(
+        #                         name_mapping={
+        #                             "model_output": "model_output_onerun",
+        #                             "majority_vote": "model_output",
+        #                         }
+        #                     ),
+        #                 ]
+        #             ),
+        #         },
+        #     ),
+        #     output_dir=os.path.join(self.log_dir, "data_processing_mv"),
+        # )
         # # Configure the pipeline
         return PipelineConfig(
             [
                 self.data_processing_comp,
                 self.inference_comp,
                 self.evalreporting_comp,
+                #self.bon_evalreporting_comp
             ],
             self.log_dir,
         )

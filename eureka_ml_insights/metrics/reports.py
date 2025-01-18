@@ -215,6 +215,45 @@ class BiLevelAverageAggregator(AverageAggregator):
                 col_std = first_result[col].std()
                 self.aggregated_result.append({col: {"mean": col_mean, "std": col_std}})
 
+class BiLevelMaxAggregator(Aggregator):
+    """
+    This class aggregates the data in two levels. It first groups the data by the first_groupby column and
+    aggregates the data by taking the max of the column_names. It It then groups the result by the
+    second_groupby column and aggregates the it again by taking the mean and standard deviation of
+    the column_names.
+    """
+
+    def __init__(self, column_names, first_groupby, output_dir, second_groupby=None, **kwargs):
+        super().__init__(column_names, output_dir, group_by=None, **kwargs)
+        self.first_groupby = first_groupby
+        self.second_groupby = second_groupby
+
+    def _aggregate(self, data):
+        # take the average of the column for each group in the first groupby,
+        # aggregate the rest of the columns by 'first'
+        gb = data.groupby(self.first_groupby)
+        agg_map = {col: "max" for col in self.column_names}
+        agg_map.update(
+            {col: "first" for col in data.columns if col not in self.column_names and col != self.first_groupby}
+        )
+
+        first_result = gb.aggregate(agg_map).reset_index()
+        if self.second_groupby:
+            # take the average and std of the first level aggregation for each group in the second groupby
+            gb = first_result.groupby(self.second_groupby)
+            agg_map = {col: ["mean", "std"] for col in self.column_names}
+            # flatten the multi-level column index
+            second_result = gb.agg(agg_map).reset_index()
+            second_result.columns = [f"{col}_{agg}" if agg else col for col, agg in second_result.columns]
+            self.aggregated_result = second_result.to_dict(orient="records")
+        else:
+            # take the average and std of the first level aggregation
+            self.aggregated_result = []
+            for col in self.column_names:
+                col_mean = first_result[col].mean()
+                col_std = first_result[col].std()
+                self.aggregated_result.append({col: {"mean": col_mean, "std": col_std}})
+
 
 class BiLevelCountAggregator(Aggregator):
     """
