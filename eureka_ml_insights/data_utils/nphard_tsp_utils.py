@@ -43,6 +43,8 @@ def ensure_root_tags(xml_string):
     Returns:
         str: The XML string enclosed with <root> and </root> if not already present.
     """
+    # breakpoint()
+
     if not xml_string.startswith("<root>"):
         xml_string = "<root>" + xml_string
 
@@ -53,11 +55,12 @@ def ensure_root_tags(xml_string):
 
 def parse_xml_to_dict(xml_string):
     # Parse the XML string
+    # breakpoint()
     result_xml_string = ensure_root_tags(xml_string)    
     root = ET.fromstring(result_xml_string)
     final_answer_element = root.find('final_answer')
 
-    tour_string = ast.literal_eval(final_answer_element.text)['Path']
+    tour_string = ast.literal_eval(final_answer_element.text.strip())['Path']
 
 #### any thing that is not number and not an arrow ###
 #### regex ###

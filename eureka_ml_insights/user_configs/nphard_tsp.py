@@ -64,6 +64,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),    
             resume_from=resume_from,
+            # resume_from="/home/vivineet/projects/evaluation/NPHardEval/TSP/eureka-ml-insights/logs/NPHARD_TSP_PIPELINE_Runs/nphard_tsp_level_test/2025-01-17-17-38-34.783582/inference_result/inference_result.jsonl", #resume_from,
             max_concurrent=1,
         )
 
@@ -73,7 +74,8 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),                    
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),     
+                    # "path": "/home/vivineet/projects/evaluation/NPHardEval/TSP/eureka-ml-insights/logs/NPHARD_TSP_PIPELINE_Runs/nphard_tsp_level_test/2025-01-17-17-38-34.783582/inference_result/inference_result.jsonl",
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [

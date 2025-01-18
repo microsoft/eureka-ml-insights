@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 import anthropic
 import tiktoken
-from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+from azure.identity import AzureCliCredential, DefaultAzureCredential, get_bearer_token_provider
 
 from eureka_ml_insights.secret_management import get_secret
 
@@ -220,6 +220,7 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
     url: str = None
     model_name: str = None
     stream: bool = False
+    auth_scope: str = "https://cognitiveservices.azure.com/.default"
 
     def __post_init__(self):
         try:
@@ -235,7 +236,8 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
             }
         except ValueError:
             self.bearer_token_provider = get_bearer_token_provider(
-                DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"
+                AzureCliCredential(), self.auth_scope
+                # DefaultAzureCredential(), self.auth_scope
             )
             self.headers = {
                 "Content-Type": "application/json",
@@ -404,7 +406,8 @@ class AzureOpenAIClientMixIn:
         from openai import AzureOpenAI
 
         token_provider = get_bearer_token_provider(
-            DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"
+            # DefaultAzureCredential(), self.auth_scope
+            AzureCliCredential(), self.auth_scope
         )
         return AzureOpenAI(
             azure_endpoint=self.url,
@@ -449,6 +452,7 @@ class AzureOpenAIModel(OpenAICommonRequestResponseMixIn, AzureOpenAIClientMixIn,
     presence_penalty: float = 0
     seed: int = 0
     api_version: str = "2023-06-01-preview"
+    auth_scope: str = "https://cognitiveservices.azure.com/.default"
 
     def __post_init__(self):
         self.client = self.get_client()
@@ -528,6 +532,7 @@ class AzureOpenAIO1Model(OpenAIO1RequestResponseMixIn, AzureOpenAIClientMixIn, E
     frequency_penalty: float = 0
     presence_penalty: float = 0
     api_version: str = "2023-06-01-preview"
+    auth_scope: str = "https://cognitiveservices.azure.com/.default"
 
     def __post_init__(self):
         self.client = self.get_client()
