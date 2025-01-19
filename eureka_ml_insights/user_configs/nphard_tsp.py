@@ -112,13 +112,99 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
 
 ##################
 
-        # Aggregate the results by a majority vote 
-        # First, let us perform majority_vote
-        self.data_post_processing_addmv = DataProcessingConfig(
-            component_type=DataProcessing,
+        # # Aggregate the results by a majority vote 
+        # # First, let us perform majority_vote
+        # self.data_post_processing_addmv = DataProcessingConfig(
+        #     component_type=DataProcessing,
+        #     data_reader_config=DataSetConfig(
+        #         DataReader,
+        #         {
+        #             "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+        #             "format": ".jsonl",
+        #             "transform": SequenceTransform(
+        #                 [
+        #                     ColumnRename(
+        #                         name_mapping={
+        #                             "model_output": "raw_output",
+        #                         }
+        #                     ),
+        #                     AddColumn("model_output"),
+        #                     NPHARDTSPExtractAnswer("raw_output", "model_output"),
+        #                     MajorityVoteTransform(id_col="data_point_id"),
+        #                     ColumnRename(
+        #                         name_mapping={
+        #                             "model_output": "model_output_onerun",
+        #                             "majority_vote": "model_output",
+        #                         }
+        #                     ),
+        #                 ]
+        #             ),
+        #         },
+        #     ),
+        #     output_dir=os.path.join(self.log_dir, "data_addmv_output"),
+        # )
+
+        # ### can move transforms from previous component to next one
+
+        # # Second, compute eaxct match
+        # self.postevalprocess_comp = EvalReportingConfig(
+        #     component_type=EvalReporting,
+        #     data_reader_config=DataSetConfig(
+        #         DataReader,
+        #         {
+        #             "path": os.path.join(self.data_post_processing_addmv.output_dir, "transformed_data.jsonl"),
+        #             "format": ".jsonl",
+        #         },
+        #     ),
+        #     metric_config=MetricConfig(NPHardMetric),
+        #     aggregator_configs=[
+        #         AggregatorConfig(CountAggregator, {"column_names": ["NPHardMetric_result"], "normalize": True}),
+        #     ],
+        #     output_dir=os.path.join(self.log_dir, "eval_report_majorityVote"),
+        # )
+
+        # # Aggregate the results by a majority vote 
+        # # First, let us perform majority_vote
+        # self.data_post_processing_addmv = DataProcessingConfig(
+        #     component_type=DataProcessing,
+        #     data_reader_config=DataSetConfig(
+        #         DataReader,
+        #         {
+        #             "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+        #             "format": ".jsonl",
+        #             "transform": SequenceTransform(
+        #                 [
+        #                     ColumnRename(
+        #                         name_mapping={
+        #                             "model_output": "raw_output",
+        #                         }
+        #                     ),
+        #                     AddColumn("model_output"),
+        #                     NPHARDTSPExtractAnswer("raw_output", "model_output"),
+        #                     MajorityVoteTransform(id_col="data_point_id"),
+        #                     ColumnRename(
+        #                         name_mapping={
+        #                             "model_output": "model_output_onerun",
+        #                             "majority_vote": "model_output",
+        #                         }
+        #                     ),
+        #                 ]
+        #             ),
+        #         },
+        #     ),
+        #     output_dir=os.path.join(self.log_dir, "data_addmv_output"),
+        # )
+
+        ### can move transforms from previous component to next one
+
+        # Second, compute eaxct match
+        self.postevalprocess_comp = EvalReportingConfig(
+            component_type=EvalReporting,
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
+                    # "path": os.path.join(self.data_post_processing_addmv.output_dir, "transformed_data.jsonl"),
+                    # "format": ".jsonl",
                     "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
                     "format": ".jsonl",
                     "transform": SequenceTransform(
@@ -141,27 +227,13 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                     ),
                 },
             ),
-            output_dir=os.path.join(self.log_dir, "data_addmv_output"),
-        )
-
-        ### can move transforms from previous component to next one
-
-        # Second, compute eaxct match
-        self.postevalprocess_comp = EvalReportingConfig(
-            component_type=EvalReporting,
-            data_reader_config=DataSetConfig(
-                DataReader,
-                {
-                    "path": os.path.join(self.data_post_processing_addmv.output_dir, "transformed_data.jsonl"),
-                    "format": ".jsonl",
-                },
-            ),
             metric_config=MetricConfig(NPHardMetric),
             aggregator_configs=[
                 AggregatorConfig(CountAggregator, {"column_names": ["NPHardMetric_result"], "normalize": True}),
             ],
             output_dir=os.path.join(self.log_dir, "eval_report_majorityVote"),
         )
+
 
         # # Configure the pipeline
         return PipelineConfig(
@@ -170,7 +242,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                 self.inference_comp,
                 self.data_post_processing,
                 self.evalreporting_comp,
-                self.data_post_processing_addmv,
+                # self.data_post_processing_addmv,
                 self.postevalprocess_comp,
             ],
             self.log_dir,
@@ -187,7 +259,7 @@ class NPHARD_TSP_PIPELINE_Runs(NPHARD_TSP_PIPELINE):
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         # data preprocessing
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
-            MultiplyTransform(n_repeats=2)
+            MultiplyTransform(n_repeats=1)
         )
         return pipeline
 
