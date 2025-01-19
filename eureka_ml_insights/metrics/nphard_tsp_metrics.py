@@ -2,27 +2,11 @@ import ast
 from .metrics_base import ExactMatch, Metric
 import xml.etree.ElementTree as ET
 
-#### change class name to TSPMetric ####
-
-class NPHardMetric(Metric):
+class NPHardTSPMetric(Metric):
     """This class is a metric that requires a correct prediction to be only one of the valid multiple choice answers."""
 
     def __init__(self):
         super().__init__()
-
-    #### not used ### 
-
-    def parse_xml_to_dict(self, xml_string):
-        # Parse the XML string
-        root = ET.fromstring(xml_string)
-
-        # Find the 'final_answer' tag
-        final_answer_element = root.find('final_answer')
-
-        # Find the 'reasoning' tag
-        reasoning_element = root.find('reasoning')
-
-        return final_answer_element, reasoning_element
 
     def __is_valid_tsp_path(self, path, cities, distance_matrix=None):
         """
@@ -54,12 +38,12 @@ class NPHardMetric(Metric):
             print("Invalid: Path does not include all cities exactly once.")
             return False, None
 
-        #### check if next step is required ####
+        # #### check if next step is required ####
 
-        # Ensure there are no duplicate visits to cities (except for the first/last city)
-        if len(path[:-1]) != len(unique_cities_in_path):
-            print("Invalid: Path includes duplicate visits to cities.")
-            return False, None
+        # # Ensure there are no duplicate visits to cities (except for the first/last city)
+        # if len(path[:-1]) != len(unique_cities_in_path):
+        #     print("Invalid: Path includes duplicate visits to cities.")
+        #     return False, None
 
         # If a distance matrix is provided, calculate the path length
         path_length = 0

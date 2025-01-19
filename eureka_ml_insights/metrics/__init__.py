@@ -28,7 +28,7 @@ from .spatial_and_layout_metrics import (
     SpatialAndLayoutReasoningMetric,
 )
 
-from .nphard_tsp_metrics import NPHardMetric
+from .nphard_tsp_metrics import NPHardTSPMetric
 
 __all__ = [
     Metric,
@@ -54,5 +54,5 @@ __all__ = [
     SumAggregator,
     MMMUMetric,
     MaxTokenF1ScoreMetric,
-    NPHardMetric,
+    NPHardTSPMetric,
 ]

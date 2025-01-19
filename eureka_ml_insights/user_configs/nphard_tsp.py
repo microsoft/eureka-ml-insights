@@ -14,7 +14,7 @@ from eureka_ml_insights.data_utils import (
 )
 from eureka_ml_insights.data_utils.aime_utils import AIMEExtractAnswer
 from eureka_ml_insights.data_utils.nphard_tsp_utils import NPHARDTSPExtractAnswer
-from eureka_ml_insights.metrics import CountAggregator, NPHardMetric
+from eureka_ml_insights.metrics import CountAggregator, NPHardTSPMetric
 
 from eureka_ml_insights.configs import(
     AggregatorConfig,
@@ -103,100 +103,16 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                 },
             ),
-            metric_config=MetricConfig(NPHardMetric),
+            metric_config=MetricConfig(NPHardTSPMetric),
             aggregator_configs=[
-                AggregatorConfig(CountAggregator, {"column_names": ["NPHardMetric_result"], "normalize": True}),
+                AggregatorConfig(CountAggregator, {"column_names": ["NPHardTSPMetric_result"], "normalize": True}),
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
         )
 
 ##################
-
         # # Aggregate the results by a majority vote 
         # # First, let us perform majority_vote
-        # self.data_post_processing_addmv = DataProcessingConfig(
-        #     component_type=DataProcessing,
-        #     data_reader_config=DataSetConfig(
-        #         DataReader,
-        #         {
-        #             "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
-        #             "format": ".jsonl",
-        #             "transform": SequenceTransform(
-        #                 [
-        #                     ColumnRename(
-        #                         name_mapping={
-        #                             "model_output": "raw_output",
-        #                         }
-        #                     ),
-        #                     AddColumn("model_output"),
-        #                     NPHARDTSPExtractAnswer("raw_output", "model_output"),
-        #                     MajorityVoteTransform(id_col="data_point_id"),
-        #                     ColumnRename(
-        #                         name_mapping={
-        #                             "model_output": "model_output_onerun",
-        #                             "majority_vote": "model_output",
-        #                         }
-        #                     ),
-        #                 ]
-        #             ),
-        #         },
-        #     ),
-        #     output_dir=os.path.join(self.log_dir, "data_addmv_output"),
-        # )
-
-        # ### can move transforms from previous component to next one
-
-        # # Second, compute eaxct match
-        # self.postevalprocess_comp = EvalReportingConfig(
-        #     component_type=EvalReporting,
-        #     data_reader_config=DataSetConfig(
-        #         DataReader,
-        #         {
-        #             "path": os.path.join(self.data_post_processing_addmv.output_dir, "transformed_data.jsonl"),
-        #             "format": ".jsonl",
-        #         },
-        #     ),
-        #     metric_config=MetricConfig(NPHardMetric),
-        #     aggregator_configs=[
-        #         AggregatorConfig(CountAggregator, {"column_names": ["NPHardMetric_result"], "normalize": True}),
-        #     ],
-        #     output_dir=os.path.join(self.log_dir, "eval_report_majorityVote"),
-        # )
-
-        # # Aggregate the results by a majority vote 
-        # # First, let us perform majority_vote
-        # self.data_post_processing_addmv = DataProcessingConfig(
-        #     component_type=DataProcessing,
-        #     data_reader_config=DataSetConfig(
-        #         DataReader,
-        #         {
-        #             "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
-        #             "format": ".jsonl",
-        #             "transform": SequenceTransform(
-        #                 [
-        #                     ColumnRename(
-        #                         name_mapping={
-        #                             "model_output": "raw_output",
-        #                         }
-        #                     ),
-        #                     AddColumn("model_output"),
-        #                     NPHARDTSPExtractAnswer("raw_output", "model_output"),
-        #                     MajorityVoteTransform(id_col="data_point_id"),
-        #                     ColumnRename(
-        #                         name_mapping={
-        #                             "model_output": "model_output_onerun",
-        #                             "majority_vote": "model_output",
-        #                         }
-        #                     ),
-        #                 ]
-        #             ),
-        #         },
-        #     ),
-        #     output_dir=os.path.join(self.log_dir, "data_addmv_output"),
-        # )
-
-        ### can move transforms from previous component to next one
-
         # Second, compute eaxct match
         self.postevalprocess_comp = EvalReportingConfig(
             component_type=EvalReporting,
@@ -227,9 +143,9 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                     ),
                 },
             ),
-            metric_config=MetricConfig(NPHardMetric),
+            metric_config=MetricConfig(NPHardTSPMetric),
             aggregator_configs=[
-                AggregatorConfig(CountAggregator, {"column_names": ["NPHardMetric_result"], "normalize": True}),
+                AggregatorConfig(CountAggregator, {"column_names": ["NPHardTSPMetric_result"], "normalize": True}),
             ],
             output_dir=os.path.join(self.log_dir, "eval_report_majorityVote"),
         )
@@ -241,8 +157,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                 self.data_processing_comp,
                 self.inference_comp,
                 self.data_post_processing,
-                self.evalreporting_comp,
-                # self.data_post_processing_addmv,
+                self.evalreporting_comp,                
                 self.postevalprocess_comp,
             ],
             self.log_dir,
