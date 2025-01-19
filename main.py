@@ -21,10 +21,23 @@ if __name__ == "__main__":
     parser.add_argument(
         "--resume_from", type=str, help="The path to the inference_result.jsonl to resume from.", default=None
     )
-    args = parser.parse_args()
+    init_args = {}
+
+    # catch any unknown arguments
+    args, unknown_args = parser.parse_known_args()
+    if unknown_args:
+        # if every other unknown arg starts with "--", parse the unknown args as key-value pairs in a dict
+        if all(arg.startswith("--") for arg in unknown_args[::2]):
+            init_args.update(
+                {arg[len("--") :]: unknown_args[i + 1] for i, arg in enumerate(unknown_args) if i % 2 == 0}
+            )
+            logging.info(f"Unknown arguments: {init_args} will be sent to the experiment config class.")
+        # else, parse the unknown args as is ie. as a list
+        else:
+            init_args["unknown_args"] = unknown_args
+            logging.info(f"Unknown arguments: {unknown_args} will be sent as is to the experiment config class.")
 
     experiment_config_class = args.exp_config
-    init_args = {}
     if args.model_config:
         try:
             init_args["model_config"] = getattr(model_configs, args.model_config)
