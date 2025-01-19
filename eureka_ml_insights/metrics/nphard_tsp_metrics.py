@@ -81,11 +81,11 @@ class NPHardTSPMetric(Metric):
         tour = list(map(int, tour_string.split(',')))
         cities = [i for i in range(len(weight_matrix_curr))]
 
-        is_valid, total_tsp_path_length = self.__is_valid_tsp_path(tour, cities, weight_matrix_curr)
+        is_tsp_path_valid, total_tsp_path_length = self.__is_valid_tsp_path(tour, cities, weight_matrix_curr)
         
         ### incorrect if path is invalid or total_path_length or tour does not exist is not same as ground truth path length
 
-        if not is_valid:
+        if not is_tsp_path_valid:
             return "incorrect"
         
         if total_tsp_path_length != ground_truth_curr:
