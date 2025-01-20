@@ -161,7 +161,6 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             self.log_dir,
         )
 
-### take from kargs ###
 
 class NPHARD_TSP_PIPELINE_multipleRuns(NPHARD_TSP_PIPELINE):
     """This class specifies the config for running AIME benchmark n repeated times""" ## change this line
