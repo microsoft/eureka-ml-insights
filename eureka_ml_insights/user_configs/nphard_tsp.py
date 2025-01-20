@@ -116,9 +116,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             component_type=EvalReporting,
             data_reader_config=DataSetConfig(
                 DataReader,
-                {
-                    # "path": os.path.join(self.data_post_processing_addmv.output_dir, "transformed_data.jsonl"),
-                    # "format": ".jsonl",
+                {                    
                     "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
                     "format": ".jsonl",
                     "transform": SequenceTransform(
@@ -163,7 +161,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
 
 
 class NPHARD_TSP_PIPELINE_multipleRuns(NPHARD_TSP_PIPELINE):
-    """This class specifies the config for running AIME benchmark n repeated times""" ## change this line
+    """This class specifies the config for running TSP benchmark n repeated times""" ## change this line
 
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
