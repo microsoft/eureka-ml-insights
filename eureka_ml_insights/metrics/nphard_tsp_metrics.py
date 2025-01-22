@@ -1,6 +1,7 @@
 import ast
 from .metrics_base import ExactMatch, Metric
 import xml.etree.ElementTree as ET
+import logging
 
 class NPHardTSPMetric(Metric):
     """
@@ -25,12 +26,12 @@ class NPHardTSPMetric(Metric):
         """
         # Ensure the path is not empty and has the correct number of cities
         if not path or len(path) != len(cities) + 1:
-            print("Invalid: Path is empty or has incorrect number of nodes.")
+            logging.info("Invalid: Path is empty or has incorrect number of nodes.")
             return False, None
 
         # Ensure the path starts and ends at the same city
         if path[0] != path[-1]:
-            print("Invalid: Path does not start and end at the same city.")
+            logging.info("Invalid: Path does not start and end at the same city.")
             return False, None
 
         # Ensure all cities are visited exactly once (except the start/end city)
@@ -38,7 +39,7 @@ class NPHardTSPMetric(Metric):
         unique_cities = set(cities)
 
         if unique_cities_in_path != unique_cities:
-            print("Invalid: Path does not include all cities exactly once.")
+            logging.info("Invalid: Path does not include all cities exactly once.")
             return False, None
 
         # If a distance matrix is provided, calculate the path length
@@ -50,7 +51,7 @@ class NPHardTSPMetric(Metric):
                     end = cities.index(path[i + 1])
                     path_length += distance_matrix[start][end]
             except (IndexError, ValueError):
-                print("Invalid: Path contains cities not in the provided distance matrix.")
+                logging.info("Invalid: Path contains cities not in the provided distance matrix.")
                 return False, None
         
         return True, path_length
