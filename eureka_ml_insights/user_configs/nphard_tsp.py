@@ -146,7 +146,6 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             output_dir=os.path.join(self.log_dir, "eval_report_majorityVote"),
         )
 
-
         # Configure the pipeline
         return PipelineConfig(
             [
