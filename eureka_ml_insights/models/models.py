@@ -371,17 +371,17 @@ class OpenAICommonRequestResponseMixIn:
     This mixin class defines the request and response handling for most OpenAI models.
     """
 
-    def create_request(self, prompt, query_images=None, system_message=None, previous_messages=None):
+    def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
         messages = []
         if system_message:
             messages.append({"role": "system", "content": system_message})
         if previous_messages:
             messages.extend(previous_messages)
-        user_content = prompt
+        user_content = text_prompt
         if query_images:
             encoded_images = self.base64encode(query_images)
             user_content = [
-                {"type": "text", "text": prompt},
+                {"type": "text", "text": text_prompt},
                 {
                     "type": "image_url",
                     "image_url": {
@@ -489,9 +489,9 @@ class DirectOpenAIModel(OpenAICommonRequestResponseMixIn, DirectOpenAIClientMixI
 
 
 class OpenAIO1RequestResponseMixIn:
-    
-    def create_request(self, prompt, query_images=None, system_message=None, previous_messages=None):
-        messages = []   
+
+    def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
+        messages = []
         if system_message:
             # Developer messages are the new system messages: 
             # Starting with o1-2024-12-17, o1 models support developer messages rather than system messages, 
@@ -499,14 +499,14 @@ class OpenAIO1RequestResponseMixIn:
             messages.append({"role": "developer", "content": system_message})        
         if previous_messages:
             messages.extend(previous_messages)
-        
-        user_content = prompt
+
+        user_content = text_prompt
         if query_images and self.model_name == "o1-preview":
             logging.warning("Images are not supported by OpenAI O1 preview model.")
         elif query_images:
             encoded_images = self.base64encode(query_images)
             user_content = [
-                {"type": "text", "text": prompt},
+                {"type": "text", "text": text_prompt},
                 {
                     "type": "image_url",
                     "image_url": {
@@ -603,7 +603,7 @@ class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
             max_output_tokens=self.max_tokens, temperature=self.temperature, top_p=self.top_p
         )
 
-    def create_request(self, text_prompt, query_images=None, system_message=None):
+    def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
         import google.generativeai as genai
 
         if self.model_name == "gemini-1.0-pro":
@@ -991,16 +991,15 @@ class ClaudeModel(EndpointModel, KeyBasedAuthMixIn):
             timeout=self.timeout,
         )
 
-    def create_request(self, prompt, query_images=None, system_message=None, previous_messages=None):
+    def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
         messages = []
-
-        user_content = prompt
+        user_content = text_prompt
         if previous_messages:
             messages.extend(previous_messages)
         if query_images:
             encoded_images = self.base64encode(query_images)
             user_content = [
-                {"type": "text", "text": prompt},
+                {"type": "text", "text": text_prompt},
                 {
                     "type": "image",
                     "source": {
