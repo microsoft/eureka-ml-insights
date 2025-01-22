@@ -29,7 +29,7 @@ from eureka_ml_insights.configs import(
 )
 from eureka_ml_insights.configs import ExperimentConfig
 
-"""This file contains user defined configuration classes for the geometric reasoning task on geometer dataset.
+"""This file contains user defined configuration classes for the Traveling Salesman Problem (TSP).
 """
 
 class NPHARD_TSP_PIPELINE(ExperimentConfig):
@@ -91,7 +91,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             output_dir=os.path.join(self.log_dir, "data_post_processing_output"),
         )
 
-        # # Configure the evaluation and reporting component.
+        # Configure the evaluation and reporting component.
         self.evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
             data_reader_config=DataSetConfig(
