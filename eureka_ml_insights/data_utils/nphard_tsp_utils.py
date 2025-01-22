@@ -7,6 +7,7 @@ import xml.etree.ElementTree as ET
 
 @dataclass
 class NPHARDTSPExtractAnswer(DFTransformBase):
+    """Class to extract and transform the TSP path from model output."""
     model_output_column: str
     model_answer_column: str
 

@@ -3,17 +3,20 @@ from .metrics_base import ExactMatch, Metric
 import xml.etree.ElementTree as ET
 
 class NPHardTSPMetric(Metric):
-    """This class is a metric that requires a correct prediction to be only one of the valid multiple choice answers."""
+    """
+    A metric class for evaluating solutions to the Traveling Salesman Problem (TSP).
+    A prediction is considered correct if it is a valid TSP tour and matches one of the optimal solutions.
+    """
 
     def __init__(self):
         super().__init__()
 
     def __is_valid_tsp_path(self, path, cities, distance_matrix=None):
         """
-        Validates a TSP path and optionally evaluates its length.
+        Validates a TSP path and evaluates its length.
 
         Parameters:
-            path (list): The TSP path, a list of city indices (or names).
+            path (list): The TSP path, a list of city indices.
             cities (list): The list of all cities.
             distance_matrix (list of lists, optional): Matrix representing distances between cities.
 
@@ -61,6 +64,9 @@ class NPHardTSPMetric(Metric):
         return tour_string in optimal_tour_strings
 
     def __evaluate__(self, x):
+        """
+        Evaluates whether the model's output is a correct TSP tour.
+        """
         is_valid_curr=x["is_valid"]
 
         if not is_valid_curr:
@@ -71,26 +77,22 @@ class NPHardTSPMetric(Metric):
         ground_truth_curr=x["ground_truth"]
         tour_string=x["model_output"]
 
+        # Convert tour string into a list of integers representing the city sequence
         tour = list(map(int, tour_string.split(',')))
         cities = [i for i in range(len(weight_matrix_curr))]
 
+        # Validate the TSP tour and compute its length
         is_tsp_path_valid, total_tsp_path_length = self.__is_valid_tsp_path(tour, cities, weight_matrix_curr)
         
-        ### incorrect if path is invalid or total_path_length or tour does not exist is not same as ground truth path length
 
-        if not is_tsp_path_valid:
+        # The prediction is incorrect if the tour is invalid or the length is incorrect
+        if not is_tsp_path_valid or total_tsp_path_length != ground_truth_curr:
             return "incorrect"
         
-        if total_tsp_path_length != ground_truth_curr:
-            return "incorrect"
-
+        # Check if the predicted tour is one of the optimal solutions
         is_tour_present = self.__is_tour_present(optimal_tour_curr, tour_string)
 
         if not is_tour_present:
             return "incorrect"
 
         return "correct"
-
-
-#### multivalue metric ####
-#### Look at Kitab metric ####
