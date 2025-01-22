@@ -147,7 +147,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
         )
 
 
-        # # Configure the pipeline
+        # Configure the pipeline
         return PipelineConfig(
             [
                 self.data_processing_comp,
