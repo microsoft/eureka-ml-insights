@@ -478,7 +478,6 @@ class IFEval_PipelineTest(PipelineTest, unittest.TestCase):
         n_aggregator_files = len([file for file in self.files if "aggregator" in str(file)])
         self.assertEqual(n_aggregators, n_aggregator_files)
 
-@unittest.skipIf("skip_tests_with_missing_ds" in os.environ, "Missing public dataset. TODO: revert")
 class BA_Calendar_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         self.test_pipeline = TEST_BA_Calendar_PIPELINE()

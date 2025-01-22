@@ -26,10 +26,12 @@ class BA_Calendar_ExtractAnswer(DFTransformBase):
         """
         answer = ""
 
+        if response is None:
+            return ""
+
         # Try to find an answer in the "Final Answer: X" format
-        print(response)
         match = re.search(r"(?i)(?<=Final Answer: ).*", response)
-        print(match)
+        
         if match:
             answer = match.group(0)
 
