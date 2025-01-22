@@ -11,7 +11,7 @@ class NPHardTSPMetric(Metric):
     def __init__(self):
         super().__init__()
 
-    def __is_valid_tsp_path(self, path, cities, distance_matrix=None):
+    def is_valid_tsp_path(self, path, cities, distance_matrix=None):
         """
         Validates a TSP path and evaluates its length.
 
@@ -55,7 +55,7 @@ class NPHardTSPMetric(Metric):
         
         return True, path_length
 
-    def __is_tour_present(self, optimal_tour_curr, tour_string):
+    def is_tour_present(self, optimal_tour_curr, tour_string):
 
         optimal_tour_list = eval(optimal_tour_curr.strip('.'))
         optimal_tour_strings = [','.join(map(str, tour + (tour[0],))) for tour in optimal_tour_list]
@@ -82,7 +82,7 @@ class NPHardTSPMetric(Metric):
         cities = [i for i in range(len(weight_matrix_curr))]
 
         # Validate the TSP tour and compute its length
-        is_tsp_path_valid, total_tsp_path_length = self.__is_valid_tsp_path(tour, cities, weight_matrix_curr)
+        is_tsp_path_valid, total_tsp_path_length = self.is_valid_tsp_path(tour, cities, weight_matrix_curr)
         
 
         # The prediction is incorrect if the tour is invalid or the length is incorrect
@@ -90,9 +90,9 @@ class NPHardTSPMetric(Metric):
             return "incorrect"
         
         # Check if the predicted tour is one of the optimal solutions
-        is_tour_present = self.__is_tour_present(optimal_tour_curr, tour_string)
+        is_tsp_tour_present = self.is_tour_present(optimal_tour_curr, tour_string)
 
-        if not is_tour_present:
+        if not is_tsp_tour_present:
             return "incorrect"
 
         return "correct"
