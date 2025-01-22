@@ -171,7 +171,7 @@ class Inference(Component):
             pre_inf_results_df, last_uid = self.fetch_previous_inference_results()
         with self.data_loader as loader:
             with self.writer as writer:
-                for data, model_inputs in tqdm(loader, desc="Inference Progress:"):
+                for data, model_args, model_kwargs in tqdm(loader, desc="Inference Progress:"):
 
                     if self.resume_from and (data["uid"] <= last_uid):
                         prev_result = self.retrieve_exisiting_result(data, pre_inf_results_df)
@@ -189,20 +189,25 @@ class Inference(Component):
                                 # rate limit is reached, wait for a second
                                 time.sleep(1)
                         self.request_times.append(time.time())
-                    response_dict = self.model.generate(*model_inputs)
+                    response_dict = self.model.generate(*model_args, **model_kwargs)
                     self.validate_response_dict(response_dict)
                     # write results
                     data.update(response_dict)
                     writer.write(data)
 
+    from functools import partial
     async def run_in_excutor(self, model_inputs, executor):
         """Run model.generate in a ThreadPoolExecutor.
         args:
-            model_inputs (tuple): inputs to the model.generate function.
+            model_inputs (tuple): args and kwargs to be passed to the model.generate function.
             executor (ThreadPoolExecutor): ThreadPoolExecutor instance.
         """
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(executor, self.model.generate, *model_inputs)
+        print("model_inputs", model_inputs)
+        # function to run in executor with args and kwargs
+        def sub_func(model_inputs):
+            return self.model.generate(*model_inputs[0], **model_inputs[1])
+        return await loop.run_in_executor(executor, sub_func, model_inputs)
 
     async def _run_par(self):
         """parallel inference"""
@@ -212,7 +217,7 @@ class Inference(Component):
             pre_inf_results_df, last_uid = self.fetch_previous_inference_results()
         with self.data_loader as loader:
             with self.writer as writer:
-                for data, model_inputs in tqdm(loader, desc="Inference Progress:"):
+                for data, model_args, model_kwargs in tqdm(loader, desc="Inference Progress:"):
                     if self.resume_from and (data["uid"] <= last_uid):
                         prev_result = self.retrieve_exisiting_result(data, pre_inf_results_df)
                         if prev_result:
@@ -226,7 +231,7 @@ class Inference(Component):
                         concurrent_inputs = []
                         concurrent_metadata = []
                     # add data to batch for concurrent inference
-                    concurrent_inputs.append(model_inputs)
+                    concurrent_inputs.append((model_args, model_kwargs))
                     concurrent_metadata.append(data)
                 # if data loader is exhausted but there are remaining data points that did not form a full batch
                 if concurrent_inputs:
