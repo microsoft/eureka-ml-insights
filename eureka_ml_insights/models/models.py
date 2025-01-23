@@ -491,8 +491,10 @@ class DirectOpenAIModel(OpenAICommonRequestResponseMixIn, DirectOpenAIClientMixI
 class OpenAIO1RequestResponseMixIn:
     
     def create_request(self, prompt, query_images=None, system_message=None, previous_messages=None):
-        messages = []   
-        if system_message:
+        messages = []
+        if system_message and "o1-preview" in self.model_name:
+            logging.warning("System and developer messages are not supported by OpenAI O1 preview model.")
+        elif system_message:
             # Developer messages are the new system messages: 
             # Starting with o1-2024-12-17, o1 models support developer messages rather than system messages, 
             # to align with the chain of command behavior described in the model spec.
@@ -501,7 +503,7 @@ class OpenAIO1RequestResponseMixIn:
             messages.extend(previous_messages)
         
         user_content = prompt
-        if query_images and self.model_name == "o1-preview":
+        if query_images and "o1-preview" in self.model_name:
             logging.warning("Images are not supported by OpenAI O1 preview model.")
         elif query_images:
             encoded_images = self.base64encode(query_images)
