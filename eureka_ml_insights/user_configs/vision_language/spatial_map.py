@@ -52,10 +52,14 @@ class SPATIAL_MAP_PIPELINE(ExperimentConfig):
                 HFDataReader,
                 {
                     "path": "microsoft/VISION_LANGUAGE",
-                    "split": "val",
+                    "split": "val_noinstruction",
                     "tasks": "spatial_map",
                     "transform": MultiplyTransform(n_repeats=5),
                 },
+            ),
+            prompt_template_path=os.path.join(
+                os.path.dirname(__file__),
+                "../../prompt_templates/vision_language_templates/basic.jinja",
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
         )
@@ -72,6 +76,7 @@ class SPATIAL_MAP_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
+            max_concurrent=10,
         )
 
         # Configure the evaluation and reporting component.
