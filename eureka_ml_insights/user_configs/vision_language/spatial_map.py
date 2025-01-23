@@ -130,8 +130,28 @@ class SPATIAL_MAP_PIPELINE(ExperimentConfig):
         # Configure the pipeline
         return PipelineConfig([self.data_processing_comp, self.inference_comp, self.evalreporting_comp], self.log_dir)
 
+class SPATIAL_MAP_COT_PIPELINE(SPATIAL_MAP_PIPELINE):
+    """This class extends SPATIAL_MAP_PIPELINE to use a COT prompt."""
+
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
+        config = super().configure_pipeline(model_config, resume_from)
+        self.data_processing_comp.prompt_template_path=os.path.join(
+                os.path.dirname(__file__),
+                "../../prompt_templates/vision_language_templates/cot.jinja",
+            )
+        return config
 
 class SPATIAL_MAP_TEXTONLY_PIPELINE(SPATIAL_MAP_PIPELINE):
+    """This class extends SPATIAL_MAP_PIPELINE to use text only data."""
+
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
+        config = super().configure_pipeline(model_config, resume_from)
+        self.data_processing_comp.data_reader_config.init_args["tasks"] = (
+            "spatial_map_text_only"
+        )
+        return config
+
+class SPATIAL_MAP_COT_TEXTONLY_PIPELINE(SPATIAL_MAP_COT_PIPELINE):
     """This class extends SPATIAL_MAP_PIPELINE to use text only data."""
 
     def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
