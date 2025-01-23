@@ -16,7 +16,8 @@ from eureka_ml_insights.data_utils import (
     SamplerTransform,
     MajorityVoteTransform,
     ColumnRename,
-    ReplaceStringsTransform
+    ReplaceStringsTransform,
+    RunPythonTransform
 )
 from eureka_ml_insights.metrics import CountAggregator, ExactMatch, BiLevelMaxAggregator, BiLevelCountAggregator
 
@@ -100,6 +101,9 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                                 column_name_src="model_output",
                                 column_name_dst="raw_model_output",
                             ),
+                            # these columns are currently copied so that they can be used in the bilevel aggregators
+                            # if they are not copied, then the bilevel aggregator used in sub category reports (e.g. subdomain)
+                            # will find the column name ambiguous
                             CopyColumn(
                                 column_name_src="Subdomain",
                                 column_name_dst="Subdomain_copy",
@@ -122,115 +126,213 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
             aggregator_configs=[
                 # the first three reports aggregate the metrics per experiment repeat
                 # each repeat can be considered as an individual pass@1 score
-                AggregatorConfig(CountAggregator, {"column_names": ["ExactMatch_result"], "group_by": "data_repeat_id", 
-                    "filename_base": "ExactMatch_SeparateRuns",
-                    "normalize": True}),
-                AggregatorConfig(CountAggregator, {"column_names": ["ExactMatch_result"], "group_by": ["data_repeat_id", "Subdomain"], 
-                    "filename_base": "ExactMatch_GroupBy_Subdomain_SeparateRuns", 
-                    "normalize": True}),
-                AggregatorConfig(CountAggregator, {"column_names": ["ExactMatch_result"], "group_by": ["data_repeat_id", "High-level domain"], 
-                    "filename_base": "ExactMatch_GroupBy_High-level_domain_SeparateRuns", "normalize": True}),
+                AggregatorConfig(CountAggregator, 
+                    {
+                        "column_names": ["ExactMatch_result"], 
+                        "group_by": "data_repeat_id", 
+                        "filename_base": "ExactMatch_SeparateRuns",
+                        "normalize": True
+                    }),
+                AggregatorConfig(CountAggregator, 
+                    {
+                        "column_names": ["ExactMatch_result"], 
+                        "group_by": ["data_repeat_id", "Subdomain"], 
+                        "filename_base": "ExactMatch_GroupBy_Subdomain_SeparateRuns", 
+                        "normalize": True
+                    }),
+                AggregatorConfig(CountAggregator, 
+                    {
+                        "column_names": ["ExactMatch_result"], 
+                        "group_by": ["data_repeat_id", "High-level domain"], 
+                        "filename_base": "ExactMatch_GroupBy_High-level_domain_SeparateRuns", "normalize": True
+                    }),
                 # the next three reports take the average and std for all repeats
                 # the resulting numbers are the average and std of N pass@1 scores, where N is number of repeats
-                AggregatorConfig(BiLevelCountAggregator, {"column_names": ["ExactMatch_result"], "first_groupby": "data_repeat_id", 
-                    "filename_base": "ExactMatch_AllRuns",
-                    "normalize": True}),
-                AggregatorConfig(BiLevelCountAggregator, {"column_names": ["ExactMatch_result"], "first_groupby": ["data_repeat_id",    "Subdomain_copy"], "second_groupby": "Subdomain",
-                    "filename_base": "ExactMatch_GroupBy_Subdomain_AllRuns", 
-                    "normalize": True}),
-                AggregatorConfig(BiLevelCountAggregator, {"column_names": ["ExactMatch_result"], "first_groupby": ["data_repeat_id", "High-level domain_copy"], "second_groupby": "High-level domain",
-                     "filename_base": "ExactMatch_GroupBy_High-level_domain_AllRuns", "normalize": True}),
+                AggregatorConfig(BiLevelCountAggregator, 
+                    {
+                        "column_names": ["ExactMatch_result"], 
+                        "first_groupby": "data_repeat_id", 
+                        "filename_base": "ExactMatch_AllRuns",
+                        "normalize": True
+                    }),
+                AggregatorConfig(BiLevelCountAggregator, 
+                    {
+                        "column_names": ["ExactMatch_result"], 
+                        "first_groupby": ["data_repeat_id",    "Subdomain_copy"], 
+                        "second_groupby": "Subdomain",
+                        "filename_base": "ExactMatch_GroupBy_Subdomain_AllRuns", 
+                        "normalize": True
+                    }),
+                AggregatorConfig(BiLevelCountAggregator, 
+                    {
+                        "column_names": ["ExactMatch_result"], 
+                        "first_groupby": ["data_repeat_id", "High-level domain_copy"], 
+                        "second_groupby": "High-level domain",
+                        "filename_base": "ExactMatch_GroupBy_High-level_domain_AllRuns", 
+                        "normalize": True
+                    }),
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
         )
 
-        # # Aggregate the results by best of n
-        # self.bon_evalreporting_comp = EvalReportingConfig(
-        #     component_type=EvalReporting,
-        #     data_reader_config=DataSetConfig(
-        #         DataReader,
-        #         {
-        #             "path": os.path.join(self.evalreporting_comp.output_dir, "metric_results.jsonl"),
-        #             "format": ".jsonl",
-        #             "transform": SequenceTransform(
-        #                 [
-        #                     CopyColumn(
-        #                         column_name_src="ExactMatch_result",
-        #                         column_name_dst="ExactMatch_result_numeric",
-        #                     ),
-        #                     ReplaceStringsTransform(columns=["ExactMatch_result_numeric"],mapping={'incorrect': '0', 'correct': '1', 'none': ''},case=False)
-        #                 ])
-        #         },
-        #     ),
-        #     aggregator_configs=[
-        #         AggregatorConfig(
-        #             BiLevelMaxAggregator,
-        #             {
-        #                 "column_names": [
-        #                     "ExactMatch_result_numeric"
-        #                 ],
-        #                 "first_groupby": "data_point_id",
-        #                 "filename_base": "BestOfN",
-        #                 "normalize": True,
-        #             },
-        #         ),
-        #         AggregatorConfig(
-        #             BiLevelMaxAggregator,
-        #             {
-        #                 "column_names": [
-        #                     "ExactMatch_result_numeric"
-        #                 ],
-        #                 "first_groupby": "data_point_id",
-        #                 "second_groupby": "Subdomain",
-        #                 "filename_base": "BestOfN_GroupBy_Subdomain",
-        #                 "normalize": True,
-        #             },
-        #         ),
-        #         AggregatorConfig(
-        #             BiLevelMaxAggregator,
-        #             {
-        #                 "column_names": [
-        #                     "ExactMatch_result_numeric"
-        #                 ],
-        #                 "first_groupby": "data_point_id",
-        #                 "second_groupby": "Subdomain",
-        #                 "filename_base": "BestOfN_GroupBy_Year_High-level_domain",
-        #                 "normalize": True,
-        #             },
-        #         ),
-        #     ],
-        #     output_dir=os.path.join(self.log_dir, "bestofn_eval_report"),
-        # )
+        self.data_post_processing_comp = DataProcessingConfig(
+            component_type=DataProcessing,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.evalreporting_comp.output_dir, "metric_results.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                        CopyColumn(
+                                column_name_src="ExactMatch_result",
+                                column_name_dst="ExactMatch_result_numeric",
+                            ),
+                        ReplaceStringsTransform(
+                                columns=["ExactMatch_result_numeric"],
+                                mapping={'incorrect': '0', 'correct': '1', 'none': ''},
+                                case=False)
+                        ]
+                    ),
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "data_post_processing_output"),
+        )
 
-        # self.data_post_processing_mv = DataProcessingConfig(
-        #     component_type=DataProcessing,
-        #     data_reader_config=DataSetConfig(
-        #         DataReader,
-        #         {
-        #             "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
-        #             "format": ".jsonl",
-        #             "transform": SequenceTransform(
-        #                 [
-        #                     MajorityVoteTransform(),
-        #                     ColumnRename(
-        #                         name_mapping={
-        #                             "model_output": "model_output_onerun",
-        #                             "majority_vote": "model_output",
-        #                         }
-        #                     ),
-        #                 ]
-        #             ),
-        #         },
-        #     ),
-        #     output_dir=os.path.join(self.log_dir, "data_processing_mv"),
-        # )
+        # Aggregate the results by best of n
+        # In this case, this is equivalent to taking the max on the numerical column of the metric.
+        self.bon_evalreporting_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.data_post_processing_comp.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            CopyColumn(
+                                column_name_src="data_point_id",
+                                column_name_dst="data_point_id_copy",
+                            ),
+                        ]
+                    )
+                },
+            ),
+            aggregator_configs=[
+                AggregatorConfig(
+                    BiLevelMaxAggregator,
+                    {
+                        "column_names": [
+                            "ExactMatch_result_numeric"
+                        ],
+                        "first_groupby": "data_point_id",
+                        "filename_base": "BestOfN",
+                        "normalize": True,
+                    },
+                ),
+                AggregatorConfig(
+                    BiLevelMaxAggregator,
+                    {
+                        "column_names": [
+                            "ExactMatch_result_numeric"
+                        ],
+                        "first_groupby": "data_point_id_copy", 
+                        "second_groupby": "Subdomain",
+                        "filename_base": "BestOfN_GroupBy_Subdomain",
+                        "normalize": True,
+                    },
+                ),
+                AggregatorConfig(
+                    BiLevelMaxAggregator,
+                    {
+                        "column_names": [
+                            "ExactMatch_result_numeric"
+                        ],
+                        "first_groupby": "data_point_id_copy", 
+                        "second_groupby": "High-level domain",
+                        "filename_base": "BestOfN_GroupBy_High-level_domain",
+                        "normalize": True,
+                    },
+                ),
+            ],
+            output_dir=os.path.join(self.log_dir, "bestofn_eval_report"),
+        )
+
+        # aggregate the output by majority vote
+        self.data_post_processing_mv = DataProcessingConfig(
+            component_type=DataProcessing,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.evalreporting_comp.output_dir, "metric_results.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            MajorityVoteTransform(model_output_col="model_output"),
+                            ColumnRename(
+                                name_mapping={
+                                    "model_output": "model_output_onerun",
+                                    "majority_vote": "model_output",
+                                }
+                            ),
+                            RunPythonTransform("df = df[df['data_repeat_id'] == 'repeat_0']")
+                        ]
+                    ),
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "data_post_processing_mv"),
+        )
+
+        # Configure the evaluation and reporting component for majority vote.
+        self.mv_evalreporting_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.data_post_processing_mv.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                        ]
+                    ),
+                },
+            ),
+            metric_config=MetricConfig(ExactMatch),
+            aggregator_configs=[
+                # these three reports aggregate the metrics for the majority vote results
+                AggregatorConfig(CountAggregator, 
+                    {
+                        "column_names": ["ExactMatch_result"], 
+                        "filename_base": "MajorityVote",
+                        "normalize": True
+                    }),
+                AggregatorConfig(CountAggregator, 
+                    {
+                        "column_names": ["ExactMatch_result"], 
+                        "group_by": ["Subdomain"], 
+                        "filename_base": "MajorityVote_GroupBy_Subdomain", 
+                        "normalize": True
+                    }),
+                AggregatorConfig(CountAggregator, 
+                    {
+                        "column_names": ["ExactMatch_result"], 
+                        "group_by": ["High-level domain"], 
+                        "filename_base": "MajorityVote_GroupBy_High-level_domain", 
+                        "normalize": True
+                    }),
+            ],
+            output_dir=os.path.join(self.log_dir, "majorityvote_eval_report"),
+        )
         # # Configure the pipeline
         return PipelineConfig(
             [
                 self.data_processing_comp,
                 self.inference_comp,
                 self.evalreporting_comp,
-                #self.bon_evalreporting_comp
+                self.data_post_processing_comp,
+                self.bon_evalreporting_comp,
+                self.data_post_processing_mv,
+                self.mv_evalreporting_comp
             ],
             self.log_dir,
         )
