@@ -51,6 +51,9 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                     ),
                 },
             ),
+            prompt_template_path=os.path.join(
+                os.path.dirname(__file__), "../prompt_templates/nphard_tsp_templates/Template_tsp_o1.jinja"
+            ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
         )
 
