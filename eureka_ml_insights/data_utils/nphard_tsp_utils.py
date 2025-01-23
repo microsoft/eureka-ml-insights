@@ -4,6 +4,7 @@ import ast
 import pandas as pd
 from eureka_ml_insights.data_utils import DFTransformBase
 import xml.etree.ElementTree as ET
+import json
 
 @dataclass
 class NPHARDTSPExtractAnswer(DFTransformBase):
@@ -22,9 +23,15 @@ def extract_final_answer(model_output):
     return match.group(1).strip() if match else None
 
 def extract_path(final_answer):
-    """Extracts the path string from the final answer."""
-    match = re.search(r"'Path':\s*'([^']+)'", final_answer)
-    return match.group(1) if match else None
+    """Extracts the path string from the final answer, handling both JSON formats."""
+    try:
+        # Convert single quotes to double quotes for valid JSON parsing
+        final_answer_json = json.loads(final_answer.replace("'", '"'))
+        return final_answer_json.get("Path", None)
+    except json.JSONDecodeError:
+        # Fallback regex extraction if JSON parsing fails
+        match = re.search(r'"Path":\s*"([^"]+)"', final_answer)
+        return match.group(1) if match else None
 
 def parse_path_from_model_output(model_output_string):
     """Parses the model output to extract a tsp path."""

@@ -108,26 +108,16 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             output_dir=os.path.join(self.log_dir, "eval_report"),
         )
 
-##################
-        # # Aggregate the results by a majority vote 
-        # # First, let us perform majority_vote
-        # Second, compute eaxct match
+        # Aggregate the results by a majority vote.
         self.postevalprocess_comp = EvalReportingConfig(
             component_type=EvalReporting,
             data_reader_config=DataSetConfig(
                 DataReader,
-                {                    
-                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+                {
+                    "path": os.path.join(self.data_post_processing.output_dir, "transformed_data.jsonl"),
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            ColumnRename(
-                                name_mapping={
-                                    "model_output": "raw_output",
-                                }
-                            ),
-                            AddColumn("model_output"),
-                            NPHARDTSPExtractAnswer("raw_output", "model_output"),
                             MajorityVoteTransform(id_col="data_point_id"),
                             ColumnRename(
                                 name_mapping={
@@ -160,7 +150,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
 
 
 class NPHARD_TSP_PIPELINE_multipleRuns(NPHARD_TSP_PIPELINE):
-    """This class specifies the config for running TSP benchmark n repeated times""" ## change this line
+    """This class specifies the config for running TSP benchmark n repeated times"""
 
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
