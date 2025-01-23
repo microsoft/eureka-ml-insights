@@ -38,9 +38,9 @@ from eureka_ml_insights.user_configs import (
     Drop_Experiment_Pipeline,
     GPQA_Experiment_Pipeline,
     IFEval_PIPELINE,
+    NPHARD_TSP_PIPELINE_multipleRuns,
     ToxiGen_Discriminative_PIPELINE,
     ToxiGen_Generative_PIPELINE,
-    NPHARD_TSP_PIPELINE_multipleRuns,    
 )
 from tests.test_utils import (
     DetectionTestModel,
@@ -54,7 +54,7 @@ from tests.test_utils import (
     TestHFDataReader,
     TestKitabMetric,
     TestMMDataLoader,
-    ToxiGenTestModel,    
+    ToxiGenTestModel,
     TSPTestModel,
 )
 
@@ -337,6 +337,7 @@ class TEST_NPHARD_TSP_PIPELINE(NPHARD_TSP_PIPELINE_multipleRuns):
         inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
 
+
 class PipelineTest:
     def setUp(self) -> None:
         self.conf = self.get_config()
@@ -355,7 +356,7 @@ class PipelineTest:
             self.assertTrue(any("processed_prompts.jsonl" in str(file) for file in self.files))
         self.assertTrue(any("inference_result.jsonl" in str(file) for file in self.files))
         self.verify_n_aggregators(self.eval_config)
-        
+
     def verify_n_aggregators(self, eval_config) -> None:
         eval_files = list(Path(self.eval_config.output_dir).rglob("*"))
         self.eval_config = eval_config
@@ -452,6 +453,7 @@ class DNA_PipelineTest(PipelineTest, unittest.TestCase):
                 )
             )
 
+
 class TOXIGEN_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_TOXIGEN_PIPELINE().pipeline_config
@@ -491,6 +493,6 @@ class NPHARD_TSP_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_NPHARD_TSP_PIPELINE().pipeline_config
 
-    
+
 if __name__ == "__main__":
     unittest.main()

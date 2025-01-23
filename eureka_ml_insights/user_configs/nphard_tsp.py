@@ -1,7 +1,24 @@
 import os
 from typing import Any
 
-from eureka_ml_insights.core import EvalReporting, Inference, PromptProcessing, DataProcessing
+from eureka_ml_insights.configs import (
+    AggregatorConfig,
+    DataProcessingConfig,
+    DataSetConfig,
+    EvalReportingConfig,
+    ExperimentConfig,
+    InferenceConfig,
+    MetricConfig,
+    ModelConfig,
+    PipelineConfig,
+    PromptProcessingConfig,
+)
+from eureka_ml_insights.core import (
+    DataProcessing,
+    EvalReporting,
+    Inference,
+    PromptProcessing,
+)
 from eureka_ml_insights.data_utils import (
     AddColumn,
     ColumnRename,
@@ -9,28 +26,17 @@ from eureka_ml_insights.data_utils import (
     HFDataReader,
     MajorityVoteTransform,
     MMDataLoader,
-    SequenceTransform,
     MultiplyTransform,
+    SequenceTransform,
 )
-from eureka_ml_insights.data_utils.aime_utils import AIMEExtractAnswer
-from eureka_ml_insights.data_utils.nphard_tsp_utils import NPHARDTSPExtractAnswer
+from eureka_ml_insights.data_utils.nphard_tsp_utils import (
+    NPHARDTSPExtractAnswer,
+)
 from eureka_ml_insights.metrics import CountAggregator, NPHardTSPMetric
-
-from eureka_ml_insights.configs import(
-    AggregatorConfig,
-    DataProcessingConfig,
-    DataSetConfig,
-    EvalReportingConfig,
-    InferenceConfig,
-    MetricConfig,
-    ModelConfig,
-    PipelineConfig,
-    PromptProcessingConfig,
-)
-from eureka_ml_insights.configs import ExperimentConfig
 
 """This file contains user defined configuration classes for the Traveling Salesman Problem (TSP).
 """
+
 
 class NPHARD_TSP_PIPELINE(ExperimentConfig):
     def configure_pipeline(
@@ -65,8 +71,8 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                 MMDataLoader,
                 {"path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl")},
             ),
-            output_dir=os.path.join(self.log_dir, "inference_result"),    
-            resume_from=resume_from,            
+            output_dir=os.path.join(self.log_dir, "inference_result"),
+            resume_from=resume_from,
             max_concurrent=1,
         )
 
@@ -76,7 +82,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),                         
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
@@ -145,7 +151,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                 self.data_processing_comp,
                 self.inference_comp,
                 self.data_post_processing,
-                self.evalreporting_comp,                
+                self.evalreporting_comp,
                 self.postevalprocess_comp,
             ],
             self.log_dir,
@@ -164,4 +170,3 @@ class NPHARD_TSP_PIPELINE_MULTIPLE_RUNS(NPHARD_TSP_PIPELINE):
             MultiplyTransform(n_repeats=1)
         )
         return pipeline
-

@@ -175,7 +175,10 @@ class TSPTestModel:
         self.name = model_name
 
     def generate(self, text_prompt, *args, **kwargs):
-        return {"model_output": "<final_answer>{'Path': '0->1->3->2->0', 'TotalDistance': '85'}</final_answer>", "is_valid": random.choice([True])}
+        return {
+            "model_output": "<final_answer>{'Path': '0->1->3->2->0', 'TotalDistance': '85'}</final_answer>",
+            "is_valid": random.choice([True]),
+        }
 
 
 class DetectionTestModel:

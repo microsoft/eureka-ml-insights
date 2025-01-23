@@ -53,6 +53,7 @@ from .nondeterminism import (
     Kitab_Nondeterminism,
     MMMU_Nondeterminism,
 )
+from .nphard_tsp import NPHARD_TSP_PIPELINE, NPHARD_TSP_PIPELINE_MULTIPLE_RUNS
 from .toxigen import (
     ToxiGen_Discriminative_PIPELINE,
     ToxiGen_Generative_PIPELINE,
@@ -71,11 +72,6 @@ from .vision_language.spatial_map import (
     SPATIAL_MAP_PIPELINE,
     SPATIAL_MAP_REPORTING_PIPELINE,
     SPATIAL_MAP_TEXTONLY_PIPELINE,
-)
-
-from .nphard_tsp import (
-    NPHARD_TSP_PIPELINE,
-    NPHARD_TSP_PIPELINE_MULTIPLE_RUNS,
 )
 
 __all__ = [

@@ -1,7 +1,7 @@
-import ast
-from .metrics_base import ExactMatch, Metric
-import xml.etree.ElementTree as ET
 import logging
+
+from .metrics_base import Metric
+
 
 class NPHardTSPMetric(Metric):
     """
@@ -53,13 +53,13 @@ class NPHardTSPMetric(Metric):
             except (IndexError, ValueError):
                 logging.info("Invalid: Path contains cities not in the provided distance matrix.")
                 return False, None
-        
+
         return True, path_length
 
     def is_tour_present(self, optimal_tour_curr, tour_string):
 
-        optimal_tour_list = eval(optimal_tour_curr.strip('.'))
-        optimal_tour_strings = [','.join(map(str, tour + (tour[0],))) for tour in optimal_tour_list]
+        optimal_tour_list = eval(optimal_tour_curr.strip("."))
+        optimal_tour_strings = [",".join(map(str, tour + (tour[0],))) for tour in optimal_tour_list]
 
         # Check if tour_string is in the list of optimal tour strings
         return tour_string in optimal_tour_strings
@@ -68,28 +68,27 @@ class NPHardTSPMetric(Metric):
         """
         Evaluates whether the model's output is a correct TSP tour.
         """
-        is_valid_curr=x["is_valid"]
+        is_valid_curr = x["is_valid"]
 
         if not is_valid_curr:
             return "none"
-        
-        optimal_tour_curr=x["optimal_tour"]
-        weight_matrix_curr=x["weight_matrix"]
-        ground_truth_curr=x["ground_truth"]
-        tour_string=x["model_output"]
+
+        optimal_tour_curr = x["optimal_tour"]
+        weight_matrix_curr = x["weight_matrix"]
+        ground_truth_curr = x["ground_truth"]
+        tour_string = x["model_output"]
 
         # Convert tour string into a list of integers representing the city sequence
-        tour = list(map(int, tour_string.split(',')))
+        tour = list(map(int, tour_string.split(",")))
         cities = [i for i in range(len(weight_matrix_curr))]
 
         # Validate the TSP tour and compute its length
         is_tsp_path_valid, total_tsp_path_length = self.is_valid_tsp_path(tour, cities, weight_matrix_curr)
-        
 
         # The prediction is incorrect if the tour is invalid or the length is incorrect
         if not is_tsp_path_valid or total_tsp_path_length != ground_truth_curr:
             return "incorrect"
-        
+
         # Check if the predicted tour is one of the optimal solutions
         is_tsp_tour_present = self.is_tour_present(optimal_tour_curr, tour_string)
 
