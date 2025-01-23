@@ -14,7 +14,7 @@ class NPHardTSPMetric(Metric):
 
     def is_valid_tsp_path(self, path, cities, distance_matrix=None):
         """
-        Validates a TSP path and evaluates its length.
+        Validates a TSP path and if valid, evaluates its length.
 
         Parameters:
             path (list): The TSP path, a list of city indices.
