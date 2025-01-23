@@ -149,7 +149,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
         )
 
 
-class NPHARD_TSP_PIPELINE_multipleRuns(NPHARD_TSP_PIPELINE):
+class NPHARD_TSP_PIPELINE_MULTIPLE_RUNS(NPHARD_TSP_PIPELINE):
     """This class specifies the config for running TSP benchmark n repeated times"""
 
     def configure_pipeline(

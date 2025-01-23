@@ -75,7 +75,7 @@ from .vision_language.spatial_map import (
 
 from .nphard_tsp import (
     NPHARD_TSP_PIPELINE,
-    NPHARD_TSP_PIPELINE_multipleRuns,
+    NPHARD_TSP_PIPELINE_MULTIPLE_RUNS,
 )
 
 __all__ = [
@@ -132,5 +132,5 @@ __all__ = [
     AIME_PIPELINE512Run,
     AIME_PIPELINE1024Run,
     NPHARD_TSP_PIPELINE,
-    NPHARD_TSP_PIPELINE_multipleRuns,
+    NPHARD_TSP_PIPELINE_MULTIPLE_RUNS,
 ]
