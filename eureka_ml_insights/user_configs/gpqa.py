@@ -18,7 +18,7 @@ from eureka_ml_insights.data_utils import (
     ColumnRename,
     ReplaceStringsTransform
 )
-from eureka_ml_insights.metrics import CountAggregator, ExactMatch, BiLevelMaxAggregator
+from eureka_ml_insights.metrics import CountAggregator, ExactMatch, BiLevelMaxAggregator, BiLevelCountAggregator
 
 from eureka_ml_insights.configs import(
     AggregatorConfig,
@@ -100,6 +100,14 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                                 column_name_src="model_output",
                                 column_name_dst="raw_model_output",
                             ),
+                            CopyColumn(
+                                column_name_src="Subdomain",
+                                column_name_dst="Subdomain_copy",
+                            ),
+                            CopyColumn(
+                                column_name_src="High-level domain",
+                                column_name_dst="High-level domain_copy",
+                            ),
                             RegexTransform(
                                 columns="model_output",
                                 prompt_pattern=r"Final Answer: (\w)(?=\s|\W|$)",
@@ -112,9 +120,26 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
             ),
             metric_config=MetricConfig(ExactMatch),
             aggregator_configs=[
-                AggregatorConfig(CountAggregator, {"column_names": ["ExactMatch_result"], "normalize": True}),
-                AggregatorConfig(CountAggregator, {"column_names": ["ExactMatch_result"], "group_by": "Subdomain", "filename_base": "ExactMatch_GroupBy_Subdomain", "normalize": True}),
-                AggregatorConfig(CountAggregator, {"column_names": ["ExactMatch_result"], "group_by": "High-level domain", "filename_base": "ExactMatch_GroupBy_Year_High-level_domain", "normalize": True}),
+                # the first three reports aggregate the metrics per experiment repeat
+                # each repeat can be considered as an individual pass@1 score
+                AggregatorConfig(CountAggregator, {"column_names": ["ExactMatch_result"], "group_by": "data_repeat_id", 
+                    "filename_base": "ExactMatch_SeparateRuns",
+                    "normalize": True}),
+                AggregatorConfig(CountAggregator, {"column_names": ["ExactMatch_result"], "group_by": ["data_repeat_id", "Subdomain"], 
+                    "filename_base": "ExactMatch_GroupBy_Subdomain_SeparateRuns", 
+                    "normalize": True}),
+                AggregatorConfig(CountAggregator, {"column_names": ["ExactMatch_result"], "group_by": ["data_repeat_id", "High-level domain"], 
+                    "filename_base": "ExactMatch_GroupBy_High-level_domain_SeparateRuns", "normalize": True}),
+                # the next three reports take the average and std for all repeats
+                # the resulting numbers are the average and std of N pass@1 scores, where N is number of repeats
+                AggregatorConfig(BiLevelCountAggregator, {"column_names": ["ExactMatch_result"], "first_groupby": "data_repeat_id", 
+                    "filename_base": "ExactMatch_AllRuns",
+                    "normalize": True}),
+                AggregatorConfig(BiLevelCountAggregator, {"column_names": ["ExactMatch_result"], "first_groupby": ["data_repeat_id",    "Subdomain_copy"], "second_groupby": "Subdomain",
+                    "filename_base": "ExactMatch_GroupBy_Subdomain_AllRuns", 
+                    "normalize": True}),
+                AggregatorConfig(BiLevelCountAggregator, {"column_names": ["ExactMatch_result"], "first_groupby": ["data_repeat_id", "High-level domain_copy"], "second_groupby": "High-level domain",
+                     "filename_base": "ExactMatch_GroupBy_High-level_domain_AllRuns", "normalize": True}),
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
         )
