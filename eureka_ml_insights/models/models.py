@@ -662,7 +662,7 @@ class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
         # Note that, in some cases, the model may still provide a finish reason as shown here https://ai.google.dev/api/generate-content?authuser=2#FinishReason
         elif e.__class__.__name__ == "IndexError" and len(self.gemini_response.parts) == 0:
             logging.warning(f"Attempt failed due to implicitly blocked input prompt and empty model output: {e}")
-            # For cases where there are some response candidates do_retorn is still True because in most cases these candidates are incomplete.
+            # For cases where there are some response candidates do_return is still True because in most cases these candidates are incomplete.
             # Trying again may not necessarily help, unless in high temperature regimes.
             if len(self.gemini_response.candidates) > 0:
                 logging.warning(f"The response is not empty and has : {len(self.gemini_response.candidates)} candidates")
