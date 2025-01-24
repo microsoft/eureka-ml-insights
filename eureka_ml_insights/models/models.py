@@ -123,8 +123,8 @@ class EndpointModel(Model):
                 logging.warning(f"Attempt {attempts+1}/{self.num_retries} failed: {e}")
                 do_return = self.handle_request_error(e)
                 if do_return:
-                    self.model_output = self.response
-                    self.is_valid = self.is_valid
+                    self.model_output = None
+                    self.is_valid = False
                     break
                 attempts += 1
         else:
@@ -491,8 +491,10 @@ class DirectOpenAIModel(OpenAICommonRequestResponseMixIn, DirectOpenAIClientMixI
 class OpenAIO1RequestResponseMixIn:
     
     def create_request(self, prompt, query_images=None, system_message=None, previous_messages=None):
-        messages = []   
-        if system_message:
+        messages = []
+        if system_message and "o1-preview" in self.model_name:
+            logging.warning("System and developer messages are not supported by OpenAI O1 preview model.")
+        elif system_message:
             # Developer messages are the new system messages: 
             # Starting with o1-2024-12-17, o1 models support developer messages rather than system messages, 
             # to align with the chain of command behavior described in the model spec.
@@ -501,7 +503,7 @@ class OpenAIO1RequestResponseMixIn:
             messages.extend(previous_messages)
         
         user_content = prompt
-        if query_images and self.model_name == "o1-preview":
+        if query_images and "o1-preview" in self.model_name:
             logging.warning("Images are not supported by OpenAI O1 preview model.")
         elif query_images:
             encoded_images = self.base64encode(query_images)
@@ -648,7 +650,7 @@ class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
             e (_type_): Exception occurred during getting a response.
 
         returns:
-            _type_: response, is_valid, do_return (False if the call should not be attempted again).
+            _type_: do_return (True if the call should not be attempted again).
         """
         # Handling cases where the model explicitly blocks prompts and provides a reason for it.
         # In these cases, there is no need to make a new attempt as the model will continue to explicitly block the request, do_return = True.
@@ -657,10 +659,17 @@ class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
                 f"Attempt failed due to explicitly blocked input prompt: {e} Block Reason {self.gemini_response.prompt_feedback.block_reason}"
             )
             return True
-        # Handling cases where the model implicitly blocks prompts and does not provide a reason for it but rather an empty content.
+        # Handling cases where the model implicitly blocks prompts and does not provide an explicit block reason for it but rather an empty content.
         # In these cases, there is no need to make a new attempt as the model will continue to implicitly block the request, do_return = True.
+        # Note that, in some cases, the model may still provide a finish reason as shown here https://ai.google.dev/api/generate-content?authuser=2#FinishReason
         elif e.__class__.__name__ == "IndexError" and len(self.gemini_response.parts) == 0:
             logging.warning(f"Attempt failed due to implicitly blocked input prompt and empty model output: {e}")
+            # For cases where there are some response candidates do_return is still True because in most cases these candidates are incomplete.
+            # Trying again may not necessarily help, unless in high temperature regimes.
+            if len(self.gemini_response.candidates) > 0:
+                logging.warning(f"The response is not empty and has : {len(self.gemini_response.candidates)} candidates")
+                logging.warning(f"Finish Reason for the first answer candidate is: {self.gemini_response.candidates[0].finish_reason}")
+                logging.warning(f"Safety Ratings for the first answer candidate are: {self.gemini_response.candidates[0].safety_ratings}")
             return True
         # Any other case will be re attempted again, do_return = False.
         return False
