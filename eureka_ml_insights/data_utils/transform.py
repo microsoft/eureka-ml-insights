@@ -211,7 +211,7 @@ class ShuffleColumnsTransform(MultiColumnTransform):
     """
 
     columns: List[str]
-    rng: np.random.Generator
+    rng: np.random.Generator = np.random.default_rng(0)
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """For each row in df, shuffle values across these columns."""
@@ -440,6 +440,8 @@ class ExtractUsageTransform:
         # otherwise, use the default "n_output_tokens" which is computed with a universal tokenizer as shown in TokenCounterTransform()
         if usage_completion_read_col:
             df[self.usage_completion_output_col] = df["usage"].apply(lambda x: x[usage_completion_read_col])
-        else:
+        elif "n_output_tokens" in df.columns:
             df[self.usage_completion_output_col] = df["n_output_tokens"]
+        else:
+            df[self.usage_completion_output_col] = np.nan
         return df 

@@ -51,8 +51,8 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
-        # Configure the data processing component.
         rng = np.random.default_rng(42)
+        # Configure the data processing component.
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
             data_reader_config=DataSetConfig(
@@ -95,10 +95,6 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
             resume_from=resume_from,
             max_concurrent=1
         )
-        # run a transformation to get the total token count used by the model for completion only (except prompt input tokens)
-        # this is needed because different models use different fields to indicate this
-
-
         # Configure the evaluation and reporting component for pass@1.
         self.evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
@@ -109,6 +105,8 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
+                            # run a transformation to get the total token count used by the model for completion only (except prompt input tokens)
+                            # this is needed because different models use different fields to indicate this
                             ExtractUsageTransform(model_config),
                             CopyColumn(
                                 column_name_src="model_output",
