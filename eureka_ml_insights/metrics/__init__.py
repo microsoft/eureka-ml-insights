@@ -22,6 +22,7 @@ from .reports import (
     Reporter,
     SumAggregator,
     TwoColumnSumAverageAggregator,
+    BiLevelSumAggregator
 )
 from .spatial_and_layout_metrics import (
     CocoObjectDetectionMetric,

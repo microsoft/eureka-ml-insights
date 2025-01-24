@@ -20,7 +20,14 @@ from eureka_ml_insights.data_utils import (
     RunPythonTransform,
     ExtractUsageTransform
 )
-from eureka_ml_insights.metrics import CountAggregator, ExactMatch, BiLevelMaxAggregator, BiLevelCountAggregator
+from eureka_ml_insights.metrics import (
+    CountAggregator, 
+    ExactMatch, 
+    BiLevelMaxAggregator, 
+    BiLevelCountAggregator,
+    BiLevelAverageAggregator,
+    BiLevelSumAggregator
+)
 
 from eureka_ml_insights.configs import(
     AggregatorConfig,
@@ -177,6 +184,28 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                         "filename_base": "ExactMatch_GroupBy_High-level_domain_AllRuns", 
                         "normalize": True
                     }),
+                # three similar reports for average completion usage
+                AggregatorConfig(BiLevelAverageAggregator, 
+                    {
+                        "column_names": ["usage_completion"], 
+                        "first_groupby": "data_repeat_id", 
+                        "filename_base": "UsageCompletion_AllRuns",
+                    }),
+                # AggregatorConfig(BiLevelAverageAggregator, 
+                #     {
+                #         "column_names": ["usage_completion"], 
+                #         "first_groupby": "data_repeat_id", 
+                #         "second_groupby": "Subdomain",
+                #         "filename_base": "UsageCompletion_GroupBy_Subdomain_AllRuns", 
+                #     }),
+                # AggregatorConfig(BiLevelAverageAggregator, 
+                #     {
+                #         "column_names": ["usage_completion"], 
+                #         "first_groupby": ["data_repeat_id", "High-level domain_copy"], 
+                #         "second_groupby": "High-level domain",
+                #         "filename_base": "UsageCompletion_GroupBy_High-level_domain_AllRuns", 
+                #         "normalize": True
+                #     }),
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
         )
@@ -232,7 +261,18 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                             "ExactMatch_result_numeric"
                         ],
                         "first_groupby": "data_point_id",
-                        "filename_base": "BestOfN",
+                        "filename_base": "ExactMatch_BestOfN",
+                        "normalize": True,
+                    },
+                ),
+                AggregatorConfig(
+                    BiLevelSumAggregator,
+                    {
+                        "column_names": [
+                            "usage_completion"
+                        ],
+                        "first_groupby": "data_point_id",
+                        "filename_base": "UsageCompletion_BestOfN",
                         "normalize": True,
                     },
                 ),
@@ -244,7 +284,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                         ],
                         "first_groupby": "data_point_id_copy", 
                         "second_groupby": "Subdomain",
-                        "filename_base": "BestOfN_GroupBy_Subdomain",
+                        "filename_base": "ExactMatch_BestOfN_GroupBy_Subdomain",
                         "normalize": True,
                     },
                 ),
@@ -256,7 +296,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                         ],
                         "first_groupby": "data_point_id_copy", 
                         "second_groupby": "High-level domain",
-                        "filename_base": "BestOfN_GroupBy_High-level_domain",
+                        "filename_base": "ExactMatch_BestOfN_GroupBy_High-level_domain",
                         "normalize": True,
                     },
                 ),
