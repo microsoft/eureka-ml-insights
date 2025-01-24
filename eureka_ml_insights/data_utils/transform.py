@@ -384,7 +384,7 @@ class MajorityVoteTransform:
         """
         # Step 1: Group by 'ID' and calculate the majority vote within each group
         df[self.majority_vote_col] = df.groupby(self.id_col)[self.model_output_col].transform(
-            lambda x: x.dropna().mode().sample(n=1, random_state=random_state).iloc[0] if not x.dropna().mode().empty else pd.NA
+            lambda x: x.dropna().mode().sample(n=1, random_state=random_state).iloc[0] if not x.dropna().mode().empty else pd.NA 
         )
 
         return df
