@@ -198,7 +198,7 @@ class BiLevelAverageAggregator(AverageAggregator):
             {col: "first" for col in data.columns if col not in self.column_names and col != self.first_groupby}
         )
 
-        first_result = gb.aggregate(agg_map).reset_index()
+        first_result = gb.aggregate(agg_map)#.reset_index()
         if self.second_groupby:
             # take the average and std of the first level aggregation for each group in the second groupby
             gb = first_result.groupby(self.second_groupby)
@@ -276,7 +276,7 @@ class BiLevelSumAggregator(Aggregator):
             {col: "first" for col in data.columns if col not in self.column_names and col != self.first_groupby}
         )
 
-        first_result = gb.aggregate(agg_map).reset_index()
+        first_result = gb.aggregate(agg_map)#.reset_index()
         if self.second_groupby:
             # take the average and std of the first level aggregation for each group in the second groupby
             gb = first_result.groupby(self.second_groupby)
@@ -292,7 +292,6 @@ class BiLevelSumAggregator(Aggregator):
                 col_mean = first_result[col].mean()
                 col_std = first_result[col].std()
                 self.aggregated_result.append({col: {"mean": col_mean, "std": col_std}})
-
 
 class BiLevelCountAggregator(Aggregator):
     """

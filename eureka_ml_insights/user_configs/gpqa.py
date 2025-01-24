@@ -188,24 +188,24 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                 AggregatorConfig(BiLevelAverageAggregator, 
                     {
                         "column_names": ["usage_completion"], 
-                        "first_groupby": "data_repeat_id", 
+                        "first_groupby": "data_point_id", 
                         "filename_base": "UsageCompletion_AllRuns",
                     }),
-                # AggregatorConfig(BiLevelAverageAggregator, 
-                #     {
-                #         "column_names": ["usage_completion"], 
-                #         "first_groupby": "data_repeat_id", 
-                #         "second_groupby": "Subdomain",
-                #         "filename_base": "UsageCompletion_GroupBy_Subdomain_AllRuns", 
-                #     }),
-                # AggregatorConfig(BiLevelAverageAggregator, 
-                #     {
-                #         "column_names": ["usage_completion"], 
-                #         "first_groupby": ["data_repeat_id", "High-level domain_copy"], 
-                #         "second_groupby": "High-level domain",
-                #         "filename_base": "UsageCompletion_GroupBy_High-level_domain_AllRuns", 
-                #         "normalize": True
-                #     }),
+                AggregatorConfig(BiLevelAverageAggregator, 
+                    {
+                        "column_names": ["usage_completion"], 
+                        "first_groupby": ["data_point_id", "Subdomain_copy"], 
+                        "second_groupby": "Subdomain",
+                        "filename_base": "UsageCompletion_GroupBy_Subdomain_AllRuns", 
+                    }),
+                AggregatorConfig(BiLevelAverageAggregator, 
+                    {
+                        "column_names": ["usage_completion"], 
+                        "first_groupby": ["data_point_id", "High-level domain_copy"], 
+                        "second_groupby": "High-level domain",
+                        "filename_base": "UsageCompletion_GroupBy_High-level_domain_AllRuns", 
+                        "normalize": True
+                    }),
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
         )
@@ -254,6 +254,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                 },
             ),
             aggregator_configs=[
+                # the first three reports aggregate results by data_point_id and take the best out of N
                 AggregatorConfig(
                     BiLevelMaxAggregator,
                     {
@@ -262,17 +263,6 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                         ],
                         "first_groupby": "data_point_id",
                         "filename_base": "ExactMatch_BestOfN",
-                        "normalize": True,
-                    },
-                ),
-                AggregatorConfig(
-                    BiLevelSumAggregator,
-                    {
-                        "column_names": [
-                            "usage_completion"
-                        ],
-                        "first_groupby": "data_point_id",
-                        "filename_base": "UsageCompletion_BestOfN",
                         "normalize": True,
                     },
                 ),
@@ -297,6 +287,18 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                         "first_groupby": "data_point_id_copy", 
                         "second_groupby": "High-level domain",
                         "filename_base": "ExactMatch_BestOfN_GroupBy_High-level_domain",
+                        "normalize": True,
+                    },
+                ),
+                # the first three reports aggregate results by data_point_id and take the sum of usage for completion tokens
+                AggregatorConfig(
+                    BiLevelSumAggregator,
+                    {
+                        "column_names": [
+                            "usage_completion"
+                        ],
+                        "first_groupby": "data_point_id",
+                        "filename_base": "UsageCompletion_BestOfN",
                         "normalize": True,
                     },
                 ),
