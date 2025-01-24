@@ -337,10 +337,6 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                 {
                     "path": os.path.join(self.data_post_processing_mv.output_dir, "transformed_data.jsonl"),
                     "format": ".jsonl",
-                    "transform": SequenceTransform(
-                        [
-                        ]
-                    ),
                 },
             ),
             metric_config=MetricConfig(ExactMatch),
