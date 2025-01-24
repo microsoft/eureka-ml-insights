@@ -24,6 +24,8 @@ class Model(ABC):
     is_valid: bool = False
     response_time: float = None
     n_output_tokens: int = None
+    chat_mode: bool = False
+    previous_messages: list = None
 
     @abstractmethod
     def generate(self, text_prompt, *args, **kwargs):
@@ -98,6 +100,19 @@ class EndpointModel(Model):
         # must return the model output and the response time
         raise NotImplementedError
 
+    def update_chat_history(self, query_text, *args, **kwargs):
+        """
+        This method is used to update the chat history with the model response.
+        args:
+            query_text (str): the text prompt to generate the response.
+        returns:
+            previous_messages (list): a list of messages in the chat history.
+        """
+        previous_messages = kwargs.get("previous_messages", [])
+        previous_messages.append({"role": "user", "content": query_text})
+        previous_messages.append({"role": "assistant", "content": self.model_output})
+        self.previous_messages = previous_messages
+
     def generate(self, query_text, *args, **kwargs):
         """
         Calls the endpoint to generate the model response.
@@ -115,6 +130,8 @@ class EndpointModel(Model):
         while attempts < self.num_retries:
             try:
                 meta_response = self.get_response(request)
+                if self.chat_mode:
+                    self.update_chat_history(query_text, *args, **kwargs)
                 if meta_response:
                     response_dict.update(meta_response)
                 self.is_valid = True
@@ -140,6 +157,8 @@ class EndpointModel(Model):
                 "n_output_tokens": self.count_tokens(),
             }
         )
+        if self.chat_mode:
+            response_dict.update({"previous_messages": self.previous_messages})
         return response_dict
 
     @abstractmethod
