@@ -15,6 +15,7 @@ from eureka_ml_insights.models import (
     RestEndpointModel,
     TestModel,
 )
+from eureka_ml_insights.models.models import AzureOpenAIModel
 
 from .config import ModelConfig
 
