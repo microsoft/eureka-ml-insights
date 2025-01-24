@@ -5,9 +5,13 @@ from .aime import (
     AIME_PIPELINE16Run,
     AIME_PIPELINE32Run,
     AIME_PIPELINE64Run,
+    AIME_PIPELINE128Run,
     AIME_PIPELINE256Run,
     AIME_PIPELINE512Run,
     AIME_PIPELINE1024Run,
+    AIME_PIPELINE5Run,
+    AIME_PIPELINEDirect5Run,
+    AIME_PIPELINETag,
 )
 from .ba_calendar import (
         BA_Calendar_PIPELINE,

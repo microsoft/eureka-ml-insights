@@ -28,6 +28,7 @@ from .spatial_and_layout_metrics import (
     SpatialAndLayoutReasoningMetric,
 )
 
+from .aime_metrics import NumericMatch
 __all__ = [
     Metric,
     ClassicMetric,
@@ -52,4 +53,5 @@ __all__ = [
     SumAggregator,
     MMMUMetric,
     MaxTokenF1ScoreMetric,
+    NumericMatch,
 ]
