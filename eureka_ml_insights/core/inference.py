@@ -73,14 +73,14 @@ class Inference(Component):
         )
 
     def fetch_previous_inference_results(self):
-        """This method loads the contents of the resume_from file and validates if it 
+        """This method loads the contents of the resume_from file and validates if it
         contains the required columns and keys in alignment with the current model configuration."""
 
         logging.info(f"Resuming inference from {self.resume_from}")
-        # fetch previous results from the provided resume_from file. 
+        # fetch previous results from the provided resume_from file.
         pre_inf_results_df = DataReader(self.resume_from, format=".jsonl").load_dataset()
 
-        # add new columns listed by the user to the previous inference results, in case we know that the current model will 
+        # add new columns listed by the user to the previous inference results, in case we know that the current model will
         # generate new columns that were not present in the previous results
         if self.new_columns:
             for col in self.new_columns:
@@ -168,7 +168,6 @@ class Inference(Component):
 
             return data
 
-
     def run(self):
         if self.max_concurrent > 1:
             asyncio.run(self._run_par())
@@ -206,6 +205,7 @@ class Inference(Component):
                     writer.write(data)
 
     from functools import partial
+
     async def run_in_excutor(self, model_inputs, executor):
         """Run model.generate in a ThreadPoolExecutor.
         args:
@@ -213,9 +213,11 @@ class Inference(Component):
             executor (ThreadPoolExecutor): ThreadPoolExecutor instance.
         """
         loop = asyncio.get_event_loop()
+
         # function to run in executor with args and kwargs
         def sub_func(model_inputs):
             return self.model.generate(*model_inputs[0], **model_inputs[1])
+
         return await loop.run_in_executor(executor, sub_func, model_inputs)
 
     async def _run_par(self):
@@ -229,7 +231,7 @@ class Inference(Component):
                 for data, model_args, model_kwargs in tqdm(loader, desc="Inference Progress:"):
                     if self.resume_from and (data["uid"] <= last_uid):
                         prev_result = self.retrieve_exisiting_result(data, pre_inf_results_df)
-                        if prev_result:                         
+                        if prev_result:
                             writer.write(prev_result)
                             continue
 
