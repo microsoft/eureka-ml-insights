@@ -17,7 +17,8 @@ from eureka_ml_insights.data_utils import (
     MajorityVoteTransform,
     ColumnRename,
     ReplaceStringsTransform,
-    RunPythonTransform
+    RunPythonTransform,
+    ExtractUsageTransform
 )
 from eureka_ml_insights.metrics import CountAggregator, ExactMatch, BiLevelMaxAggregator, BiLevelCountAggregator
 
@@ -87,7 +88,11 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
             resume_from=resume_from,
             max_concurrent=1
         )
-        # Configure the evaluation and reporting component.
+        # run a transformation to get the total token count used by the model for completion only (except prompt input tokens)
+        # this is needed because different models use different fields to indicate this
+
+
+        # Configure the evaluation and reporting component for pass@1.
         self.evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
             data_reader_config=DataSetConfig(
@@ -97,6 +102,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
+                            ExtractUsageTransform(model_config),
                             CopyColumn(
                                 column_name_src="model_output",
                                 column_name_dst="raw_model_output",
@@ -175,7 +181,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
             output_dir=os.path.join(self.log_dir, "eval_report"),
         )
 
-        self.data_post_processing_comp = DataProcessingConfig(
+        self.posteval_data_post_processing_comp = DataProcessingConfig(
             component_type=DataProcessing,
             data_reader_config=DataSetConfig(
                 DataReader,
@@ -206,7 +212,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    "path": os.path.join(self.data_post_processing_comp.output_dir, "transformed_data.jsonl"),
+                    "path": os.path.join(self.posteval_data_post_processing_comp.output_dir, "transformed_data.jsonl"),
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
@@ -329,7 +335,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                 self.data_processing_comp,
                 self.inference_comp,
                 self.evalreporting_comp,
-                self.data_post_processing_comp,
+                self.posteval_data_post_processing_comp,
                 self.bon_evalreporting_comp,
                 self.data_post_processing_mv,
                 self.mv_evalreporting_comp

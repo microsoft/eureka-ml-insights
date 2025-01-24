@@ -7,7 +7,23 @@ from typing import Dict, List
 import numpy as np
 import pandas as pd
 import tiktoken
+import json
 
+from eureka_ml_insights.configs.config import ModelConfig
+
+from eureka_ml_insights.models import (
+    ClaudeModel,
+    GeminiModel,
+    LlamaServerlessAzureRestEndpointModel,
+    LLaVAModel,
+    LLaVAHuggingFaceModel,
+    MistralServerlessAzureRestEndpointModel,
+    AzureOpenAIModel,
+    DirectOpenAIModel,
+    DirectOpenAIO1Model,
+    AzureOpenAIO1Model,
+    RestEndpointModel,
+)
 
 @dataclass
 class DFTransformBase:
@@ -386,7 +402,43 @@ class MajorityVoteTransform:
         """
         # Step 1: Group by 'ID' and calculate the majority vote within each group
         df[self.majority_vote_col] = df.groupby(self.id_col)[self.model_output_col].transform(
-            lambda x: x.dropna().mode()[0] if not x.dropna().mode().empty else pd.NA
+            lambda x: x.dropna().mode().sample(n=1,random_state=99).iloc[0] if not x.dropna().mode().empty else pd.NA
         )
 
         return df
+
+@dataclass
+class ExtractUsageTransform:
+    """Extracts token usage completion numbers (except prompt input tokens) for all models"""
+
+    model_config: ModelConfig # config used for the experiment
+    usage_completion_output_col: str = "usage_completion" # default name of the column where completion numbers will be stored for all models
+
+    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Transforms the dataframe by extracting the .
+
+        Args:
+            df (pd.DataFrame): Input dataframe of inference results retrieved with the model_config.
+
+        Returns:
+            pd.DataFrame: Transformed dataframe with completion token numbers in completion_usage_col.
+        """
+        usage_completion_read_col = None
+        if (self.model_config.class_name is GeminiModel):
+            usage_completion_read_col = "candidates_token_count"
+        elif (self.model_config.class_name is ClaudeModel):
+            usage_completion_read_col = "output_tokens"
+        elif (self.model_config.class_name is AzureOpenAIO1Model
+              or self.model_config.class_name is AzureOpenAIModel 
+              or self.model_config.class_name is LlamaServerlessAzureRestEndpointModel
+              or self.model_config.class_name is DirectOpenAIModel 
+              or self.model_config.class_name is DirectOpenAIO1Model):
+            usage_completion_read_col = "completion_tokens"
+        # if the model is one for which the usage of completion tokens is known, use that corresponding column for the model
+        # otherwise, use the default "n_output_tokens" which is computed with a universal tokenizer as shown in TokenCounterTransform()
+        if usage_completion_read_col:
+            df[self.usage_completion_output_col] = df["usage"].apply(lambda x: x[usage_completion_read_col])
+        else:
+            df[self.usage_completion_output_col] = df["n_output_tokens"]
+        return df 
