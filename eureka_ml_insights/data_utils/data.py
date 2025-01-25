@@ -300,7 +300,7 @@ class JsonLinesWriter:
 
 class JsonReader(DataReaderBase):
     """
-    This is a DataReader that loads a json or lsonl data file from a local path.
+    This is a DataReader that loads a json or jsonl data file from a local path.
     """
 
     def __init__(self, path):
@@ -460,7 +460,7 @@ class DataReader:
             df = pd.read_csv(self.path, **self.kwargs)
         elif self.format == ".jsonl":
             log.info(f"Loading JSONL Data From {self.path}.")
-            df = pd.read_json(self.path, lines=True, **self.kwargs)
+            df = pd.read_json(self.path, lines=True, convert_dates=False, convert_axes=False, **self.kwargs)
         else:
             log.info(f"Data format is: {self.format}, default to read as csv.")
             df = pd.read_csv(self.path, **self.kwargs)
