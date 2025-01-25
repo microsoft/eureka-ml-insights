@@ -286,7 +286,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                         "filename_base": "ExactMatch_BestOfN_GroupBy_High-level_domain",
                     },
                 ),
-                # the first three reports aggregate results by data_point_id and take the sum of usage for completion tokens
+                # aggregates results by data_point_id and takes the sum of usage for completion tokens
                 AggregatorConfig(
                     BiLevelSumAggregator,
                     {
