@@ -1,35 +1,30 @@
 import os
-from typing import Any, Optional
+from typing import Any
 
-from eureka_ml_insights.core import (
-    DataProcessing,
-    Inference,
-    PromptProcessing,
-)
-from eureka_ml_insights.core.eval_reporting import EvalReporting
-from eureka_ml_insights.data_utils import ColumnRename, SequenceTransform, RunPythonTransform
-from eureka_ml_insights.data_utils.data import (
-    MMDataLoader,
-    DataReader,
-    HFDataReader,
-)
-from eureka_ml_insights.configs import(
+from eureka_ml_insights.configs import (
     DataProcessingConfig,
     DataSetConfig,
+    ExperimentConfig,
     InferenceConfig,
     ModelConfig,
     PipelineConfig,
     PromptProcessingConfig,
 )
-from eureka_ml_insights.configs import ExperimentConfig
+from eureka_ml_insights.core import DataProcessing, Inference, PromptProcessing
+from eureka_ml_insights.data_utils import (
+    ColumnRename,
+    RunPythonTransform,
+    SequenceTransform,
+)
+from eureka_ml_insights.data_utils.data import DataReader, MMDataLoader
 
 
 class TEST_PIPELINE(ExperimentConfig):
     """This class specifies the config for running IFEval benchmark on any model"""
 
     def configure_pipeline(
-        self, model_config: ModelConfig, resume_from: str = None, 
-        **kwargs: dict[str, Any]) -> PipelineConfig:
+        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
+    ) -> PipelineConfig:
 
         # data preprocessing
         self.data_processing_comp = PromptProcessingConfig(
@@ -61,7 +56,7 @@ class TEST_PIPELINE(ExperimentConfig):
             chat_mode=True,
         )
 
-        ## Prepare the prompt for the next chat turn, 
+        ## Prepare the prompt for the next chat turn,
         ## in this case the prompt is a simple "Are you sure?" question
         self.post_processing_comp = DataProcessingConfig(
             component_type=DataProcessing,
@@ -79,7 +74,7 @@ class TEST_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "post_processing_output"),
         )
-        ## Specify what extra columns the data loader should load, 
+        ## Specify what extra columns the data loader should load,
         ## which for chat mode should include the previous_messages columns
         self.second_inference_comp = InferenceConfig(
             component_type=Inference,
@@ -105,6 +100,5 @@ class TEST_PIPELINE(ExperimentConfig):
                 self.post_processing_comp,
                 self.second_inference_comp,
             ],
-        
             self.log_dir,
         )
