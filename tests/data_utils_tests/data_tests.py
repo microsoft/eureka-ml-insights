@@ -184,10 +184,12 @@ class TestShuffleColumns(unittest.TestCase):
         self.shuffle_transform = ShuffleColumnsTransform(columns=["A", "B", "C"])
 
     def test_shuffle_columns_values(self):
-        # Apply the transformation twice
-        np.random.seed(42)
+        # Apply the transformation twice with two different generators that have different seeds
+        rng_1 = np.random.default_rng(42)
+        self.shuffle_transform.rng = rng_1
         transformed_df_1 = self.shuffle_transform.transform(self.df.copy())
-        np.random.seed(0)
+        rng_2 = np.random.default_rng(0)
+        self.shuffle_transform.rng = rng_2
         transformed_df_2 = self.shuffle_transform.transform(self.df.copy())
 
         # Columns that should remain unchanged

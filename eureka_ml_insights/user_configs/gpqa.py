@@ -73,6 +73,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                             ColumnMatchMapTransform(
                                 new_col="ground_truth", key_col="Correct Answer", columns=["A", "B", "C", "D"]
                             ),
+                            MultiplyTransform(n_repeats=1),
                         ]
                     ),
                 },
@@ -155,7 +156,8 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                     {
                         "column_names": ["ExactMatch_result"], 
                         "group_by": ["data_repeat_id", "High-level domain"], 
-                        "filename_base": "ExactMatch_GroupBy_High-level_domain_SeparateRuns", "normalize": True
+                        "filename_base": "ExactMatch_GroupBy_High-level_domain_SeparateRuns", 
+                        "normalize": True
                     }),
                 # the next three reports take the average and std for all repeats
                 # the resulting numbers are the average and std of N pass@1 scores, where N is number of repeats
@@ -202,7 +204,6 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                         "first_groupby": ["data_point_id", "High-level domain_copy"], 
                         "second_groupby": "High-level domain",
                         "filename_base": "UsageCompletion_GroupBy_High-level_domain_AllRuns", 
-                        "normalize": True
                     }),
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
@@ -223,7 +224,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                             ),
                         ReplaceStringsTransform(
                                 columns=["ExactMatch_result_numeric"],
-                                mapping={'incorrect': '0', 'correct': '1', 'none': ''},
+                                mapping={'incorrect': '0', 'correct': '1', 'none': 'NaN'},
                                 case=False)
                         ]
                     ),
@@ -261,7 +262,6 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                         ],
                         "first_groupby": "data_point_id",
                         "filename_base": "ExactMatch_BestOfN",
-                        "normalize": True,
                     },
                 ),
                 AggregatorConfig(
@@ -273,7 +273,6 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                         "first_groupby": "data_point_id_copy", 
                         "second_groupby": "Subdomain",
                         "filename_base": "ExactMatch_BestOfN_GroupBy_Subdomain",
-                        "normalize": True,
                     },
                 ),
                 AggregatorConfig(
@@ -285,7 +284,6 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                         "first_groupby": "data_point_id_copy", 
                         "second_groupby": "High-level domain",
                         "filename_base": "ExactMatch_BestOfN_GroupBy_High-level_domain",
-                        "normalize": True,
                     },
                 ),
                 # the first three reports aggregate results by data_point_id and take the sum of usage for completion tokens
@@ -297,7 +295,6 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                         ],
                         "first_groupby": "data_point_id",
                         "filename_base": "UsageCompletion_BestOfN",
-                        "normalize": True,
                     },
                 ),
             ],
