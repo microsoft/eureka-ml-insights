@@ -181,7 +181,8 @@ class Inference(Component):
         with self.data_loader as loader:
             with self.writer as writer:
                 for data, model_args, model_kwargs in tqdm(loader, desc="Inference Progress:"):
-
+                    if self.chat_mode and data.get("is_valid", True) is False:
+                        continue
                     if self.resume_from and (data["uid"] <= last_uid):
                         prev_result = self.retrieve_exisiting_result(data, pre_inf_results_df)
                         if prev_result:
@@ -229,6 +230,8 @@ class Inference(Component):
         with self.data_loader as loader:
             with self.writer as writer:
                 for data, model_args, model_kwargs in tqdm(loader, desc="Inference Progress:"):
+                    if self.chat_mode and data.get("is_valid", True) is False:
+                        continue
                     if self.resume_from and (data["uid"] <= last_uid):
                         prev_result = self.retrieve_exisiting_result(data, pre_inf_results_df)
                         if prev_result:
