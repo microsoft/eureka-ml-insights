@@ -14,7 +14,7 @@ class TestModel:
     def __init__(self, model_name="generic_test_model"):
         self.name = model_name
 
-    def generate(self, text_prompt, query_images=None):
+    def generate(self, text_prompt, *args, **kwargs):
         time.sleep(0.1)
         return {"model_output": "model output", "is_valid": True, "response_time": 0, "n_output_tokens": 0}
 
@@ -35,7 +35,7 @@ class SpatialReasoningTestModel:
     def __init__(self):
         self.name = "random_generator"
 
-    def generate(self, text_prompt, query_images=None):
+    def generate(self, text_prompt, *args, **kwargs):
         return {
             "model_output": random.choice(["left", "right", "above", "below"]),
             "is_valid": random.choice([True, False]),
@@ -61,7 +61,7 @@ class HoloAssistTestModel:
     def __init__(self):
         self.name = "random_generator"
 
-    def generate(self, text_prompt, query_images=None):
+    def generate(self, text_prompt, *args, **kwargs):
         return {
             "model_output": random.choice(["printer", "gopro", "nintendo switch", "dslr"]),
             "is_valid": random.choice([True, False]),
@@ -72,7 +72,7 @@ class GeometricReasoningTestModel:
     def __init__(self):
         self.name = "random_generator"
 
-    def generate(self, text_prompt, query_images=None):
+    def generate(self, text_prompt, *args, **kwargs):
         return {"model_output": random.choice(["(13, 66)", "(66, 13)"]), "is_valid": random.choice([True, False])}
 
 
@@ -80,7 +80,7 @@ class KitabTestModel:
     def __init__(self):
         self.name = "random_generator"
 
-    def generate(self, text_prompt, query_images=None):
+    def generate(self, text_prompt, *args, **kwargs):
         model_output = "The author has written several books and is famous for winning international book prizes. "
         potential_outputs = []
         potential_outputs.append(
@@ -110,7 +110,7 @@ class GenericTestModel:
     def __init__(self, model_name="generic_test_model"):
         self.name = model_name
 
-    def generate(self, text_prompt, query_images=None):
+    def generate(self, text_prompt, *args, **kwargs):
         return {"model_output": "Generic model output", "is_valid": random.choice([True, False])}
 
 
@@ -130,7 +130,7 @@ class ToxiGenTestModel:
     def __init__(self):
         self.name = "random_generator"
 
-    def generate(self, text_prompt, query_images=None):
+    def generate(self, text_prompt, *args, **kwargs):
         label = random.choice(["1", "2", "3", "4", "5"])
         # return "###Final score: " + label, random.choice([True, False])
         potential_outputs = []
@@ -177,7 +177,7 @@ class DetectionTestModel:
 
         self.obj_list = ["apple", "banana", "orange", "grape", "kiwi", "melon", "strawberry"]
 
-    def generate(self, text_prompt, query_images=None):
+    def generate(self, text_prompt, *args, **kwargs):
 
         model_output = ""
         for i in range(0, random.randint(1, 4)):

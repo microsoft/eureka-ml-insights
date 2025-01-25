@@ -6,6 +6,7 @@ from pathlib import Path
 
 import jsonlines
 
+
 # setup loggers
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
@@ -40,6 +41,7 @@ from eureka_ml_insights.user_configs import (
     IFEval_PIPELINE,
     ToxiGen_Discriminative_PIPELINE,
     ToxiGen_Generative_PIPELINE,
+    BA_Calendar_PIPELINE,
 )
 from tests.test_utils import (
     DetectionTestModel,
@@ -213,7 +215,7 @@ class TEST_GEOMETRIC_REASONING_PIPELINE(GEOMETER_PIPELINE):
         data_processing_comp = config.component_configs[0]
         data_processing_comp.data_reader_config.class_name = TestHFDataReader
         inference_comp = config.component_configs[1]
-        inference_comp.data_loader_config.class_name = TestDataLoader
+        inference_comp.data_loader_config.class_name = TestMMDataLoader
         inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
 
@@ -249,6 +251,20 @@ class TEST_IFEval_PIPELINE(IFEval_PIPELINE):
             ]
         )
         return config
+    
+class TEST_BA_Calendar_PIPELINE(BA_Calendar_PIPELINE):
+    # Test config the BA Calendar benchmark with TestModel and TestDataLoader
+    def configure_pipeline(self):
+        config = super().configure_pipeline(model_config=ModelConfig(GenericTestModel, {}))
+        self.data_processing_comp.data_reader_config.init_args["transform"].transforms.extend(
+            [
+                RunPythonTransform("df = df.explode(['selected_constraints'])"),
+                SamplerTransform(sample_count=N_ITER, random_seed=99, stratify_by="selected_constraints"),
+            ]
+        )
+        self.inference_comp.data_loader_config.class_name = TestDataLoader
+        self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
+        return config
 
 
 class TEST_TOXIGEN_PIPELINE(ToxiGen_Discriminative_PIPELINE):
@@ -282,7 +298,7 @@ class TEST_MMMU_PIPELINE(MMMU_BASELINE_PIPELINE):
         self.data_processing_comp.data_reader_config.init_args["split"] = "dev"
         self.data_processing_comp.data_reader_config.init_args["tasks"] = ["Math"]
 
-        self.inference_comp.data_loader_config.class_name = TestDataLoader
+        self.inference_comp.data_loader_config.class_name = TestMMDataLoader
         self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
 
@@ -436,6 +452,53 @@ class DNA_PipelineTest(PipelineTest, unittest.TestCase):
                     for item in eval_inference_data
                 )
             )
+
+class IFEval_PipelineTest(PipelineTest, unittest.TestCase):
+    def get_config(self):
+        self.test_pipeline = TEST_IFEval_PIPELINE()
+        self.config = self.test_pipeline.pipeline_config
+        return self.config
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.eval_configs = [
+            self.test_pipeline.evalreporting_comp,
+            self.test_pipeline.instruction_level_evalreporting_comp,
+        ]
+
+    def test_outputs_exist(self) -> None:
+        logging.info("Running test_outputs_exist test in PipelineTest")
+        self.assertTrue(any("transformed_data.jsonl" in str(file) for file in self.files))
+        if self.data_reader_config.prompt_template_path:
+            self.assertTrue(any("processed_prompts.jsonl" in str(file) for file in self.files))
+        self.assertTrue(any("inference_result.jsonl" in str(file) for file in self.files))
+        if self.eval_config.metric_config is not None:
+            self.assertTrue(any("metric_results.jsonl" in str(file) for file in self.files))
+        n_aggregators = len([config for eval_config in self.eval_configs for config in eval_config.aggregator_configs])
+        n_aggregator_files = len([file for file in self.files if "aggregator" in str(file)])
+        self.assertEqual(n_aggregators, n_aggregator_files)
+
+class BA_Calendar_PipelineTest(PipelineTest, unittest.TestCase):
+    def get_config(self):
+        self.test_pipeline = TEST_BA_Calendar_PIPELINE()
+        self.config = self.test_pipeline.pipeline_config
+        return self.config
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.eval_configs = [self.test_pipeline.evalreporting_comp,self.test_pipeline.bon_evalreporting_comp, self.test_pipeline.majvote_evalreporting_comp]
+
+    def test_outputs_exist(self) -> None:
+        logging.info("Running test_outputs_exist test in PipelineTest")
+        self.assertTrue(any("transformed_data.jsonl" in str(file) for file in self.files))
+        if self.data_reader_config.prompt_template_path:
+            self.assertTrue(any("processed_prompts.jsonl" in str(file) for file in self.files))
+        self.assertTrue(any("inference_result.jsonl" in str(file) for file in self.files))
+        if self.eval_config.metric_config is not None:
+            self.assertTrue(any("metric_results.jsonl" in str(file) for file in self.files))
+        n_aggregators = len([config for eval_config in self.eval_configs for config in eval_config.aggregator_configs])
+        n_aggregator_files = len([file for file in self.files if "aggregator" in str(file)])
+        self.assertEqual(n_aggregators, n_aggregator_files)
 
 class TOXIGEN_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
