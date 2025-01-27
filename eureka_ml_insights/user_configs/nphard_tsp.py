@@ -73,7 +73,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
-            max_concurrent=1,
+            max_concurrent=5,
         )
 
         # post process the response to extract the answer
@@ -167,6 +167,6 @@ class NPHARD_TSP_PIPELINE_MULTIPLE_RUNS(NPHARD_TSP_PIPELINE):
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         # data preprocessing
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
-            MultiplyTransform(n_repeats=1)
+            MultiplyTransform(n_repeats=5)
         )
         return pipeline
