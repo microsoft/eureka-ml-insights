@@ -397,4 +397,7 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 *.pyproj
+
+# Project files
 /keys
+eureka_ml_insights/configs/pvt_model_configs.py

@@ -5,6 +5,7 @@ import logging
 
 from eureka_ml_insights import user_configs as configs
 from eureka_ml_insights.configs import model_configs
+from eureka_ml_insights.configs import pvt_model_configs
 from eureka_ml_insights.core import Pipeline
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -39,10 +40,16 @@ if __name__ == "__main__":
 
     experiment_config_class = args.exp_config
     if args.model_config:
+        logging.info(f"Using model config {args.model_config}.")
         try:
+            logging.info(f"Trying to import model config from model_configs.")
             init_args["model_config"] = getattr(model_configs, args.model_config)
         except AttributeError:
-            raise ValueError(f"Model config class {args.model_config} not found.")
+            try:
+                logging.info(f"Trying to import model config from pvt_model_configs.")
+                init_args["model_config"] = getattr(pvt_model_configs, args.model_config)
+            except AttributeError:
+                raise ValueError(f"Model config class {args.model_config} not found.")
 
     if args.resume_from:
         init_args["resume_from"] = args.resume_from
