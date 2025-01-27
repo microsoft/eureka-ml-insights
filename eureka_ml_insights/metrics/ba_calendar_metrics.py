@@ -48,11 +48,13 @@ def filter_slots_by_constraints(time_slots, constraints, day):
     for slot in time_slots:
         start_time, end_time = slot
         if constraints['no_meetings_before']:
-            no_meetings_before = datetime.strptime(f"{constraints['no_meetings_before']}:00", "%H:%M")
+            nb = int(constraints['no_meetings_before'])
+            no_meetings_before = datetime.strptime(f"{nb}:00", "%H:%M")
             if start_time < no_meetings_before:
                 continue
         if constraints['no_meetings_after']:
-            no_meetings_after = datetime.strptime(f"{constraints['no_meetings_after']}:00", "%H:%M")
+            na = int(constraints['no_meetings_after'])
+            no_meetings_after = datetime.strptime(f"{na}:00", "%H:%M")
             if end_time >= no_meetings_after:
                 continue
         if constraints['no_meetings_on_weekends'] and day in ['Saturday', 'Sunday']:
@@ -224,12 +226,14 @@ class BACalendarMetric(CompositeMetric):
         no_meetings_after = instance['constraints'].get('no_meetings_after')
 
         if no_meetings_before:
-            no_meetings_before = datetime.strptime(f"{no_meetings_before}:00", "%H:%M")
+            nb = int(no_meetings_before)
+            no_meetings_before = datetime.strptime(f"{nb}:00", "%H:%M")
             if start_time < no_meetings_before:
                 return {'time_restrictions_programmatic_check': 0}
 
         if no_meetings_after:
-            no_meetings_after = datetime.strptime(f"{no_meetings_after}:00", '%H:%M')
+            na = int(no_meetings_after)
+            no_meetings_after = datetime.strptime(f"{na}:00", '%H:%M')
             if end_time > no_meetings_after:
                 return {'time_restrictions_programmatic_check': 0}
         return {'time_restrictions_programmatic_check': 1}

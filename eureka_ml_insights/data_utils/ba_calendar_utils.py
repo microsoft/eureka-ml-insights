@@ -29,7 +29,6 @@ class BA_Calendar_ExtractAnswer(DFTransformBase):
         if response is None:
             return ""
 
-        # Try to find an answer in the "Final Answer: X" format
         match = re.search(r"(?i)(?<=Final Answer: ).*", response)
         
         if match:

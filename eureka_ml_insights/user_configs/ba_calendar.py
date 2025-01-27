@@ -49,6 +49,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                    "split": "test",
                    "transform": SequenceTransform([
                        ColumnRename(name_mapping={"task_prompt": "prompt"}),
+                       #SamplerTransform(random_seed=5, sample_count=10),
                        MultiplyTransform(n_repeats=1),
                    ]),
                 }
