@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import pandas as pd
 
 from eureka_ml_insights.data_utils import DFTransformBase
+import ast
 
 
 @dataclass
@@ -38,6 +39,52 @@ def extract_path(final_answer):
         match = re.search(r'"Solution":\s*"([^"]+)"', final_answer)
         return match.group(1) if match else None
 
+def extract_solution(final_answer):
+    if isinstance(final_answer, str):
+        solution = final_answer
+    elif isinstance(final_answer, dict):
+        solution = final_answer.get('Solution', final_answer)  # Handle direct dict case
+    else:
+        return {}
+    
+    if isinstance(solution, dict):
+        return {k.replace('_', ''): v for k, v in solution.items()}  # Normalize variable names
+    
+    extracted_values = {}
+    matches = re.findall(r"(x\d+|x_\d+)\s*=\s*(True|False)", solution)
+    
+    for var, value in matches:
+        normalized_var = var.replace('_', '')  # Normalize variable names
+        extracted_values[normalized_var] = value == 'True'
+    
+    return extracted_values
+
+
+def extract_solution2(final_answer):
+    # Convert string to dictionary
+    parsed_dict = ast.literal_eval(final_answer)
+
+    # Extract Solution values
+    solution_values = parsed_dict.get('Solution', {})
+
+    # Handling different formats
+    extracted_values = {}
+
+    if isinstance(solution_values, dict):
+        # Case 1: Solution is already a dictionary
+        extracted_values = {k.replace('_', ''): v for k, v in solution_values.items()}
+    elif isinstance(solution_values, str):
+        # Case 2: Solution is a string, parse it
+        for pair in solution_values.split(','):
+            key, value = pair.strip().split('=')
+            formatted_key = key.strip().replace('_', '')  # Remove underscore
+            extracted_values[formatted_key] = value.strip() == 'True'
+
+    # Print extracted values
+    formatted_output = ', '.join([f"'{k}'= {v}" for k, v in extracted_values.items()])
+
+    return formatted_output
+
 def convert_to_binary_string(solution):
     if solution == "Unsatisfactory":
         return ""  # Return empty string if the solution is "Unsatisfactory"
@@ -56,11 +103,23 @@ def convert_to_binary_string(solution):
 def parse_path_from_model_output(model_output_string):
     """Parses the model output to extract a SAT path."""    
     final_answer = extract_final_answer(model_output_string)
-    sat_solution = extract_path(final_answer) if final_answer else None
     
+    print("final_answer: ", final_answer)
+
+    sat_solution1 = extract_path(final_answer) if final_answer else None
+    
+    print("sat_solution1: ", sat_solution1)
+
+    sat_solution = extract_solution2(final_answer) if final_answer else None
+    
+    print("sat_solution: ", sat_solution)
+
+
     binary_soln_string = ""
 
     if sat_solution:
         binary_soln_string = convert_to_binary_string(sat_solution)
+
+    print("binary_sat_solution: ", binary_soln_string)
 
     return binary_soln_string

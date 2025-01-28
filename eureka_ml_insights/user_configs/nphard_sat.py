@@ -48,7 +48,7 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 HFDataReader,
                 {
-                    "path": "GeoMeterData/nphard_tsp3",
+                    "path": "GeoMeterData/nphard_sat1",
                     "split": "train",
                     "transform": SequenceTransform(
                         [
@@ -72,8 +72,8 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
                 {"path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl")},
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),            
-            resume_from=resume_from,
-            max_concurrent=1,
+            resume_from=resume_from,            
+            max_concurrent=5,
         )
 
         # post process the response to extract the answer
@@ -82,7 +82,7 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),                    
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),                  
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
@@ -167,6 +167,6 @@ class NPHARD_SAT_PIPELINE_MULTIPLE_RUNS(NPHARD_SAT_PIPELINE):
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         # data preprocessing
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
-            MultiplyTransform(n_repeats=1)
+            MultiplyTransform(n_repeats=5)
         )
         return pipeline
