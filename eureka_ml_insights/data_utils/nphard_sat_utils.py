@@ -103,17 +103,9 @@ def convert_to_binary_string(solution):
 def parse_path_from_model_output(model_output_string):
     """Parses the model output to extract a SAT path."""    
     final_answer = extract_final_answer(model_output_string)
-    
-    print("final_answer: ", final_answer)
-
-    sat_solution1 = extract_path(final_answer) if final_answer else None
-    
-    print("sat_solution1: ", sat_solution1)
 
     sat_solution = extract_solution2(final_answer) if final_answer else None
     
-    print("sat_solution: ", sat_solution)
-
 
     binary_soln_string = ""
 
