@@ -1,0 +1,71 @@
+import json
+import re
+from dataclasses import dataclass
+
+import pandas as pd
+
+from eureka_ml_insights.data_utils import DFTransformBase
+
+
+@dataclass
+class NPHARDSATExtractAnswer(DFTransformBase):
+    """Class to extract and transform the SAT path from model output."""
+
+    model_output_column: str
+    model_answer_column: str
+
+    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Extracts the SAT path from the model output and stores it in the model_answer_column."""
+        df[self.model_answer_column] = df[self.model_output_column].apply(parse_path_from_model_output)
+        return df
+
+
+def extract_final_answer(model_output):
+    """Extracts the final answer enclosed within <final_answer> tags."""
+    match = re.search(r"<final_answer>(.*?)</final_answer>", model_output, re.DOTALL)
+    return match.group(1).strip() if match else None
+
+
+def extract_path(final_answer):
+    """Extracts the path string from the final answer, handling both JSON formats."""
+    try:
+        # Convert single quotes to double quotes for valid JSON parsing
+        final_answer_json = json.loads(final_answer.replace("'", '"'))
+        return final_answer_json.get("Solution", None)
+    except json.JSONDecodeError:
+        # Fallback regex extraction if JSON parsing fails
+        # match = re.search(r"<final_answer>\{'Solution':\s*'([^']+)'\}</final_answer>", text)
+        match = re.search(r'"Solution":\s*"([^"]+)"', final_answer)
+        return match.group(1) if match else None
+
+def convert_to_binary_string(solution):
+    if solution == "Unsatisfiable":
+        return ""  # Return empty string if the solution is "Unsatisfactory"
+
+    variables = solution.split(', ')  # Split by ", "
+    binary_representation = [str(int(var.split(' = ')[1] == 'True')) for var in variables]
+    return ','.join(binary_representation)
+
+
+def parse_path_from_model_output(model_output_string):
+    """Parses the model output to extract a SAT path."""
+    final_answer = extract_final_answer(model_output_string)
+    sat_solution = extract_path(final_answer) if final_answer else None
+    
+    binary_soln_string = ""
+
+    if sat_solution:
+        binary_soln_string = convert_to_binary_string(sat_solution)
+
+    # print(binary_soln_string)
+
+    return binary_soln_string
+
+    # if tour_string is None:
+    #     return "0,0,0,0"
+
+    # # Remove non-numeric characters except '->' and split into a list of integers
+    # tour_string = re.sub(r"[^0-9->]", "", tour_string)
+    # tour = list(map(int, tour_string.split("->")))
+
+    # return ",".join(map(str, tour))

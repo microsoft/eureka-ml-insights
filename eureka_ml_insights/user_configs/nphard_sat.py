@@ -29,9 +29,9 @@ from eureka_ml_insights.data_utils import (
     MultiplyTransform,
     SequenceTransform,
 )
-# from eureka_ml_insights.data_utils.nphard_tsp_utils import (
-#     NPHARDTSPExtractAnswer,
-# )
+from eureka_ml_insights.data_utils.nphard_sat_utils import (
+    NPHARDSATExtractAnswer,
+)
 from eureka_ml_insights.metrics import CountAggregator #, NPHardTSPMetric
 
 """This file contains user defined configuration classes for the Traveling Salesman Problem (TSP).
@@ -76,29 +76,29 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
             max_concurrent=1,
         )
 
-        # # post process the response to extract the answer
-        # self.data_post_processing = DataProcessingConfig(
-        #     component_type=DataProcessing,
-        #     data_reader_config=DataSetConfig(
-        #         DataReader,
-        #         {
-        #             "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
-        #             "format": ".jsonl",
-        #             "transform": SequenceTransform(
-        #                 [
-        #                     ColumnRename(
-        #                         name_mapping={
-        #                             "model_output": "raw_output",
-        #                         }
-        #                     ),
-        #                     AddColumn("model_output"),
-        #                     NPHARDTSPExtractAnswer("raw_output", "model_output"),
-        #                 ]
-        #             ),
-        #         },
-        #     ),
-        #     output_dir=os.path.join(self.log_dir, "data_post_processing_output"),
-        # )
+        # post process the response to extract the answer
+        self.data_post_processing = DataProcessingConfig(
+            component_type=DataProcessing,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            ColumnRename(
+                                name_mapping={
+                                    "model_output": "raw_output",
+                                }
+                            ),
+                            AddColumn("model_output"),
+                            NPHARDSATExtractAnswer("raw_output", "model_output"),
+                        ]
+                    ),
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "data_post_processing_output"),
+        )
 
         # # Configure the evaluation and reporting component.
         # self.evalreporting_comp = EvalReportingConfig(
@@ -150,7 +150,7 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
             [
                 self.data_processing_comp,
                 self.inference_comp,
-                # self.data_post_processing,
+                self.data_post_processing,
                 # self.evalreporting_comp,
                 # self.postevalprocess_comp,
             ],
