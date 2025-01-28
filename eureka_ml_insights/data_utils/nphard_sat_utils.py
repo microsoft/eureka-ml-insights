@@ -39,16 +39,22 @@ def extract_path(final_answer):
         return match.group(1) if match else None
 
 def convert_to_binary_string(solution):
-    if solution == "Unsatisfiable":
+    if solution == "Unsatisfactory":
         return ""  # Return empty string if the solution is "Unsatisfactory"
 
-    variables = solution.split(', ')  # Split by ", "
-    binary_representation = [str(int(var.split(' = ')[1] == 'True')) for var in variables]
+    # Split by comma and handle cases with or without spaces
+    variables = re.split(r',\s*', solution)  
+
+    binary_representation = []
+    for var in variables:
+        key_value = re.split(r'\s*=\s*', var)  # Handle cases with or without spaces around '='
+        if len(key_value) == 2:
+            binary_representation.append(str(int(key_value[1] == 'True')))
+
     return ','.join(binary_representation)
 
-
 def parse_path_from_model_output(model_output_string):
-    """Parses the model output to extract a SAT path."""
+    """Parses the model output to extract a SAT path."""    
     final_answer = extract_final_answer(model_output_string)
     sat_solution = extract_path(final_answer) if final_answer else None
     
@@ -57,15 +63,4 @@ def parse_path_from_model_output(model_output_string):
     if sat_solution:
         binary_soln_string = convert_to_binary_string(sat_solution)
 
-    # print(binary_soln_string)
-
     return binary_soln_string
-
-    # if tour_string is None:
-    #     return "0,0,0,0"
-
-    # # Remove non-numeric characters except '->' and split into a list of integers
-    # tour_string = re.sub(r"[^0-9->]", "", tour_string)
-    # tour = list(map(int, tour_string.split("->")))
-
-    # return ",".join(map(str, tour))

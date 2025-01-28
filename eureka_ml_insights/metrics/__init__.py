@@ -10,6 +10,8 @@ from .metrics_base import (
     SubstringExistsMatch,
 )
 from .mmmu_metrics import MMMUMetric
+from .nphard_sat_metrics import NPHardSATMetric
+
 from .reports import (
     Aggregator,
     AverageAggregator,
@@ -52,4 +54,5 @@ __all__ = [
     SumAggregator,
     MMMUMetric,
     MaxTokenF1ScoreMetric,
+    NPHardSATMetric,
 ]
