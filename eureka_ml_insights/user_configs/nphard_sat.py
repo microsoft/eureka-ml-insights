@@ -71,8 +71,8 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
                 MMDataLoader,
                 {"path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl")},
             ),
-            output_dir=os.path.join(self.log_dir, "inference_result"),
-            resume_from="/home/vivineet/projects/evaluation/NPHardEval/SAT_01-27-2025/eureka-ml-insights/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_level_test/2025-01-28-00-05-19.688436/inference_result/inference_result.jsonl", #resume_from,
+            output_dir=os.path.join(self.log_dir, "inference_result"),            
+            resume_from=resume_from,
             max_concurrent=1,
         )
 
@@ -82,8 +82,7 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    # "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
-                    "path": "/home/vivineet/projects/evaluation/NPHardEval/SAT_01-27-2025/eureka-ml-insights/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_level_test/2025-01-28-00-05-19.688436/inference_result/inference_result.jsonl",
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),                    
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
@@ -101,51 +100,50 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
             output_dir=os.path.join(self.log_dir, "data_post_processing_output"),
         )
 
-        # # Configure the evaluation and reporting component.
-        # self.evalreporting_comp = EvalReportingConfig(
-        #     component_type=EvalReporting,
-        #     data_reader_config=DataSetConfig(
-        #         DataReader,
-        #         {
-        #             # "path": os.path.join(self.data_post_processing.output_dir, "transformed_data.jsonl"),
-        #             "path": "/home/vivineet/projects/evaluation/NPHardEval/SAT_01-27-2025/eureka-ml-insights/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_level_test/2025-01-27-23-59-50.918318/data_post_processing_output/transformed_data.jsonl",
-        #             "format": ".jsonl",
-        #         },
-        #     ),
-        #     metric_config=MetricConfig(NPHardSATMetric),
-        #     aggregator_configs=[
-        #         AggregatorConfig(CountAggregator, {"column_names": ["NPHardSATMetric_result"], "normalize": True}),
-        #     ],
-        #     output_dir=os.path.join(self.log_dir, "eval_report"),
-        # )
+        # Configure the evaluation and reporting component.
+        self.evalreporting_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.data_post_processing.output_dir, "transformed_data.jsonl"),                    
+                    "format": ".jsonl",
+                },
+            ),
+            metric_config=MetricConfig(NPHardSATMetric),
+            aggregator_configs=[
+                AggregatorConfig(CountAggregator, {"column_names": ["NPHardSATMetric_result"], "normalize": True}),
+            ],
+            output_dir=os.path.join(self.log_dir, "eval_report"),
+        )
 
-        # # Aggregate the results by a majority vote.
-        # self.postevalprocess_comp = EvalReportingConfig(
-        #     component_type=EvalReporting,
-        #     data_reader_config=DataSetConfig(
-        #         DataReader,
-        #         {
-        #             "path": os.path.join(self.data_post_processing.output_dir, "transformed_data.jsonl"),
-        #             "format": ".jsonl",
-        #             "transform": SequenceTransform(
-        #                 [
-        #                     MajorityVoteTransform(id_col="data_point_id"),
-        #                     ColumnRename(
-        #                         name_mapping={
-        #                             "model_output": "model_output_onerun",
-        #                             "majority_vote": "model_output",
-        #                         }
-        #                     ),
-        #                 ]
-        #             ),
-        #         },
-        #     ),
-        #     metric_config=MetricConfig(NPHardSATMetric),
-        #     aggregator_configs=[
-        #         AggregatorConfig(CountAggregator, {"column_names": ["NPHardSATMetric_result"], "normalize": True}),
-        #     ],
-        #     output_dir=os.path.join(self.log_dir, "eval_report_majorityVote"),
-        # )
+        # Aggregate the results by a majority vote.
+        self.postevalprocess_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.data_post_processing.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            MajorityVoteTransform(id_col="data_point_id"),
+                            ColumnRename(
+                                name_mapping={
+                                    "model_output": "model_output_onerun",
+                                    "majority_vote": "model_output",
+                                }
+                            ),
+                        ]
+                    ),
+                },
+            ),
+            metric_config=MetricConfig(NPHardSATMetric),
+            aggregator_configs=[
+                AggregatorConfig(CountAggregator, {"column_names": ["NPHardSATMetric_result"], "normalize": True}),
+            ],
+            output_dir=os.path.join(self.log_dir, "eval_report_majorityVote"),
+        )
 
         # Configure the pipeline
         return PipelineConfig(
@@ -153,8 +151,8 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
                 self.data_processing_comp,
                 self.inference_comp,
                 self.data_post_processing,
-                # self.evalreporting_comp,
-                # self.postevalprocess_comp,
+                self.evalreporting_comp,
+                self.postevalprocess_comp,
             ],
             self.log_dir,
         )
