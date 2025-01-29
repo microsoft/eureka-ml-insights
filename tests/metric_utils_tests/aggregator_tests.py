@@ -304,15 +304,15 @@ class BiLevelAverageAggregatorTest(BiLevelAggregatorTestData, unittest.TestCase)
 
 
 class BiLevelMaxAggregatorTest(BiLevelAggregatorTestData, unittest.TestCase):
-    def test_bilevel_average_aggregator(self):
-        avg_agg = BiLevelAggregator(
+    def test_bilevel_max_aggregator(self):
+        max_agg = BiLevelAggregator(
             ["numeric_metric"],
             first_groupby="data_point_id",
             second_groupby="group",
             output_dir=self.output_dir,
             agg_fn="max",
         )
-        avg_agg.aggregate(self.data)
+        max_agg.aggregate(self.data)
         expected = [
             {
                 "group": "a",
@@ -326,32 +326,32 @@ class BiLevelMaxAggregatorTest(BiLevelAggregatorTestData, unittest.TestCase):
             },
         ]
 
-        for i in range(len(avg_agg.aggregated_result)):
+        for i in range(len(max_agg.aggregated_result)):
             self.assertAlmostEqual(
-                avg_agg.aggregated_result[i]["numeric_metric_mean"],
+                max_agg.aggregated_result[i]["numeric_metric_mean"],
                 expected[i]["numeric_metric_mean"],
                 places=self.precision,
             )
             self.assertAlmostEqual(
-                avg_agg.aggregated_result[i]["numeric_metric_std"],
+                max_agg.aggregated_result[i]["numeric_metric_std"],
                 expected[i]["numeric_metric_std"],
                 places=self.precision,
             )
 
-    def test_bilevel_average_aggregator_2(self):
-        avg_agg = BiLevelAggregator(
+    def test_bilevel_max_aggregator_2(self):
+        max_agg = BiLevelAggregator(
             ["numeric_metric"],
             first_groupby="data_repeat_id",
             second_groupby=None,
             output_dir=self.output_dir,
             agg_fn="max",
         )
-        avg_agg.aggregate(self.data)
+        max_agg.aggregate(self.data)
         expected_first_level = [np.max([5, 8, 2, 3]), np.max([6, 8, 3, 4]), np.max([5, 8, 4, 2])]
         expected = [
             {"numeric_metric": {"mean": np.mean(expected_first_level), "std": np.std(expected_first_level, ddof=1)}}
         ]
-        self.assertEqual(avg_agg.aggregated_result, expected)
+        self.assertEqual(max_agg.aggregated_result, expected)
 
 
 class BiLevelCountAggregatorTest(BiLevelAggregatorTestData, unittest.TestCase):
