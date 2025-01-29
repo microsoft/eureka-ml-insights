@@ -18,7 +18,7 @@ from eureka_ml_insights.data_utils.transform import AddColumn, ColumnRename, Cop
 from eureka_ml_insights.metrics.ba_calendar_metrics import BACalendarMetric
 from eureka_ml_insights.metrics.reports import (
     AverageAggregator,
-    BiLevelMaxAggregator,
+    BiLevelAggregator,
 )
 
 from ..configs.config import (
@@ -126,7 +126,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
             ),
             aggregator_configs=[
                 AggregatorConfig(
-                    BiLevelMaxAggregator,
+                    BiLevelAggregator,
                     {
                         "column_names": [
                             "BACalendarMetric_all_correct",
@@ -142,6 +142,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                         "first_groupby": "data_point_id",
                         "filename_base": "BaCal_BestOfN_Aggregated",
                         "normalize": True,
+                        "agg_fn": "max",
                     },
                 ),
             ],
