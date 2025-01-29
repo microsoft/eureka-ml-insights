@@ -1,20 +1,26 @@
 import os
 from typing import Any
 
-from eureka_ml_insights.core import (
-    Inference,
-    PromptProcessing,
-)
-
+from eureka_ml_insights.core import Inference, PromptProcessing
 from eureka_ml_insights.core.data_processing import DataProcessing
 from eureka_ml_insights.core.eval_reporting import EvalReporting
-from eureka_ml_insights.data_utils.ba_calendar_utils import BA_Calendar_ExtractAnswer
+from eureka_ml_insights.data_utils.ba_calendar_utils import (
+    BA_Calendar_ExtractAnswer,
+)
 from eureka_ml_insights.data_utils.data import (
     DataLoader,
     DataReader,
     HFDataReader,
 )
-from eureka_ml_insights.data_utils.transform import AddColumn, ColumnRename, CopyColumn, MajorityVoteTransform, MultiplyTransform, RunPythonTransform, SamplerTransform, SequenceTransform
+from eureka_ml_insights.data_utils.transform import (
+    AddColumn,
+    ColumnRename,
+    CopyColumn,
+    MajorityVoteTransform,
+    MultiplyTransform,
+    RunPythonTransform,
+    SequenceTransform,
+)
 from eureka_ml_insights.metrics.ba_calendar_metrics import BACalendarMetric
 from eureka_ml_insights.metrics.reports import (
     AverageAggregator,
@@ -28,11 +34,12 @@ from ..configs.config import (
     EvalReportingConfig,
     InferenceConfig,
     MetricConfig,
+    ModelConfig,
     PipelineConfig,
     PromptProcessingConfig,
-    ModelConfig,
 )
 from ..configs.experiment_config import ExperimentConfig
+
 
 class BA_Calendar_PIPELINE(ExperimentConfig):
     """This class specifies the config for running any benchmark on any model"""
@@ -41,17 +48,21 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
         # data preprocessing
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
-            prompt_template_path=os.path.join(os.path.dirname(__file__), "../prompt_templates/ba_calendar_templates/calendar_scheduling_cot.jinja"),
+            prompt_template_path=os.path.join(
+                os.path.dirname(__file__), "../prompt_templates/ba_calendar_templates/calendar_scheduling_cot.jinja"
+            ),
             data_reader_config=DataSetConfig(
                 HFDataReader,
                 {
-                   "path": "microsoft/ba-calendar",
-                   "split": "test",
-                   "transform": SequenceTransform([
-                       ColumnRename(name_mapping={"task_prompt": "prompt"}),
-                       MultiplyTransform(n_repeats=1),
-                   ]),
-                }
+                    "path": "microsoft/ba-calendar",
+                    "split": "test",
+                    "transform": SequenceTransform(
+                        [
+                            ColumnRename(name_mapping={"task_prompt": "prompt"}),
+                            MultiplyTransform(n_repeats=1),
+                        ]
+                    ),
+                },
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
         )
@@ -104,7 +115,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                             "BACalendarMetric_no_weekends_programmatic_check",
                             "BACalendarMetric_time_restrictions_programmatic_check",
                             "BACalendarMetric_specific_times_programmatic_check",
-                            "BACalendarMetric_priority_programmatic_check"
+                            "BACalendarMetric_priority_programmatic_check",
                         ],
                         "filename_base": "BaCal_OverallMetrics_SeparateRuns",
                         "group_by": "data_repeat_id",
@@ -137,7 +148,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                             "BACalendarMetric_no_weekends_programmatic_check",
                             "BACalendarMetric_time_restrictions_programmatic_check",
                             "BACalendarMetric_specific_times_programmatic_check",
-                            "BACalendarMetric_priority_programmatic_check"
+                            "BACalendarMetric_priority_programmatic_check",
                         ],
                         "first_groupby": "data_point_id",
                         "filename_base": "BaCal_BestOfN_Aggregated",
@@ -202,7 +213,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                             "BACalendarMetric_no_weekends_programmatic_check",
                             "BACalendarMetric_time_restrictions_programmatic_check",
                             "BACalendarMetric_specific_times_programmatic_check",
-                            "BACalendarMetric_priority_programmatic_check"
+                            "BACalendarMetric_priority_programmatic_check",
                         ],
                         "filename_base": "BaCal_MajVote_OverallMetrics_Aggregated",
                         "group_by": "data_repeat_id",
@@ -220,11 +231,11 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                 self.evalreporting_comp,
                 self.bon_evalreporting_comp,
                 self.maj_vote_data_post_processing,
-                self.majvote_evalreporting_comp
+                self.majvote_evalreporting_comp,
             ],
             self.log_dir,
-        
         )
+
 
 class BA_Calendar_Parallel_PIPELINE(BA_Calendar_PIPELINE):
     """This class specifies the config for running BA Calendar benchmark 5 repeated times"""
@@ -234,5 +245,7 @@ class BA_Calendar_Parallel_PIPELINE(BA_Calendar_PIPELINE):
     ) -> PipelineConfig:
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         # data preprocessing
-        self.data_processing_comp.data_reader_config.init_args["transform"].transforms[-1] = MultiplyTransform(n_repeats=5)
+        self.data_processing_comp.data_reader_config.init_args["transform"].transforms[-1] = MultiplyTransform(
+            n_repeats=5
+        )
         return pipeline
