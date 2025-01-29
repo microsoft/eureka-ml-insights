@@ -199,8 +199,8 @@ class CountAggregator(Aggregator):
 class BiLevelAggregator(AverageAggregator):
     """
     This class aggregates the data in two levels. It first groups the data by the first_groupby column and
-    aggregates the data by taking the average of the column_names. It It then groups the result by the
-    second_groupby column and aggregates the it again by taking the mean and standard deviation of
+    aggregates the data by applying the agg_fn on the column_names. It It then groups the result by the
+    second_groupby column and aggregates again by taking the mean and standard deviation of
     the column_names.
     """
 
