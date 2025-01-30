@@ -17,8 +17,8 @@ class NPHardTSPMetric(Metric):
         Validates a TSP path and if valid, evaluates its length.
 
         Parameters:
-            path (list): The TSP path, a list of city indices.
-            cities (list): The list of all cities.
+            path (list of int): The TSP path, a list of city indices.
+            cities (list of int): The list of all cities.
             distance_matrix (list of lists, optional): Matrix representing distances between cities.
 
         Returns:
