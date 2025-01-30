@@ -10,4 +10,4 @@
 
 # python main.py --exp_config NPHARD_TSP_PIPELINE_multipleRuns --model_config TRAPI_GPT4O_2024_05_13_CONFIG --exp_logdir nphard_tsp_level_test
 
-python main.py --exp_config NPHARD_TSP_PIPELINE_multipleRuns --model_config TRAPI_O1_CONFIG --exp_logdir nphard_tsp_level_test
+python main.py --exp_config NPHARD_TSP_PIPELINE_MULTIPLE_RUNS --model_config TRAPI_O1_CONFIG --exp_logdir nphard_tsp_level_test
