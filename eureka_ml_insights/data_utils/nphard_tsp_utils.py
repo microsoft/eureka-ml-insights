@@ -46,8 +46,9 @@ def parse_path_from_model_output(model_output_string):
     if tour_string is None:
         return "0,0,0,0"
 
-    # Remove non-numeric characters except '->' and split into a list of integers
-    tour_string = re.sub(r"[^0-9->]", "", tour_string)
+    # Remove non-numeric characters except '->' and split into a list of integers    
+    parts = re.findall(r'\d+|->', tour_string)
+    tour_string = ''.join(parts)
     tour = list(map(int, tour_string.split("->")))
 
     return ",".join(map(str, tour))
