@@ -169,6 +169,7 @@ class ToxiGenTestModel:
         )
         return {"model_output": random.choice(potential_outputs), "is_valid": random.choice([True, False])}
 
+
 class TSPTestModel:
     def __init__(self, model_name="generic_test_model"):
         self.name = model_name
@@ -178,6 +179,7 @@ class TSPTestModel:
             "model_output": "<final_answer>{'Path': '0->1->3->2->0', 'TotalDistance': '85'}</final_answer>",
             "is_valid": random.choice([True]),
         }
+
 
 class DetectionTestModel:
     def __init__(self):
