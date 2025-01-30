@@ -23,10 +23,8 @@ from eureka_ml_insights.data_utils import (
 from eureka_ml_insights.metrics import (
     CountAggregator, 
     ExactMatch, 
-    BiLevelMaxAggregator, 
-    BiLevelCountAggregator,
-    BiLevelAverageAggregator,
-    BiLevelSumAggregator
+    BiLevelAggregator, 
+    BiLevelCountAggregator
 )
 
 from eureka_ml_insights.configs import(
@@ -113,17 +111,6 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                                 column_name_src="model_output",
                                 column_name_dst="raw_model_output",
                             ),
-                            # these columns are currently copied so that they can be used in the bilevel aggregators
-                            # if they are not copied, then the bilevel aggregator used in sub category reports (e.g. subdomain)
-                            # will find the column name ambiguous
-                            CopyColumn(
-                                column_name_src="Subdomain",
-                                column_name_dst="Subdomain_copy",
-                            ),
-                            CopyColumn(
-                                column_name_src="High-level domain",
-                                column_name_dst="High-level domain_copy",
-                            ),
                             RegexTransform(
                                 columns="model_output",
                                 prompt_pattern=r"Final Answer: (\w)(?=\s|\W|$)",
@@ -171,7 +158,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                 AggregatorConfig(BiLevelCountAggregator, 
                     {
                         "column_names": ["ExactMatch_result"], 
-                        "first_groupby": ["data_repeat_id",    "Subdomain_copy"], 
+                        "first_groupby": ["data_repeat_id",    "Subdomain"], 
                         "second_groupby": "Subdomain",
                         "filename_base": "ExactMatch_GroupBy_Subdomain_AllRuns", 
                         "normalize": True
@@ -179,31 +166,34 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                 AggregatorConfig(BiLevelCountAggregator, 
                     {
                         "column_names": ["ExactMatch_result"], 
-                        "first_groupby": ["data_repeat_id", "High-level domain_copy"], 
+                        "first_groupby": ["data_repeat_id", "High-level domain"], 
                         "second_groupby": "High-level domain",
                         "filename_base": "ExactMatch_GroupBy_High-level_domain_AllRuns", 
                         "normalize": True
                     }),
                 # three similar reports for average completion usage
-                AggregatorConfig(BiLevelAverageAggregator, 
+                AggregatorConfig(BiLevelAggregator, 
                     {
                         "column_names": ["usage_completion"], 
                         "first_groupby": "data_point_id", 
                         "filename_base": "UsageCompletion_AllRuns",
+                        "agg_fn": "mean"
                     }),
-                AggregatorConfig(BiLevelAverageAggregator, 
+                AggregatorConfig(BiLevelAggregator, 
                     {
                         "column_names": ["usage_completion"], 
-                        "first_groupby": ["data_point_id", "Subdomain_copy"], 
+                        "first_groupby": ["data_point_id", "Subdomain"], 
                         "second_groupby": "Subdomain",
                         "filename_base": "UsageCompletion_GroupBy_Subdomain_AllRuns", 
+                        "agg_fn": "mean"
                     }),
-                AggregatorConfig(BiLevelAverageAggregator, 
+                AggregatorConfig(BiLevelAggregator, 
                     {
                         "column_names": ["usage_completion"], 
-                        "first_groupby": ["data_point_id", "High-level domain_copy"], 
+                        "first_groupby": ["data_point_id", "High-level domain"], 
                         "second_groupby": "High-level domain",
-                        "filename_base": "UsageCompletion_GroupBy_High-level_domain_AllRuns", 
+                        "filename_base": "UsageCompletion_GroupBy_High-level_domain_AllRuns",
+                        "agg_fn": "mean" 
                     }),
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
@@ -241,60 +231,56 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                 DataReader,
                 {
                     "path": os.path.join(self.posteval_data_post_processing_comp.output_dir, "transformed_data.jsonl"),
-                    "format": ".jsonl",
-                    "transform": SequenceTransform(
-                        [
-                            CopyColumn(
-                                column_name_src="data_point_id",
-                                column_name_dst="data_point_id_copy",
-                            ),
-                        ]
-                    )
+                    "format": ".jsonl"
                 },
             ),
             aggregator_configs=[
                 # the first three reports aggregate results by data_point_id and take the best out of N
                 AggregatorConfig(
-                    BiLevelMaxAggregator,
+                    BiLevelAggregator,
                     {
                         "column_names": [
                             "ExactMatch_result_numeric"
                         ],
                         "first_groupby": "data_point_id",
                         "filename_base": "ExactMatch_BestOfN",
+                        "agg_fn": "max"
                     },
                 ),
                 AggregatorConfig(
-                    BiLevelMaxAggregator,
+                    BiLevelAggregator,
                     {
                         "column_names": [
                             "ExactMatch_result_numeric"
                         ],
-                        "first_groupby": "data_point_id_copy", 
+                        "first_groupby": "data_point_id", 
                         "second_groupby": "Subdomain",
                         "filename_base": "ExactMatch_BestOfN_GroupBy_Subdomain",
+                        "agg_fn": "max"
                     },
                 ),
                 AggregatorConfig(
-                    BiLevelMaxAggregator,
+                    BiLevelAggregator,
                     {
                         "column_names": [
                             "ExactMatch_result_numeric"
                         ],
-                        "first_groupby": "data_point_id_copy", 
+                        "first_groupby": "data_point_id", 
                         "second_groupby": "High-level domain",
                         "filename_base": "ExactMatch_BestOfN_GroupBy_High-level_domain",
+                        "agg_fn": "max"
                     },
                 ),
                 # aggregates results by data_point_id and takes the sum of usage for completion tokens
                 AggregatorConfig(
-                    BiLevelSumAggregator,
+                    BiLevelAggregator,
                     {
                         "column_names": [
                             "usage_completion"
                         ],
                         "first_groupby": "data_point_id",
                         "filename_base": "UsageCompletion_BestOfN",
+                         "agg_fn": "sum"
                     },
                 ),
             ],
