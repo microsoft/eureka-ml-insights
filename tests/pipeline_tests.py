@@ -27,6 +27,7 @@ from eureka_ml_insights.user_configs import (
     MAZE_PIPELINE,
     MAZE_TEXTONLY_PIPELINE,
     MMMU_BASELINE_PIPELINE,
+    NPHARD_TSP_PIPELINE_MULTIPLE_RUNS,
     OBJECT_DETECTION_SINGLE_PIPELINE,
     OBJECT_RECOGNITION_SINGLE_PIPELINE,
     SPATIAL_GRID_PIPELINE,
@@ -38,7 +39,6 @@ from eureka_ml_insights.user_configs import (
     Drop_Experiment_Pipeline,
     GPQA_Experiment_Pipeline,
     IFEval_PIPELINE,
-    NPHARD_TSP_PIPELINE_MULTIPLE_RUNS,
     ToxiGen_Discriminative_PIPELINE,
     ToxiGen_Generative_PIPELINE,
 )
