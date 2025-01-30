@@ -29,6 +29,7 @@ from .spatial_and_layout_metrics import (
     ObjectRecognitionMetric,
     SpatialAndLayoutReasoningMetric,
 )
+from .nphard_tsp_metrics import NPHardTSPMetric
 
 __all__ = [
     Metric,
@@ -56,4 +57,5 @@ __all__ = [
     MMMUMetric,
     MaxTokenF1ScoreMetric,
     ValueFilteredAggregator,
+    NPHardTSPMetric,
 ]

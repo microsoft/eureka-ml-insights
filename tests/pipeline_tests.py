@@ -42,6 +42,7 @@ from eureka_ml_insights.user_configs import (
     ToxiGen_Discriminative_PIPELINE,
     ToxiGen_Generative_PIPELINE,
     BA_Calendar_PIPELINE,
+    NPHARD_TSP_PIPELINE_MULTIPLE_RUNS,
 )
 from tests.test_utils import (
     DetectionTestModel,
@@ -56,6 +57,7 @@ from tests.test_utils import (
     TestKitabMetric,
     TestMMDataLoader,
     ToxiGenTestModel,
+    TSPTestModel,
 )
 
 N_ITER = 2
@@ -338,6 +340,20 @@ class TEST_AIME_PIPELINE(AIME_PIPELINE):
         return config
 
 
+class TEST_NPHARD_TSP_PIPELINE(NPHARD_TSP_PIPELINE_MULTIPLE_RUNS):
+    # Test config the spatial reasoning benchmark with the TestDataLoader
+    # with small sample data and a test model
+    def configure_pipeline(self):
+        model_config = ModelConfig(TSPTestModel, {})
+        config = super().configure_pipeline(model_config=model_config)
+        data_processing_comp = config.component_configs[0]
+        data_processing_comp.data_reader_config.class_name = TestHFDataReader
+        inference_comp = config.component_configs[1]
+        inference_comp.data_loader_config.class_name = TestMMDataLoader
+        inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
+        return config
+
+
 class PipelineTest:
     def setUp(self) -> None:
         self.conf = self.get_config()
@@ -534,6 +550,10 @@ class AIME_PipelineTest(PipelineTest, unittest.TestCase):
         super().test_outputs_exist()
         self.verify_n_aggregators(self.conf.component_configs[-3])
 
+
+class NPHARD_TSP_PipelineTest(PipelineTest, unittest.TestCase):
+    def get_config(self):
+        return TEST_NPHARD_TSP_PIPELINE().pipeline_config
 
 
 if __name__ == "__main__":
