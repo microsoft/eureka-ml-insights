@@ -38,7 +38,7 @@ from eureka_ml_insights.user_configs import (
     Drop_Experiment_Pipeline,
     GPQA_Experiment_Pipeline,
     IFEval_PIPELINE,
-    NPHARD_TSP_PIPELINE_multipleRuns,
+    NPHARD_TSP_PIPELINE_MULTIPLE_RUNS,
     ToxiGen_Discriminative_PIPELINE,
     ToxiGen_Generative_PIPELINE,
 )
@@ -324,7 +324,7 @@ class TEST_AIME_PIPELINE(AIME_PIPELINE):
         return config
 
 
-class TEST_NPHARD_TSP_PIPELINE(NPHARD_TSP_PIPELINE_multipleRuns):
+class TEST_NPHARD_TSP_PIPELINE(NPHARD_TSP_PIPELINE_MULTIPLE_RUNS):
     # Test config the spatial reasoning benchmark with the TestDataLoader
     # with small sample data and a test model
     def configure_pipeline(self):
