@@ -17,6 +17,7 @@ from eureka_ml_insights.core import DataProcessing, Inference, PromptProcessing
 from eureka_ml_insights.core.eval_reporting import EvalReporting
 from eureka_ml_insights.data_utils import (
     AddColumn,
+    AddColumnAndData,
     ColumnRename,
     CopyColumn,
     DataReader,
@@ -29,7 +30,7 @@ from eureka_ml_insights.data_utils import (
 )
 from eureka_ml_insights.data_utils.aime_utils import AIMEExtractAnswer
 from eureka_ml_insights.data_utils.data import DataLoader
-from eureka_ml_insights.metrics.metrics_base import ExactMatch
+from eureka_ml_insights.metrics.metrics_base import ExactMatch, MetricBasedVerifier
 from eureka_ml_insights.metrics.reports import (
     BiLevelCountAggregator,
     CountAggregator,
@@ -47,8 +48,8 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
 
         # this call to super will configure the initial prompt processing and final eval reporting comps that can be reused.
         super().configure_pipeline(model_config, resume_from, **kwargs)
-    
-        component_configs = [self.prompt_processing_comp]
+        self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(SamplerTransform(random_seed=42, sample_count=2))
+        component_configs = [self.data_processing_comp]
 
         for i in range(1, 5):
             # Student inference component
@@ -57,7 +58,7 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                 model_config=model_config,
                 data_loader_config=DataSetConfig(
                     DataLoader,
-                    {"path": os.path.join(self.prompt_processing_comp.output_dir, "transformed_data.jsonl")},
+                    {"path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl")},
                 ),
                 output_dir=os.path.join(self.log_dir, f"student_inference_result_{i}"),
                 resume_from=resume_from,
@@ -79,14 +80,14 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                                 # extract and verify the student answer
                                 AIMEExtractAnswer(f"model_output", f"student_extracted_answer_{i}"),
                                 MetricBasedVerifier(ExactMatch, f"student_extracted_answer_{i}"),
+                                # drop rows where verification_result is True
+                                RunPythonTransform(python_code="df = df[df['verification_result'] == 'correct']"),
                                 ColumnRename(
                                     name_mapping={
                                         "verification_result": f"verification_result_{i}",
                                         "model_output": f"student_output_{i}",
                                     }
                                 ),
-                                # drop rows where verification_result is True
-                                RunPythonTransform(python_code="data = data[data['verification_result'] == 'correct']"),
                             ]
                         ),
                     },
