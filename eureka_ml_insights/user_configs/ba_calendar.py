@@ -16,7 +16,6 @@ from eureka_ml_insights.metrics.ba_calendar_metrics import BACalendarMetric
 from eureka_ml_insights.metrics.reports import (
     AverageAggregator,
     BiLevelCountAggregator,
-    BiLevelMaxAggregator,
     BiLevelAggregator
 )
 
@@ -128,7 +127,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                 ),
                 # the next three reports take the average and std for all repeats
                 # the resulting numbers are the average and std of N pass@1 scores, where N is number of repeats
-                AggregatorConfig(BiLevelCountAggregator, 
+                AggregatorConfig(BiLevelAggregator, 
                     {
                         "column_names": [
                             "BACalendarMetric_all_correct",
@@ -143,7 +142,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                         ], 
                         "first_groupby": "data_repeat_id", 
                         "filename_base": "BaCal_OverallMetrics_Avg",
-                        "normalize": True
+                        "agg_fn": "mean"
                     }),
                     # three similar reports for average completion usage
                 AggregatorConfig(BiLevelAggregator, 
@@ -152,22 +151,6 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                         "first_groupby": "data_point_id", 
                         "filename_base": "UsageCompletion_AllRuns",
                         "agg_fn": "mean"
-                    }),
-                AggregatorConfig(BiLevelAggregator, 
-                    {
-                        "column_names": ["usage_completion"], 
-                        "first_groupby": ["data_point_id", "Subdomain"], 
-                        "second_groupby": "Subdomain",
-                        "filename_base": "UsageCompletion_GroupBy_Subdomain_AllRuns", 
-                        "agg_fn": "mean"
-                    }),
-                AggregatorConfig(BiLevelAggregator, 
-                    {
-                        "column_names": ["usage_completion"], 
-                        "first_groupby": ["data_point_id", "High-level domain"], 
-                        "second_groupby": "High-level domain",
-                        "filename_base": "UsageCompletion_GroupBy_High-level_domain_AllRuns",
-                        "agg_fn": "mean" 
                     }),
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
