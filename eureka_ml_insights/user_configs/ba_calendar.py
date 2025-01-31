@@ -14,10 +14,11 @@ from eureka_ml_insights.data_utils.data import (
     DataReader,
     HFDataReader,
 )
-from eureka_ml_insights.data_utils.transform import AddColumn, ColumnRename, CopyColumn, MajorityVoteTransform, MultiplyTransform, RunPythonTransform, SamplerTransform, SequenceTransform
+from eureka_ml_insights.data_utils.transform import AddColumn, ColumnRename, CopyColumn, ExtractUsageTransform, MajorityVoteTransform, MultiplyTransform, RunPythonTransform, SamplerTransform, SequenceTransform
 from eureka_ml_insights.metrics.ba_calendar_metrics import BACalendarMetric
 from eureka_ml_insights.metrics.reports import (
     AverageAggregator,
+    BiLevelCountAggregator,
     BiLevelMaxAggregator,
 )
 
@@ -80,6 +81,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
+                            ExtractUsageTransform(model_config),
                             ColumnRename(
                                 name_mapping={
                                     "model_output": "raw_output",
@@ -111,6 +113,49 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                         "group_by": "data_repeat_id",
                     },
                 ),
+                # the next three reports take the average and std for all repeats
+                # the resulting numbers are the average and std of N pass@1 scores, where N is number of repeats
+                AggregatorConfig(BiLevelCountAggregator, 
+                    {
+                        "column_names": [
+                            "BACalendarMetric_all_correct",
+                            "BACalendarMetric_fraction_passed",
+                            "BACalendarMetric_availability_programmatic_check",
+                            "BACalendarMetric_meeting_duration_programmatic_check",
+                            "BACalendarMetric_buffer_time_programmatic_check",
+                            "BACalendarMetric_no_weekends_programmatic_check",
+                            "BACalendarMetric_time_restrictions_programmatic_check",
+                            "BACalendarMetric_specific_times_programmatic_check",
+                            "BACalendarMetric_priority_programmatic_check"
+                        ], 
+                        "first_groupby": "data_repeat_id", 
+                        "filename_base": "BaCal_OverallMetrics_Avg",
+                        "normalize": True
+                    }),
+                    # three similar reports for average completion usage
+                AggregatorConfig(BiLevelAggregator, 
+                    {
+                        "column_names": ["usage_completion"], 
+                        "first_groupby": "data_point_id", 
+                        "filename_base": "UsageCompletion_AllRuns",
+                        "agg_fn": "mean"
+                    }),
+                AggregatorConfig(BiLevelAggregator, 
+                    {
+                        "column_names": ["usage_completion"], 
+                        "first_groupby": ["data_point_id", "Subdomain"], 
+                        "second_groupby": "Subdomain",
+                        "filename_base": "UsageCompletion_GroupBy_Subdomain_AllRuns", 
+                        "agg_fn": "mean"
+                    }),
+                AggregatorConfig(BiLevelAggregator, 
+                    {
+                        "column_names": ["usage_completion"], 
+                        "first_groupby": ["data_point_id", "High-level domain"], 
+                        "second_groupby": "High-level domain",
+                        "filename_base": "UsageCompletion_GroupBy_High-level_domain_AllRuns",
+                        "agg_fn": "mean" 
+                    }),
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
         )
@@ -143,6 +188,18 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                         "first_groupby": "data_point_id",
                         "filename_base": "BaCal_BestOfN_Aggregated",
                         "normalize": True,
+                    },
+                ),
+                # aggregates results by data_point_id and takes the sum of usage for completion tokens
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "usage_completion"
+                        ],
+                        "first_groupby": "data_point_id",
+                        "filename_base": "UsageCompletion_BestOfN",
+                         "agg_fn": "sum"
                     },
                 ),
             ],

@@ -443,7 +443,7 @@ class DirectOpenAIClientMixIn(KeyBasedAuthMixIn):
         from openai import OpenAI
 
         return OpenAI(
-            api_key=self.api_key,
+           api_key=self.api_key,
         )
 
     def handle_request_error(self, e):

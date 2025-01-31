@@ -5,6 +5,7 @@
 import ast
 import json
 import re
+import math
 import numpy as np
 from datetime import datetime, timedelta
 
@@ -104,6 +105,7 @@ class BACalendarMetric(CompositeMetric):
                 passed_constraints.append(value)
         result['all_correct'] = all_correct
         result['fraction_passed'] = np.mean(passed_constraints)
+        result.update(self.compute_constrainedness_programmatic(instance))
         return result
 
     def is_formatted(self, solution):
@@ -295,3 +297,52 @@ class BACalendarMetric(CompositeMetric):
         else:
             result = 1
         return {'specific_times_programmatic_check': result}
+
+    def compute_constrainedness_programmatic(self, instance):
+        params = instance['params']
+        constraints = instance['constraints']
+        metadata = instance['metadata']
+        if not instance['constraints']['buffer_time_before_and_after_meeting']:
+            buffer_time_before_and_after_meeting = 0
+        else:
+            buffer_time_before_and_after_meeting = instance['constraints']['buffer_time_before_and_after_meeting']
+        total_slots = 0
+        feasible_slots = 0       
+        for day in params['days_of_week']:
+            common_time_slots = None
+            union_time_slots = None
+            availability = json.loads(metadata['availability'].replace("'", '"'))
+            for participant, schedule in availability.items():
+                if day in schedule:
+                    participant_time_slots = []
+                    participant_time_slots_unconstrained = []
+                    for time_slot in schedule[day]:
+                        start_time, end_time = parse_time_block(time_slot)
+                        time_slots = generate_time_slots(start_time, end_time, params['granularity'])
+                        time_slots = filter_slots_by_duration(time_slots, constraints['meeting_duration'])
+                        participant_time_slots_unconstrained.extend(time_slots)
+                        time_slots = generate_time_slots(start_time, end_time, params['granularity'])
+                        time_slots = filter_slots_by_duration(time_slots, constraints['meeting_duration'] + buffer_time_before_and_after_meeting*2)
+                        time_slots = filter_slots_by_constraints(time_slots, constraints, day=day)
+                        participant_time_slots.extend(time_slots)
+                    if common_time_slots is None:
+                        common_time_slots = set(participant_time_slots)
+                    else:
+                        common_time_slots = common_time_slots.intersection(participant_time_slots)
+                    if union_time_slots is None:
+                        union_time_slots = set(participant_time_slots_unconstrained)
+                    else:
+                        union_time_slots = union_time_slots.union(participant_time_slots_unconstrained)
+            if common_time_slots:
+                feasible_slots +=len(common_time_slots)
+            if union_time_slots:
+                total_slots+=len(union_time_slots)
+
+        # Calculate constrainedness ratio
+        if total_slots > 0:
+            constrainedness_ratio = 1 - (feasible_slots / total_slots)
+        else:
+            constrainedness_ratio = 1
+
+        # Add test result
+        return {'constrainedness': constrainedness_ratio, 'constrainedness_bucket': math.floor(constrainedness_ratio*10)}
