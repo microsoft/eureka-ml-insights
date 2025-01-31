@@ -62,11 +62,12 @@ class DataLoader:
 
     def prepare_model_input(self, row):
         query_text = row["prompt"]
-        model_inputs = (query_text,)
-        return row, model_inputs
+        model_args = (query_text,)
+        model_kwargs = {}
+        return row, model_args, model_kwargs
 
     def get_sample_model_input(self):
-        """Get a sample data row and model_inputs from the jsonlines reader."""
+        """Get a sample data row and model_args from the jsonlines reader."""
         row = next(self.reader.iter(skip_empty=True, skip_invalid=True))
         return self.prepare_model_input(row)
 
@@ -82,12 +83,14 @@ class MMDataLoader(DataLoader):
         load_images: bool = True,
         image_column_names: List[str] = None,
         image_column_search_regex: str = "image",
+        misc_columns: List[str] = None,
     ):
         super().__init__(path, total_lines)
         self.mm_data_path_prefix = mm_data_path_prefix
         self.load_images = load_images
         self.image_column_names = image_column_names
         self.image_column_search_regex = image_column_search_regex
+        self.misc_columns = misc_columns
         """
         Initializes an MMDataLoader.
         args:
@@ -97,12 +100,13 @@ class MMDataLoader(DataLoader):
             load_images: optional bool, specify if images should be loaded.
             image_column_names: optional List of str, names of columns that have images in them.
             image_column_search_regex: optional Regex str, to search for which columns have images in them.
+            misc_columns: optional List of str, names of other columns from the data to include in the model inputs.
         """
 
     def prepare_model_input(self, row):
         # Given a row from the jsonl file, prepare the data for the model.
         query_text = row["prompt"]
-        model_inputs = (query_text,)
+        model_args = (query_text,)
 
         # if images are present load them
         if self.load_images:
@@ -117,8 +121,12 @@ class MMDataLoader(DataLoader):
             if image_column_names:
                 images = self._gather_image_file_names(row, image_column_names)
                 query_images = self._load_images(images)
-                model_inputs = (query_text, query_images)
-        return row, model_inputs
+                model_args = (query_text, query_images)
+        model_kwargs = {}
+        if self.misc_columns:
+            for column in self.misc_columns:
+                model_kwargs[column] = row[column]
+        return row, model_args, model_kwargs
 
     def _search_for_image_columns(self, data_row) -> list:
         """
@@ -237,6 +245,7 @@ class AzureMMDataLoader(MMDataLoader):
         total_lines=None,
         image_column_names=None,
         image_column_search_regex="image",
+        misc_columns=None,
     ):
         """
         Initializes an AzureMMDataLoader.
@@ -247,12 +256,14 @@ class AzureMMDataLoader(MMDataLoader):
             total_lines: option int, the number of lines of the dataset file.
             image_column_names: optional List of str, names of columns that have images in them.
             image_column_search_regex: optional Regex str, to search for which columns have images in them.
+            misc_columns: optional List of str, names of other columns from the data to include in the model inputs.
         """
         super().__init__(
             path,
             total_lines,
             image_column_names=image_column_names,
             image_column_search_regex=image_column_search_regex,
+            misc_columns=misc_columns,
         )
         self.logger = AzureStorageLogger().get_logger()
         self.account_url = account_url
@@ -289,7 +300,7 @@ class JsonLinesWriter:
 
 class JsonReader(DataReaderBase):
     """
-    This is a DataReader that loads a json or lsonl data file from a local path.
+    This is a DataReader that loads a json or jsonl data file from a local path.
     """
 
     def __init__(self, path):
@@ -449,7 +460,7 @@ class DataReader:
             df = pd.read_csv(self.path, **self.kwargs)
         elif self.format == ".jsonl":
             log.info(f"Loading JSONL Data From {self.path}.")
-            df = pd.read_json(self.path, lines=True, **self.kwargs)
+            df = pd.read_json(self.path, lines=True, convert_dates=False, convert_axes=False, **self.kwargs)
         else:
             log.info(f"Data format is: {self.format}, default to read as csv.")
             df = pd.read_csv(self.path, **self.kwargs)
