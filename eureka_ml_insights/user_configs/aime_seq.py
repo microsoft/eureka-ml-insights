@@ -1,40 +1,31 @@
 import os
 from typing import Any
-from .aime import AIME_PIPELINE
+
 from eureka_ml_insights.configs import (
-    AggregatorConfig,
     DataProcessingConfig,
     DataSetConfig,
-    EvalReportingConfig,
-    ExperimentConfig,
     InferenceConfig,
-    MetricConfig,
     ModelConfig,
     PipelineConfig,
     PromptProcessingConfig,
 )
 from eureka_ml_insights.core import DataProcessing, Inference, PromptProcessing
-from eureka_ml_insights.core.eval_reporting import EvalReporting
 from eureka_ml_insights.data_utils import (
-    AddColumn,
     AddColumnAndData,
     ColumnRename,
-    CopyColumn,
     DataReader,
-    HFDataReader,
-    MajorityVoteTransform,
-    MultiplyTransform,
     RunPythonTransform,
     SamplerTransform,
     SequenceTransform,
 )
 from eureka_ml_insights.data_utils.aime_utils import AIMEExtractAnswer
 from eureka_ml_insights.data_utils.data import DataLoader
-from eureka_ml_insights.metrics.metrics_base import ExactMatch, MetricBasedVerifier
-from eureka_ml_insights.metrics.reports import (
-    BiLevelCountAggregator,
-    CountAggregator,
+from eureka_ml_insights.metrics.metrics_base import (
+    ExactMatch,
+    MetricBasedVerifier,
 )
+
+from .aime import AIME_PIPELINE
 
 # from eureka_ml_insights.data_utils.transform import MajorityVoteTransform
 
@@ -48,7 +39,9 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
 
         # this call to super will configure the initial prompt processing and final eval reporting comps that can be reused.
         super().configure_pipeline(model_config, resume_from, **kwargs)
-        self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(SamplerTransform(random_seed=42, sample_count=2))
+        self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
+            SamplerTransform(random_seed=42, sample_count=2)
+        )
         component_configs = [self.data_processing_comp]
 
         for i in range(1, 5):
@@ -65,7 +58,6 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                 chat_mode=True,
             )
             component_configs.append(self.student_inference_comp)
-
 
             # Metric based verification and filtering out the correct answers
             self.verificaiton_comp = DataProcessingConfig(
@@ -96,7 +88,6 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
             )
             component_configs.append(self.verificaiton_comp)
 
-
             # Create a new prompt with ground truth hinting
             self.hint_processing_comp = PromptProcessingConfig(
                 component_type=PromptProcessing,
@@ -104,8 +95,8 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                     DataReader,
                     {
                         "path": os.path.join(self.verificaiton_comp.output_dir, "transformed_data.jsonl"),
-                        "format": ".jsonl",   
-                    }
+                        "format": ".jsonl",
+                    },
                 ),
                 prompt_template_path=os.path.join(
                     os.path.dirname(__file__), "../prompt_templates/aime_templates/hint_creation.jinja"
@@ -113,7 +104,6 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                 output_dir=os.path.join(self.log_dir, f"hint_processing_output_{i}"),
             )
             component_configs.append(self.hint_processing_comp)
-
 
             # Inference component for the teacher model to provide hints
             self.teacher_inference_comp = InferenceConfig(
@@ -129,7 +119,6 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                 chat_mode=True,
             )
             component_configs.append(self.teacher_inference_comp)
-
 
             # Prompt processing for the stundent to try again
             self.hint_prompt_processing = PromptProcessingConfig(
@@ -147,13 +136,14 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                         ),
                     },
                 ),
-                prompt_template_path=os.path.join(os.path.dirname(__file__), "../prompt_templates/aime_templates/prompt_w_hint.jinja"),
+                prompt_template_path=os.path.join(
+                    os.path.dirname(__file__), "../prompt_templates/aime_templates/prompt_w_hint.jinja"
+                ),
                 output_dir=os.path.join(self.log_dir, f"teacher_hint_prompt_{i}"),
             )
             component_configs.append(self.hint_prompt_processing)
 
         component_configs.append(self.evalreporting_comp)
-
 
         # Configure the pipeline
         return PipelineConfig(
