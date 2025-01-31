@@ -52,7 +52,7 @@ dependencies:
   - cuda-nvtx=11.8.86=0
   - cuda-runtime=11.8.0=0
   - dataclasses=0.8=pyhc8e2a94_3
-  - datasets=2.19.0=py_0
+  - datasets=3.2.0=py_0
   - debugpy=1.6.7=py311h6a678d5_0
   - decorator=5.1.1=pyhd8ed1ab_0
   - dill=0.3.6=py311h06a4308_0
