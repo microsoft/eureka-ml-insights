@@ -45,34 +45,50 @@ class CompositeMetric(Metric):
 
 class ClassicMetric(Metric):
     """This class is a base class for metrics that require ground truths and predictions."""
+    def __init__(self, model_output_col: str = "model_output"):
+        super().__init__()
+        self.model_output_col = model_output_col
 
     def validate_data(self, data):
         """This method checks if the data has the required fields."""
         super().validate_data(data)
-        assert "model_output" in data.columns, "Data does not have 'model_output' field."
         assert "ground_truth" in data.columns, "Data does not have 'ground_truth' field."
+        assert self.model_output_col in data.columns, f"Data does not have '{self.model_output_col}' field."
         return True
 
     def evaluate(self, data):
         self.validate_data(data)
         data[self.__class__.__name__ + "_result"] = data.apply(
-            lambda x: self.__evaluate__(x["model_output"], x["ground_truth"], x["is_valid"]), axis=1
+            lambda x: self.__evaluate__(x[self.model_output_col], x["ground_truth"], x["is_valid"]), axis=1
         )
         return data
 
+class MetricBasedVerifier:
+    def __init__(self, metric_class, model_output_col: str = "model_output"):
+        self.model_output_col = model_output_col
+        self.metric_class = metric_class
 
+    def transform(self, data):
+        data = self.metric_class(model_output_col=self.model_output_col).evaluate(data)
+        # rename the result column to "verification_reuslt"
+        data.rename(columns={self.metric_class.__name__ + "_result": "verification_result"}, inplace=True)
+        return data
+
+        
 class DetectionMetric(Metric):
     """
     This class is for the detection metric, where access is needed to the image
     and ground truth is stored in an external file.
     """
+    def __init__(self, model_output_col: str = "model_output"):
+        super().__init__()
+        self.model_output_col = model_output_col
 
     def validate_data(self, data):
         """This method checks if the data has the required fields."""
-
+        super().validate_data(data)
         assert "id" in data.columns, "Data does not have 'id' field."
-        assert "model_output" in data.columns, "Data does not have 'model_output' field."
-        assert "is_valid" in data.columns, "Data does not have 'is_valid' field."
+        assert self.model_output_col in data.columns, f"Data does not have '{self.model_output_col}' field."
         return True
 
     def evaluate(self, data):
@@ -81,7 +97,7 @@ class DetectionMetric(Metric):
         tqdm.pandas()
 
         data[self.__class__.__name__ + "_result"] = data.progress_apply(
-            lambda x: self.__evaluate__(x["id"], x["model_output"], x["is_valid"]), axis=1
+            lambda x: self.__evaluate__(x["id"], x[self.model_output_col], x["is_valid"]), axis=1
         )
         return data
 
@@ -98,7 +114,7 @@ class MultipleChoiceMetric(ClassicMetric):
     def evaluate(self, data):
         self.validate_data(data)
         data[self.__class__.__name__ + "_result"] = data.apply(
-            lambda x: self.__evaluate__(x["model_output"], x["ground_truth"], x["target_options"], x["is_valid"]),
+            lambda x: self.__evaluate__(x[self.model_output_col], x["ground_truth"], x["target_options"], x["is_valid"]),
             axis=1,
         )
         return data
@@ -117,7 +133,7 @@ class MixedQuestionTypeMetric(MultipleChoiceMetric):
         self.validate_data(data)
         data[self.__class__.__name__ + "_result"] = data.apply(
             lambda x: self.__evaluate__(
-                x["model_output"], x["ground_truth"], x["question_type"], x["target_options"], x["is_valid"]
+                x[self.model_output_col], x["ground_truth"], x["question_type"], x["target_options"], x["is_valid"]
             ),
             axis=1,
         )
