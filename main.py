@@ -4,8 +4,7 @@ import argparse
 import logging
 
 from eureka_ml_insights import user_configs as configs
-# from eureka_ml_insights.configs import model_configs
-from eureka_ml_insights.configs import pvt_model_configs as model_configs
+from eureka_ml_insights.configs import model_configs
 from eureka_ml_insights.core import Pipeline
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
