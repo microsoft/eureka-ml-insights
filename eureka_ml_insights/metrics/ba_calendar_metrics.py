@@ -344,5 +344,8 @@ class BACalendarMetric(CompositeMetric):
         else:
             constrainedness_ratio = 1
 
+        # Bucket the constrainedness ratio into intervals of 0.2
+        constrainedness_bucket = round(math.floor(constrainedness_ratio / 0.1) * 0.1, 4)
+
         # Add test result
-        return {'constrainedness': constrainedness_ratio, 'constrainedness_bucket': math.floor(constrainedness_ratio*10)}
+        return {'constrainedness': constrainedness_ratio, 'constrainedness_bucket': constrainedness_bucket}

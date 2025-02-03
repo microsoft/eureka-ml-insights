@@ -16,11 +16,14 @@ from eureka_ml_insights.metrics.ba_calendar_metrics import BACalendarMetric
 from eureka_ml_insights.metrics.reports import (
     AverageAggregator,
     BiLevelCountAggregator,
-    BiLevelAggregator
+    BiLevelAggregator,
+    CountAggregator,
+    CustomAggregator
 )
 
 from eureka_ml_insights.data_utils.transform import (
     AddColumn,
+    AddColumnAndData,
     ColumnRename,
     CopyColumn,
     ExtractUsageTransform,
@@ -49,7 +52,7 @@ from ..configs.experiment_config import ExperimentConfig
 class BA_Calendar_PIPELINE(ExperimentConfig):
     """This class specifies the config for running any benchmark on any model"""
 
-    def configure_pipeline(self, model_config=None, resume_from=None, **kwargs) -> PipelineConfig:
+    def configure_pipeline(self, model_config=None, resume_from=None, resume_logdir=None, **kwargs) -> PipelineConfig:
         # data preprocessing
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
@@ -83,6 +86,9 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
             resume_from=resume_from,
             max_concurrent=1,
         )
+
+        if resume_logdir:
+            self.log_dir = resume_logdir
 
         # Configure the evaluation and reporting component for evaluation and dataset level aggregation
         self.evalreporting_comp = EvalReportingConfig(
@@ -162,7 +168,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                         "second_groupby": "BACalendarMetric_constrainedness_bucket",
                         "filename_base": "OverallMetrics_Avg_by_constrainedness",
                         "agg_fn": "mean"
-                    }),
+                    }),                
                 # reports for average completion usage
                 AggregatorConfig(BiLevelAggregator, 
                     {
@@ -279,6 +285,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                     "transform": SequenceTransform(
                         [
                             RunPythonTransform("df = df[df['data_repeat_id'] == 'repeat_0']"),
+                            AddColumnAndData("count", 1)
                         ]
                     ),
                 },
@@ -320,6 +327,14 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                         "group_by": "BACalendarMetric_constrainedness_bucket",
                     },
                 ),
+                AggregatorConfig(CountAggregator, 
+                    {
+                        "column_names": [
+                            "count",
+                        ], 
+                        "group_by": "BACalendarMetric_constrainedness_bucket", 
+                        "filename_base": "OverallMetrics_Avg_by_constrainedness",
+                    }),
             ],
             output_dir=os.path.join(self.log_dir, "majvote_eval_report"),
         )
@@ -357,10 +372,13 @@ class BA_Calendar_RunEvals_PIPELINE(BA_Calendar_PIPELINE):
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, resume_logdir: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
-        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
-        self.log_dir = resume_logdir
+        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from, resume_logdir=resume_logdir)
         self.evalreporting_comp.data_reader_config.init_args["path"] = resume_from
         # self.data_processing_comp.data_reader_config.init_args["transform"].transforms.insert(0, SamplerTransform(random_seed=5, sample_count=100))
+        # self.maj_vote_data_post_processing.data_reader_config.init_args["transform"].transforms.insert(0, SamplerTransform(random_seed=5, sample_count=100))
+        # self.evalreporting_comp.data_reader_config.init_args["transform"].transforms.insert(0, SamplerTransform(random_seed=5, sample_count=100))
+        # self.bon_evalreporting_comp.data_reader_config.init_args["transform"].transforms.insert(0, SamplerTransform(random_seed=5, sample_count=100))
+        # self.majvote_evalreporting_comp.data_reader_config.init_args["transform"].transforms.insert(0, SamplerTransform(random_seed=5, sample_count=100))
         return PipelineConfig(
             [
                 self.evalreporting_comp,
