@@ -17,8 +17,7 @@ from eureka_ml_insights.metrics.reports import (
     AverageAggregator,
     BiLevelCountAggregator,
     BiLevelAggregator,
-    CountAggregator,
-    CustomAggregator
+    CountAggregator
 )
 
 from eureka_ml_insights.data_utils.transform import (
