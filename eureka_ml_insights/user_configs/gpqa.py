@@ -155,7 +155,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
         )
         self.inference_llm_answer_extract = InferenceConfig(
             component_type=Inference,
-            model_config=CLAUDE_3_5_SONNET_20241022_CONFIG, #TRAPI_GPT4O_2024_11_20_CONFIG,
+            model_config=TRAPI_GPT4O_2024_11_20_CONFIG,#CLAUDE_3_5_SONNET_20241022_CONFIG, #,
             data_loader_config=DataSetConfig(
                 MMDataLoader,
                 {"path": os.path.join(self.filter_empty_answer.output_dir, "transformed_data.jsonl")},
@@ -180,15 +180,37 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                     "transform": SequenceTransform(
                         [
                             # drop all columns except the uid and model_output
-                            RunPythonTransform("df = df[['uid', 'model_output']]"),
+                            RunPythonTransform("df = df[['data_repeat_id','data_point_id', 'model_output']]"),
                             ColumnRename(name_mapping={"model_output": "answer_extract_model_output"}),
+                            RegexTransform(
+                                columns="answer_extract_model_output",
+                                prompt_pattern=r"Final Answer: (\w)(?=\s|\W|$)",
+                                case=True,
+                            ),
                         ]
                     ),
                 },
             ),
             output_dir=os.path.join(self.log_dir, "data_join_output"),
-            pandas_merge_args={"on": "uid", "how": "left"},
+            pandas_merge_args={"on": ['data_repeat_id', 'data_point_id'], "how": "left"},
         )
+        # self.process_llm_answer_extraction = DataProcessingConfig(
+        #     component_type=DataProcessing,
+        #     data_reader_config=DataSetConfig(
+        #         DataReader,
+        #         {
+        #             "path": os.path.join(self.data_join.output_dir, "transformed_data.jsonl"),
+        #             "format": ".jsonl",
+        #             "transform": SequenceTransform(
+        #                 [
+        #                     # consolidate model_output to replace model_output with answer_extract_model_output whenever empty
+        #                     RunPythonTransform("df['model_output'] = df.apply(lambda row: row['answer_extract_model_output'] if row['model_output'] == '' else row['model_output'], axis=1)"),
+        #                 ]
+        #             ),
+        #         },
+        #     ),
+        #     output_dir=os.path.join(self.log_dir, "process_llm_answer_extraction"),
+        # ) 
         # Configure the evaluation and reporting component for pass@1.
         self.evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
@@ -200,7 +222,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                     "transform": SequenceTransform(
                         [
                             # consolidate model_output to replace model_output with answer_extract_model_output whenever empty
-                            RunPythonTransform("df['model_output'] = df.apply(lambda row: row['answer_extract_model_output'] if row['model_output'] == "" else row['model_output'], axis=1)"),
+                            RunPythonTransform("df['model_output'] = df.apply(lambda row: row['answer_extract_model_output'] if row['model_output'] == '' else row['model_output'], axis=1)"),
                         ]
                     ),
                 },
@@ -441,11 +463,12 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                 self.filter_empty_answer,
                 self.inference_llm_answer_extract,
                 self.data_join,
-                # self.evalreporting_comp,
-                # self.posteval_data_post_processing_comp,
-                # self.bon_evalreporting_comp,
-                # self.data_post_processing_mv,
-                # self.mv_evalreporting_comp
+                # self.process_llm_answer_extraction,
+                self.evalreporting_comp,
+                self.posteval_data_post_processing_comp,
+                self.bon_evalreporting_comp,
+                self.data_post_processing_mv,
+                self.mv_evalreporting_comp
             ],
             self.log_dir,
         )
