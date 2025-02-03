@@ -27,6 +27,7 @@ from eureka_ml_insights.data_utils.transform import (
     MajorityVoteTransform,
     MultiplyTransform,
     RunPythonTransform,
+    SamplerTransform,
     SequenceTransform,
 )
 from eureka_ml_insights.metrics.ba_calendar_metrics import BACalendarMetric
@@ -121,7 +122,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                             "BACalendarMetric_specific_times_programmatic_check",
                             "BACalendarMetric_priority_programmatic_check",
                         ],
-                        "filename_base": "BaCal_OverallMetrics_SeparateRuns",
+                        "filename_base": "OverallMetrics_SeparateRuns",
                         "group_by": "data_repeat_id",
                     },
                 ),
@@ -141,10 +142,28 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                             "BACalendarMetric_priority_programmatic_check"
                         ], 
                         "first_groupby": "data_repeat_id", 
-                        "filename_base": "BaCal_OverallMetrics_Avg",
+                        "filename_base": "OverallMetrics_Avg",
                         "agg_fn": "mean"
                     }),
-                    # three similar reports for average completion usage
+                AggregatorConfig(BiLevelAggregator, 
+                    {
+                        "column_names": [
+                            "BACalendarMetric_all_correct",
+                            "BACalendarMetric_fraction_passed",
+                            "BACalendarMetric_availability_programmatic_check",
+                            "BACalendarMetric_meeting_duration_programmatic_check",
+                            "BACalendarMetric_buffer_time_programmatic_check",
+                            "BACalendarMetric_no_weekends_programmatic_check",
+                            "BACalendarMetric_time_restrictions_programmatic_check",
+                            "BACalendarMetric_specific_times_programmatic_check",
+                            "BACalendarMetric_priority_programmatic_check"
+                        ], 
+                        "first_groupby": "data_repeat_id", 
+                        "second_groupby": "BACalendarMetric_constrainedness_bucket",
+                        "filename_base": "OverallMetrics_Avg_by_constrainedness",
+                        "agg_fn": "mean"
+                    }),
+                # reports for average completion usage
                 AggregatorConfig(BiLevelAggregator, 
                     {
                         "column_names": ["usage_completion"], 
@@ -182,11 +201,33 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                             "BACalendarMetric_priority_programmatic_check",
                         ],
                         "first_groupby": "data_point_id",
-                        "filename_base": "BaCal_BestOfN_Aggregated",
+                        "filename_base": "BestOfN_Aggregated",
                         "normalize": True,
                         "agg_fn": "max",
                     },
                 ),
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "BACalendarMetric_all_correct",
+                            "BACalendarMetric_fraction_passed",
+                            "BACalendarMetric_availability_programmatic_check",
+                            "BACalendarMetric_meeting_duration_programmatic_check",
+                            "BACalendarMetric_buffer_time_programmatic_check",
+                            "BACalendarMetric_no_weekends_programmatic_check",
+                            "BACalendarMetric_time_restrictions_programmatic_check",
+                            "BACalendarMetric_specific_times_programmatic_check",
+                            "BACalendarMetric_priority_programmatic_check",
+                        ],
+                        "first_groupby": "data_point_id",
+                        "second_groupby": "BACalendarMetric_constrainedness_bucket",
+                        "filename_base": "BestOfN_Aggregated",
+                        "normalize": True,
+                        "agg_fn": "max",
+                    },
+                ),
+                
                 # aggregates results by data_point_id and takes the sum of usage for completion tokens
                 AggregatorConfig(
                     BiLevelAggregator,
@@ -258,8 +299,25 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                             "BACalendarMetric_specific_times_programmatic_check",
                             "BACalendarMetric_priority_programmatic_check",
                         ],
-                        "filename_base": "BaCal_MajVote_OverallMetrics_Aggregated",
-                        "group_by": "data_repeat_id",
+                        "filename_base": "MajVote_OverallMetrics_Aggregated",
+                    },
+                ),
+                AggregatorConfig(
+                    AverageAggregator,
+                    {
+                        "column_names": [
+                            "BACalendarMetric_all_correct",
+                            "BACalendarMetric_fraction_passed",
+                            "BACalendarMetric_availability_programmatic_check",
+                            "BACalendarMetric_meeting_duration_programmatic_check",
+                            "BACalendarMetric_buffer_time_programmatic_check",
+                            "BACalendarMetric_no_weekends_programmatic_check",
+                            "BACalendarMetric_time_restrictions_programmatic_check",
+                            "BACalendarMetric_specific_times_programmatic_check",
+                            "BACalendarMetric_priority_programmatic_check",
+                        ],
+                        "filename_base": "MajVote_OverallMetrics_Aggregated",
+                        "group_by": "BACalendarMetric_constrainedness_bucket",
                     },
                 ),
             ],
@@ -292,3 +350,23 @@ class BA_Calendar_Parallel_PIPELINE(BA_Calendar_PIPELINE):
             n_repeats=5
         )
         return pipeline
+
+class BA_Calendar_RunEvals_PIPELINE(BA_Calendar_PIPELINE):
+    """This class specifies the config for running BA Calendar benchmark 5 repeated times"""
+
+    def configure_pipeline(
+        self, model_config: ModelConfig, resume_from: str = None, resume_logdir: str = None, **kwargs: dict[str, Any]
+    ) -> PipelineConfig:
+        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
+        self.log_dir = resume_logdir
+        self.evalreporting_comp.data_reader_config.init_args["path"] = resume_from
+        # self.data_processing_comp.data_reader_config.init_args["transform"].transforms.insert(0, SamplerTransform(random_seed=5, sample_count=100))
+        return PipelineConfig(
+            [
+                self.evalreporting_comp,
+                self.bon_evalreporting_comp,
+                self.maj_vote_data_post_processing,
+                self.majvote_evalreporting_comp,
+            ],
+            self.log_dir,
+        )
