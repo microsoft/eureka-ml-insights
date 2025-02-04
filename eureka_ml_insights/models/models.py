@@ -859,9 +859,6 @@ class Phi4HFModel(HuggingFaceModel):
 class LLaVAHuggingFaceModel(HuggingFaceModel):
     """This class is used to run a self-hosted LLaVA model via HuggingFace apis."""
 
-    quantize: bool = False
-    use_flash_attn: bool = False
-
     def __post_init__(self):
         super().__post_init__()
         if "llava" not in self.model_name:
