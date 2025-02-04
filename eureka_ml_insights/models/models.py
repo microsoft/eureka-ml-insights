@@ -719,7 +719,6 @@ class HuggingFaceModel(Model):
         import torch
 
         if self.quantize:
-
             from transformers import BitsAndBytesConfig
 
             logging.info("Quantizing model")
@@ -859,9 +858,6 @@ class Phi4HFModel(HuggingFaceModel):
 @dataclass
 class LLaVAHuggingFaceModel(HuggingFaceModel):
     """This class is used to run a self-hosted LLaVA model via HuggingFace apis."""
-
-    quantize: bool = False
-    use_flash_attn: bool = False
 
     def __post_init__(self):
         super().__post_init__()
