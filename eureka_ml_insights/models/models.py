@@ -527,7 +527,7 @@ class OpenAIO1RequestResponseMixIn:
         elif query_images:
             encoded_images = self.base64encode(query_images)
             user_content = [
-                {"type": "text", "text": prompt},
+                {"type": "text", "text": text_prompt},
                 {
                     "type": "image_url",
                     "image_url": {
@@ -716,9 +716,9 @@ class HuggingFaceModel(Model):
 
     def get_model(self):
         from transformers import AutoModelForCausalLM, AutoTokenizer
+        import torch
 
         if self.quantize:
-            import torch
             from transformers import BitsAndBytesConfig
 
             logging.info("Quantizing model")
