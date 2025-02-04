@@ -810,6 +810,24 @@ class Phi3HFModel(HuggingFaceModel):
 
 
 @dataclass
+class Phi4HFModel(HuggingFaceModel):
+    """This class is used to run a self-hosted PHI3 model via HuggingFace apis."""
+
+    def __post_init__(self):
+        super().__post_init__()
+        if "microsoft/phi-4" not in self.model_name:
+            logging.warning(
+                "This model class applies a template to the prompt that is specific to Phi-4 models"
+                "but your model is not a Phi-4 model."
+            )
+
+    def model_template_fn(self, text_prompt, system_message=None):
+        if system_message:
+            return f"<|im_start|>system<|im_sep|>\n{system_message}<|im_start|>user<|im_sep|>\n{text_prompt}<|im_end|>\n<|im_start|>assistant<|im_sep|>"
+        else:
+            return f"<|im_start|>user<|im_sep|>\n{text_prompt}<|im_end|>\n<|im_start|>assistant<|im_sep|>"
+
+@dataclass
 class LLaVAHuggingFaceModel(HuggingFaceModel):
     """This class is used to run a self-hosted LLaVA model via HuggingFace apis."""
 
