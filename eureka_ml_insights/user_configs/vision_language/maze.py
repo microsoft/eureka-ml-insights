@@ -15,7 +15,7 @@ from eureka_ml_insights.data_utils import (
     PrependStringTransform,
     SequenceTransform,
 )
-from eureka_ml_insights.metrics import SubstringExistsMatch, CountAggregator
+from eureka_ml_insights.metrics import SubstringExistsMatch, CountAggregator, BiLevelMaxAggregator, MaxAggregator
 
 from eureka_ml_insights.configs import (
     AggregatorConfig,
@@ -100,28 +100,32 @@ class MAZE_PIPELINE(ExperimentConfig):
                                 extracted_answer_column_name="model_output",
                                 extracted_options_column_name="target_options_answers",
                             ),
-                            MajorityVoteTransform(id_col="id"),
-                            ColumnRename(
-                                name_mapping={
-                                    "model_output": "model_output_onerun",
-                                    "majority_vote": "model_output",
-                                }
-                            ),
                         ],
-
                     ),
                 },
             ),
             metric_config=MetricConfig(SubstringExistsMatch),
             aggregator_configs=[
-                AggregatorConfig(CountAggregator, {"column_names": ["SubstringExistsMatch_result"], "normalize": True}),
                 AggregatorConfig(
-                    CountAggregator,
-                    {
-                        "column_names": ["SubstringExistsMatch_result"],
-                        "group_by": "task",
-                        "normalize": True,
-                    },
+                    BiLevelMaxAggregator,
+                        {
+                            "column_names": [
+                                "SubstringExistsMatch_result"
+                            ],
+                            "first_groupby": "uid",
+                            "normalize": True,
+                        },
+                ),
+                AggregatorConfig(
+                    BiLevelMaxAggregator,
+                        {
+                            "column_names": [
+                                "SubstringExistsMatch_result"
+                            ],
+                            "first_groupby": "uid",
+                            "second_groupby": "task",
+                            "normalize": True,
+                        },
                 ),
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),

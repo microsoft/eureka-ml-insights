@@ -253,7 +253,7 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
 
     def get_response(self, request):
         start_time = time.time()
-        response = urllib.request.urlopen(request)
+        response = urllib.request.urlopen(request, timeout=300)
         end_time = time.time()
         res = json.loads(response.read())
         self.model_output = res["choices"][0]["message"]["content"]
