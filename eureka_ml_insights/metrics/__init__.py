@@ -16,7 +16,7 @@ from .reports import (
     AverageSTDDevAggregator,
     BiLevelAggregator,
     BiLevelCountAggregator,
-    BiLevelMaxAggregator,
+    BiLevelAggregator,
     CocoDetectionAggregator,
     CountAggregator,
     MaxAggregator,

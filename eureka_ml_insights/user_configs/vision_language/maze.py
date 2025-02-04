@@ -15,7 +15,7 @@ from eureka_ml_insights.data_utils import (
     PrependStringTransform,
     SequenceTransform,
 )
-from eureka_ml_insights.metrics import SubstringExistsMatch, CountAggregator, BiLevelMaxAggregator, MaxAggregator
+from eureka_ml_insights.metrics import SubstringExistsMatch, CountAggregator, BiLevelAggregator, MaxAggregator
 
 from eureka_ml_insights.configs import (
     AggregatorConfig,
@@ -107,23 +107,25 @@ class MAZE_PIPELINE(ExperimentConfig):
             metric_config=MetricConfig(SubstringExistsMatch),
             aggregator_configs=[
                 AggregatorConfig(
-                    BiLevelMaxAggregator,
+                    BiLevelAggregator,
                         {
                             "column_names": [
                                 "SubstringExistsMatch_result"
                             ],
                             "first_groupby": "uid",
+                            "agg_fn": "max",
                             "normalize": True,
                         },
                 ),
                 AggregatorConfig(
-                    BiLevelMaxAggregator,
+                    BiLevelAggregator,
                         {
                             "column_names": [
                                 "SubstringExistsMatch_result"
                             ],
                             "first_groupby": "uid",
                             "second_groupby": "task",
+                            "agg_fn": "max",
                             "normalize": True,
                         },
                 ),

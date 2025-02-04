@@ -527,7 +527,7 @@ class OpenAIO1RequestResponseMixIn:
         elif query_images:
             encoded_images = self.base64encode(query_images)
             user_content = [
-                {"type": "text", "text": text_prompt},
+                {"type": "text", "text": prompt},
                 {
                     "type": "image_url",
                     "image_url": {
