@@ -509,7 +509,7 @@ class DirectOpenAIModel(OpenAICommonRequestResponseMixIn, DirectOpenAIClientMixI
 
 class OpenAIO1RequestResponseMixIn:
     
-    def create_request(self, prompt, query_images=None, system_message=None, previous_messages=None):
+    def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
         messages = []
         if system_message and "o1-preview" in self.model_name:
             logging.warning("System and developer messages are not supported by OpenAI O1 preview model.")
@@ -521,7 +521,7 @@ class OpenAIO1RequestResponseMixIn:
         if previous_messages:
             messages.extend(previous_messages)
         
-        user_content = prompt
+        user_content = text_prompt
         if query_images and "o1-preview" in self.model_name:
             logging.warning("Images are not supported by OpenAI O1 preview model.")
         elif query_images:
