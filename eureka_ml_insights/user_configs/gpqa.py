@@ -194,23 +194,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
             output_dir=os.path.join(self.log_dir, "data_join_output"),
             pandas_merge_args={"on": ['data_repeat_id', 'data_point_id'], "how": "left"},
         )
-        # self.process_llm_answer_extraction = DataProcessingConfig(
-        #     component_type=DataProcessing,
-        #     data_reader_config=DataSetConfig(
-        #         DataReader,
-        #         {
-        #             "path": os.path.join(self.data_join.output_dir, "transformed_data.jsonl"),
-        #             "format": ".jsonl",
-        #             "transform": SequenceTransform(
-        #                 [
-        #                     # consolidate model_output to replace model_output with answer_extract_model_output whenever empty
-        #                     RunPythonTransform("df['model_output'] = df.apply(lambda row: row['answer_extract_model_output'] if row['model_output'] == '' else row['model_output'], axis=1)"),
-        #                 ]
-        #             ),
-        #         },
-        #     ),
-        #     output_dir=os.path.join(self.log_dir, "process_llm_answer_extraction"),
-        # ) 
+
         # Configure the evaluation and reporting component for pass@1.
         self.evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
