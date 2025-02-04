@@ -176,6 +176,7 @@ class RestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
     frequency_penalty: float = 0
     presence_penalty: float = 0
     do_sample: bool = True
+    timeout: int = None
 
     def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
         """Creates a request for the model."""
@@ -212,7 +213,7 @@ class RestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
     def get_response(self, request):
         # Get the model response and measure the time taken.
         start_time = time.time()
-        response = urllib.request.urlopen(request)
+        response = urllib.request.urlopen(request, timeout=self.timeout)
         end_time = time.time()
         # Parse the response and return the model output.
         res = json.loads(response.read())
@@ -225,6 +226,8 @@ class RestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
             # Print the headers - they include the request ID and the timestamp, which are useful for debugging.
             logging.info(e.info())
             logging.info(e.read().decode("utf8", "ignore"))
+        else:
+            logging.info("The request failed with: "+ str(e))
         return False
 
 
@@ -237,6 +240,7 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
     model_name: str = None
     stream: bool = False
     auth_scope: str = "https://cognitiveservices.azure.com/.default"
+    timeout: int = None
 
     def __post_init__(self):
         try:
@@ -272,7 +276,7 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
 
     def get_response(self, request):
         start_time = time.time()
-        response = urllib.request.urlopen(request)
+        response = urllib.request.urlopen(request, timeout=self.timeout)
         end_time = time.time()
         res = json.loads(response.read())
         self.model_output = res["choices"][0]["message"]["content"]
@@ -286,6 +290,8 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
             # Print the headers - they include the request ID and the timestamp, which are useful for debugging.
             logging.info(e.info())
             logging.info(e.read().decode("utf8", "ignore"))
+        else:
+            logging.info("The request failed with: "+ str(e))
         return False
 
 
