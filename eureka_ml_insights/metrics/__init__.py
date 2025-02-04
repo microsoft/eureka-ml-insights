@@ -14,7 +14,7 @@ from .reports import (
     Aggregator,
     AverageAggregator,
     AverageSTDDevAggregator,
-    BiLevelAverageAggregator,
+    BiLevelAggregator,
     BiLevelCountAggregator,
     BiLevelMaxAggregator,
     CocoDetectionAggregator,
@@ -23,6 +23,7 @@ from .reports import (
     Reporter,
     SumAggregator,
     TwoColumnSumAverageAggregator,
+    ValueFilteredAggregator,
 )
 from .spatial_and_layout_metrics import (
     CocoObjectDetectionMetric,
@@ -48,10 +49,12 @@ __all__ = [
     AverageSTDDevAggregator,
     ExactMatch,
     CaseInsensitiveMatch,
-    BiLevelAverageAggregator,
+    BiLevelAggregator,
     BiLevelCountAggregator,
     TwoColumnSumAverageAggregator,
     SumAggregator,
+    MaxAggregator,
     MMMUMetric,
     MaxTokenF1ScoreMetric,
+    ValueFilteredAggregator,
 ]

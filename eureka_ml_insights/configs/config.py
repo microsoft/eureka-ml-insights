@@ -114,6 +114,7 @@ class InferenceConfig(ComponentConfig):
     new_columns: List[str] = None
     requests_per_minute: int = None
     max_concurrent: int = 1
+    chat_mode: bool = False
 
 
 @dataclass
