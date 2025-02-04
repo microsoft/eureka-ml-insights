@@ -146,7 +146,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                             "BACalendarMetric_specific_times_programmatic_check",
                             "BACalendarMetric_priority_programmatic_check"
                         ], 
-                        "first_groupby": "data_repeat_id", 
+                        "first_groupby": "data_point_id", 
                         "filename_base": "OverallMetrics_Avg",
                         "agg_fn": "mean"
                     }),
@@ -163,7 +163,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                             "BACalendarMetric_specific_times_programmatic_check",
                             "BACalendarMetric_priority_programmatic_check"
                         ], 
-                        "first_groupby": "data_repeat_id", 
+                        "first_groupby": "data_point_id", 
                         "second_groupby": "BACalendarMetric_constrainedness_bucket",
                         "filename_base": "OverallMetrics_Avg_by_constrainedness",
                         "agg_fn": "mean"
@@ -283,8 +283,8 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
+                            AddColumnAndData("count", 1),
                             RunPythonTransform("df = df[df['data_repeat_id'] == 'repeat_0']"),
-                            AddColumnAndData("count", 1)
                         ]
                     ),
                 },
@@ -376,7 +376,7 @@ class BA_Calendar_RunEvals_PIPELINE(BA_Calendar_PIPELINE):
         # self.data_processing_comp.data_reader_config.init_args["transform"].transforms.insert(0, SamplerTransform(random_seed=5, sample_count=100))
         # self.maj_vote_data_post_processing.data_reader_config.init_args["transform"].transforms.insert(0, SamplerTransform(random_seed=5, sample_count=100))
         # self.evalreporting_comp.data_reader_config.init_args["transform"].transforms.insert(0, SamplerTransform(random_seed=5, sample_count=100))
-        # self.bon_evalreporting_comp.data_reader_config.init_args["transform"].transforms.insert(0, SamplerTransform(random_seed=5, sample_count=100))
+        # # self.bon_evalreporting_comp.data_reader_config.init_args["transform"].transforms.insert(0, SamplerTransform(random_seed=5, sample_count=100))
         # self.majvote_evalreporting_comp.data_reader_config.init_args["transform"].transforms.insert(0, SamplerTransform(random_seed=5, sample_count=100))
         return PipelineConfig(
             [
