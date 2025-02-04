@@ -153,6 +153,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "filter_empty_answer"),
         )
+        
         self.inference_llm_answer_extract = InferenceConfig(
             component_type=Inference,
             model_config=TRAPI_GPT4O_2024_11_20_CONFIG,#CLAUDE_3_5_SONNET_20241022_CONFIG, #,
@@ -163,6 +164,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
             output_dir=os.path.join(self.log_dir, "llm_answer_extract_inference_result"),
             max_concurrent=1
         )
+        
         self.data_join = DataJoinConfig(
             component_type=DataJoin,
             data_reader_config=DataSetConfig(
@@ -377,6 +379,56 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
             output_dir=os.path.join(self.log_dir, "bestofn_eval_report"),
         )
 
+        self.won_evalreporting_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.posteval_data_post_processing_comp.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl"
+                },
+            ),
+            aggregator_configs=[
+                # the first three reports aggregate results by data_point_id and take the best out of N
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "ExactMatch_result_numeric"
+                        ],
+                        "first_groupby": "data_point_id",
+                        "filename_base": "ExactMatch_WorstOfN",
+                        "agg_fn": "min"
+                    },
+                ),
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "ExactMatch_result_numeric"
+                        ],
+                        "first_groupby": "data_point_id", 
+                        "second_groupby": "Subdomain",
+                        "filename_base": "ExactMatch_WorstOfN_GroupBy_Subdomain",
+                        "agg_fn": "min"
+                    },
+                ),
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "ExactMatch_result_numeric"
+                        ],
+                        "first_groupby": "data_point_id", 
+                        "second_groupby": "High-level domain",
+                        "filename_base": "ExactMatch_WorstOfN_GroupBy_High-level_domain",
+                        "agg_fn": "min"
+                    },
+                ),
+            ],
+            output_dir=os.path.join(self.log_dir, "worstofn_eval_report"),
+        )
+
         # aggregate the output by majority vote
         self.data_post_processing_mv = DataProcessingConfig(
             component_type=DataProcessing,
@@ -447,10 +499,10 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                 self.filter_empty_answer,
                 self.inference_llm_answer_extract,
                 self.data_join,
-                # self.process_llm_answer_extraction,
                 self.evalreporting_comp,
                 self.posteval_data_post_processing_comp,
                 self.bon_evalreporting_comp,
+                self.won_evalreporting_comp,
                 self.data_post_processing_mv,
                 self.mv_evalreporting_comp
             ],
