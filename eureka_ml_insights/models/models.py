@@ -509,7 +509,7 @@ class DirectOpenAIModel(OpenAICommonRequestResponseMixIn, DirectOpenAIClientMixI
 
 class OpenAIO1RequestResponseMixIn:
     
-    def create_request(self, prompt, query_images=None, system_message=None, previous_messages=None):
+    def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
         messages = []
         if system_message and "o1-preview" in self.model_name:
             logging.warning("System and developer messages are not supported by OpenAI O1 preview model.")
@@ -521,7 +521,7 @@ class OpenAIO1RequestResponseMixIn:
         if previous_messages:
             messages.extend(previous_messages)
         
-        user_content = prompt
+        user_content = text_prompt
         if query_images and "o1-preview" in self.model_name:
             logging.warning("Images are not supported by OpenAI O1 preview model.")
         elif query_images:
@@ -706,6 +706,9 @@ class HuggingFaceModel(Model):
     do_sample: bool = True
     apply_model_template: bool = True
 
+    quantize: bool = False
+    use_flash_attn: bool = False
+
     def __post_init__(self):
         # The device need to be set before get_model() is called
         self.device = self.pick_available_device()
@@ -714,7 +717,32 @@ class HuggingFaceModel(Model):
     def get_model(self):
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
-        self.model = AutoModelForCausalLM.from_pretrained(self.model_name).to(self.device)
+        if self.quantize:
+            import torch
+            from transformers import BitsAndBytesConfig
+
+            logging.info("Quantizing model")
+            # specify how to quantize the model
+            quantization_config = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_compute_dtype=torch.float16,
+            )
+
+            self.model = AutoModelForCausalLM.from_pretrained(
+                self.model_name,
+                torch_dtype=torch.float16,
+                quantization_config=quantization_config,
+                device_map=self.device,
+                use_flash_attention_2=self.use_flash_attn,
+            ).to(self.device)
+        else:
+            self.model = AutoModelForCausalLM.from_pretrained(
+                self.model_name,
+                torch_dtype=torch.float16,
+                device_map=self.device,
+                use_flash_attention_2=self.use_flash_attn,
+            ).to(self.device)
+
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, use_fast=False)
 
     def pick_available_device(self):
