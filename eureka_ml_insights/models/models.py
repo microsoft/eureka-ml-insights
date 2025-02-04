@@ -716,9 +716,10 @@ class HuggingFaceModel(Model):
 
     def get_model(self):
         from transformers import AutoModelForCausalLM, AutoTokenizer
+        import torch
 
         if self.quantize:
-            import torch
+
             from transformers import BitsAndBytesConfig
 
             logging.info("Quantizing model")
