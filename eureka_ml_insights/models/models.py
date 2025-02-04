@@ -272,7 +272,7 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
 
     def get_response(self, request):
         start_time = time.time()
-        response = urllib.request.urlopen(request)
+        response = urllib.request.urlopen(request, timeout=300)
         end_time = time.time()
         res = json.loads(response.read())
         self.model_output = res["choices"][0]["message"]["content"]
@@ -718,6 +718,7 @@ class HuggingFaceModel(Model):
         from transformers import AutoModelForCausalLM, AutoTokenizer
         import torch
 
+        quantization_config = None
         if self.quantize:
             from transformers import BitsAndBytesConfig
 
@@ -728,20 +729,14 @@ class HuggingFaceModel(Model):
                 bnb_4bit_compute_dtype=torch.float16,
             )
 
-            self.model = AutoModelForCausalLM.from_pretrained(
-                self.model_name,
-                torch_dtype=torch.float16,
-                quantization_config=quantization_config,
-                device_map=self.device,
-                use_flash_attention_2=self.use_flash_attn,
-            ).to(self.device)
-        else:
-            self.model = AutoModelForCausalLM.from_pretrained(
-                self.model_name,
-                torch_dtype=torch.float16,
-                device_map=self.device,
-                use_flash_attention_2=self.use_flash_attn,
-            ).to(self.device)
+        self.model = AutoModelForCausalLM.from_pretrained(
+            self.model_name,
+            torch_dtype=torch.float16,
+            quantization_config=quantization_config,
+            device_map=self.device,
+            use_flash_attention_2=self.use_flash_attn,
+        )
+
 
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, use_fast=False)
 
@@ -876,6 +871,7 @@ class LLaVAHuggingFaceModel(HuggingFaceModel):
             LlavaNextProcessor,
         )
 
+        quantization_config = None
         if self.quantize:
             from transformers import BitsAndBytesConfig
 
@@ -887,39 +883,22 @@ class LLaVAHuggingFaceModel(HuggingFaceModel):
             )
 
         if "v1.6" in self.model_name:
-            if self.quantize:
-                self.model = LlavaNextForConditionalGeneration.from_pretrained(
-                    self.model_name,
-                    torch_dtype=torch.float16,
-                    quantization_config=quantization_config,
-                    device_map=self.device,
-                    use_flash_attention_2=self.use_flash_attn,
-                )
-            else:
-                self.model = LlavaNextForConditionalGeneration.from_pretrained(
-                    self.model_name,
-                    torch_dtype=torch.float16,
-                    device_map=self.device,
-                    use_flash_attention_2=self.use_flash_attn,
-                )
-
+            self.model = LlavaNextForConditionalGeneration.from_pretrained(
+                self.model_name,
+                torch_dtype=torch.float16,
+                quantization_config=quantization_config,
+                device_map=self.device,
+                use_flash_attention_2=self.use_flash_attn,
+            )
             self.processor = LlavaNextProcessor.from_pretrained(self.model_name)
         else:
-            if self.quantize:
-                self.model = LlavaForConditionalGeneration.from_pretrained(
-                    self.model_name,
-                    torch_dtype=torch.float16,
-                    quantization_config=quantization_config,
-                    device_map=self.device,
-                    use_flash_attention_2=self.use_flash_attn,
-                )
-            else:
-                self.model = LlavaForConditionalGeneration.from_pretrained(
-                    self.model_name,
-                    torch_dtype=torch.float16,
-                    device_map=self.device,
-                    use_flash_attention_2=self.use_flash_attn,
-                )
+            self.model = LlavaForConditionalGeneration.from_pretrained(
+                self.model_name,
+                torch_dtype=torch.float16,
+                quantization_config=quantization_config,
+                device_map=self.device,
+                use_flash_attention_2=self.use_flash_attn,
+            )
 
             self.processor = AutoProcessor.from_pretrained(self.model_name)
 
