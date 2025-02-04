@@ -182,10 +182,9 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                     "transform": SequenceTransform(
                         [
                             # drop all columns except the uid and model_output
-                            RunPythonTransform("df = df[['data_repeat_id','data_point_id', 'model_output']]"),
-                            ColumnRename(name_mapping={"model_output": "answer_extract_model_output"}),
+                            RunPythonTransform("if 'data_repeat_id' in df.columns: df = df[['data_repeat_id','data_point_id', 'model_output']]"),
                             RegexTransform(
-                                columns="answer_extract_model_output",
+                                columns="model_output",
                                 prompt_pattern=r"Final Answer: (\w)(?=\s|\W|$)",
                                 case=True,
                             ),
@@ -207,8 +206,9 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            # consolidate model_output to replace model_output with answer_extract_model_output whenever empty
-                            RunPythonTransform("df['model_output'] = df.apply(lambda row: row['answer_extract_model_output'] if row['model_output'] == '' else row['model_output'], axis=1)"),
+                            # consolidate model_output_y to replace the original model_output whenever empty
+                            # the initial if statement checks whether there has been a join beforehand
+                            RunPythonTransform("if 'model_output_x' in df.columns: df['model_output'] = df.apply(lambda row: row['model_output_y'] if row['model_output_x'] == '' else row['model_output_x'], axis=1)"),
                         ]
                     ),
                 },

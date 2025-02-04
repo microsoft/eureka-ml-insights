@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import tiktoken
 import json
+import logging
 
 from eureka_ml_insights.configs.config import ModelConfig
 
@@ -68,7 +69,7 @@ class RunPythonTransform(DFTransformBase):
     def __post_init__(self):
         # To avoid disastrous consequences, we only allow operations on the data frame.
         # Therefore, every statement in the python_code should be in the form of df['column_name'] = ... or df = ...
-        self.allowed_statement_prefixes = ["df = ", "df[", "import "]
+        self.allowed_statement_prefixes = ["df = ", "df[", "import ", "if "]
         # Similarly, we only allow a limited set of imports. To add to this safe list, create a PR.
         self.allowed_imports = ["ast", "math", "numpy"]
         self.validate()
@@ -191,6 +192,9 @@ class MultiColumnTransform(DFTransformBase):
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """Apply the transform to the columns."""
+        if df.empty:
+            logging.warn("The input dataframe is empty, no transformation was applied.")
+            return df
         self.validate(df)
         for column in self.columns:
             df[column] = df[column].apply(self._transform)
