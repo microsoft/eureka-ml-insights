@@ -1,7 +1,8 @@
 import json
+import logging
 import re
 from dataclasses import dataclass
-import logging
+
 import pandas as pd
 
 from eureka_ml_insights.data_utils import DFTransformBase
