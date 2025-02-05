@@ -272,7 +272,7 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
 
     def get_response(self, request):
         start_time = time.time()
-        response = urllib.request.urlopen(request)
+        response = urllib.request.urlopen(request, timeout=300)
         end_time = time.time()
         res = json.loads(response.read())
         self.model_output = res["choices"][0]["message"]["content"]
@@ -509,7 +509,7 @@ class DirectOpenAIModel(OpenAICommonRequestResponseMixIn, DirectOpenAIClientMixI
 
 class OpenAIO1RequestResponseMixIn:
     
-    def create_request(self, prompt, query_images=None, system_message=None, previous_messages=None):
+    def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
         messages = []
         if system_message and "o1-preview" in self.model_name:
             logging.warning("System and developer messages are not supported by OpenAI O1 preview model.")
@@ -521,7 +521,7 @@ class OpenAIO1RequestResponseMixIn:
         if previous_messages:
             messages.extend(previous_messages)
         
-        user_content = prompt
+        user_content = text_prompt
         if query_images and "o1-preview" in self.model_name:
             logging.warning("Images are not supported by OpenAI O1 preview model.")
         elif query_images:
@@ -706,6 +706,9 @@ class HuggingFaceModel(Model):
     do_sample: bool = True
     apply_model_template: bool = True
 
+    quantize: bool = False
+    use_flash_attn: bool = False
+
     def __post_init__(self):
         # The device need to be set before get_model() is called
         self.device = self.pick_available_device()
@@ -713,8 +716,28 @@ class HuggingFaceModel(Model):
 
     def get_model(self):
         from transformers import AutoModelForCausalLM, AutoTokenizer
+        import torch
 
-        self.model = AutoModelForCausalLM.from_pretrained(self.model_name).to(self.device)
+        quantization_config = None
+        if self.quantize:
+            from transformers import BitsAndBytesConfig
+
+            logging.info("Quantizing model")
+            # specify how to quantize the model
+            quantization_config = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_compute_dtype=torch.float16,
+            )
+
+        self.model = AutoModelForCausalLM.from_pretrained(
+            self.model_name,
+            torch_dtype=torch.float16,
+            quantization_config=quantization_config,
+            device_map=self.device,
+            use_flash_attention_2=self.use_flash_attn,
+        )
+
+
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, use_fast=False)
 
     def pick_available_device(self):
@@ -810,11 +833,26 @@ class Phi3HFModel(HuggingFaceModel):
 
 
 @dataclass
+class Phi4HFModel(HuggingFaceModel):
+    """This class is used to run a self-hosted PHI3 model via HuggingFace apis."""
+
+    def __post_init__(self):
+        super().__post_init__()
+        if "microsoft/phi-4" not in self.model_name:
+            logging.warning(
+                "This model class applies a template to the prompt that is specific to Phi-4 models"
+                "but your model is not a Phi-4 model."
+            )
+
+    def model_template_fn(self, text_prompt, system_message=None):
+        if system_message:
+            return f"<|im_start|>system<|im_sep|>\n{system_message}<|im_start|>user<|im_sep|>\n{text_prompt}<|im_end|>\n<|im_start|>assistant<|im_sep|>"
+        else:
+            return f"<|im_start|>user<|im_sep|>\n{text_prompt}<|im_end|>\n<|im_start|>assistant<|im_sep|>"
+
+@dataclass
 class LLaVAHuggingFaceModel(HuggingFaceModel):
     """This class is used to run a self-hosted LLaVA model via HuggingFace apis."""
-
-    quantize: bool = False
-    use_flash_attn: bool = False
 
     def __post_init__(self):
         super().__post_init__()
@@ -833,6 +871,7 @@ class LLaVAHuggingFaceModel(HuggingFaceModel):
             LlavaNextProcessor,
         )
 
+        quantization_config = None
         if self.quantize:
             from transformers import BitsAndBytesConfig
 
@@ -844,39 +883,22 @@ class LLaVAHuggingFaceModel(HuggingFaceModel):
             )
 
         if "v1.6" in self.model_name:
-            if self.quantize:
-                self.model = LlavaNextForConditionalGeneration.from_pretrained(
-                    self.model_name,
-                    torch_dtype=torch.float16,
-                    quantization_config=quantization_config,
-                    device_map=self.device,
-                    use_flash_attention_2=self.use_flash_attn,
-                )
-            else:
-                self.model = LlavaNextForConditionalGeneration.from_pretrained(
-                    self.model_name,
-                    torch_dtype=torch.float16,
-                    device_map=self.device,
-                    use_flash_attention_2=self.use_flash_attn,
-                )
-
+            self.model = LlavaNextForConditionalGeneration.from_pretrained(
+                self.model_name,
+                torch_dtype=torch.float16,
+                quantization_config=quantization_config,
+                device_map=self.device,
+                use_flash_attention_2=self.use_flash_attn,
+            )
             self.processor = LlavaNextProcessor.from_pretrained(self.model_name)
         else:
-            if self.quantize:
-                self.model = LlavaForConditionalGeneration.from_pretrained(
-                    self.model_name,
-                    torch_dtype=torch.float16,
-                    quantization_config=quantization_config,
-                    device_map=self.device,
-                    use_flash_attention_2=self.use_flash_attn,
-                )
-            else:
-                self.model = LlavaForConditionalGeneration.from_pretrained(
-                    self.model_name,
-                    torch_dtype=torch.float16,
-                    device_map=self.device,
-                    use_flash_attention_2=self.use_flash_attn,
-                )
+            self.model = LlavaForConditionalGeneration.from_pretrained(
+                self.model_name,
+                torch_dtype=torch.float16,
+                quantization_config=quantization_config,
+                device_map=self.device,
+                use_flash_attention_2=self.use_flash_attn,
+            )
 
             self.processor = AutoProcessor.from_pretrained(self.model_name)
 
