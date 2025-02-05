@@ -352,9 +352,9 @@ class RegexTransform(MultiColumnTransform):
         else:
             results = re.findall(self.prompt_pattern, sentence)
         if results:
-            if (str == "first"):
+            if (self.occurrence == "first"):
                 return results[0]
-            elif (str == "last"):
+            elif (self.occurrence == "last"):
                 return results[len(results) - 1]
         else:
             return None
