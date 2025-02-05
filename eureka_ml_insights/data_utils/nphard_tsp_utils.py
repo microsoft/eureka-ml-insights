@@ -19,11 +19,6 @@ class NPHARDTSPExtractAnswer(DFTransformBase):
         df[self.model_answer_column] = df[self.model_output_column].apply(parse_path_from_model_output)
         return df
 
-# def extract_final_answer(model_output):
-#     """Extracts the final answer enclosed within <final_answer> tags."""
-#     match = re.search(r"<final_answer>(.*?)</final_answer>", model_output, re.DOTALL)
-#     return match.group(1).strip() if match else None
-
 def extract_final_answer(model_output):
     """
     Searches from the end of the string for the last valid <final_answer>...</final_answer> pair.
@@ -58,8 +53,6 @@ def extract_final_answer(model_output):
 
         return content.strip()
 
-
-
 def extract_path(final_answer):
     """Extracts the path string from the final answer, handling both JSON formats."""
     try:
@@ -81,14 +74,11 @@ def parse_path_from_model_output(model_output_string):
         if tour_string is None:
             return "0,0,0,0"
 
-    # Remove non-numeric characters except '->' and split into a list of integers    
-    # try:
+        # Remove non-numeric characters except '->' and split into a list of integers
         parts = re.findall(r"\d+|->", tour_string)        
         tour_string = "".join(parts)
         tour = list(map(int, tour_string.split("->")))            
-    except Exception as e:
-        print("data utils final answer: ", final_answer)
-        print(f"Path does not have valid: {e}")
+    except Exception as e:                
         return "0,0,0,0"
 
     return ",".join(map(str, tour))
