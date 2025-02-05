@@ -248,6 +248,61 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
             ],
             output_dir=os.path.join(self.log_dir, "bestofn_eval_report"),
         )
+        # Aggregate the results by worst of n
+        self.won_evalreporting_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.evalreporting_comp.output_dir, "metric_results.jsonl"),
+                    "format": ".jsonl",
+                },
+            ),
+            aggregator_configs=[
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "BACalendarMetric_all_correct",
+                            "BACalendarMetric_fraction_passed",
+                            "BACalendarMetric_availability_programmatic_check",
+                            "BACalendarMetric_meeting_duration_programmatic_check",
+                            "BACalendarMetric_buffer_time_programmatic_check",
+                            "BACalendarMetric_no_weekends_programmatic_check",
+                            "BACalendarMetric_time_restrictions_programmatic_check",
+                            "BACalendarMetric_specific_times_programmatic_check",
+                            "BACalendarMetric_priority_programmatic_check",
+                        ],
+                        "first_groupby": "data_point_id",
+                        "filename_base": "OverallMetrics_WorstofN",
+                        "normalize": True,
+                        "agg_fn": "min",
+                    },
+                ),
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "BACalendarMetric_all_correct",
+                            "BACalendarMetric_fraction_passed",
+                            "BACalendarMetric_availability_programmatic_check",
+                            "BACalendarMetric_meeting_duration_programmatic_check",
+                            "BACalendarMetric_buffer_time_programmatic_check",
+                            "BACalendarMetric_no_weekends_programmatic_check",
+                            "BACalendarMetric_time_restrictions_programmatic_check",
+                            "BACalendarMetric_specific_times_programmatic_check",
+                            "BACalendarMetric_priority_programmatic_check",
+                        ],
+                        "first_groupby": "data_point_id",
+                        "second_groupby": "BACalendarMetric_constrainedness_bucket",
+                        "filename_base": "OverallMetrics_WorstOfN_by_constrainedness",
+                        "normalize": True,
+                        "agg_fn": "min",
+                    },
+                ),
+            ],
+            output_dir=os.path.join(self.log_dir, "worstofn_eval_report"),
+        )
 
         # Aggregate the results by a majority vote
         self.maj_vote_data_post_processing = DataProcessingConfig(
@@ -345,6 +400,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                 self.inference_comp,
                 self.evalreporting_comp,
                 self.bon_evalreporting_comp,
+                self.won_evalreporting_comp,
                 self.maj_vote_data_post_processing,
                 self.majvote_evalreporting_comp,
             ],
@@ -382,6 +438,7 @@ class BA_Calendar_RunEvals_PIPELINE(BA_Calendar_PIPELINE):
             [
                 self.evalreporting_comp,
                 self.bon_evalreporting_comp,
+                self.won_evalreporting_comp,
                 self.maj_vote_data_post_processing,
                 self.majvote_evalreporting_comp,
             ],
