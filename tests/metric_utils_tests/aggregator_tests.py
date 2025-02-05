@@ -9,11 +9,13 @@ from eureka_ml_insights.metrics import (
     Aggregator,
     AverageAggregator,
     AverageSTDDevAggregator,
-    BiLevelAverageAggregator,
+    BiLevelAggregator,
     BiLevelCountAggregator,
     CountAggregator,
+    MaxAggregator,
     SumAggregator,
     TwoColumnSumAverageAggregator,
+    ValueFilteredAggregator,
 )
 
 PRECISION = 3
@@ -77,6 +79,44 @@ class TestAverageAggregator(TestData, unittest.TestCase):
             {
                 "col1": {("a_x"): 1.5, ("a_y"): 3, ("c_y"): 5},
                 "col2": {("a_x"): 1.5, ("a_y"): 3, ("c_y"): 2},
+            },
+        )
+
+        avg_agg.write_results()
+        self.assertTrue(os.path.exists(avg_agg.output_file))
+
+
+class TestMaxAggregator(TestData, unittest.TestCase):
+    def test_max_aggregator(self):
+        avg_agg = MaxAggregator(["col1", "col2"], self.output_dir)
+        avg_agg.aggregate(self.data)
+        self.assertEqual(
+            avg_agg.aggregated_result,
+            {
+                "col1": max(self.data["col1"]),
+                "col2": max(self.data["col2"]),
+            },
+        )
+
+    def test_max_aggregator_input_validation(self):
+        avg_agg = MaxAggregator("col3", self.output_dir)
+        self.assertRaises(ValueError, avg_agg.aggregate, self.data)
+
+    def test_max_aggregator_group_by(self):
+        avg_agg = MaxAggregator(["col1", "col2"], self.output_dir, group_by="col3")
+        avg_agg.aggregate(self.data)
+        self.assertEqual(avg_agg.aggregated_result, {"col1": {"a": 3, "c": 6}, "col2": {"a": 3, "c": 3}})
+
+    def test_max_aggregator_group_by_multiple_columns(self):
+        self.output_dir = create_logdir("MaxAggregatorTests")
+
+        avg_agg = MaxAggregator(["col1", "col2"], self.output_dir, group_by=["col3", "col4"])
+        avg_agg.aggregate(self.data)
+        self.assertEqual(
+            avg_agg.aggregated_result,
+            {
+                "col1": {("a_x"): 2, ("a_y"): 3, ("c_y"): 6},
+                "col2": {("a_x"): 2, ("a_y"): 3, ("c_y"): 3},
             },
         )
 
@@ -180,8 +220,12 @@ class BiLevelAggregatorTestData:
 
 class BiLevelAverageAggregatorTest(BiLevelAggregatorTestData, unittest.TestCase):
     def test_bilevel_average_aggregator(self):
-        avg_agg = BiLevelAverageAggregator(
-            ["numeric_metric"], first_groupby="data_point_id", second_groupby="group", output_dir=self.output_dir
+        avg_agg = BiLevelAggregator(
+            ["numeric_metric"],
+            first_groupby="data_point_id",
+            second_groupby="group",
+            output_dir=self.output_dir,
+            agg_fn="mean",
         )
         avg_agg.aggregate(self.data)
         expected = [
@@ -210,8 +254,12 @@ class BiLevelAverageAggregatorTest(BiLevelAggregatorTestData, unittest.TestCase)
             )
 
     def test_bilevel_average_aggregator_2(self):
-        avg_agg = BiLevelAverageAggregator(
-            ["numeric_metric"], first_groupby="data_repeat_id", second_groupby=None, output_dir=self.output_dir
+        avg_agg = BiLevelAggregator(
+            ["numeric_metric"],
+            first_groupby="data_repeat_id",
+            second_groupby=None,
+            output_dir=self.output_dir,
+            agg_fn="mean",
         )
         avg_agg.aggregate(self.data)
         expected_first_level = [np.mean([5, 8, 2, 3]), np.mean([6, 8, 3, 4]), np.mean([5, 8, 4, 2])]
@@ -219,6 +267,91 @@ class BiLevelAverageAggregatorTest(BiLevelAggregatorTestData, unittest.TestCase)
             {"numeric_metric": {"mean": np.mean(expected_first_level), "std": np.std(expected_first_level, ddof=1)}}
         ]
         self.assertEqual(avg_agg.aggregated_result, expected)
+
+    def test_bilevel_average_aggregator_multicol(self):
+        avg_agg = BiLevelAggregator(
+            ["numeric_metric"],
+            first_groupby=["data_repeat_id", "group"],
+            second_groupby="group",
+            output_dir=self.output_dir,
+            agg_fn="mean",
+        )
+        avg_agg.aggregate(self.data)
+        expected = [
+            {
+                "group": "a",
+                "numeric_metric_mean": np.mean([np.mean([5, 8]), np.mean([6, 8]), np.mean([5, 8])]),
+                "numeric_metric_std": np.std([np.mean([5, 8]), np.mean([6, 8]), np.mean([5, 8])], ddof=1),
+            },
+            {
+                "group": "b",
+                "numeric_metric_mean": np.mean([np.mean([2, 3]), np.mean([3, 4]), np.mean([4, 2])]),
+                "numeric_metric_std": np.std([np.mean([2, 3]), np.mean([3, 4]), np.mean([4, 2])], ddof=1),
+            },
+        ]
+
+        for i in range(len(avg_agg.aggregated_result)):
+            self.assertAlmostEqual(
+                avg_agg.aggregated_result[i]["numeric_metric_mean"],
+                expected[i]["numeric_metric_mean"],
+                places=self.precision,
+            )
+            self.assertAlmostEqual(
+                avg_agg.aggregated_result[i]["numeric_metric_std"],
+                expected[i]["numeric_metric_std"],
+                places=self.precision,
+            )
+
+
+class BiLevelMaxAggregatorTest(BiLevelAggregatorTestData, unittest.TestCase):
+    def test_bilevel_max_aggregator(self):
+        max_agg = BiLevelAggregator(
+            ["numeric_metric"],
+            first_groupby="data_point_id",
+            second_groupby="group",
+            output_dir=self.output_dir,
+            agg_fn="max",
+        )
+        max_agg.aggregate(self.data)
+        expected = [
+            {
+                "group": "a",
+                "numeric_metric_mean": np.mean([np.max([5, 6, 5]), np.max([8, 8, 8])]),
+                "numeric_metric_std": np.std([np.max([5, 6, 5]), np.max([8, 8, 8])], ddof=1),
+            },
+            {
+                "group": "b",
+                "numeric_metric_mean": np.mean([np.max([2, 3, 4]), np.max([3, 4, 2])]),
+                "numeric_metric_std": np.std([np.max([2, 3, 4]), np.max([3, 4, 2])], ddof=1),
+            },
+        ]
+
+        for i in range(len(max_agg.aggregated_result)):
+            self.assertAlmostEqual(
+                max_agg.aggregated_result[i]["numeric_metric_mean"],
+                expected[i]["numeric_metric_mean"],
+                places=self.precision,
+            )
+            self.assertAlmostEqual(
+                max_agg.aggregated_result[i]["numeric_metric_std"],
+                expected[i]["numeric_metric_std"],
+                places=self.precision,
+            )
+
+    def test_bilevel_max_aggregator_2(self):
+        max_agg = BiLevelAggregator(
+            ["numeric_metric"],
+            first_groupby="data_repeat_id",
+            second_groupby=None,
+            output_dir=self.output_dir,
+            agg_fn="max",
+        )
+        max_agg.aggregate(self.data)
+        expected_first_level = [np.max([5, 8, 2, 3]), np.max([6, 8, 3, 4]), np.max([5, 8, 4, 2])]
+        expected = [
+            {"numeric_metric": {"mean": np.mean(expected_first_level), "std": np.std(expected_first_level, ddof=1)}}
+        ]
+        self.assertEqual(max_agg.aggregated_result, expected)
 
 
 class BiLevelCountAggregatorTest(BiLevelAggregatorTestData, unittest.TestCase):
@@ -335,6 +468,47 @@ class TestSumAggregator(TestData, unittest.TestCase):
         avg_agg.aggregate(self.data)
         self.assertEqual(avg_agg.aggregated_result, {"col1": {("a_x"): 3, ("a_y"): 3, ("c_y"): 15}})
 
+        avg_agg.write_results()
+        self.assertTrue(os.path.exists(avg_agg.output_file))
+
+
+class ValueFilteredAggregatorTestData:
+    def setUp(self):
+        self.data = pd.DataFrame(
+            {
+                "data_point_id": [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4],
+                "data_repeat_id": [1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3],
+                "col1": [5, "NA", 2, 3, 6, 8, 3, "NA", 5, 8, 4, 2],
+                "col2": [5, 8, 2, "NA", 6, 8, 3, 4, 5, 8, "NA", 2],
+                "col3": [5, 8, "NA", 3, "abc", 8, 3, 4, 5, 8, 4, 2],
+                "categorical_metric": ["x", "y", "z", "z", "y", "y", "z", "y", "x", "y", "y", "x"],
+                "group": ["a", "a", "b", "b", "a", "a", "b", "b", "a", "a", "b", "b"],
+            }
+        )
+        self.output_dir = "output_dir"
+        self.precision = PRECISION
+
+
+class TestValueFilteredAggregator(ValueFilteredAggregatorTestData, unittest.TestCase):
+    def test_average_aggregator(self):
+        avg_agg = ValueFilteredAggregator(AverageAggregator, "NA", ["col1", "col2"], self.output_dir)
+        avg_agg.aggregate(self.data)
+        x = [a for a in self.data["col1"] if a != "NA"]
+        y = [a for a in self.data["col2"] if a != "NA"]
+        self.assertEqual(
+            avg_agg.aggregated_result,
+            {"col1": sum(x) / len(x), "col2": sum(y) / len(y)},
+        )
+
+    def test_average_aggregator_input_validation(self):
+        avg_agg = ValueFilteredAggregator(AverageAggregator, "NA", ["col3"], self.output_dir)
+        self.assertRaises(ValueError, avg_agg.aggregate, self.data)
+
+    def test_average_aggregator_group_by(self):
+        self.output_dir = create_logdir("ValueFilteredAggregatorTests")
+        avg_agg = ValueFilteredAggregator(AverageAggregator, "NA", ["col1", "col2"], self.output_dir, group_by="group")
+        avg_agg.aggregate(self.data)
+        self.assertEqual(avg_agg.aggregated_result, {"col1": {"a": 6.4, "b": 2.8}, "col2": {"a": 6.667, "b": 2.75}})
         avg_agg.write_results()
         self.assertTrue(os.path.exists(avg_agg.output_file))
 

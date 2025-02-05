@@ -111,15 +111,35 @@ class SumAggregator(NumericalAggregator):
         self.aggregated_result = sums
 
 
-class AverageAggregator(NumericalAggregator):
+class MaxAggregator(NumericalAggregator):
+    """
+    This class aggregates data by taking the max of the values."""
 
     def _aggregate(self, data):
-        averages = {col: data[col].mean().round(3) for col in self.column_names}
-        self.aggregated_result = averages
+        maxes = {col: data[col].max() for col in self.column_names}
+        self.aggregated_result = maxes
 
     def _aggregate_grouped(self, data):
         gb = data.groupby(self.group_by)
-        averages = {col: round(gb[col].mean(), 3).to_dict() for col in self.column_names}
+        maxes = {col: gb[col].max().to_dict() for col in self.column_names}
+        self.aggregated_result = maxes
+
+
+class AverageAggregator(NumericalAggregator):
+
+    def _aggregate(self, data):
+        if len(data) == 0:
+            averages = {col: 0 for col in self.column_names}
+        else:
+            averages = {col: data[col].mean().round(3) for col in self.column_names}
+        self.aggregated_result = averages
+
+    def _aggregate_grouped(self, data):
+        if len(data) == 0:
+            averages = {col: 0 for col in self.column_names}
+        else:
+            gb = data.groupby(self.group_by)
+            averages = {col: round(gb[col].mean(), 3).to_dict() for col in self.column_names}
         self.aggregated_result = averages
 
 
@@ -176,26 +196,33 @@ class CountAggregator(Aggregator):
         self.aggregated_result = col_counts
 
 
-class BiLevelAverageAggregator(AverageAggregator):
+class BiLevelAggregator(AverageAggregator):
     """
     This class aggregates the data in two levels. It first groups the data by the first_groupby column and
-    aggregates the data by taking the average of the column_names. It It then groups the result by the
-    second_groupby column and aggregates the it again by taking the mean and standard deviation of
+    aggregates the data by applying the agg_fn on the column_names. It It then groups the result by the
+    second_groupby column and aggregates again by taking the mean and standard deviation of
     the column_names.
     """
 
-    def __init__(self, column_names, first_groupby, output_dir, second_groupby=None, **kwargs):
+    def __init__(self, column_names, first_groupby, output_dir, second_groupby=None, agg_fn="mean", **kwargs):
         super().__init__(column_names, output_dir, group_by=None, **kwargs)
         self.first_groupby = first_groupby
         self.second_groupby = second_groupby
+        self.agg_fn = agg_fn
 
     def _aggregate(self, data):
-        # take the average of the column for each group in the first groupby,
+        # take the self.agg_fn aggregation of the column for each group in the first groupby,
         # aggregate the rest of the columns by 'first'
         gb = data.groupby(self.first_groupby)
-        agg_map = {col: "mean" for col in self.column_names}
+        agg_map = {col: self.agg_fn for col in self.column_names}  # aggregate the column_names by self.agg_fn
         agg_map.update(
-            {col: "first" for col in data.columns if col not in self.column_names and col != self.first_groupby}
+            {
+                col: "first"
+                for col in data.columns
+                if col not in self.column_names  # aggregate the un-interesting columns by 'first'
+                and col != self.first_groupby  # in case first_groupby is a single column
+                and col not in self.first_groupby
+            }  # in case there are multiple columns in the first_groupby
         )
 
         first_result = gb.aggregate(agg_map).reset_index()
@@ -229,20 +256,24 @@ class BiLevelCountAggregator(Aggregator):
         self.first_groupby = first_groupby
         self.second_groupby = second_groupby
         self.normalize = normalize
+        self.agg_fn = lambda x: x.value_counts(normalize=self.normalize).to_dict()
 
     def _aggregate_grouped(self, data):
-        # take the average of the column for each group in the first groupby,
+        # Count values in the columns for each group in the first groupby,
         # aggregate the rest of the columns by 'first'
         gb = data.groupby(self.first_groupby)
-        if self.normalize:
-            # normalize the counts to be between 0 and 1
-            agg_map = {col: lambda x: x.value_counts(normalize=True).to_dict() for col in self.column_names}
-        else:
-            agg_map = {col: lambda x: x.value_counts().to_dict() for col in self.column_names}
+        agg_map = {col: self.agg_fn for col in self.column_names}  # aggregate the column_names by self.agg_fn
         agg_map.update(
-            {col: "first" for col in data.columns if col not in self.column_names and col != self.first_groupby}
+            {
+                col: "first"
+                for col in data.columns
+                if col not in self.column_names  # aggregate the un-interesting columns by 'first'
+                and col != self.first_groupby  # in case first_groupby is a single column
+                and col not in self.first_groupby
+            }  # in case there are multiple columns in the first_groupby
         )
-        first_result = gb.aggregate(agg_map)
+
+        first_result = gb.aggregate(agg_map).reset_index()
 
         # take the average and std of the first level aggregation for each group in the second groupby
         def agg_counts_by_avg_std(x):
@@ -292,6 +323,52 @@ class TwoColumnSumAverageAggregator(NumericalAggregator):
         self.aggregated_result = {"ratio": divided_result}
 
 
+class ValueFilteredAggregator(Aggregator):
+    def __init__(
+        self,
+        agg_class,
+        value,
+        column_names,
+        output_dir,
+        group_by=None,
+        ignore_non_numeric=False,
+        filename_base=None,
+        **kwargs,
+    ):
+        """
+        Aggregator that filters out a particular value before aggregating the data.
+        args:
+            agg_class: Aggregator class to use for aggregation
+            value: value to filter out
+            column_names: column names to filter and aggregate
+            output_dir: str. directory to save the report
+            group_by: str. or list of str. column(s) to group by before aggregating
+            ignore_non_numeric: bool. if True ignore non-numeric values for average aggregator
+            filename_base: str. optional base string to be used in the file name for the report. If not None, the report filename will concatenate the class name, datetime, and filename_base.
+        """
+
+        self.base_aggregator = agg_class(
+            column_names, output_dir, group_by, ignore_non_numeric, filename_base, **kwargs
+        )
+        self.value = value
+        self.column_names = column_names
+        self.group_by = group_by
+        self.output_dir = output_dir
+        self.aggregated_result = None
+        self.ignore_non_numeric = ignore_non_numeric
+        self.filename_base = filename_base
+
+    def aggregate(self, data):
+        agg_results = {}
+        for col in self.column_names:
+            # workaround to process one column at a time
+            filtered_data = data[data[col] != self.value].copy()
+            self.base_aggregator.column_names = [col]
+            self.base_aggregator.aggregate(filtered_data)
+            agg_results.update(self.base_aggregator.aggregated_result)
+        self.aggregated_result = agg_results
+
+
 class CocoDetectionAggregator(Aggregator):
     """This class uses the coco tools to calculated AP50 for the provided detections."""
 
@@ -300,8 +377,8 @@ class CocoDetectionAggregator(Aggregator):
         args:
             column_names: Single column (pass as a list to conform with superclass), that indicates which column has the detection results
             output_dir: str, directory to save the reports
-            target_coco_json_reader: JsonReader, reader to load the ground truth json for the detections (in coco json format)            
-        """        
+            target_coco_json_reader: JsonReader, reader to load the ground truth json for the detections (in coco json format)
+        """
         super().__init__(column_names, output_dir)
 
         self.coco = COCO()
