@@ -23,7 +23,7 @@ class NPHARDTSPExtractAnswer(DFTransformBase):
 
 def extract_final_answer(model_output):
     # Find all non-overlapping occurrences between <final_answer> and </final_answer>
-    matches = re.findall(r'<final_answer>(.*?)</final_answer>', model_output, flags=re.DOTALL)
+    matches = re.findall(r"<final_answer>(.*?)</final_answer>", model_output, flags=re.DOTALL)
 
     # Return the last occurrence if any are found, otherwise return None
     return matches[-1] if matches else None
