@@ -1,7 +1,7 @@
 import json
 import re
 from dataclasses import dataclass
-
+import logging
 import pandas as pd
 
 from eureka_ml_insights.data_utils import DFTransformBase
@@ -81,6 +81,7 @@ def parse_path_from_model_output(model_output_string):
         tour_string = "".join(parts)
         tour = list(map(int, tour_string.split("->")))
     except Exception as e:
+        logging.info(f"There is no valid path: {e}")
         return "0,0,0,0"
 
     return ",".join(map(str, tour))
