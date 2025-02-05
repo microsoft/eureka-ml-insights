@@ -19,6 +19,7 @@ class NPHARDTSPExtractAnswer(DFTransformBase):
         df[self.model_answer_column] = df[self.model_output_column].apply(parse_path_from_model_output)
         return df
 
+
 def extract_final_answer(model_output):
     """
     Searches from the end of the string for the last valid <final_answer>...</final_answer> pair.
@@ -27,8 +28,8 @@ def extract_final_answer(model_output):
     3. If found, extracts and returns the text inside. Otherwise, keeps going backward.
     4. Returns None if no valid pairs are found.
     """
-    start_tag = '<final_answer>'
-    end_tag = '</final_answer>'
+    start_tag = "<final_answer>"
+    end_tag = "</final_answer>"
 
     search_upto = len(model_output)
     while True:
@@ -53,6 +54,7 @@ def extract_final_answer(model_output):
 
         return content.strip()
 
+
 def extract_path(final_answer):
     """Extracts the path string from the final answer, handling both JSON formats."""
     try:
@@ -68,17 +70,17 @@ def extract_path(final_answer):
 def parse_path_from_model_output(model_output_string):
     """Parses the model output to extract a tsp path."""
     try:
-        final_answer = extract_final_answer(model_output_string)    
-        tour_string = extract_path(final_answer) if final_answer else None    
+        final_answer = extract_final_answer(model_output_string)
+        tour_string = extract_path(final_answer) if final_answer else None
 
         if tour_string is None:
             return "0,0,0,0"
 
         # Remove non-numeric characters except '->' and split into a list of integers
-        parts = re.findall(r"\d+|->", tour_string)        
+        parts = re.findall(r"\d+|->", tour_string)
         tour_string = "".join(parts)
-        tour = list(map(int, tour_string.split("->")))            
-    except Exception as e:                
+        tour = list(map(int, tour_string.split("->")))
+    except Exception as e:
         return "0,0,0,0"
 
     return ",".join(map(str, tour))
