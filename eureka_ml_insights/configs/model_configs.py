@@ -171,6 +171,7 @@ LLAMA3_1_70B_INSTRUCT_CONFIG = ModelConfig(
             "key_vault_url": None,
         },
         "model_name": "meta-llama-3-1-70b-instruct",
+        "timeout": 600,
     },
 )
 
@@ -184,6 +185,7 @@ LLAMA3_1_405B_INSTRUCT_CONFIG = ModelConfig(
             "key_vault_url": None,
         },
         "model_name": "Meta-Llama-3-1-405B-Instruct",
+        "timeout": 600,
     },
 )
 
