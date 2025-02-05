@@ -9,6 +9,7 @@ from .aime import (
     AIME_PIPELINE512Run,
     AIME_PIPELINE1024Run,
 )
+from .aime_seq import AIME_SEQ_PIPELINE
 from .ba_calendar import (
         BA_Calendar_PIPELINE,
         BA_Calendar_Parallel_PIPELINE,
@@ -133,4 +134,5 @@ __all__ = [
     AIME_PIPELINE256Run,
     AIME_PIPELINE512Run,
     AIME_PIPELINE1024Run,
+    AIME_SEQ_PIPELINE,
 ]
