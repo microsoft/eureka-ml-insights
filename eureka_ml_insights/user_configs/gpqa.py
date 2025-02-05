@@ -122,7 +122,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                             RegexTransform(
                                 columns="model_output",
                                 prompt_pattern=r"Final Answer: (\w)(?=\s|\W|$)",
-                                case=True,
+                                ignore_case=False,
                             ),
                             ImputeNA(columns="model_output", value="")
                         ]
@@ -186,7 +186,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                             RegexTransform(
                                 columns="model_output",
                                 prompt_pattern=r"Final Answer: (\w)(?=\s|\W|$)",
-                                case=True,
+                                ignore_case=True,
                             ),
                         ]
                     ),

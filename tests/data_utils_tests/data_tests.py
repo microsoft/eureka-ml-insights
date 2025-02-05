@@ -73,7 +73,7 @@ class TestDataTransform(unittest.TestCase):
         df1 = pd.DataFrame({"A": [1, 2, None], "B": [model_data_loc1, model_data_loc2, model_data_loc3]})
         transform = SequenceTransform(
             [
-                RegexTransform(model_output, prompt_pattern, case=True),
+                RegexTransform(model_output, prompt_pattern, ignore_case=True),
                 ImputeNA("B", "0.0"),
             ]
         )

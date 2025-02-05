@@ -333,16 +333,31 @@ class PrependStringTransform(MultiColumnTransform):
 @dataclass
 class RegexTransform(MultiColumnTransform):
     """
-    Find occurrence of the pattern in selected columns.
+    Find the occurrence of the pattern in selected columns.
+    args:
+        columns: List of str or str, Column(s) to apply transform to.
+        prompt_pattern: str, pattern to search for
+        ignore_case: bool, True if the regex match should ignore the case
+        occurrence: str, "last" or "first" to indicate which of the occurrences to pick
     """
 
     columns: List[str] | str
     prompt_pattern: str
-    case: bool
+    ignore_case: bool = False
+    occurrence: str = "last"
 
     def _transform(self, sentence):
-        results = re.findall(self.prompt_pattern, sentence)
-        return results[0] if results else None
+        if self.ignore_case:
+            results = re.findall(self.prompt_pattern, sentence, flags=re.IGNORECASE)
+        else:
+            results = re.findall(self.prompt_pattern, sentence)
+        if results:
+            if (str == "first"):
+                return results[0]
+            elif (str == "last"):
+                return results[len(results) - 1]
+        else:
+            return None
 
 
 @dataclass
