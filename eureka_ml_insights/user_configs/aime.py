@@ -23,6 +23,7 @@ from eureka_ml_insights.data_utils import (
     MajorityVoteTransform,
     MultiplyTransform,
     SequenceTransform,
+    ExtractUsageTransform,
 )
 from eureka_ml_insights.data_utils.aime_utils import AIMEExtractAnswer
 from eureka_ml_insights.data_utils.data import DataLoader
@@ -30,6 +31,7 @@ from eureka_ml_insights.metrics.aime_metrics import NumericMatch
 from eureka_ml_insights.metrics.reports import (
     BiLevelCountAggregator,
     CountAggregator,
+    BiLevelAggregator
 )
 
 # from eureka_ml_insights.data_utils.transform import MajorityVoteTransform
@@ -97,6 +99,7 @@ class AIME_PIPELINE(ExperimentConfig):
                             ),
                             AddColumn("model_output"),
                             AIMEExtractAnswer("raw_output", "model_output"),
+                            ExtractUsageTransform(model_config),
                         ]
                     ),
                 },
@@ -116,16 +119,55 @@ class AIME_PIPELINE(ExperimentConfig):
             ),
             metric_config=MetricConfig(NumericMatch),
             aggregator_configs=[
-                AggregatorConfig(
-                    CountAggregator,
-                    {
-                        "column_names": [
-                            "NumericMatch_result",
-                        ],
-                        "group_by": "Year",
-                        "filename_base": "NumericMatch_GroupBy",
-                    },
-                ),
+                # the first two reports aggregate the metrics per experiment repeat
+                # each repeat can be considered as an individual pass@1 score
+                AggregatorConfig(CountAggregator, 
+                {
+                    "column_names": ["NumericMatch_result"], 
+                    "group_by": "data_repeat_id", 
+                    "filename_base": "NumericMatch_SeparateRuns",
+                    "normalize": True
+                }),
+                AggregatorConfig(CountAggregator, 
+                {
+                    "column_names": ["NumericMatch_result"], 
+                    "group_by": ["data_repeat_id", "Year"], 
+                    "filename_base": "NumericMatch_GroupBy_Year_SeparateRuns", 
+                    "normalize": True
+                }),
+                # the next two reports take the average and std for all repeats
+                # the resulting numbers are the average and std of N pass@1 scores, where N is number of repeats
+                AggregatorConfig(BiLevelCountAggregator, 
+                {
+                    "column_names": ["NumericMatch_result"], 
+                    "first_groupby": "data_repeat_id", 
+                    "filename_base": "NumericMatch_AllRuns",
+                    "normalize": True
+                }),
+                AggregatorConfig(BiLevelCountAggregator, 
+                {
+                    "column_names": ["NumericMatch_result"], 
+                    "first_groupby": ["data_repeat_id",    "Year"], 
+                    "second_groupby": "Year",
+                    "filename_base": "NumericMatch_GroupBy_Year_AllRuns", 
+                    "normalize": True
+                }),
+                # two similar reports for average completion usage
+                AggregatorConfig(BiLevelAggregator, 
+                {
+                    "column_names": ["usage_completion"], 
+                    "first_groupby": "data_point_id", 
+                    "filename_base": "UsageCompletion_AllRuns",
+                    "agg_fn": "mean"
+                }),
+                AggregatorConfig(BiLevelAggregator, 
+                {
+                    "column_names": ["usage_completion"], 
+                    "first_groupby": ["data_point_id", "Year"], 
+                    "second_groupby": "Year",
+                    "filename_base": "UsageCompletion_GroupBy_Year_AllRuns", 
+                    "agg_fn": "mean"
+                }),
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
         )
