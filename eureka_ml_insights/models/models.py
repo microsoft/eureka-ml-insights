@@ -1031,6 +1031,92 @@ class LLaVAModel(LLaVAHuggingFaceModel):
 
 
 @dataclass
+class vLLMModel(Model):
+    """This class is used to run a self-hosted language model via vLLM apis."""
+
+    model_name: str = None
+    trust_remote_code: bool = False
+    tensor_parallel_size: int = 1
+    dtype: str = "auto"
+    quantization: str = None
+    seed: int = 0
+    gpu_memory_utilization: float = 0.9
+    cpu_offload_gb: float = 0
+
+    temperature: float = 0.001
+    top_p: float = 0.95
+    top_k: int = -1
+    max_tokens: int = 2000
+    apply_model_template: bool = True
+
+    def __post_init__(self):
+        # vLLM automatically picks an available devices when get_model() is called
+        self.get_model()
+
+    def get_model(self):
+        from vllm import LLM
+
+        self.model = LLM(
+            model=self.model_name,
+            trust_remote_code=self.trust_remote_code,
+            tensor_parallel_size=self.tensor_parallel_size,
+            dtype=self.dtype,
+            quantization=self.quantization,
+            seed=self.seed,
+            gpu_memory_utilization=self.gpu_memory_utilization,
+            cpu_offload_gb=self.cpu_offload_gb,
+        )
+        
+    def _generate(self, text_prompt, query_images=None):
+        from vllm import SamplingParams
+
+        sampling_params = SamplingParams(
+            temperature=self.temperature,
+            top_p=self.top_p,
+            top_k=self.top_k,
+            max_tokens=self.max_tokens,
+        )
+    
+        start_time = time.time()
+        outputs = self.model.generate(text_prompt, sampling_params)
+        end_time = time.time()
+        
+        self.model_output = outputs[0].outputs[0].text
+
+        self.response_time = end_time - start_time
+
+    def generate(self, text_prompt, query_images=None, system_message=None):
+        response_dict = {}
+
+        if text_prompt:
+            if self.apply_model_template:
+                text_prompt = self.model_template_fn(text_prompt, system_message)
+
+            try:
+                meta_response = self._generate(text_prompt, query_images=query_images)
+                if meta_response:
+                    response_dict.update(meta_response)
+                self.is_valid = True
+
+            except Exception as e:
+                logging.warning(e)
+                self.is_valid = False
+
+        response_dict.update(
+            {
+                "model_output": self.model_output,
+                "is_valid": self.is_valid,
+                "response_time": self.response_time,
+                "n_output_tokens": self.count_tokens(),
+            }
+        )
+        return response_dict
+
+    def model_template_fn(self, text_prompt, system_message=None):
+        return system_message + " " + text_prompt if system_message else text_prompt
+
+
+@dataclass
 class ClaudeModel(EndpointModel, KeyBasedAuthMixIn):
     """This class is used to interact with Claude models through the python api."""
 
