@@ -26,7 +26,7 @@ from eureka_ml_insights.data_utils import (
 )
 from eureka_ml_insights.data_utils.aime_utils import AIMEExtractAnswer
 from eureka_ml_insights.data_utils.data import DataLoader
-from eureka_ml_insights.metrics.metrics_base import ExactMatch
+from eureka_ml_insights.metrics.aime_metrics import NumericMatch
 from eureka_ml_insights.metrics.reports import (
     BiLevelCountAggregator,
     CountAggregator,
@@ -78,7 +78,7 @@ class AIME_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
-            max_concurrent=10,
+            max_concurrent=1,
         )
         # post process the response to extract the answer
         self.data_post_processing = DataProcessingConfig(
@@ -114,16 +114,16 @@ class AIME_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                 },
             ),
-            metric_config=MetricConfig(ExactMatch),
+            metric_config=MetricConfig(NumericMatch),
             aggregator_configs=[
                 AggregatorConfig(
                     CountAggregator,
                     {
                         "column_names": [
-                            "ExactMatch_result",
+                            "NumericMatch_result",
                         ],
                         "group_by": "Year",
-                        "filename_base": "ExactMatch_GroupBy",
+                        "filename_base": "NumericMatch_GroupBy",
                     },
                 ),
             ],
@@ -171,13 +171,13 @@ class AIME_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                 },
             ),
-            metric_config=MetricConfig(ExactMatch),
+            metric_config=MetricConfig(NumericMatch),
             aggregator_configs=[
                 AggregatorConfig(
                     BiLevelCountAggregator,
                     {
                         "column_names": [
-                            "ExactMatch_result",
+                            "NumericMatch_result",
                         ],
                         "first_groupby": "ID",
                         "filename_base": "MajorityVote",
@@ -215,6 +215,35 @@ class AIME_PIPELINE5Run(AIME_PIPELINE):
         )
         return pipeline
 
+class AIME_PIPELINE5Run_2025(AIME_PIPELINE):
+    """This class specifies the config for running AIME benchmark 5 repeated times"""
+
+    def configure_pipeline(
+        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
+    ) -> PipelineConfig:
+        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
+        self.data_processing_comp.data_reader_config = DataSetConfig(
+                DataReader,
+                {
+                    # read from local file for 2025
+                    "path": r"C:\Users\benushi\OneDrive - Microsoft\Datasets\AIME2025_copy.csv",
+                    "transform": SequenceTransform(
+                        [
+                            ColumnRename(
+                                name_mapping={
+                                    "Question": "prompt",
+                                    "Answer": "ground_truth",
+                                }
+                            ),
+                        ],
+                    ),
+                },
+            )
+        # data preprocessing
+        self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
+            MultiplyTransform(n_repeats=5)
+        )
+        return pipeline
 
 class AIME_PIPELINE16Run(AIME_PIPELINE):
     """This class specifies the config for running AIME benchmark 5 repeated times"""
