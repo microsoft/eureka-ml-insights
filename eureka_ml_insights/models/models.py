@@ -24,6 +24,8 @@ class Model(ABC):
     is_valid: bool = False
     response_time: float = None
     n_output_tokens: int = None
+    chat_mode: bool = False
+    previous_messages: list = None
 
     @abstractmethod
     def generate(self, text_prompt, *args, **kwargs):
@@ -98,6 +100,19 @@ class EndpointModel(Model):
         # must return the model output and the response time
         raise NotImplementedError
 
+    def update_chat_history(self, query_text, *args, **kwargs):
+        """
+        This method is used to update the chat history with the model response.
+        args:
+            query_text (str): the text prompt to generate the response.
+        returns:
+            previous_messages (list): a list of messages in the chat history.
+        """
+        previous_messages = kwargs.get("previous_messages", [])
+        previous_messages.append({"role": "user", "content": query_text})
+        previous_messages.append({"role": "assistant", "content": self.model_output})
+        self.previous_messages = previous_messages
+
     def generate(self, query_text, *args, **kwargs):
         """
         Calls the endpoint to generate the model response.
@@ -115,6 +130,8 @@ class EndpointModel(Model):
         while attempts < self.num_retries:
             try:
                 meta_response = self.get_response(request)
+                if self.chat_mode:
+                    self.update_chat_history(query_text, *args, **kwargs)
                 if meta_response:
                     response_dict.update(meta_response)
                 self.is_valid = True
@@ -140,6 +157,8 @@ class EndpointModel(Model):
                 "n_output_tokens": self.count_tokens(),
             }
         )
+        if self.chat_mode:
+            response_dict.update({"previous_messages": self.previous_messages})
         return response_dict
 
     @abstractmethod
@@ -157,6 +176,7 @@ class RestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
     frequency_penalty: float = 0
     presence_penalty: float = 0
     do_sample: bool = True
+    timeout: int = None
 
     def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
         """Creates a request for the model."""
@@ -193,7 +213,7 @@ class RestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
     def get_response(self, request):
         # Get the model response and measure the time taken.
         start_time = time.time()
-        response = urllib.request.urlopen(request)
+        response = urllib.request.urlopen(request, timeout=self.timeout)
         end_time = time.time()
         # Parse the response and return the model output.
         res = json.loads(response.read())
@@ -206,6 +226,8 @@ class RestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
             # Print the headers - they include the request ID and the timestamp, which are useful for debugging.
             logging.info(e.info())
             logging.info(e.read().decode("utf8", "ignore"))
+        else:
+            logging.info("The request failed with: "+ str(e))
         return False
 
 
@@ -218,6 +240,7 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
     model_name: str = None
     stream: bool = False
     auth_scope: str = "https://cognitiveservices.azure.com/.default"
+    timeout: int = None
 
     def __post_init__(self):
         try:
@@ -253,7 +276,7 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
 
     def get_response(self, request):
         start_time = time.time()
-        response = urllib.request.urlopen(request)
+        response = urllib.request.urlopen(request, timeout=self.timeout)
         end_time = time.time()
         res = json.loads(response.read())
         self.model_output = res["choices"][0]["message"]["content"]
@@ -267,6 +290,8 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
             # Print the headers - they include the request ID and the timestamp, which are useful for debugging.
             logging.info(e.info())
             logging.info(e.read().decode("utf8", "ignore"))
+        else:
+            logging.info("The request failed with: "+ str(e))
         return False
 
 
@@ -371,17 +396,17 @@ class OpenAICommonRequestResponseMixIn:
     This mixin class defines the request and response handling for most OpenAI models.
     """
 
-    def create_request(self, prompt, query_images=None, system_message=None, previous_messages=None):
+    def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
         messages = []
         if system_message:
             messages.append({"role": "system", "content": system_message})
         if previous_messages:
             messages.extend(previous_messages)
-        user_content = prompt
+        user_content = text_prompt
         if query_images:
             encoded_images = self.base64encode(query_images)
             user_content = [
-                {"type": "text", "text": prompt},
+                {"type": "text", "text": text_prompt},
                 {
                     "type": "image_url",
                     "image_url": {
@@ -490,7 +515,7 @@ class DirectOpenAIModel(OpenAICommonRequestResponseMixIn, DirectOpenAIClientMixI
 
 class OpenAIO1RequestResponseMixIn:
     
-    def create_request(self, prompt, query_images=None, system_message=None, previous_messages=None):
+    def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
         messages = []
         if system_message and "o1-preview" in self.model_name:
             logging.warning("System and developer messages are not supported by OpenAI O1 preview model.")
@@ -502,13 +527,13 @@ class OpenAIO1RequestResponseMixIn:
         if previous_messages:
             messages.extend(previous_messages)
         
-        user_content = prompt
+        user_content = text_prompt
         if query_images and "o1-preview" in self.model_name:
             logging.warning("Images are not supported by OpenAI O1 preview model.")
         elif query_images:
             encoded_images = self.base64encode(query_images)
             user_content = [
-                {"type": "text", "text": prompt},
+                {"type": "text", "text": text_prompt},
                 {
                     "type": "image_url",
                     "image_url": {
@@ -605,7 +630,7 @@ class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
             max_output_tokens=self.max_tokens, temperature=self.temperature, top_p=self.top_p
         )
 
-    def create_request(self, text_prompt, query_images=None, system_message=None):
+    def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
         import google.generativeai as genai
 
         if self.model_name == "gemini-1.0-pro":
@@ -687,6 +712,9 @@ class HuggingFaceModel(Model):
     do_sample: bool = True
     apply_model_template: bool = True
 
+    quantize: bool = False
+    use_flash_attn: bool = False
+
     def __post_init__(self):
         # The device need to be set before get_model() is called
         self.device = self.pick_available_device()
@@ -694,8 +722,28 @@ class HuggingFaceModel(Model):
 
     def get_model(self):
         from transformers import AutoModelForCausalLM, AutoTokenizer
+        import torch
 
-        self.model = AutoModelForCausalLM.from_pretrained(self.model_name).to(self.device)
+        quantization_config = None
+        if self.quantize:
+            from transformers import BitsAndBytesConfig
+
+            logging.info("Quantizing model")
+            # specify how to quantize the model
+            quantization_config = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_compute_dtype=torch.float16,
+            )
+
+        self.model = AutoModelForCausalLM.from_pretrained(
+            self.model_name,
+            torch_dtype=torch.float16,
+            quantization_config=quantization_config,
+            device_map=self.device,
+            use_flash_attention_2=self.use_flash_attn,
+        )
+
+
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, use_fast=False)
 
     def pick_available_device(self):
@@ -791,11 +839,26 @@ class Phi3HFModel(HuggingFaceModel):
 
 
 @dataclass
+class Phi4HFModel(HuggingFaceModel):
+    """This class is used to run a self-hosted PHI3 model via HuggingFace apis."""
+
+    def __post_init__(self):
+        super().__post_init__()
+        if "microsoft/phi-4" not in self.model_name:
+            logging.warning(
+                "This model class applies a template to the prompt that is specific to Phi-4 models"
+                "but your model is not a Phi-4 model."
+            )
+
+    def model_template_fn(self, text_prompt, system_message=None):
+        if system_message:
+            return f"<|im_start|>system<|im_sep|>\n{system_message}<|im_start|>user<|im_sep|>\n{text_prompt}<|im_end|>\n<|im_start|>assistant<|im_sep|>"
+        else:
+            return f"<|im_start|>user<|im_sep|>\n{text_prompt}<|im_end|>\n<|im_start|>assistant<|im_sep|>"
+
+@dataclass
 class LLaVAHuggingFaceModel(HuggingFaceModel):
     """This class is used to run a self-hosted LLaVA model via HuggingFace apis."""
-
-    quantize: bool = False
-    use_flash_attn: bool = False
 
     def __post_init__(self):
         super().__post_init__()
@@ -814,6 +877,7 @@ class LLaVAHuggingFaceModel(HuggingFaceModel):
             LlavaNextProcessor,
         )
 
+        quantization_config = None
         if self.quantize:
             from transformers import BitsAndBytesConfig
 
@@ -825,39 +889,22 @@ class LLaVAHuggingFaceModel(HuggingFaceModel):
             )
 
         if "v1.6" in self.model_name:
-            if self.quantize:
-                self.model = LlavaNextForConditionalGeneration.from_pretrained(
-                    self.model_name,
-                    torch_dtype=torch.float16,
-                    quantization_config=quantization_config,
-                    device_map=self.device,
-                    use_flash_attention_2=self.use_flash_attn,
-                )
-            else:
-                self.model = LlavaNextForConditionalGeneration.from_pretrained(
-                    self.model_name,
-                    torch_dtype=torch.float16,
-                    device_map=self.device,
-                    use_flash_attention_2=self.use_flash_attn,
-                )
-
+            self.model = LlavaNextForConditionalGeneration.from_pretrained(
+                self.model_name,
+                torch_dtype=torch.float16,
+                quantization_config=quantization_config,
+                device_map=self.device,
+                use_flash_attention_2=self.use_flash_attn,
+            )
             self.processor = LlavaNextProcessor.from_pretrained(self.model_name)
         else:
-            if self.quantize:
-                self.model = LlavaForConditionalGeneration.from_pretrained(
-                    self.model_name,
-                    torch_dtype=torch.float16,
-                    quantization_config=quantization_config,
-                    device_map=self.device,
-                    use_flash_attention_2=self.use_flash_attn,
-                )
-            else:
-                self.model = LlavaForConditionalGeneration.from_pretrained(
-                    self.model_name,
-                    torch_dtype=torch.float16,
-                    device_map=self.device,
-                    use_flash_attention_2=self.use_flash_attn,
-                )
+            self.model = LlavaForConditionalGeneration.from_pretrained(
+                self.model_name,
+                torch_dtype=torch.float16,
+                quantization_config=quantization_config,
+                device_map=self.device,
+                use_flash_attention_2=self.use_flash_attn,
+            )
 
             self.processor = AutoProcessor.from_pretrained(self.model_name)
 
@@ -1000,16 +1047,15 @@ class ClaudeModel(EndpointModel, KeyBasedAuthMixIn):
             timeout=self.timeout,
         )
 
-    def create_request(self, prompt, query_images=None, system_message=None, previous_messages=None):
+    def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
         messages = []
-
-        user_content = prompt
+        user_content = text_prompt
         if previous_messages:
             messages.extend(previous_messages)
         if query_images:
             encoded_images = self.base64encode(query_images)
             user_content = [
-                {"type": "text", "text": prompt},
+                {"type": "text", "text": text_prompt},
                 {
                     "type": "image",
                     "source": {

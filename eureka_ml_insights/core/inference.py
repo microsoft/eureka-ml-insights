@@ -25,6 +25,7 @@ class Inference(Component):
         new_columns=None,
         requests_per_minute=None,
         max_concurrent=1,
+        chat_mode=False,
     ):
         """
         Initialize the Inference component.
@@ -36,6 +37,7 @@ class Inference(Component):
             new_columns (list): optional. List of new columns to be added to resume_from data to match the current inference response.
             requests_per_minute (int): optional. Number of inference requests to be made per minute, used for rate limiting. If not provided, rate limiting will not be applied.
             max_concurrent (int): optional. Maximum number of concurrent inferences to run. Default is 1.
+            chat_mode (bool): optional. If True, the model will be used in chat mode, where a history of messages will be maintained in "previous_messages" column.
         """
         super().__init__(output_dir)
         self.model = model_config.class_name(**model_config.init_args)
@@ -54,6 +56,8 @@ class Inference(Component):
 
         # parallel inference parameters
         self.max_concurrent = max_concurrent
+        self.chat_mode = chat_mode
+        self.model.chat_mode = self.chat_mode
 
     @classmethod
     def from_config(cls, config):
@@ -65,22 +69,27 @@ class Inference(Component):
             new_columns=config.new_columns,
             requests_per_minute=config.requests_per_minute,
             max_concurrent=config.max_concurrent,
+            chat_mode=config.chat_mode,
         )
 
     def fetch_previous_inference_results(self):
-        # fetch previous results from the provided resume_from file
+        """This method loads the contents of the resume_from file and validates if it
+        contains the required columns and keys in alignment with the current model configuration."""
+
         logging.info(f"Resuming inference from {self.resume_from}")
+        # fetch previous results from the provided resume_from file.
         pre_inf_results_df = DataReader(self.resume_from, format=".jsonl").load_dataset()
 
-        # add new columns listed by the user to the previous inference results
+        # add new columns listed by the user to the previous inference results, in case we know that the current model will
+        # generate new columns that were not present in the previous results
         if self.new_columns:
             for col in self.new_columns:
                 if col not in pre_inf_results_df.columns:
                     pre_inf_results_df[col] = None
 
-        # validate the resume_from contents
+        # validate the resume_from contents both stand-alone and against the current model response keys
         with self.data_loader as loader:
-            _, sample_model_input = self.data_loader.get_sample_model_input()
+            _, sample_model_input, sample_model_kwargs = loader.get_sample_model_input()
             sample_data_keys = loader.reader.read().keys()
 
             # verify that "model_output" and "is_valid" columns are present
@@ -88,7 +97,7 @@ class Inference(Component):
                 raise ValueError("Columns 'model_output' and 'is_valid' are required in the resume_from file.")
 
             # perform a sample inference call to get the model output keys and validate the resume_from contents
-            sample_response_dict = self.model.generate(*sample_model_input)
+            sample_response_dict = self.model.generate(*sample_model_input, **sample_model_kwargs)
             if not sample_response_dict["is_valid"]:
                 raise ValueError(
                     "Sample inference call for resume_from returned invalid results, please check the model configuration."
@@ -152,9 +161,9 @@ class Inference(Component):
                 prev_model_tokens,
                 prev_model_time,
             )
-            # add remaining pre_inf_results_df columns to the data point
+            # add remaining pre_inf_results_df columns to the data point, making sure to update the previous_messages column
             for col in pre_inf_results_df.columns:
-                if col not in data:
+                if col not in data or col == "previous_messages":
                     data[col] = prev_results[col].values[0]
 
             return data
@@ -171,8 +180,9 @@ class Inference(Component):
             pre_inf_results_df, last_uid = self.fetch_previous_inference_results()
         with self.data_loader as loader:
             with self.writer as writer:
-                for data, model_inputs in tqdm(loader, desc="Inference Progress:"):
-
+                for data, model_args, model_kwargs in tqdm(loader, desc="Inference Progress:"):
+                    if self.chat_mode and data.get("is_valid", True) is False:
+                        continue
                     if self.resume_from and (data["uid"] <= last_uid):
                         prev_result = self.retrieve_exisiting_result(data, pre_inf_results_df)
                         if prev_result:
@@ -189,20 +199,27 @@ class Inference(Component):
                                 # rate limit is reached, wait for a second
                                 time.sleep(1)
                         self.request_times.append(time.time())
-                    response_dict = self.model.generate(*model_inputs)
+                    response_dict = self.model.generate(*model_args, **model_kwargs)
                     self.validate_response_dict(response_dict)
                     # write results
                     data.update(response_dict)
                     writer.write(data)
 
+    from functools import partial
+
     async def run_in_excutor(self, model_inputs, executor):
         """Run model.generate in a ThreadPoolExecutor.
         args:
-            model_inputs (tuple): inputs to the model.generate function.
+            model_inputs (tuple): args and kwargs to be passed to the model.generate function.
             executor (ThreadPoolExecutor): ThreadPoolExecutor instance.
         """
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(executor, self.model.generate, *model_inputs)
+
+        # function to run in executor with args and kwargs
+        def sub_func(model_inputs):
+            return self.model.generate(*model_inputs[0], **model_inputs[1])
+
+        return await loop.run_in_executor(executor, sub_func, model_inputs)
 
     async def _run_par(self):
         """parallel inference"""
@@ -212,7 +229,9 @@ class Inference(Component):
             pre_inf_results_df, last_uid = self.fetch_previous_inference_results()
         with self.data_loader as loader:
             with self.writer as writer:
-                for data, model_inputs in tqdm(loader, desc="Inference Progress:"):
+                for data, model_args, model_kwargs in tqdm(loader, desc="Inference Progress:"):
+                    if self.chat_mode and data.get("is_valid", True) is False:
+                        continue
                     if self.resume_from and (data["uid"] <= last_uid):
                         prev_result = self.retrieve_exisiting_result(data, pre_inf_results_df)
                         if prev_result:
@@ -226,7 +245,7 @@ class Inference(Component):
                         concurrent_inputs = []
                         concurrent_metadata = []
                     # add data to batch for concurrent inference
-                    concurrent_inputs.append(model_inputs)
+                    concurrent_inputs.append((model_args, model_kwargs))
                     concurrent_metadata.append(data)
                 # if data loader is exhausted but there are remaining data points that did not form a full batch
                 if concurrent_inputs:

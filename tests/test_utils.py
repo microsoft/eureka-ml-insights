@@ -242,11 +242,11 @@ class TestKitabMetric(CompositeMetric):
 class EarlyStoppableIterable:
     def __iter__(self):
         count = 0
-        for data, model_inputs in super().__iter__():
+        for data, model_args, model_kwargs in super().__iter__():
             if count == self.n_iter:
                 break
             count += 1
-            yield data, model_inputs
+            yield data, model_args, model_kwargs
 
     def __len__(self):
         return self.n_iter
