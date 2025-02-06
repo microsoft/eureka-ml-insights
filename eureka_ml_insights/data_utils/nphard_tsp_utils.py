@@ -46,12 +46,14 @@ def parse_path_from_model_output(model_output_string):
     try:
         final_answer = extract_final_answer(model_output_string)
         tour_string = extract_path(final_answer) if final_answer else None
-
-        # Remove non-numeric characters except '->' and split into a list of integers
+        
+        if tour_string is None:
+            return "0,0,0,0"
+        
         parts = re.findall(r"\d+|->", tour_string)
         tour_string = "".join(parts)
         tour = list(map(int, tour_string.split("->")))
-    except Exception as e:
+    except (AttributeError, ValueError) as e:
         logging.info(f"There is no valid path: {e}")
         return "0,0,0,0"
 
