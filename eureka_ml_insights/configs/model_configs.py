@@ -11,6 +11,7 @@ from eureka_ml_insights.models import (
     LlamaServerlessAzureRestEndpointModel,
     LLaVAHuggingFaceModel,
     LLaVAModel,
+    Phi4HFModel,
     MistralServerlessAzureRestEndpointModel,
     RestEndpointModel,
     TestModel,
@@ -84,6 +85,14 @@ OAI_GPT4O_2024_05_13_CONFIG = ModelConfig(
     },
 )
 
+OAI_GPT4O_2024_11_20_CONFIG = ModelConfig(
+    DirectOpenAIModel,
+    {
+        "model_name": "gpt-4o-2024-11-20",
+        "secret_key_params": OPENAI_SECRET_KEY_PARAMS,
+    },
+)
+
 OAI_GPT4O_MINI_2024_07_18_CONFIG = ModelConfig(
     DirectOpenAIModel,
     {
@@ -99,18 +108,27 @@ GEMINI_SECRET_KEY_PARAMS = {
     "key_vault_url": None,
 }
 
-GEMINI_V15_PRO_CONFIG = ModelConfig(
+GEMINI_V2_FLASH_THINKING_EXP_0121_CONFIG = ModelConfig(
     GeminiModel,
     {
-        "model_name": "gemini-1.5-pro",
+        "model_name": "gemini-2.0-flash-thinking-exp-01-21",
+        "secret_key_params": GEMINI_SECRET_KEY_PARAMS,
+	    "max_tokens": 32768
+    },
+)
+
+GEMINI_V2_PRO_EXP_0205_CONFIG = ModelConfig(
+    GeminiModel,
+    {
+        "model_name": "gemini-2.0-pro-exp-02-05",
         "secret_key_params": GEMINI_SECRET_KEY_PARAMS,
     },
 )
 
-GEMINI_V1_PRO_CONFIG = ModelConfig(
+GEMINI_V15_PRO_CONFIG = ModelConfig(
     GeminiModel,
     {
-        "model_name": "gemini-1.0-pro",
+        "model_name": "gemini-1.5-pro",
         "secret_key_params": GEMINI_SECRET_KEY_PARAMS,
     },
 )
@@ -138,6 +156,14 @@ CLAUDE_3_5_SONNET_CONFIG = ModelConfig(
     },
 )
 
+CLAUDE_3_5_SONNET_20241022_CONFIG = ModelConfig(
+    ClaudeModel,
+    {
+        "secret_key_params": CLAUDE_SECRET_KEY_PARAMS,
+        "model_name": "claude-3-5-sonnet-20241022",
+    },
+)
+
 # LLAVA models
 LLAVAHF_V16_34B_CONFIG = ModelConfig(
     LLaVAHuggingFaceModel,
@@ -157,6 +183,15 @@ LLAVA_V16_34B_CONFIG = ModelConfig(
 LLAVA_V15_7B_CONFIG = ModelConfig(
     LLaVAModel,
     {"model_name": "liuhaotian/llava-v1.5-7b", "use_flash_attn": True},
+)
+
+# Phi Models
+PHI4_HF_CONFIG = ModelConfig(
+    Phi4HFModel,
+    {
+        "model_name": "microsoft/phi-4",
+        "use_flash_attn": True,
+    },
 )
 
 # Llama models
