@@ -454,10 +454,12 @@ class AzureOpenAIClientMixIn:
 
     def handle_request_error(self, e):
         # if the error is due to a content filter, there is no need to retry
-        if e.code == "content_filter":
+        if hasattr(e, 'code') and e.code == "content_filter":
             logging.warning("Content filtered.")
             response = None
             return response, False, True
+        else:
+            logging.warning(str(e))
         return False
 
 
@@ -554,6 +556,7 @@ class OpenAIO1RequestResponseMixIn:
             top_p=self.top_p,
             frequency_penalty=self.frequency_penalty,
             presence_penalty=self.presence_penalty,
+            reasoning_effort=self.reasoning_effort,
             **request,
         )
         end_time = time.time()
@@ -576,6 +579,7 @@ class DirectOpenAIO1Model(OpenAIO1RequestResponseMixIn, DirectOpenAIClientMixIn,
     seed: int = 0
     frequency_penalty: float = 0
     presence_penalty: float = 0
+    reasoning_effort: str = "medium"
 
     def __post_init__(self):
         self.api_key = self.get_api_key()
@@ -595,6 +599,7 @@ class AzureOpenAIO1Model(OpenAIO1RequestResponseMixIn, AzureOpenAIClientMixIn, E
     seed: int = 0
     frequency_penalty: float = 0
     presence_penalty: float = 0
+    reasoning_effort: str = "medium"
     api_version: str = "2023-06-01-preview"
     auth_scope: str = "https://cognitiveservices.azure.com/.default"
 
