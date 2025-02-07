@@ -89,6 +89,8 @@ class BACalendarMetric(CompositeMetric):
         solution = solution.strip('"').strip('`').strip('\n')
         if check_time_slot_format(solution):
             result['format_programmatic'] = 1
+        else:
+            result['format_programmatic'] = 0
         result.update(self.check_availability_programmatic(instance, solution))
         result.update(self.check_meeting_duration_programmatic(instance, solution))
         result.update(self.check_buffer_time_programmatic(instance, solution))
