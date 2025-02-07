@@ -16,7 +16,6 @@ from .flenqa import FlenQA_Experiment_Pipeline
 from .geometer import GEOMETER_PIPELINE
 from .gpqa import ( 
     GPQA_Experiment_Pipeline,
-    GPQA_PIPELINE_5Run
 )
 from .ifeval import IFEval_PIPELINE
 from .image_understanding.object_detection import (
@@ -108,7 +107,6 @@ __all__ = [
     IFEval_PIPELINE,
     FlenQA_Experiment_Pipeline,
     GPQA_Experiment_Pipeline,
-    GPQA_PIPELINE_5Run,
     Drop_Experiment_Pipeline,
     GEOMETER_PIPELINE,
     MMMU_BASELINE_PIPELINE,
