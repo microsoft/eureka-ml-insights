@@ -190,8 +190,6 @@ PHI4_HF_CONFIG = ModelConfig(
     Phi4HFModel,
     {
         "model_name": "microsoft/phi-4",
-        "temperature": 1.0,
-        "max_tokens": 4096,
         "use_flash_attn": True,
     },
 )
