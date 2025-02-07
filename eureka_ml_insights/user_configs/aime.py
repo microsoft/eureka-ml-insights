@@ -3,6 +3,7 @@ from typing import Any
 
 from eureka_ml_insights.configs import (
     AggregatorConfig,
+    DataJoinConfig,
     DataProcessingConfig,
     DataSetConfig,
     EvalReportingConfig,
@@ -13,7 +14,7 @@ from eureka_ml_insights.configs import (
     PipelineConfig,
     PromptProcessingConfig,
 )
-from eureka_ml_insights.core import DataProcessing, Inference, PromptProcessing
+from eureka_ml_insights.core import DataProcessing, Inference, PromptProcessing, DataJoin
 from eureka_ml_insights.core.eval_reporting import EvalReporting
 from eureka_ml_insights.data_utils import (
     AddColumn,
@@ -84,6 +85,7 @@ class AIME_PIPELINE(ExperimentConfig):
             resume_from=resume_from,
             max_concurrent=1,
         )
+               
         # post process the response to extract the answer
         self.data_post_processing = DataProcessingConfig(
             component_type=DataProcessing,
@@ -386,7 +388,7 @@ class AIME_PIPELINE5Run_2025(AIME_PIPELINE):
                 DataReader,
                 {
                     # read from local file for 2025
-                    "path": r"C:\Users\benushi\OneDrive - Microsoft\Datasets\AIME2025_copy.csv",
+                    "path": r"C:\Users\lingjiaochen\Downloads\AIME2025.csv",
                     "transform": SequenceTransform(
                         [
                             ColumnRename(
@@ -399,11 +401,108 @@ class AIME_PIPELINE5Run_2025(AIME_PIPELINE):
                     ),
                 },
             )
+        # join the other answer
+        answer_path = r"C:\Users\lingjiaochen\Downloads\AIME2025_Answer.csv"
+        other_data_reader_config  = DataSetConfig(
+                DataReader,
+                {
+                    "path": answer_path,
+                     "transform": SequenceTransform(
+                        [
+                            ColumnRename(
+                                name_mapping={
+                                     "Answer_Label":"ground_truth",
+                                }
+                            ),
+                        ]
+                    ),
+                },
+            )
+        # post process the response to extract the answer
+        self.data_post_processing = DataJoinConfig(
+            component_type=DataJoin,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            ColumnRename(
+                                name_mapping={
+                                    "model_output": "raw_output",
+                                    "ground_truth":"old_ground_truth",
+                                }
+                            ),
+                            AddColumn("model_output"),
+                            AIMEExtractAnswer("raw_output", "model_output"),
+                            ExtractUsageTransform(model_config),
+                        ]
+                    ),
+                },
+            ),
+            other_data_reader_config  = other_data_reader_config,
+            pandas_merge_args ={"on":"ID"},
+            output_dir=os.path.join(self.log_dir, "data_post_processing_output"),
+        )
+        
+        # post process the response to extract the answer for majority vote
+        self.data_post_processing_addmv = DataJoinConfig(
+            component_type=DataJoin,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            ColumnRename(
+                                name_mapping={
+                                    "model_output": "raw_output",
+                                    "ground_truth":"old_ground_truth",
+
+                                }
+                            ),
+                            AddColumn("model_output"),
+                            AIMEExtractAnswer("raw_output", "model_output"),
+                            MajorityVoteTransform(id_col="ID"),
+                            ColumnRename(
+                                name_mapping={
+                                    "model_output": "model_output_onerun",
+                                    "majority_vote": "model_output",
+                                }
+                            ),
+                        ]
+                    ),
+                },
+            ),
+            other_data_reader_config  = other_data_reader_config,
+            pandas_merge_args ={"on":"ID"},
+            output_dir=os.path.join(self.log_dir, "data_addmv_output"),
+        )
+        
+
         # data preprocessing
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
             MultiplyTransform(n_repeats=5)
         )
-        return pipeline
+        
+        # Configure the pipeline; this is necessary for resume_from to work
+        return PipelineConfig(
+            [
+                self.data_processing_comp,
+                self.inference_comp,
+                self.data_post_processing,
+                self.evalreporting_comp,
+                self.data_post_processing_addmv,
+                self.mv_evalreporting_comp ,
+                self.posteval_data_post_processing_comp,
+                self.bon_evalreporting_comp,
+                self.won_evalreporting_comp
+            ],
+            self.log_dir,
+        )
+
 
 class AIME_PIPELINE16Run(AIME_PIPELINE):
     """This class specifies the config for running AIME benchmark 5 repeated times"""
