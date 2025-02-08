@@ -27,9 +27,9 @@ class AIMEExtractAnswer(DFTransformBase):
         numerical_value = None
 
         # Try to find an answer in the "Final Answer: X" format
-        match = re.search(r"Final Answer:\s*([\$]?-?[\d,]+(?:\.\d+)?%?)", response)
+        match = re.findall(r"Final Answer:\s*([\$]?-?[\d,]+(?:\.\d+)?%?)", response)
         if match:
-            answer_str = match.group(1)
+            answer_str = match[-1]
             # Remove $ and commas, handle percentages for numerical comparison
             answer_str = answer_str.replace("$", "").replace(",", "")
             if answer_str.endswith("%"):
