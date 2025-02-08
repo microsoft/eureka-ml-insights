@@ -706,7 +706,7 @@ class TogetherModel(OpenAICommonRequestResponseMixIn, KeyBasedAuthMixIn, Endpoin
     timeout: int = 600
     model_name: str = None
     temperature: float = 0
-    max_tokens: int = 2000
+    max_tokens: int = 65536
     top_p: float = 0.95
     presence_penalty: float = 0
     stop=["<｜end▁of▁sentence｜>"]
