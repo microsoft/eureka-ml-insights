@@ -42,6 +42,9 @@ TOGETHER_DEEPSEEK_R1_CONFIG = ModelConfig(
         "model_name": "deepseek-ai/DeepSeek-R1",
         "secret_key_params": TOGETHER_SECRET_KEY_PARAMS,
         "temperature": 1.0,
+        # high max token limit for deep seek
+        # otherwise the answers may be cut in the middle
+        "max_tokens": 65536
     },
 )
 # OpenAI models
