@@ -12,6 +12,7 @@ from .models import (
     LLaVAModel,
     MistralServerlessAzureRestEndpointModel,
     Phi3HFModel,
+    Phi4HFModel,
     RestEndpointModel,
     TestModel,
 )
@@ -23,6 +24,7 @@ __all__ = [
     KeyBasedAuthMixIn,
     LLaVAHuggingFaceModel,
     Phi3HFModel,
+    Phi4HFModel,
     DirectOpenAIModel,
     AzureOpenAIModel,
     GeminiModel,

@@ -10,17 +10,20 @@ from .metrics_base import (
     SubstringExistsMatch,
 )
 from .mmmu_metrics import MMMUMetric
+from .nphard_tsp_metrics import NPHardTSPMetric
 from .reports import (
     Aggregator,
     AverageAggregator,
     AverageSTDDevAggregator,
-    BiLevelAverageAggregator,
+    BiLevelAggregator,
     BiLevelCountAggregator,
     CocoDetectionAggregator,
     CountAggregator,
+    MaxAggregator,
     Reporter,
     SumAggregator,
     TwoColumnSumAverageAggregator,
+    ValueFilteredAggregator,
 )
 from .spatial_and_layout_metrics import (
     CocoObjectDetectionMetric,
@@ -46,10 +49,13 @@ __all__ = [
     AverageSTDDevAggregator,
     ExactMatch,
     CaseInsensitiveMatch,
-    BiLevelAverageAggregator,
+    BiLevelAggregator,
     BiLevelCountAggregator,
     TwoColumnSumAverageAggregator,
     SumAggregator,
+    MaxAggregator,
     MMMUMetric,
     MaxTokenF1ScoreMetric,
+    ValueFilteredAggregator,
+    NPHardTSPMetric,
 ]

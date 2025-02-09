@@ -1,4 +1,3 @@
-from .aime import AIME_PIPELINE
 from .aime import (
     AIME_PIPELINE,
     AIME_PIPELINE5Run,
@@ -9,10 +8,7 @@ from .aime import (
     AIME_PIPELINE512Run,
     AIME_PIPELINE1024Run,
 )
-from .ba_calendar import (
-        BA_Calendar_PIPELINE,
-        BA_Calendar_Parallel_PIPELINE,
-)
+from .ba_calendar import BA_Calendar_Parallel_PIPELINE, BA_Calendar_PIPELINE
 from .dna import DNA_PIPELINE
 from .drop import Drop_Experiment_Pipeline
 from .flenqa import FlenQA_Experiment_Pipeline
@@ -60,6 +56,7 @@ from .nondeterminism import (
 )
 from .omni_math import (Omni_Math_PIPELINE,
                         Omni_Math_Parallel_PIPELINE)
+from .nphard_tsp import NPHARD_TSP_PIPELINE, NPHARD_TSP_PIPELINE_MULTIPLE_RUNS
 from .toxigen import (
     ToxiGen_Discriminative_PIPELINE,
     ToxiGen_Generative_PIPELINE,
@@ -137,4 +134,6 @@ __all__ = [
     AIME_PIPELINE1024Run,
     Omni_Math_PIPELINE,
     Omni_Math_Parallel_PIPELINE,
+    NPHARD_TSP_PIPELINE,
+    NPHARD_TSP_PIPELINE_MULTIPLE_RUNS,
 ]

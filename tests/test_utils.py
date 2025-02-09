@@ -170,6 +170,17 @@ class ToxiGenTestModel:
         return {"model_output": random.choice(potential_outputs), "is_valid": random.choice([True, False])}
 
 
+class TSPTestModel:
+    def __init__(self, model_name="generic_test_model"):
+        self.name = model_name
+
+    def generate(self, text_prompt, *args, **kwargs):
+        return {
+            "model_output": "<final_answer>{'Path': '0->1->3->2->0', 'TotalDistance': '85'}</final_answer>",
+            "is_valid": random.choice([True]),
+        }
+
+
 class DetectionTestModel:
     def __init__(self):
         self.name = "detection_output_generator"
@@ -241,11 +252,11 @@ class TestKitabMetric(CompositeMetric):
 class EarlyStoppableIterable:
     def __iter__(self):
         count = 0
-        for data, model_inputs in super().__iter__():
+        for data, model_args, model_kwargs in super().__iter__():
             if count == self.n_iter:
                 break
             count += 1
-            yield data, model_inputs
+            yield data, model_args, model_kwargs
 
     def __len__(self):
         return self.n_iter
