@@ -1047,7 +1047,7 @@ class vLLMModel(Model):
     top_p: float = 0.95
     top_k: int = -1
     max_tokens: int = 2000
-    apply_model_template: bool = True
+    apply_model_template: bool = False
 
     def __post_init__(self):
         # vLLM automatically picks an available devices when get_model() is called
@@ -1113,7 +1113,7 @@ class vLLMModel(Model):
         return response_dict
 
     def model_template_fn(self, text_prompt, system_message=None):
-        return system_message + " " + text_prompt if system_message else text_prompt
+        raise NotImplementedError
 
 
 @dataclass
