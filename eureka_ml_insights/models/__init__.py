@@ -13,6 +13,7 @@ from .models import (
     MistralServerlessAzureRestEndpointModel,
     Phi3HFModel,
     Phi4HFModel,
+    Phi4VHFModel,
     RestEndpointModel,
     TestModel,
 )
@@ -25,6 +26,7 @@ __all__ = [
     LLaVAHuggingFaceModel,
     Phi3HFModel,
     Phi4HFModel,
+    Phi4VHFModel,
     DirectOpenAIModel,
     AzureOpenAIModel,
     GeminiModel,

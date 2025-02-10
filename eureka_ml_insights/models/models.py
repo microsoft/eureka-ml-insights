@@ -840,7 +840,7 @@ class Phi3HFModel(HuggingFaceModel):
 
 @dataclass
 class Phi4HFModel(HuggingFaceModel):
-    """This class is used to run a self-hosted PHI3 model via HuggingFace apis."""
+    """This class is used to run a self-hosted PHI4 model via HuggingFace apis."""
 
     def __post_init__(self):
         super().__post_init__()
@@ -851,6 +851,119 @@ class Phi4HFModel(HuggingFaceModel):
             )
 
     def model_template_fn(self, text_prompt, system_message=None):
+        if system_message:
+            return f"<|im_start|>system<|im_sep|>\n{system_message}<|im_start|>user<|im_sep|>\n{text_prompt}<|im_end|>\n<|im_start|>assistant<|im_sep|>"
+        else:
+            return f"<|im_start|>user<|im_sep|>\n{text_prompt}<|im_end|>\n<|im_start|>assistant<|im_sep|>"
+
+@dataclass
+class Phi4VHFModel(Phi4HFModel):
+    """This class is used to run a self-hosted PHI4V model via HuggingFace apis."""
+
+    def __post_init__(self):
+        super().__post_init__()
+        if "bunny-phi-4" not in self.model_name:
+            logging.warning(
+                "This model class applies a template to the prompt that is specific to bunny-phi-4 models"
+                "but your model is not a LLAVA model."
+            )
+
+    def get_model(self):
+        import torch
+        from transformers import (
+            AutoTokenizer,
+            AutoConfig,
+        )
+        from bunny.model import BunnyPhi3ForCausalLM
+
+        quantization_config = None
+        if self.quantize:
+            from transformers import BitsAndBytesConfig
+
+            logging.info("Quantizing model")
+            # specify how to quantize the model
+            quantization_config = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_compute_dtype=torch.float16,
+            )
+
+        model = BunnyPhi3ForCausalLM.from_pretrained(
+                self.model_name,
+                torch_dtype=torch.float16,
+                quantization_config=quantization_config,
+                device_map=self.device,
+                use_flash_attention_2=self.use_flash_attn,
+            )
+
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, use_fast=True)
+        self.processor = model.get_vision_tower().image_processor        
+        model.resize_token_embeddings(len(self.tokenizer))
+
+        # if isinstance(model.generation_config.eos_token_id, (list, set)):
+        #     # TODO Huge hack
+        #     model.generation_config.eos_token_id = model.generation_config.eos_token_id[0]
+
+    def _tokenizer_image_token(prompt, tokenizer, image_token_index, return_tensors):
+
+        import torch
+
+        prompt_chunks = [tokenizer(chunk).input_ids for chunk in prompt.split('<image>')]
+
+        def insert_separator(X, sep):
+            return [ele for sublist in zip(X, [sep] * len(X)) for ele in sublist][:-1]
+
+        input_ids = []
+        offset = 0
+        if len(prompt_chunks) > 0 and len(prompt_chunks[0]) > 0 and prompt_chunks[0][0] == tokenizer.bos_token_id:
+            offset = 1
+            input_ids.append(prompt_chunks[0][0])
+
+        for x in insert_separator(prompt_chunks, [image_token_index] * (offset + 1)):
+            input_ids.extend(x[offset:])
+
+        if return_tensors is not None:
+            if return_tensors == 'pt':
+                return torch.tensor(input_ids, dtype=torch.long)
+            raise ValueError(f'Unsupported tensor type: {return_tensors}')
+        return input_ids
+
+    def _generate(self, text_prompt, query_images=None):
+
+        print(f"text_prompt: {text_prompt}\n")
+
+        from bunny.constants import IMAGE_TOKEN_INDEX
+
+        input_ids  = self._tokenizer_image_token(text_prompt, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).to(self.device)
+        images  = self.processor.preprocess(query_images, return_tensors='pt')['pixel_values'][0].unsqueeze(0).to(self.device)
+        start_time = time.time()
+        output_ids = self.model.generate(
+            input_ids,
+            images,
+            max_new_tokens=self.max_tokens,
+            temperature=self.temperature,
+            top_p=self.top_p,
+            do_sample=self.do_sample,
+        )
+        end_time = time.time()
+        sequence_length = input_ids.shape[1]
+        new_output_ids = output_ids[:, sequence_length:]
+        self.model_output = self.processor.batch_decode(
+            new_output_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False
+        )[0]
+
+        self.response_time = end_time - start_time
+
+    def generate(self, text_prompt, query_images=None, system_message=None):
+
+        if query_images and len(query_images) > 1:
+            logging.error(f"Not implemented for more than 1 image. {len(query_images)} images are in the prompt")
+            return {"model_output": None, "is_valid": False, "response_time": None, "n_output_tokens": None}
+
+        return super().generate(text_prompt, query_images=query_images, system_message=system_message)
+
+    def model_template_fn(self, text_prompt, system_message=None):
+        text_prompt = f"<image>\n{text_prompt}"
+
         if system_message:
             return f"<|im_start|>system<|im_sep|>\n{system_message}<|im_start|>user<|im_sep|>\n{text_prompt}<|im_end|>\n<|im_start|>assistant<|im_sep|>"
         else:
