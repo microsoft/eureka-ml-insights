@@ -914,7 +914,7 @@ class Phi4VHFModel(Phi4HFModel):
         import torch
         from bunny.constants import IMAGE_TOKEN_INDEX
 
-        prompt_chunks = [tokenizer(chunk).input_ids for chunk in prompt.split('<image>')]
+        prompt_chunks = [self.tokenizer(chunk).input_ids for chunk in prompt.split('<image>')]
 
         def insert_separator(X, sep):
             return [ele for sublist in zip(X, [sep] * len(X)) for ele in sublist][:-1]
