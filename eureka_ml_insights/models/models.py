@@ -918,6 +918,8 @@ class Phi4VHFModel(Phi4HFModel):
 
         prompt_chunks = [self.tokenizer(chunk).input_ids for chunk in prompt.split('<image>')]
 
+        print(prompt_chunks)
+
         def insert_separator(X, sep):
             return [ele for sublist in zip(X, [sep] * len(X)) for ele in sublist][:-1]
 
@@ -933,12 +935,12 @@ class Phi4VHFModel(Phi4HFModel):
         return torch.tensor(input_ids, dtype=torch.long)
 
     def _generate(self, text_prompt, query_images=None):
-
-        input_ids  = self._tokenizer_image_token(text_prompt).unsqueeze(0).to(self.device)
+        
+        inputs = self.tokenizer(text_prompt, return_tensors="pt").to(self.device)
         images  = self.processor.preprocess(query_images, return_tensors='pt')['pixel_values'][0].unsqueeze(0).to(self.device)
         start_time = time.time()
         output_ids = self.model.generate(
-            input_ids,
+            inputs,
             images,
             max_new_tokens=self.max_tokens,
             temperature=self.temperature,
