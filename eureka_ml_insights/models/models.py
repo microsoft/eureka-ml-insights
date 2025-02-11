@@ -799,6 +799,7 @@ class HuggingFaceModel(Model):
 
             try:
                 meta_response = self._generate(text_prompt, query_images=query_images)
+            print(self.model_output)
                 print(meta_response)
                 if meta_response:
                     response_dict.update(meta_response)
