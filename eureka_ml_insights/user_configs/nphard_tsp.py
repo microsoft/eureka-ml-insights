@@ -158,8 +158,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                     "path": os.path.join(self.posteval_data_post_processing_comp.output_dir, "transformed_data.jsonl"),
                     "format": ".jsonl",
                 },
-            ),
-            # metric_config=MetricConfig(NPHardTSPMetric),
+            ),            
             aggregator_configs=[
                 AggregatorConfig(BiLevelAggregator,
                                  {
@@ -171,6 +170,30 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                             ),
             ],
             output_dir=os.path.join(self.log_dir, "bestofn_eval_report"),
+        )
+
+
+        # Aggregate the results worst of n.
+        self.bon_evalreporting_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.posteval_data_post_processing_comp.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
+                },
+            ),            
+            aggregator_configs=[
+                AggregatorConfig(BiLevelAggregator,
+                                 {
+                                     "column_names": ["NPHardTSPMetric_result_numeric"], 
+                                     "normalize": True,
+                                     "first_groupby": "data_point_id",
+                                     "agg_fn": "min"
+                                 }
+                            ),
+            ],
+            output_dir=os.path.join(self.log_dir, "worstofn_eval_report"),
         )
 
         # Aggregate the results by a majority vote.
