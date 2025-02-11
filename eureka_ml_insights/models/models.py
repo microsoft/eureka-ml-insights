@@ -898,7 +898,7 @@ class Phi4VHFModel(Phi4HFModel):
 
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, use_fast=True)
 
-        vision_tower = model.get_vision_tower()
+        vision_tower = self.model.get_vision_tower()
         if not vision_tower.is_loaded:
             vision_tower.load_model()
 
@@ -931,8 +931,6 @@ class Phi4VHFModel(Phi4HFModel):
         return torch.tensor(input_ids, dtype=torch.long)
 
     def _generate(self, text_prompt, query_images=None):
-
-        print(f"text_prompt: {text_prompt}\n")
 
         input_ids  = self._tokenizer_image_token(text_prompt).unsqueeze(0).to(self.device)
         images  = self.processor.preprocess(query_images, return_tensors='pt')['pixel_values'][0].unsqueeze(0).to(self.device)
