@@ -12,8 +12,10 @@ from .models import (
     LLaVAModel,
     MistralServerlessAzureRestEndpointModel,
     Phi3HFModel,
+    Phi4HFModel,
     RestEndpointModel,
     TestModel,
+    TogetherModel
 )
 
 __all__ = [
@@ -23,6 +25,7 @@ __all__ = [
     KeyBasedAuthMixIn,
     LLaVAHuggingFaceModel,
     Phi3HFModel,
+    Phi4HFModel,
     DirectOpenAIModel,
     AzureOpenAIModel,
     GeminiModel,
@@ -32,4 +35,5 @@ __all__ = [
     LLaVAModel,
     RestEndpointModel,
     TestModel,
+    TogetherModel
 ]
