@@ -888,7 +888,7 @@ class Phi4VHFModel(Phi4HFModel):
                 bnb_4bit_compute_dtype=torch.float16,
             )
 
-        model = BunnyPhi3ForCausalLM.from_pretrained(
+        self.model = BunnyPhi3ForCausalLM.from_pretrained(
                 self.model_name,
                 torch_dtype=torch.float16,
                 quantization_config=quantization_config,
