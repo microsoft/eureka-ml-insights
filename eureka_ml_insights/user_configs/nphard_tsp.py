@@ -50,7 +50,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 HFDataReader,
                 {
-                    "path": "GeoMeterData/nphard_tsp2",
+                    "path": "GeoMeterData/nphard_tsp1",
                     "split": "train",
                     "transform": SequenceTransform(
                         [
@@ -59,10 +59,9 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                     ),
                 },
             ),
-            prompt_template_path=os.path.join(
-                # os.path.dirname(__file__), "../prompt_templates/nphard_tsp_templates/Template_tsp_gemini_flash.jinja"
-                os.path.dirname(__file__), "../prompt_templates/nphard_tsp_templates/Template_tsp_o1.jinja"
-                # os.path.dirname(__file__), "../prompt_templates/nphard_tsp_templates/Template_tsp_cot.jinja"
+            prompt_template_path=os.path.join(                
+                # os.path.dirname(__file__), "../prompt_templates/nphard_tsp_templates/Template_tsp_o1.jinja"
+                os.path.dirname(__file__), "../prompt_templates/nphard_tsp_templates/Template_tsp_cot.jinja"
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
         )
@@ -174,7 +173,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
 
 
         # Aggregate the results worst of n.
-        self.bon_evalreporting_comp = EvalReportingConfig(
+        self.won_evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
             data_reader_config=DataSetConfig(
                 DataReader,
@@ -233,6 +232,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                 self.evalreporting_comp,
                 self.posteval_data_post_processing_comp,
                 self.bon_evalreporting_comp,
+                self.won_evalreporting_comp,
                 self.postevalprocess_comp,
             ],
             self.log_dir,
@@ -248,6 +248,6 @@ class NPHARD_TSP_PIPELINE_MULTIPLE_RUNS(NPHARD_TSP_PIPELINE):
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         # data preprocessing
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
-            MultiplyTransform(n_repeats=1)
+            MultiplyTransform(n_repeats=5)
         )
         return pipeline
