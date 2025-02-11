@@ -866,7 +866,7 @@ class Phi4VHFModel(Phi4HFModel):
         if "bunny-phi-4" not in self.model_name:
             logging.warning(
                 "This model class applies a template to the prompt that is specific to bunny-phi-4 models"
-                "but your model is not a LLAVA model."
+                "but your model is not a Phi-4V model."
             )
 
     def get_model(self):
@@ -909,7 +909,7 @@ class Phi4VHFModel(Phi4HFModel):
         #     # TODO Huge hack
         #     model.generation_config.eos_token_id = model.generation_config.eos_token_id[0]
 
-    def _tokenizer_image_token(prompt):
+    def _tokenizer_image_token(self, prompt):
 
         import torch
         from bunny.constants import IMAGE_TOKEN_INDEX
