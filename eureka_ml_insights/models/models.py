@@ -422,7 +422,7 @@ class OpenAICommonRequestResponseMixIn:
         completion = self.client.chat.completions.create(
             model=self.model_name,
             top_p=self.top_p,
-            seed=self.seed,
+            # seed=self.seed,
             frequency_penalty=self.frequency_penalty,
             presence_penalty=self.presence_penalty,
             temperature=self.temperature,
@@ -607,7 +607,7 @@ class AzureOpenAIO1Model(OpenAIO1RequestResponseMixIn, AzureOpenAIClientMixIn, E
 class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
     """This class is used to interact with Gemini models through the python api."""
 
-    timeout: int = 60
+    timeout: int = 600
     model_name: str = None
     temperature: float = 0
     max_tokens: int = 2000
@@ -699,7 +699,46 @@ class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
         # Any other case will be re attempted again, do_return = False.
         return False
 
+@dataclass
+class TogetherModel(OpenAICommonRequestResponseMixIn, KeyBasedAuthMixIn, EndpointModel):
+    """This class is used to interact with Together models through the together python api."""
 
+    timeout: int = 600
+    model_name: str = None
+    temperature: float = 0
+    max_tokens: int = 65536
+    top_p: float = 0.95
+    presence_penalty: float = 0
+    stop=["<｜end▁of▁sentence｜>"]
+
+    def __post_init__(self):
+        from together import Together
+        self.api_key = self.get_api_key()
+        self.client = Together(api_key=self.api_key)
+    
+    def get_response(self, request):
+        start_time = time.time()
+        completion = self.client.chat.completions.create(
+            model=self.model_name,
+            top_p=self.top_p,
+            presence_penalty=self.presence_penalty,
+            temperature=self.temperature,
+            max_tokens=self.max_tokens,
+            stop = self.stop,
+            **request,
+        )
+        
+        end_time = time.time()
+        openai_response = completion.model_dump()
+        self.model_output = openai_response["choices"][0]["message"]["content"]
+        self.response_time = end_time - start_time
+        if "usage" in openai_response:
+            return {"usage": openai_response["usage"]}
+
+    def handle_request_error(self, e):
+        logging.warning(e)
+        return False
+    
 @dataclass
 class HuggingFaceModel(Model):
     """This class is used to run a self-hosted language model via HuggingFace apis."""
