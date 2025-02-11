@@ -903,7 +903,7 @@ class Phi4VHFModel(Phi4HFModel):
             vision_tower.load_model()
 
         self.processor = vision_tower.image_processor        
-        model.resize_token_embeddings(len(self.tokenizer))
+        self.model.resize_token_embeddings(len(self.tokenizer))
 
         # if isinstance(model.generation_config.eos_token_id, (list, set)):
         #     # TODO Huge hack
