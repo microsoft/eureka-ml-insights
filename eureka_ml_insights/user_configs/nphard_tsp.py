@@ -107,7 +107,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
 
 ###############################################
 
-        # Configure the evaluation and reporting component. 
+        # Configure the evaluation and reporting component for evaluation and dataset level aggregation
         self.evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
             data_reader_config=DataSetConfig(
@@ -132,7 +132,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                 {
                     "column_names": ["NPHardTSPMetric_result"],
                     "group_by": ["data_repeat_id", "category"],
-                    "filename_base": "NPHardTSPMetric_GroupBy_Year_SeparateRuns",
+                    "filename_base": "NPHardTSPMetric_GroupBy_Category_SeparateRuns",
                     "normalize": True,
                 }),    
                 # the next two reports take the average and std for all repeats
@@ -149,7 +149,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                     "column_names": ["NPHardTSPMetric_result"], 
                     "first_groupby": ["data_repeat_id", "category"], 
                     "second_groupby": "category",
-                    "filename_base": "NPHardTSPMetric_GroupBy_Year_AllRuns", 
+                    "filename_base": "NPHardTSPMetric_GroupBy_Category_AllRuns", 
                     "normalize": True
                 }),       
                 # # two similar reports for average completion usage
