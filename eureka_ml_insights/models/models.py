@@ -908,7 +908,11 @@ class Phi4VHFModel(Phi4HFModel):
         #     # TODO Huge hack
         #     model.generation_config.eos_token_id = model.generation_config.eos_token_id[0]
 
+
     def _tokenizer_image_token(self, prompt):
+        import torch
+        from bunny.constants import IMAGE_TOKEN_INDEX
+
         prompt_chunks = [self.tokenizer(chunk).input_ids for chunk in prompt.split('<image>')]
 
         def insert_separator(X, sep):
@@ -925,7 +929,10 @@ class Phi4VHFModel(Phi4HFModel):
 
         return torch.tensor(input_ids, dtype=torch.long)
 
-    def _process_images(images):
+
+    def _process_images(self, images):
+        import torch
+
         image_aspect_ratio = getattr(self.model.config, "image_aspect_ratio", None)
         new_images = []
         if image_aspect_ratio == 'pad':
@@ -939,9 +946,10 @@ class Phi4VHFModel(Phi4HFModel):
             new_images = torch.stack(new_images, dim=0)
         return new_images
 
+
     def _generate(self, text_prompt, query_images=None):
         
-        input_ids = self.tokenizer_image_token(prompt).unsqueeze(0).to(self.device)
+        input_ids = self._tokenizer_image_token(text_prompt).unsqueeze(0).to(self.device)
         images  = self._process_images(query_images).to(self.device)
 
         print(input_ids.shape)
