@@ -103,6 +103,8 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             output_dir=os.path.join(self.log_dir, "data_post_processing_output"),
         )
 
+###############################################
+
         # Configure the evaluation and reporting component. 
         self.evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
@@ -168,8 +170,68 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             output_dir=os.path.join(self.log_dir, "eval_report"),
         )
 
-        #### Aggregate the results best of n.
-        #### first convert correct to 1 and incorrect to 0, none to NaN
+#############################################
+        # Aggregate the results by a majority vote
+        # First, let us perform majority_vote
+        self.data_post_processing_addmv = DataProcessingConfig(
+            component_type=DataProcessing,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            ColumnRename(
+                                name_mapping={
+                                    "model_output": "raw_output",
+                                }
+                            ),
+                            AddColumn("model_output"),
+                            NPHARDTSPExtractAnswer("raw_output", "model_output"),
+                            MajorityVoteTransform(id_col="data_point_id"),
+                            ColumnRename(
+                                name_mapping={
+                                    "model_output": "model_output_onerun",
+                                    "majority_vote": "model_output",
+                                }
+                            ),
+                        ]
+                    ),
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "data_addmv_output"),
+        )
+
+        # Second, compute numeric match
+        self.mv_evalreporting_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.data_post_processing_addmv.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
+                },
+            ),
+            metric_config=MetricConfig(NPHardTSPMetric),
+            aggregator_configs=[
+                AggregatorConfig(
+                    BiLevelCountAggregator,
+                    {
+                        "column_names": [
+                            "NPHardTSPMetric_result",
+                        ],
+                        "first_groupby": "data_point_id",
+                        "filename_base": "MajorityVote",
+                        "normalize": True,
+                    },
+                ),         
+            ],
+            output_dir=os.path.join(self.log_dir, "majorityvote_eval_report"),
+        )
+
+
+#############################################
 
         self.posteval_data_post_processing_comp = DataProcessingConfig(
             component_type=DataProcessing,
@@ -195,81 +257,205 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             output_dir=os.path.join(self.log_dir, "posteval_data_post_processing_output"),
         )
 
-
-        # Aggregate the results best of n.
+        # Aggregate the results by best of n
+        # In this case, this is equivalent to taking the max on the numerical column of the metric.
         self.bon_evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
                     "path": os.path.join(self.posteval_data_post_processing_comp.output_dir, "transformed_data.jsonl"),
-                    "format": ".jsonl",
+                    "format": ".jsonl"
                 },
-            ),            
+            ),
             aggregator_configs=[
-                AggregatorConfig(BiLevelAggregator,
-                                 {
-                                     "column_names": ["NPHardTSPMetric_result_numeric"], 
-                                     "normalize": True,
-                                     "first_groupby": "data_point_id",
-                                     "agg_fn": "max"
-                                 }
-                            ),
+                # the first three reports aggregate results by data_point_id and take the best out of N
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "NPHardTSPMetric_result_numeric"
+                        ],
+                        "first_groupby": "data_point_id",
+                        "filename_base": "NPHardTSPMetric_BestOfN",
+                        "agg_fn": "max"
+                    },
+                ),
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "NPHardTSPMetric_result_numeric"
+                        ],
+                        "first_groupby": "data_point_id", 
+                        "second_groupby": "category",
+                        "filename_base": "NPHardTSPMetric_BestOfN_GroupBy_Category",
+                        "agg_fn": "max"
+                    },
+                ),
+                # # # aggregates results by data_point_id and takes the sum of usage for completion tokens
+                # AggregatorConfig(
+                #     BiLevelAggregator,
+                #     {
+                #         "column_names": [
+                #             "usage_completion"
+                #         ],
+                #         "first_groupby": "data_point_id",
+                #         "filename_base": "UsageCompletion_BestOfN",
+                #          "agg_fn": "sum"
+                #     },
+                # ),
             ],
             output_dir=os.path.join(self.log_dir, "bestofn_eval_report"),
         )
+###############################################
+############## worst of n ######################
 
-
-        # Aggregate the results worst of n.
         self.won_evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
                     "path": os.path.join(self.posteval_data_post_processing_comp.output_dir, "transformed_data.jsonl"),
-                    "format": ".jsonl",
+                    "format": ".jsonl"
                 },
-            ),            
+            ),
             aggregator_configs=[
-                AggregatorConfig(BiLevelAggregator,
-                                 {
-                                     "column_names": ["NPHardTSPMetric_result_numeric"], 
-                                     "normalize": True,
-                                     "first_groupby": "data_point_id",
-                                     "agg_fn": "min"
-                                 }
-                            ),
+                # the first three reports aggregate results by data_point_id and take the best out of N
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "NPHardTSPMetric_result_numeric"
+                        ],
+                        "first_groupby": "data_point_id",
+                        "filename_base": "NPHardTSPMetric_WorstOfN",
+                        "agg_fn": "min"
+                    },
+                ),
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "NPHardTSPMetric_result_numeric"
+                        ],
+                        "first_groupby": "data_point_id", 
+                        "second_groupby": "category",
+                        "filename_base": "NPHardTSPMetric_WorstOfN_GroupBy_Category",
+                        "agg_fn": "min"
+                    },
+                ),
             ],
             output_dir=os.path.join(self.log_dir, "worstofn_eval_report"),
         )
 
-        # Aggregate the results by a majority vote.
-        self.postevalprocess_comp = EvalReportingConfig(
-            component_type=EvalReporting,
-            data_reader_config=DataSetConfig(
-                DataReader,
-                {
-                    "path": os.path.join(self.data_post_processing.output_dir, "transformed_data.jsonl"),
-                    "format": ".jsonl",
-                    "transform": SequenceTransform(
-                        [
-                            MajorityVoteTransform(id_col="data_point_id"),
-                            ColumnRename(
-                                name_mapping={
-                                    "model_output": "model_output_onerun",
-                                    "majority_vote": "model_output",
-                                }
-                            ),
-                        ]
-                    ),
-                },
-            ),
-            metric_config=MetricConfig(NPHardTSPMetric),
-            aggregator_configs=[
-                AggregatorConfig(CountAggregator, {"column_names": ["NPHardTSPMetric_result"], "normalize": True}),
-            ],
-            output_dir=os.path.join(self.log_dir, "eval_report_majorityVote"),
-        )
+
+
+
+###############################################
+
+        # #### Aggregate the results best of n.
+        # #### first convert correct to 1 and incorrect to 0, none to NaN
+
+        # self.posteval_data_post_processing_comp = DataProcessingConfig(
+        #     component_type=DataProcessing,
+        #     data_reader_config=DataSetConfig(
+        #         DataReader,
+        #         {
+        #             "path": os.path.join(self.evalreporting_comp.output_dir, "metric_results.jsonl"),
+        #             "format": ".jsonl",
+        #             "transform": SequenceTransform(
+        #                 [
+        #                 CopyColumn(
+        #                         column_name_src="NPHardTSPMetric_result",
+        #                         column_name_dst="NPHardTSPMetric_result_numeric",
+        #                     ),
+        #                 ReplaceStringsTransform(
+        #                         columns=["NPHardTSPMetric_result_numeric"],
+        #                         mapping={'incorrect': '0', 'correct': '1', 'none': 'NaN'},
+        #                         case=False)
+        #                 ]
+        #             ),
+        #         },
+        #     ),
+        #     output_dir=os.path.join(self.log_dir, "posteval_data_post_processing_output"),
+        # )
+
+
+        # # Aggregate the results best of n.
+        # self.bon_evalreporting_comp = EvalReportingConfig(
+        #     component_type=EvalReporting,
+        #     data_reader_config=DataSetConfig(
+        #         DataReader,
+        #         {
+        #             "path": os.path.join(self.posteval_data_post_processing_comp.output_dir, "transformed_data.jsonl"),
+        #             "format": ".jsonl",
+        #         },
+        #     ),            
+        #     aggregator_configs=[
+        #         AggregatorConfig(BiLevelAggregator,
+        #                          {
+        #                              "column_names": ["NPHardTSPMetric_result_numeric"], 
+        #                              "normalize": True,
+        #                              "first_groupby": "data_point_id",
+        #                              "agg_fn": "max"
+        #                          }
+        #                     ),
+        #     ],
+        #     output_dir=os.path.join(self.log_dir, "bestofn_eval_report"),
+        # )
+
+
+        # # Aggregate the results worst of n.
+        # self.won_evalreporting_comp = EvalReportingConfig(
+        #     component_type=EvalReporting,
+        #     data_reader_config=DataSetConfig(
+        #         DataReader,
+        #         {
+        #             "path": os.path.join(self.posteval_data_post_processing_comp.output_dir, "transformed_data.jsonl"),
+        #             "format": ".jsonl",
+        #         },
+        #     ),            
+        #     aggregator_configs=[
+        #         AggregatorConfig(BiLevelAggregator,
+        #                          {
+        #                              "column_names": ["NPHardTSPMetric_result_numeric"], 
+        #                              "normalize": True,
+        #                              "first_groupby": "data_point_id",
+        #                              "agg_fn": "min"
+        #                          }
+        #                     ),
+        #     ],
+        #     output_dir=os.path.join(self.log_dir, "worstofn_eval_report"),
+        # )
+
+        # # Aggregate the results by a majority vote.
+        # self.postevalprocess_comp = EvalReportingConfig(
+        #     component_type=EvalReporting,
+        #     data_reader_config=DataSetConfig(
+        #         DataReader,
+        #         {
+        #             "path": os.path.join(self.data_post_processing.output_dir, "transformed_data.jsonl"),
+        #             "format": ".jsonl",
+        #             "transform": SequenceTransform(
+        #                 [
+        #                     MajorityVoteTransform(id_col="data_point_id"),
+        #                     ColumnRename(
+        #                         name_mapping={
+        #                             "model_output": "model_output_onerun",
+        #                             "majority_vote": "model_output",
+        #                         }
+        #                     ),
+        #                 ]
+        #             ),
+        #         },
+        #     ),
+        #     metric_config=MetricConfig(NPHardTSPMetric),
+        #     aggregator_configs=[
+        #         AggregatorConfig(CountAggregator, {"column_names": ["NPHardTSPMetric_result"], "normalize": True}),
+        #     ],
+        #     output_dir=os.path.join(self.log_dir, "eval_report_majorityVote"),
+        # )
 
         # Configure the pipeline
         return PipelineConfig(
@@ -278,6 +464,11 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                 self.inference_comp,
                 self.data_post_processing,
                 self.evalreporting_comp,
+                self.data_post_processing_addmv,
+                self.mv_evalreporting_comp,
+                self.posteval_data_post_processing_comp,
+                self.bon_evalreporting_comp,
+                self.won_evalreporting_comp                
                 # self.posteval_data_post_processing_comp,
                 # self.bon_evalreporting_comp,
                 # self.won_evalreporting_comp,
