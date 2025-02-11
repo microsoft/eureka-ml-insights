@@ -28,11 +28,13 @@ from eureka_ml_insights.data_utils import (
     MMDataLoader,
     MultiplyTransform,
     SequenceTransform,
+    CopyColumn,
+    ReplaceStringsTransform
 )
 from eureka_ml_insights.data_utils.nphard_tsp_utils import (
     NPHARDTSPExtractAnswer,
 )
-from eureka_ml_insights.metrics import CountAggregator, NPHardTSPMetric
+from eureka_ml_insights.metrics import CountAggregator, NPHardTSPMetric, BiLevelAggregator, BiLevelCountAggregator
 
 """This file contains user defined configuration classes for the Traveling Salesman Problem (TSP).
 """
@@ -58,7 +60,9 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                 },
             ),
             prompt_template_path=os.path.join(
+                # os.path.dirname(__file__), "../prompt_templates/nphard_tsp_templates/Template_tsp_gemini_flash.jinja"
                 os.path.dirname(__file__), "../prompt_templates/nphard_tsp_templates/Template_tsp_o1.jinja"
+                # os.path.dirname(__file__), "../prompt_templates/nphard_tsp_templates/Template_tsp_cot.jinja"
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
         )
@@ -100,7 +104,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             output_dir=os.path.join(self.log_dir, "data_post_processing_output"),
         )
 
-        # Configure the evaluation and reporting component.
+        # Configure the evaluation and reporting component. 
         self.evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
             data_reader_config=DataSetConfig(
@@ -115,6 +119,58 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                 AggregatorConfig(CountAggregator, {"column_names": ["NPHardTSPMetric_result"], "normalize": True}),
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
+        )
+
+        #### Aggregate the results best of n.
+        #### first convert correct to 1 and incorrect to 0, none to NaN
+
+        self.posteval_data_post_processing_comp = DataProcessingConfig(
+            component_type=DataProcessing,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.evalreporting_comp.output_dir, "metric_results.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                        CopyColumn(
+                                column_name_src="NPHardTSPMetric_result",
+                                column_name_dst="NPHardTSPMetric_result_numeric",
+                            ),
+                        ReplaceStringsTransform(
+                                columns=["NPHardTSPMetric_result_numeric"],
+                                mapping={'incorrect': '0', 'correct': '1', 'none': 'NaN'},
+                                case=False)
+                        ]
+                    ),
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "posteval_data_post_processing_output"),
+        )
+
+
+        # Aggregate the results best of n.
+        self.bon_evalreporting_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.posteval_data_post_processing_comp.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
+                },
+            ),
+            # metric_config=MetricConfig(NPHardTSPMetric),
+            aggregator_configs=[
+                AggregatorConfig(BiLevelAggregator,
+                                 {
+                                     "column_names": ["NPHardTSPMetric_result_numeric"], 
+                                     "normalize": True,
+                                     "first_groupby": "data_point_id",
+                                     "agg_fn": "max"
+                                 }
+                            ),
+            ],
+            output_dir=os.path.join(self.log_dir, "bestofn_eval_report"),
         )
 
         # Aggregate the results by a majority vote.
@@ -152,6 +208,8 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                 self.inference_comp,
                 self.data_post_processing,
                 self.evalreporting_comp,
+                self.posteval_data_post_processing_comp,
+                self.bon_evalreporting_comp,
                 self.postevalprocess_comp,
             ],
             self.log_dir,
