@@ -799,8 +799,6 @@ class HuggingFaceModel(Model):
 
             try:
                 meta_response = self._generate(text_prompt, query_images=query_images)
-                print(self.model_output)
-                print(meta_response)
                 if meta_response:
                     response_dict.update(meta_response)
                 self.is_valid = True
@@ -864,7 +862,6 @@ class Phi4VHFModel(Phi4HFModel):
 
     def __post_init__(self):
         super().__post_init__()
-        print(self.model_name)
         if "bunny-phi-4" not in self.model_name:
             logging.warning(
                 "This model class applies a template to the prompt that is specific to bunny-phi-4 models"
@@ -912,13 +909,7 @@ class Phi4VHFModel(Phi4HFModel):
         #     model.generation_config.eos_token_id = model.generation_config.eos_token_id[0]
 
     def _tokenizer_image_token(self, prompt):
-
-        import torch
-        from bunny.constants import IMAGE_TOKEN_INDEX
-
         prompt_chunks = [self.tokenizer(chunk).input_ids for chunk in prompt.split('<image>')]
-
-        print(prompt_chunks)
 
         def insert_separator(X, sep):
             return [ele for sublist in zip(X, [sep] * len(X)) for ele in sublist][:-1]
@@ -934,13 +925,31 @@ class Phi4VHFModel(Phi4HFModel):
 
         return torch.tensor(input_ids, dtype=torch.long)
 
+    def _process_images(images):
+        image_aspect_ratio = getattr(self.model.config, "image_aspect_ratio", None)
+        new_images = []
+        if image_aspect_ratio == 'pad':
+            for image in images:
+                image = expand2square(image, tuple(int(x * 255) for x in self.processor.image_mean))
+                image = self.processor.preprocess(image, return_tensors='pt')['pixel_values'][0]
+                new_images.append(image)
+        else:
+            return self.processor(images, return_tensors='pt')['pixel_values']
+        if all(x.shape == new_images[0].shape for x in new_images):
+            new_images = torch.stack(new_images, dim=0)
+        return new_images
+
     def _generate(self, text_prompt, query_images=None):
         
-        inputs = self.tokenizer(text_prompt, return_tensors="pt").to(self.device)
-        images  = self.processor.preprocess(query_images, return_tensors='pt')['pixel_values'][0].unsqueeze(0).to(self.device)
+        input_ids = self.tokenizer_image_token(prompt).unsqueeze(0).to(self.device)
+        images  = self._process_images(query_images).to(self.device)
+
+        print(input_ids.shape)
+        print(images.shape)
+
         start_time = time.time()
         output_ids = self.model.generate(
-            inputs,
+            input_ids,
             images,
             max_new_tokens=self.max_tokens,
             temperature=self.temperature,
