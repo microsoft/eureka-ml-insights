@@ -14,12 +14,13 @@ from eureka_ml_insights.data_utils.data import (
     DataReader,
     HFDataReader,
 )
-from eureka_ml_insights.data_utils.omni_math_utils import Omni_Math_ParseLabel
-from eureka_ml_insights.data_utils.transform import AddColumn, ColumnRename, CopyColumn, MajorityVoteTransform, MultiplyTransform, RunPythonTransform, SamplerTransform, SequenceTransform
+from eureka_ml_insights.data_utils.omni_math_utils import Omni_Math_ParseLabel, Omni_Math_ParseSolution
+from eureka_ml_insights.data_utils.transform import AddColumn, AddColumnAndData, ColumnRename, CopyColumn, ExtractUsageTransform, MajorityVoteTransform, MultiplyTransform, ReplaceStringsTransform, RunPythonTransform, SamplerTransform, SequenceTransform
 from eureka_ml_insights.metrics.ba_calendar_metrics import BACalendarMetric
 from eureka_ml_insights.metrics.reports import (
     AverageAggregator,
-    BiLevelMaxAggregator,
+    BiLevelAggregator,
+    CountAggregator,
 )
 
 from ..configs.config import (
@@ -50,7 +51,7 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                    "split": "test",
                    "transform": SequenceTransform([
                     #    ColumnRename(name_mapping={"problem": "prompt"}),
-                    SamplerTransform(sample_count=10, random_seed=99),
+                    SamplerTransform(sample_count=100, random_seed=99),
                        MultiplyTransform(n_repeats=1),
                    ]),
                 }
@@ -97,10 +98,9 @@ class Omni_Math_PIPELINE(ExperimentConfig):
             resume_from=resume_from,
             max_concurrent=1,
         )
-
-        # Configure the evaluation and reporting component for evaluation and dataset level aggregation
-        self.evalreporting_comp = EvalReportingConfig(
-            component_type=EvalReporting,
+        
+        self.eval_inf_data_processing_comp = DataProcessingConfig(
+            component_type=DataProcessing,
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
@@ -108,13 +108,281 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
+                            ExtractUsageTransform(model_config),
                             ColumnRename(
                                 name_mapping={
                                     "model_output": "raw_output",
                                 }
                             ),
                             AddColumn("model_output"),
-                            Omni_Math_ParseLabel("raw_output", "model_output"),
+                            AddColumn("model_solution"),
+                            Omni_Math_ParseLabel("raw_output", "OmniMath_correctness"),
+                            Omni_Math_ParseSolution("raw_output", "model_output"),
+                        ]
+                    ),
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "eval_inf_data_processing_output"),
+        )
+
+        # Configure the evaluation and reporting component for evaluation and dataset level aggregation
+        self.evalreporting_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            # data_reader_config=DataSetConfig(
+            #     DataReader,
+            #     {
+            #         "path": os.path.join(self.eval_inference_comp.output_dir, "inference_result.jsonl"),
+            #         "format": ".jsonl",
+            #         "transform": SequenceTransform(
+            #             [
+            #                 ExtractUsageTransform(model_config),
+            #                 ColumnRename(
+            #                     name_mapping={
+            #                         "model_output": "raw_output",
+            #                     }
+            #                 ),
+            #                 AddColumn("model_output"),
+            #                 AddColumn("model_solution"),
+            #                 Omni_Math_ParseLabel("raw_output", "OmniMath_correctness"),
+            #                 Omni_Math_ParseSolution("raw_output", "model_output"),
+            #             ]
+            #         ),
+            #     },
+            # ),
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.eval_inf_data_processing_comp.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
+                },
+            ),
+            aggregator_configs=[
+                AggregatorConfig(
+                    AverageAggregator,
+                    {
+                        "column_names": [
+                            "OmniMath_correctness",
+                        ],
+                        "filename_base": "Correctness_SeparateRuns",
+                        "group_by": "data_repeat_id",
+                    },
+                ),
+                # the next three reports take the average and std for all repeats
+                # the resulting numbers are the average and std of N pass@1 scores, where N is number of repeats
+                AggregatorConfig(BiLevelAggregator, 
+                    {
+                        "column_names": [
+                            "OmniMath_correctness"
+                        ], 
+                        "first_groupby": "data_repeat_id", 
+                        "filename_base": "Correctness_Avg",
+                        "agg_fn": "mean"
+                    }),
+                AggregatorConfig(BiLevelAggregator, 
+                    {
+                        "column_names": [
+                            "OmniMath_correctness"
+                        ], 
+                        "first_groupby": ["data_repeat_id", "difficulty"], 
+                        "second_groupby": "difficulty",
+                        "filename_base": "Correctness_Avg_by_difficulty",
+                        "agg_fn": "mean"
+                    }), 
+                AggregatorConfig(BiLevelAggregator, 
+                    {
+                        "column_names": [
+                            "OmniMath_correctness"
+                        ], 
+                        "first_groupby": ["data_repeat_id", "source"], 
+                        "second_groupby": "source",
+                        "filename_base": "Correctness_Avg_by_source",
+                        "agg_fn": "mean"
+                    }),                
+                # reports for average completion usage
+                AggregatorConfig(BiLevelAggregator, 
+                    {
+                        "column_names": ["usage_completion"], 
+                        "first_groupby": "data_point_id", 
+                        "filename_base": "UsageCompletion",
+                        "agg_fn": "mean"
+                    }),
+                AggregatorConfig(BiLevelAggregator, 
+                    {
+                        "column_names": ["usage_completion"], 
+                        "first_groupby": ["data_point_id", "difficulty"],
+                        "second_groupby": "difficulty",
+                        "filename_base": "UsageCompletion_by_difficulty",
+                        "agg_fn": "mean"
+                    }),
+                AggregatorConfig(BiLevelAggregator, 
+                    {
+                        "column_names": ["usage_completion"], 
+                        "first_groupby": ["data_point_id", "source"],
+                        "second_groupby": "source",
+                        "filename_base": "UsageCompletion_by_difficulty_source",
+                        "agg_fn": "mean"
+                    }),
+            ],
+            output_dir=os.path.join(self.log_dir, "eval_report"),
+        )
+
+        # Aggregate the results by best of n
+        self.bon_evalreporting_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.eval_inf_data_processing_comp.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
+                },
+            ),
+            aggregator_configs=[
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "OmniMath_correctness",
+                        ],
+                        "first_groupby": "data_point_id",
+                        "filename_base": "Correctness_BestofN",
+                        "normalize": True,
+                        "agg_fn": "max",
+                    },
+                ),
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "OmniMath_correctness",
+                        ],
+                        "first_groupby": "data_point_id",
+                        "second_groupby": "difficulty",
+                        "filename_base": "Correctness_BestOfN_by_difficulty",
+                        "normalize": True,
+                        "agg_fn": "max",
+                    },
+                ),
+                
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "OmniMath_correctness",
+                        ],
+                        "first_groupby": "data_point_id",
+                        "second_groupby": "source",
+                        "filename_base": "Correctness_BestOfN_by_source",
+                        "normalize": True,
+                        "agg_fn": "max",
+                    },
+                ),
+                
+                # aggregates results by data_point_id and takes the sum of usage for completion tokens
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "usage_completion"
+                        ],
+                        "first_groupby": "data_point_id",
+                        "filename_base": "UsageCompletion_BestOfN",
+                         "agg_fn": "sum"
+                    },
+                ),
+            ],
+            output_dir=os.path.join(self.log_dir, "bestofn_eval_report"),
+        )
+        # Aggregate the results by worst of n
+        self.won_evalreporting_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.eval_inf_data_processing_comp.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
+                },
+            ),
+            aggregator_configs=[
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "OmniMath_correctness",
+                        ],
+                        "first_groupby": "data_point_id",
+                        "filename_base": "Correctness_WorstofN",
+                        "normalize": True,
+                        "agg_fn": "min",
+                    },
+                ),
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "OmniMath_correctness",
+                        ],
+                        "first_groupby": "data_point_id",
+                        "second_groupby": "difficulty",
+                        "filename_base": "Correctness_WorstOfN_by_difficulty",
+                        "normalize": True,
+                        "agg_fn": "min",
+                    },
+                ),
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "OmniMath_correctness",
+                        ],
+                        "first_groupby": "data_point_id",
+                        "second_groupby": "source",
+                        "filename_base": "Correctness_WorstOfN_by_source",
+                        "normalize": True,
+                        "agg_fn": "min",
+                    },
+                ),
+            ],
+            output_dir=os.path.join(self.log_dir, "worstofn_eval_report"),
+        )
+
+        # Aggregate the results by a majority vote
+        self.maj_vote_data_post_processing = DataProcessingConfig(
+            component_type=DataProcessing,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.eval_inf_data_processing_comp.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            ColumnRename(
+                                name_mapping={
+                                    "model_output": "model_output_onerun",
+                                }
+                            ),
+                            AddColumn("model_output"),
+                            MajorityVoteTransform(model_output_col="model_output_onerun", model_label_column="OmniMath_correctness"),
+                            CopyColumn("majority_vote", "model_output"),
+                            CopyColumn("majority_label", "OmniMath_correctness_majority_vote"),
+                            AddColumnAndData("count", 1),
+
+                        ]
+                    ),
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "data_majvote_output"),
+        )
+
+        self.majvote_evalreporting_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.maj_vote_data_post_processing.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            RunPythonTransform("df = df[df['data_repeat_id'] == 'repeat_0']"),
                         ]
                     ),
                 },
@@ -124,120 +392,385 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                     AverageAggregator,
                     {
                         "column_names": [
-                            "BACalendarMetric_all_correct",
-                            "BACalendarMetric_fraction_passed",
-                            "BACalendarMetric_availability_programmatic_check",
-                            "BACalendarMetric_meeting_duration_programmatic_check",
-                            "BACalendarMetric_buffer_time_programmatic_check",
-                            "BACalendarMetric_no_weekends_programmatic_check",
-                            "BACalendarMetric_time_restrictions_programmatic_check",
-                            "BACalendarMetric_specific_times_programmatic_check",
-                            "BACalendarMetric_priority_programmatic_check"
+                            "OmniMath_correctness_majority_vote",
                         ],
-                        "filename_base": "BaCal_OverallMetrics_SeparateRuns",
-                        "group_by": "data_repeat_id",
+                        "filename_base": "Correctness_MajVote",
                     },
                 ),
+                AggregatorConfig(
+                    AverageAggregator,
+                    {
+                        "column_names": [
+                            "OmniMath_correctness_majority_vote",
+                        ],
+                        "filename_base": "Correctness_MajVote_by_difficulty",
+                        "group_by": "difficulty",
+                    },
+                ),
+                AggregatorConfig(
+                    AverageAggregator,
+                    {
+                        "column_names": [
+                            "OmniMath_correctness_majority_vote",
+                        ],
+                        "filename_base": "Correctness_MajVote_by_source",
+                        "group_by": "source",
+                    },
+                ),
+                AggregatorConfig(CountAggregator, 
+                    {
+                        "column_names": [
+                            "count",
+                        ], 
+                        "group_by": "difficulty", 
+                        "filename_base": "NumExamples_by_difficulty",
+                    }),
+                AggregatorConfig(CountAggregator, 
+                    {
+                        "column_names": [
+                            "count",
+                        ], 
+                        "group_by": "source", 
+                        "filename_base": "NumExamples_by_source",
+                    }),
             ],
-            output_dir=os.path.join(self.log_dir, "eval_report"),
+            output_dir=os.path.join(self.log_dir, "majvote_eval_report"),
         )
 
-        # # Aggregate the results by best of n
-        # self.bon_evalreporting_comp = EvalReportingConfig(
-        #     component_type=EvalReporting,
-        #     data_reader_config=DataSetConfig(
-        #         DataReader,
-        #         {
-        #             "path": os.path.join(self.evalreporting_comp.output_dir, "metric_results.jsonl"),
-        #             "format": ".jsonl",
-        #         },
-        #     ),
-        #     aggregator_configs=[
-        #         AggregatorConfig(
-        #             BiLevelMaxAggregator,
-        #             {
-        #                 "column_names": [
-        #                     "BACalendarMetric_all_correct",
-        #                     "BACalendarMetric_fraction_passed",
-        #                     "BACalendarMetric_availability_programmatic_check",
-        #                     "BACalendarMetric_meeting_duration_programmatic_check",
-        #                     "BACalendarMetric_buffer_time_programmatic_check",
-        #                     "BACalendarMetric_no_weekends_programmatic_check",
-        #                     "BACalendarMetric_time_restrictions_programmatic_check",
-        #                     "BACalendarMetric_specific_times_programmatic_check",
-        #                     "BACalendarMetric_priority_programmatic_check"
-        #                 ],
-        #                 "first_groupby": "data_point_id",
-        #                 "filename_base": "BaCal_BestOfN_Aggregated",
-        #                 "normalize": True,
-        #             },
-        #         ),
-        #     ],
-        #     output_dir=os.path.join(self.log_dir, "bestofn_eval_report"),
-        # )
+        self.domain_eval_data_processing_comp = DataProcessingConfig(
+            component_type=DataProcessing,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.maj_vote_data_post_processing.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            RunPythonTransform("df['highlevel_domain'] = df['domain'].apply(lambda x: list(set([y.split('->')[0] for y in x])))"),
+                            RunPythonTransform("df['sub_domain'] = df['domain'].apply(lambda x: list(set([y.split('->')[1] for y in x])))"),
+                            RunPythonTransform("df['sec_sub_domain'] = df['domain'].apply(lambda x: list(set([y.split('->')[2] for y in x])))"),
+                            # RunPythonTransform("df = df.explode(['highlevel_domain', 'sub_domain', 'sec_sub_domain'])"),
+                        ]
+                    ),
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "domain_eval_data_processing_output"),
+        )
 
-        # # Aggregate the results by a majority vote
-        # self.maj_vote_data_post_processing = DataProcessingConfig(
-        #     component_type=DataProcessing,
-        #     data_reader_config=DataSetConfig(
-        #         DataReader,
-        #         {
-        #             "path": os.path.join(self.evalreporting_comp.output_dir, "metric_results.jsonl"),
-        #             "format": ".jsonl",
-        #             "transform": SequenceTransform(
-        #                 [
-        #                     ColumnRename(
-        #                         name_mapping={
-        #                             "model_output": "model_output_onerun",
-        #                         }
-        #                     ),
-        #                     AddColumn("model_output"),
-        #                     MajorityVoteTransform(model_output_col="model_output_onerun"),
-        #                     CopyColumn("majority_vote", "model_output"),
-        #                 ]
-        #             ),
-        #         },
-        #     ),
-        #     output_dir=os.path.join(self.log_dir, "data_majvote_output"),
-        # )
-        # # Second, compute eaxct match
-        # self.majvote_evalreporting_comp = EvalReportingConfig(
-        #     component_type=EvalReporting,
-        #     data_reader_config=DataSetConfig(
-        #         DataReader,
-        #         {
-        #             "path": os.path.join(self.maj_vote_data_post_processing.output_dir, "transformed_data.jsonl"),
-        #             "format": ".jsonl",
-        #             "transform": SequenceTransform(
-        #                 [
-        #                     RunPythonTransform("df = df[df['data_repeat_id'] == 'repeat_0']"),
-        #                 ]
-        #             ),
-        #         },
-        #     ),
-        #     metric_config=MetricConfig(BACalendarMetric),
-        #     aggregator_configs=[
-        #         AggregatorConfig(
-        #             AverageAggregator,
-        #             {
-        #                 "column_names": [
-        #                     "BACalendarMetric_all_correct",
-        #                     "BACalendarMetric_fraction_passed",
-        #                     "BACalendarMetric_availability_programmatic_check",
-        #                     "BACalendarMetric_meeting_duration_programmatic_check",
-        #                     "BACalendarMetric_buffer_time_programmatic_check",
-        #                     "BACalendarMetric_no_weekends_programmatic_check",
-        #                     "BACalendarMetric_time_restrictions_programmatic_check",
-        #                     "BACalendarMetric_specific_times_programmatic_check",
-        #                     "BACalendarMetric_priority_programmatic_check"
-        #                 ],
-        #                 "filename_base": "BaCal_MajVote_OverallMetrics_Aggregated",
-        #                 "group_by": "data_repeat_id",
-        #             },
-        #         ),
-        #     ],
-        #     output_dir=os.path.join(self.log_dir, "majvote_eval_report"),
-        # )
+        
+        # Configure the evaluation and reporting component for domain level aggregation
+        self.domain_evalreporting_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.domain_eval_data_processing_comp.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            RunPythonTransform("df = df.explode(['highlevel_domain'])"), #, 'sub_domain', 'sec_sub_domain'])"),
+                            # RunPythonTransform("df = df[df['data_repeat_id'] == 'repeat_0']"),
+                        ]
+                    ),
+                },
+            ),
+            aggregator_configs=[
+                AggregatorConfig(BiLevelAggregator, 
+                    {
+                        "column_names": [
+                            "OmniMath_correctness"
+                        ], 
+                        "first_groupby": ["data_repeat_id", "highlevel_domain"], 
+                        "second_groupby": "highlevel_domain",
+                        "filename_base": "Correctness_Avg_by_domain",
+                        "agg_fn": "mean"
+                    }), 
+                AggregatorConfig(BiLevelAggregator, 
+                    {
+                        "column_names": ["usage_completion"], 
+                        "first_groupby": ["data_point_id", "highlevel_domain"],
+                        "second_groupby": "highlevel_domain",
+                        "filename_base": "UsageCompletion_by_highlevel_domain",
+                        "agg_fn": "mean"
+                    }),
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "OmniMath_correctness",
+                        ],
+                        "first_groupby": "data_point_id",
+                        "second_groupby": "highlevel_domain",
+                        "filename_base": "Correctness_BestOfN_by_highlevel_domain",
+                        "normalize": True,
+                        "agg_fn": "max",
+                    },
+                ),
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "OmniMath_correctness",
+                        ],
+                        "first_groupby": "data_point_id",
+                        "second_groupby": "highlevel_domain",
+                        "filename_base": "Correctness_WorstOfN_by_highlevel_domain",
+                        "normalize": True,
+                        "agg_fn": "min",
+                    },
+                ),
+                
+            ],
+            output_dir=os.path.join(self.log_dir, "eval_report_by_domain"),
+        )
+
+        self.domain_majvote_evalreporting_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.domain_eval_data_processing_comp.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            RunPythonTransform("df = df.explode(['highlevel_domain'])"), #, 'sub_domain', 'sec_sub_domain'])"),
+                            RunPythonTransform("df = df[df['data_repeat_id'] == 'repeat_0']"),
+                        ]
+                    ),
+                },
+            ),
+            aggregator_configs=[
+                AggregatorConfig(
+                    AverageAggregator,
+                    {
+                        "column_names": [
+                            "OmniMath_correctness_majority_vote",
+                        ],
+                        "filename_base": "Correctness_MajVote_by_highlevel_domain",
+                        "group_by": "highlevel_domain",
+                    },
+                ),
+                AggregatorConfig(CountAggregator, 
+                    {
+                        "column_names": [
+                            "count",
+                        ], 
+                        "group_by": "highlevel_domain", 
+                        "filename_base": "NumExamples_by_highlevel_domain",
+                    }
+                ),
+            ],
+            output_dir=os.path.join(self.log_dir, "majvote_eval_report_by_domain"),
+        )
+
+        # Configure the evaluation and reporting component for domain level aggregation
+        self.sub_domain_evalreporting_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.domain_eval_data_processing_comp.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            RunPythonTransform("df = df.explode(['sub_domain'])"), #, 'sub_domain', 'sec_sub_domain'])"),
+                            # RunPythonTransform("df = df[df['data_repeat_id'] == 'repeat_0']"),
+                        ]
+                    ),
+                },
+            ),
+            aggregator_configs=[
+                AggregatorConfig(BiLevelAggregator, 
+                    {
+                        "column_names": [
+                            "OmniMath_correctness"
+                        ], 
+                        "first_groupby": ["data_repeat_id", "sub_domain"], 
+                        "second_groupby": "sub_domain",
+                        "filename_base": "Correctness_Avg_by_sub_domain",
+                        "agg_fn": "mean"
+                    }),
+                AggregatorConfig(BiLevelAggregator, 
+                    {
+                        "column_names": ["usage_completion"], 
+                        "first_groupby": ["data_point_id", "sub_domain"],
+                        "second_groupby": "sub_domain",
+                        "filename_base": "UsageCompletion_by_sub_domain",
+                        "agg_fn": "mean"
+                    }),
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "OmniMath_correctness",
+                        ],
+                        "first_groupby": "data_point_id",
+                        "second_groupby": "sub_domain",
+                        "filename_base": "Correctness_BestOfN_by_sub_domain",
+                        "normalize": True,
+                        "agg_fn": "max",
+                    },
+                ),
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "OmniMath_correctness",
+                        ],
+                        "first_groupby": "data_point_id",
+                        "second_groupby": "sub_domain",
+                        "filename_base": "Correctness_WorstOfN_by_sub_domain",
+                        "normalize": True,
+                        "agg_fn": "min",
+                    },
+                ),                
+            ],
+            output_dir=os.path.join(self.log_dir, "eval_report_by_sub_domain"),
+        )
+
+        self.sub_domain_majvote_evalreporting_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.domain_eval_data_processing_comp.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            RunPythonTransform("df = df.explode(['sub_domain'])"), #, 'sub_domain', 'sec_sub_domain'])"),
+                            RunPythonTransform("df = df[df['data_repeat_id'] == 'repeat_0']"),
+                        ]
+                    ),
+                },
+            ),
+            aggregator_configs=[
+                AggregatorConfig(
+                    AverageAggregator,
+                    {
+                        "column_names": [
+                            "OmniMath_correctness_majority_vote",
+                        ],
+                        "filename_base": "Correctness_MajVote_by_sub_domain",
+                        "group_by": "sub_domain",
+                    },
+                ),
+                AggregatorConfig(CountAggregator, 
+                    {
+                        "column_names": [
+                            "count",
+                        ], 
+                        "group_by": "sub_domain", 
+                        "filename_base": "NumExamples_by_sub_domain",
+                    }
+                ),
+            ],
+            output_dir=os.path.join(self.log_dir, "majvote_eval_report_by_sub_domain"),
+        )
+
+        # Configure the evaluation and reporting component for domain level aggregation
+        self.sec_sub_domain_evalreporting_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.domain_eval_data_processing_comp.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            RunPythonTransform("df = df.explode(['sec_sub_domain'])"), #, 'sub_domain', 'sec_sub_domain'])"),
+                            # RunPythonTransform("df = df[df['data_repeat_id'] == 'repeat_0']"),
+                        ]
+                    ),
+                },
+            ),
+            aggregator_configs=[
+                AggregatorConfig(BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "OmniMath_correctness"
+                        ],
+                        "first_groupby": ["data_repeat_id", "sec_sub_domain"],
+                        "second_groupby": "sec_sub_domain",
+                        "filename_base": "Correctness_Avg_by_sec_sub_domain",
+                        "agg_fn": "mean"
+                    }),
+                AggregatorConfig(BiLevelAggregator,
+                    {
+                        "column_names": ["usage_completion"],
+                        "first_groupby": ["data_point_id", "sec_sub_domain"],
+                        "second_groupby": "sec_sub_domain",
+                        "filename_base": "UsageCompletion_by_sec_sub_domain",
+                        "agg_fn": "mean"
+                    }),
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "OmniMath_correctness",
+                        ],
+                        "first_groupby": "data_point_id",
+                        "second_groupby": "sec_sub_domain",
+                        "filename_base": "Correctness_BestOfN_by_sec_sub_domain",
+                        "normalize": True,
+                        "agg_fn": "max",
+                    },
+                ),
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "OmniMath_correctness",
+                        ],
+                        "first_groupby": "data_point_id",
+                        "second_groupby": "sec_sub_domain",
+                        "filename_base": "Correctness_WorstOfN_by_sec_sub_domain",
+                        "normalize": True,
+                        "agg_fn": "min",
+                    },
+                )
+                
+            ],
+            output_dir=os.path.join(self.log_dir, "eval_report_by_sec_sub_domain"),
+        )
+
+        self.sec_sub_domain_majvote_evalreporting_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.domain_eval_data_processing_comp.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            RunPythonTransform("df = df.explode(['sec_sub_domain'])"), #, 'sub_domain', 'sec_sub_domain'])"),
+                            RunPythonTransform("df = df[df['data_repeat_id'] == 'repeat_0']"),
+                        ]
+                    ),
+                },
+            ),
+            aggregator_configs=[
+                AggregatorConfig(
+                    AverageAggregator,
+                    {
+                        "column_names": [
+                            "OmniMath_correctness_majority_vote",
+                        ],
+                        "filename_base": "Correctness_MajVote_by_sec_sub_domain",
+                        "group_by": "sec_sub_domain",
+                    },
+                ),
+                AggregatorConfig(CountAggregator,
+                    {
+                        "column_names": [
+                            "count",
+                        ],
+                        "group_by": "sec_sub_domain",
+                        "filename_base": "NumExamples_by_sec_sub_domain",
+                    }
+                ),
+            ],
+            output_dir=os.path.join(self.log_dir, "majvote_eval_report_by_sec_sub_domain"),
+        )
 
         # Configure the pipeline
         return PipelineConfig(
@@ -246,13 +779,20 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                 self.inference_comp,
                 self.eval_data_processing_comp,
                 self.eval_inference_comp,
+                self.eval_inf_data_processing_comp,
                 self.evalreporting_comp,
-                # self.bon_evalreporting_comp,
-                # self.maj_vote_data_post_processing,
-                # self.majvote_evalreporting_comp
+                self.bon_evalreporting_comp,
+                self.maj_vote_data_post_processing,
+                self.majvote_evalreporting_comp,
+                self.domain_eval_data_processing_comp,
+                self.domain_evalreporting_comp,
+                self.domain_majvote_evalreporting_comp,
+                self.sub_domain_evalreporting_comp,
+                self.sub_domain_majvote_evalreporting_comp,
+                self.sec_sub_domain_evalreporting_comp,
+                self.sec_sub_domain_majvote_evalreporting_comp,
             ],
             self.log_dir,
-        
         )
 
 class Omni_Math_Parallel_PIPELINE(Omni_Math_PIPELINE):
