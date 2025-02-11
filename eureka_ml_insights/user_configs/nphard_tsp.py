@@ -115,7 +115,55 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             ),
             metric_config=MetricConfig(NPHardTSPMetric),
             aggregator_configs=[
-                AggregatorConfig(CountAggregator, {"column_names": ["NPHardTSPMetric_result"], "normalize": True}),
+                # the first two reports aggregate the metrics per experiment repeat
+                # each repeat can be considered as an individual pass@1 score                
+                AggregatorConfig(CountAggregator, 
+                {
+                    "column_names": ["NPHardTSPMetric_result"],
+                    "group_by": "data_repeat_id",
+                    "filename_base": "NPHardTSPMetric_result_SeparateRuns",
+                    "normalize": True,
+                }),
+                AggregatorConfig(CountAggregator, 
+                {
+                    "column_names": ["NPHardTSPMetric_result"],
+                    "group_by": ["data_repeat_id", "category"],
+                    "filename_base": "NPHardTSPMetric_GroupBy_Year_SeparateRuns",
+                    "normalize": True,
+                }),    
+                # the next two reports take the average and std for all repeats
+                # the resulting numbers are the average and std of N pass@1 scores, where N is number of repeats
+                AggregatorConfig(BiLevelCountAggregator, 
+                {
+                    "column_names": ["NPHardTSPMetric_result"], 
+                    "first_groupby": "data_repeat_id", 
+                    "filename_base": "NPHardTSPMetric_AllRuns",
+                    "normalize": True
+                }),
+                AggregatorConfig(BiLevelCountAggregator, 
+                {
+                    "column_names": ["NPHardTSPMetric_result"], 
+                    "first_groupby": ["data_repeat_id", "category"], 
+                    "second_groupby": "category",
+                    "filename_base": "NPHardTSPMetric_GroupBy_Year_AllRuns", 
+                    "normalize": True
+                }),       
+                # two similar reports for average completion usage
+                AggregatorConfig(BiLevelAggregator, 
+                {
+                    "column_names": ["usage_completion"], 
+                    "first_groupby": "data_point_id", 
+                    "filename_base": "UsageCompletion_AllRuns",
+                    "agg_fn": "mean"
+                }),
+                AggregatorConfig(BiLevelAggregator, 
+                {
+                    "column_names": ["usage_completion"], 
+                    "first_groupby": ["data_point_id", "category"], 
+                    "second_groupby": "category",
+                    "filename_base": "UsageCompletion_GroupBy_Year_AllRuns", 
+                    "agg_fn": "mean"
+                }),                                                     
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
         )
