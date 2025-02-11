@@ -862,6 +862,7 @@ class Phi4VHFModel(Phi4HFModel):
 
     def __post_init__(self):
         super().__post_init__()
+        print(self.model_name)
         if "bunny-phi-4" not in self.model_name:
             logging.warning(
                 "This model class applies a template to the prompt that is specific to bunny-phi-4 models"
@@ -896,16 +897,22 @@ class Phi4VHFModel(Phi4HFModel):
             )
 
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, use_fast=True)
-        self.processor = model.get_vision_tower().image_processor        
+
+        vision_tower = model.get_vision_tower()
+        if not vision_tower.is_loaded:
+            vision_tower.load_model()
+
+        self.processor = vision_tower.image_processor        
         model.resize_token_embeddings(len(self.tokenizer))
 
         # if isinstance(model.generation_config.eos_token_id, (list, set)):
         #     # TODO Huge hack
         #     model.generation_config.eos_token_id = model.generation_config.eos_token_id[0]
 
-    def _tokenizer_image_token(prompt, tokenizer, image_token_index, return_tensors):
+    def _tokenizer_image_token(prompt):
 
         import torch
+        from bunny.constants import IMAGE_TOKEN_INDEX
 
         prompt_chunks = [tokenizer(chunk).input_ids for chunk in prompt.split('<image>')]
 
@@ -914,26 +921,20 @@ class Phi4VHFModel(Phi4HFModel):
 
         input_ids = []
         offset = 0
-        if len(prompt_chunks) > 0 and len(prompt_chunks[0]) > 0 and prompt_chunks[0][0] == tokenizer.bos_token_id:
+        if len(prompt_chunks) > 0 and len(prompt_chunks[0]) > 0 and prompt_chunks[0][0] == self.tokenizer.bos_token_id:
             offset = 1
             input_ids.append(prompt_chunks[0][0])
 
-        for x in insert_separator(prompt_chunks, [image_token_index] * (offset + 1)):
+        for x in insert_separator(prompt_chunks, [IMAGE_TOKEN_INDEX] * (offset + 1)):
             input_ids.extend(x[offset:])
 
-        if return_tensors is not None:
-            if return_tensors == 'pt':
-                return torch.tensor(input_ids, dtype=torch.long)
-            raise ValueError(f'Unsupported tensor type: {return_tensors}')
-        return input_ids
+        return torch.tensor(input_ids, dtype=torch.long)
 
     def _generate(self, text_prompt, query_images=None):
 
         print(f"text_prompt: {text_prompt}\n")
 
-        from bunny.constants import IMAGE_TOKEN_INDEX
-
-        input_ids  = self._tokenizer_image_token(text_prompt, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).to(self.device)
+        input_ids  = self._tokenizer_image_token(text_prompt).unsqueeze(0).to(self.device)
         images  = self.processor.preprocess(query_images, return_tensors='pt')['pixel_values'][0].unsqueeze(0).to(self.device)
         start_time = time.time()
         output_ids = self.model.generate(
