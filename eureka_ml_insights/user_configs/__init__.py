@@ -47,7 +47,10 @@ from .kitab import (
     KITAB_TWO_BOOK_CONSTRAINT_PIPELINE,
     KITAB_TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT,
 )
-from .mmmu import MMMU_BASELINE_PIPELINE
+from .mmmu import (
+    MMMU_BASELINE_PIPELINE,
+    MMMU_COT_PIPELINE,
+)
 from .nondeterminism import (
     Geo_Nondeterminism,
     IFEval_Nondeterminism,
@@ -107,6 +110,7 @@ __all__ = [
     Drop_Experiment_Pipeline,
     GEOMETER_PIPELINE,
     MMMU_BASELINE_PIPELINE,
+    MMMU_COT_PIPELINE,
     KITAB_ONE_BOOK_CONSTRAINT_PIPELINE,
     KITAB_ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT,
     KITAB_ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT,

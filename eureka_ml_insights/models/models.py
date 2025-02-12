@@ -869,109 +869,34 @@ class Phi4VHFModel(Phi4HFModel):
             )
 
     def get_model(self):
-        import torch
-        from transformers import (
-            AutoTokenizer,
-            AutoConfig,
-        )
-        from bunny.model import BunnyPhi3ForCausalLM
+        from bunny.model.builder import load_pretrained_model
+        from bunny.util.mm_utils import get_model_name_from_path
+        import os
 
-        quantization_config = None
+        # load model
+        model_path = os.path.expanduser(self.model_name)
+        model_name = get_model_name_from_path(model_path)
+
+        kwargs = {"device_map" : self.device}
+        if self.use_flash_attn:
+            kwargs["attn_implementation"] = "flash_attention_2"
         if self.quantize:
-            from transformers import BitsAndBytesConfig
+            kwargs["load_in_4bit"] = True
 
-            logging.info("Quantizing model")
-            # specify how to quantize the model
-            quantization_config = BitsAndBytesConfig(
-                load_in_4bit=True,
-                bnb_4bit_compute_dtype=torch.float16,
-            )
-
-        self.model = BunnyPhi3ForCausalLM.from_pretrained(
-                self.model_name,
-                torch_dtype=torch.float16,
-                quantization_config=quantization_config,
-                device_map=self.device,
-                use_flash_attention_2=self.use_flash_attn,
-            )
-
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, use_fast=True)
-
-        vision_tower = self.model.get_vision_tower()
-        if not vision_tower.is_loaded:
-            vision_tower.load_model()
-
-        self.processor = vision_tower.image_processor        
-        self.model.resize_token_embeddings(len(self.tokenizer))
-
-        # if isinstance(model.generation_config.eos_token_id, (list, set)):
-        #     # TODO Huge hack
-        #     model.generation_config.eos_token_id = model.generation_config.eos_token_id[0]
-
-
-    def _tokenizer_image_token(self, prompt):
-        import torch
-        from bunny.constants import IMAGE_TOKEN_INDEX
-
-        prompt_chunks = [self.tokenizer(chunk).input_ids for chunk in prompt.split('<image>')]
-
-        def insert_separator(X, sep):
-            return [ele for sublist in zip(X, [sep] * len(X)) for ele in sublist][:-1]
-
-        input_ids = []
-        offset = 0
-        if len(prompt_chunks) > 0 and len(prompt_chunks[0]) > 0 and prompt_chunks[0][0] == self.tokenizer.bos_token_id:
-            offset = 1
-            input_ids.append(prompt_chunks[0][0])
-
-        for x in insert_separator(prompt_chunks, [IMAGE_TOKEN_INDEX] * (offset + 1)):
-            input_ids.extend(x[offset:])
-
-        return torch.tensor(input_ids, dtype=torch.long)
-
-
-    def _expand2square(self, pil_img, background_color):
-        width, height = pil_img.size
-        if width == height:
-            return pil_img
-        elif width > height:
-            result = Image.new(pil_img.mode, (width, width), background_color)
-            result.paste(pil_img, (0, (width - height) // 2))
-            return result
-        else:
-            result = Image.new(pil_img.mode, (height, height), background_color)
-            result.paste(pil_img, ((height - width) // 2, 0))
-            return result
-
-    def _process_images(self, images):
-        import torch
-
-        image_aspect_ratio = getattr(self.model.config, "image_aspect_ratio", None)
-        new_images = []
-        if image_aspect_ratio == 'pad':
-            for image in images:
-                image = self._expand2square(image, tuple(int(x * 255) for x in self.processor.image_mean))
-                image = self.processor.preprocess(image, return_tensors='pt')['pixel_values'][0]
-                new_images.append(image)
-        else:
-            return self.processor(images, return_tensors='pt')['pixel_values']
-        if all(x.shape == new_images[0].shape for x in new_images):
-            new_images = torch.stack(new_images, dim=0)
-        return new_images
-
+        self.tokenizer, self.model, self.processor, _ = load_pretrained_model(model_path, None, model_name, "phi-4", **kwargs)    
 
     def _generate(self, text_prompt, query_images=None):
         
-        input_ids = self._tokenizer_image_token(text_prompt).unsqueeze(0).to(self.device)
-        images  = self._process_images(query_images).to(self.device)
+        from bunny.util.mm_utils import get_model_name_from_path, tokenizer_image_token, process_images
+        from bunny.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN
 
-        print(input_ids.shape)
-        print(images.shape)
+        input_ids = tokenizer_image_token(text_prompt, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).to(self.device)
+        image = process_images(query_images, self.processor, self.model.config)[0]
 
         start_time = time.time()
         output_ids = self.model.generate(
             input_ids,
-            images,
+            images=image.unsqueeze(0).to(dtype=self.model.dtype, non_blocking=True).to(self.device),
             max_new_tokens=self.max_tokens,
             temperature=self.temperature,
             top_p=self.top_p,
@@ -980,7 +905,7 @@ class Phi4VHFModel(Phi4HFModel):
         end_time = time.time()
         sequence_length = input_ids.shape[1]
         new_output_ids = output_ids[:, sequence_length:]
-        self.model_output = self.processor.batch_decode(
+        self.model_output = self.tokenizer.batch_decode(
             new_output_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False
         )[0]
 

@@ -56,7 +56,7 @@ class MMMU_BASELINE_PIPELINE(ExperimentConfig):
                     ]
                 ),
             },
-        ),
+        ),     
         output_dir=os.path.join(self.log_dir, "data_processing_output"),
         ignore_failure=False,
         )
@@ -105,3 +105,14 @@ class MMMU_BASELINE_PIPELINE(ExperimentConfig):
 
         # Configure the pipeline
         return PipelineConfig([self.data_processing_comp, self.inference_comp, self.evalreporting_comp], self.log_dir)
+
+class MMMU_COT_PIPELINE(MMMU_BASELINE_PIPELINE):
+    """This class extends MMMU_BASELINE_PIPELINE to use a COT prompt."""
+
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
+        config = super().configure_pipeline(model_config, resume_from)
+        self.data_processing_comp.prompt_template_path=os.path.join(
+                os.path.dirname(__file__),
+                "../prompt_templates/mmmu_templates/cot.jinja",
+            )
+        return config
