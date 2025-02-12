@@ -59,6 +59,7 @@ class AIME_PIPELINE(ExperimentConfig):
                                     "Answer": "ground_truth",
                                 }
                             ),
+                            #SamplerTransform(sample_count=10,random_seed=0),
                         ],
                     ),
                 },
@@ -182,6 +183,18 @@ class AIME_PIPELINE(ExperimentConfig):
                         ],
                         "first_groupby": "ID",
                         "filename_base": "MajorityVote",
+                        "normalize": True,
+                    },
+                ),
+                AggregatorConfig(
+                    BiLevelCountAggregator,
+                    {
+                        "column_names": [
+                            "NumericMatch_result",
+                        ],
+                        "first_groupby": "ID",
+                        "second_groupby": "Year",
+                        "filename_base": "MajorityVote_byyear",
                         "normalize": True,
                     },
                 ),
