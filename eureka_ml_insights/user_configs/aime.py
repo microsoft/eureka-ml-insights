@@ -26,7 +26,8 @@ from eureka_ml_insights.data_utils import (
     SequenceTransform,
     ExtractUsageTransform,
     CopyColumn,
-    ReplaceStringsTransform
+    ReplaceStringsTransform,
+    RunPythonTransform,
 )
 from eureka_ml_insights.data_utils.aime_utils import AIMEExtractAnswer
 from eureka_ml_insights.data_utils.data import DataLoader
@@ -194,7 +195,7 @@ class AIME_PIPELINE(ExperimentConfig):
                             ),
                             AddColumn("model_output"),
                             AIMEExtractAnswer("raw_output", "model_output"),
-                            MajorityVoteTransform(id_col="ID"),
+                            MajorityVoteTransform(id_col="data_point_id"),
                             ColumnRename(
                                 name_mapping={
                                     "model_output": "model_output_onerun",
@@ -225,7 +226,7 @@ class AIME_PIPELINE(ExperimentConfig):
                         "column_names": [
                             "NumericMatch_result",
                         ],
-                        "first_groupby": "ID",
+                        "first_groupby": "data_point_id",
                         "filename_base": "MajorityVote",
                         "normalize": True,
                     },
@@ -397,10 +398,14 @@ class AIME_PIPELINE5Run_2025(AIME_PIPELINE):
                                     "Answer": "ground_truth",
                                 }
                             ),
+                            RunPythonTransform("df['Year']=2025"),
                         ],
                     ),
                 },
             )
+        
+    
+        
         # join the other answer
         answer_path = r"C:\Users\lingjiaochen\Downloads\AIME2025_Answer.csv"
         other_data_reader_config  = DataSetConfig(
@@ -418,6 +423,37 @@ class AIME_PIPELINE5Run_2025(AIME_PIPELINE):
                     ),
                 },
             )
+            
+            
+        # data preprocessing
+        self.data_processing_comp = PromptProcessingConfig(
+            component_type=PromptProcessing,
+            data_reader_config=DataSetConfig(
+                HFDataReader,
+                {
+                    "path": "opencompass/AIME2025",
+                    "split": "train",
+                    "transform": SequenceTransform(
+                        [
+                            ColumnRename(
+                                name_mapping={
+                                    "question": "prompt",
+                                    "answer": "ground_truth",
+                                }
+                            ),
+                                                        RunPythonTransform("df['Year']=2025"),
+
+                        ],
+                    ),
+                },
+            ),
+            prompt_template_path=os.path.join(
+                os.path.dirname(__file__), "../prompt_templates/aime_templates/Template_1clean.jinja"
+            ),
+            output_dir=os.path.join(self.log_dir, "data_processing_output"),
+        )
+        
+        '''
         # post process the response to extract the answer
         self.data_post_processing = DataJoinConfig(
             component_type=DataJoin,
@@ -442,7 +478,7 @@ class AIME_PIPELINE5Run_2025(AIME_PIPELINE):
                 },
             ),
             other_data_reader_config  = other_data_reader_config,
-            pandas_merge_args ={"on":"ID"},
+            pandas_merge_args ={"on":"data_point_id"},
             output_dir=os.path.join(self.log_dir, "data_post_processing_output"),
         )
         
@@ -465,7 +501,7 @@ class AIME_PIPELINE5Run_2025(AIME_PIPELINE):
                             ),
                             AddColumn("model_output"),
                             AIMEExtractAnswer("raw_output", "model_output"),
-                            MajorityVoteTransform(id_col="ID"),
+                            MajorityVoteTransform(id_col="data_point_id"),
                             ColumnRename(
                                 name_mapping={
                                     "model_output": "model_output_onerun",
@@ -477,10 +513,10 @@ class AIME_PIPELINE5Run_2025(AIME_PIPELINE):
                 },
             ),
             other_data_reader_config  = other_data_reader_config,
-            pandas_merge_args ={"on":"ID"},
+            pandas_merge_args ={"on":"data_point_id"},
             output_dir=os.path.join(self.log_dir, "data_addmv_output"),
         )
-        
+        '''
 
         # data preprocessing
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
