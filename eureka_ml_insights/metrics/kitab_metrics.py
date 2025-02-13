@@ -22,7 +22,7 @@ from fuzzywuzzy import fuzz
 
 from eureka_ml_insights.metrics import CompositeMetric
 from eureka_ml_insights.secret_management import get_secret
-
+from eureka_ml_insights.data_utils import kitab_utils
 
 class KitabMetric(CompositeMetric):
     stopwords = set(["a", "an", "the", "in", "is", "of", "on", "for", "with", "to", "and"])
