@@ -128,27 +128,6 @@ class Omni_Math_PIPELINE(ExperimentConfig):
         # Configure the evaluation and reporting component for evaluation and dataset level aggregation
         self.evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
-            # data_reader_config=DataSetConfig(
-            #     DataReader,
-            #     {
-            #         "path": os.path.join(self.eval_inference_comp.output_dir, "inference_result.jsonl"),
-            #         "format": ".jsonl",
-            #         "transform": SequenceTransform(
-            #             [
-            #                 ExtractUsageTransform(model_config),
-            #                 ColumnRename(
-            #                     name_mapping={
-            #                         "model_output": "raw_output",
-            #                     }
-            #                 ),
-            #                 AddColumn("model_output"),
-            #                 AddColumn("model_solution"),
-            #                 Omni_Math_ParseLabel("raw_output", "OmniMath_correctness"),
-            #                 Omni_Math_ParseSolution("raw_output", "model_output"),
-            #             ]
-            #         ),
-            #     },
-            # ),
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
@@ -782,6 +761,7 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                 self.eval_inf_data_processing_comp,
                 self.evalreporting_comp,
                 self.bon_evalreporting_comp,
+                self.won_evalreporting_comp,
                 self.maj_vote_data_post_processing,
                 self.majvote_evalreporting_comp,
                 self.domain_eval_data_processing_comp,
