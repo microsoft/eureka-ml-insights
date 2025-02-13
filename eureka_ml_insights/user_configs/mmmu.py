@@ -47,7 +47,7 @@ class MMMU_BASELINE_PIPELINE(ExperimentConfig):
             {
                 "path": "MMMU/MMMU",
                 "split": "validation",
-                "tasks": ["Art"],
+                "tasks": MMMUAll,
                 "transform": SequenceTransform(
                     [
                         ASTEvalTransform(columns=["options"]),
