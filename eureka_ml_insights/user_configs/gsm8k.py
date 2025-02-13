@@ -23,6 +23,7 @@ from eureka_ml_insights.data_utils import (
     MajorityVoteTransform,
     MultiplyTransform,
     SequenceTransform,
+    SamplerTransform,
 )
 from eureka_ml_insights.data_utils.gsm8k_utils import GSM8KExtractAnswer
 from eureka_ml_insights.data_utils.data import DataLoader
@@ -30,6 +31,7 @@ from eureka_ml_insights.metrics.metrics_base import ExactMatch
 from eureka_ml_insights.metrics.reports import (
     BiLevelCountAggregator,
     CountAggregator,
+    AverageAggregator,
 )
 
 
@@ -48,14 +50,18 @@ class GSM8K_PIPELINE(ExperimentConfig):
                 {
                     "path": "openai/gsm8k",
                     "split": "train",
+                    "name": "main",
                     "transform": SequenceTransform(
                         [
                             ColumnRename(
                                 name_mapping={
-                                    "Question": "prompt",
-                                    "Answer": "ground_truth",
+                                    "question": "prompt",
+                                    #"answer": "ground_truth",
                                 }
                             ),
+                            #! 
+                            SamplerTransform(sample_count=5, random_seed=99),
+                            MultiplyTransform(n_repeats=1),
                         ],
                     ),
                 },
@@ -94,7 +100,9 @@ class GSM8K_PIPELINE(ExperimentConfig):
                                 }
                             ),
                             AddColumn("model_output"),
+                            AddColumn("ground_truth"),
                             GSM8KExtractAnswer("raw_output", "model_output"),
+                            GSM8KExtractAnswer("answer", "ground_truth"),
                         ]
                     ),
                 },
@@ -120,8 +128,9 @@ class GSM8K_PIPELINE(ExperimentConfig):
                         "column_names": [
                             "ExactMatch_result",
                         ],
-                        "group_by": "Year",
-                        "filename_base": "ExactMatch_GroupBy",
+                        #"group_by": "Year",
+                        "normalize": True,
+                        "filename_base": "ExactMatch",
                     },
                 ),
             ],
@@ -146,7 +155,8 @@ class GSM8K_PIPELINE(ExperimentConfig):
                             ),
                             AddColumn("model_output"),
                             GSM8KExtractAnswer("raw_output", "model_output"),
-                            MajorityVoteTransform(id_col="ID"),
+                            GSM8KExtractAnswer("answer", "ground_truth"),
+                            MajorityVoteTransform(id_col="data_point_id"),
                             ColumnRename(
                                 name_mapping={
                                     "model_output": "model_output_onerun",
@@ -177,7 +187,7 @@ class GSM8K_PIPELINE(ExperimentConfig):
                         "column_names": [
                             "ExactMatch_result",
                         ],
-                        "first_groupby": "ID",
+                        "first_groupby": "data_point_id",
                         "filename_base": "MajorityVote",
                         "normalize": True,
                     },
@@ -208,7 +218,7 @@ class GSM8K_PIPELINE5Run(GSM8K_PIPELINE):
     ) -> PipelineConfig:
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         # data preprocessing
-        self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
-            MultiplyTransform(n_repeats=5)
+        self.data_processing_comp.data_reader_config.init_args["transform"].transforms[-1] = MultiplyTransform(
+            n_repeats=5
         )
         return pipeline

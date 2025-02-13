@@ -16,6 +16,7 @@ class GSM8KExtractAnswer(DFTransformBase):
         return df
 
 
+    @staticmethod
     def parse_output_answer(response):
         """
         Parse the input string to extract answer of a given GSM8K question.
