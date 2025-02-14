@@ -205,8 +205,6 @@ class Inference(Component):
                     data.update(response_dict)
                     writer.write(data)
 
-    from functools import partial
-
     async def run_in_excutor(self, model_inputs, executor):
         """Run model.generate in a ThreadPoolExecutor.
         args:
