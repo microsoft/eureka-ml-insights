@@ -6,6 +6,32 @@ import pandas as pd
 
 from .transform import DFTransformBase
 
+# @staticmethod
+def parse_output_answer(response):
+    """
+    Parse the input string to extract the model judgement.
+    Parameters:
+        response (str): Input string containing model judgement as '## Equivalence Judgement: X '.
+    Returns: 
+        dict: A dict of extracted final answer and model based judgement.
+    """
+    if response is None or response == '':
+        return {}
+
+    parts = response.split("## ")
+    data = {}
+    
+    for part in parts[1:]:
+        lines = part.strip().split("\n")
+        title = lines[0].strip().replace('#', '').replace('*', '').lower()
+        content = "\n".join(lines[1:]).strip()
+        
+        if title == "Justification":
+            data[title] = content
+        else:
+            data[title] = lines[1].strip() if len(lines) > 1 else ''
+    
+    return data
 
 @dataclass
 class Omni_Math_ParseLabel(DFTransformBase):
@@ -13,33 +39,12 @@ class Omni_Math_ParseLabel(DFTransformBase):
     model_answer_column: str
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        df[self.model_answer_column] = df[self.model_output_column].apply(self.parse_output_answer)
+        df[self.model_answer_column] = df[self.model_output_column].apply(self.extract_label)
         return df
-
+    
     @staticmethod
-    def parse_output_answer(response):
-        """
-        Parse the input string to extract the model judgement.
-        Parameters:
-            response (str): Input string containing model judgement as '## Equivalence Judgement: X '.
-        Returns: 
-            dict: A dict of extracted final answer and model based judgement.
-        """
-        if response is None or response == '':
-            return {}
-
-        parts = response.split("## ")
-        data = {}
-        
-        for part in parts[1:]:
-            lines = part.strip().split("\n")
-            title = lines[0].strip().replace('#', '').replace('*', '').lower()
-            content = "\n".join(lines[1:]).strip()
-            
-            if title == "Justification":
-                data[title] = content
-            else:
-                data[title] = lines[1].strip() if len(lines) > 1 else ''
+    def extract_label(response):
+        data = parse_output_answer(response)
         label = 'Equivalence Judgement'.lower()
         model_label = data[label] if label in data else ''
         numeric_label = math.nan
@@ -48,7 +53,7 @@ class Omni_Math_ParseLabel(DFTransformBase):
         elif model_label.strip().replace('#', '').replace('*', '').lower() == 'false':
             numeric_label = 0
         if numeric_label == math.nan:
-            print(title, data[label], model_label, numeric_label)
+            print(data[label], model_label, numeric_label)
         return numeric_label
     
 
@@ -58,35 +63,42 @@ class Omni_Math_ParseSolution(DFTransformBase):
     model_answer_column: str
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        df[self.model_answer_column] = df[self.model_output_column].apply(self.parse_output_answer)
+        df[self.model_answer_column] = df[self.model_output_column].apply(self.extract_solution)
         return df
-
+    
     @staticmethod
-    def parse_output_answer(response):
-        """
-        Parse the input string to extract the model judgement.
-        Parameters:
-            response (str): Input string containing model judgement as '## Equivalence Judgement: X '.
-        Returns: 
-            dict: A dict of extracted final answer and model based judgement.
-        """
-        if response is None or response == '':
-            return {}
-
-        parts = response.split("## ")
-        data = {}
-        
-        for part in parts[1:]:
-            lines = part.strip().split("\n")
-            title = lines[0].strip().replace('#', '').replace('*', '').lower()
-            content = "\n".join(lines[1:]).strip()
-            
-            if title == "Justification":
-                data[title] = content
-            else:
-                data[title] = lines[1].strip() if len(lines) > 1 else ''
+    def extract_solution(response):
+        data = parse_output_answer(response)
         label = 'Student Final Answer'.lower()
-        return data[label] if label in data else ''
+        model_label = data[label] if label in data else ''
+        return model_label
+
+    # @staticmethod
+    # def parse_output_answer(response):
+    #     """
+    #     Parse the input string to extract the model judgement.
+    #     Parameters:
+    #         response (str): Input string containing model judgement as '## Equivalence Judgement: X '.
+    #     Returns: 
+    #         dict: A dict of extracted final answer and model based judgement.
+    #     """
+    #     if response is None or response == '':
+    #         return {}
+
+    #     parts = response.split("## ")
+    #     data = {}
+        
+    #     for part in parts[1:]:
+    #         lines = part.strip().split("\n")
+    #         title = lines[0].strip().replace('#', '').replace('*', '').lower()
+    #         content = "\n".join(lines[1:]).strip()
+            
+    #         if title == "Justification":
+    #             data[title] = content
+    #         else:
+    #             data[title] = lines[1].strip() if len(lines) > 1 else ''
+    #     label = 'Student Final Answer'.lower()
+    #     return data[label] if label in data else ''
     
 
     

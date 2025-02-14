@@ -51,7 +51,7 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                    "split": "test",
                    "transform": SequenceTransform([
                     #    ColumnRename(name_mapping={"problem": "prompt"}),
-                    SamplerTransform(sample_count=100, random_seed=99),
+                    SamplerTransform(sample_count=5, random_seed=99),
                        MultiplyTransform(n_repeats=1),
                    ]),
                 }
@@ -69,7 +69,7 @@ class Omni_Math_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
-            max_concurrent=1,
+            max_concurrent=5,
         )
 
         # eval data preprocessing
