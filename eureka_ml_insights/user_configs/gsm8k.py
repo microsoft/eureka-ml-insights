@@ -31,7 +31,6 @@ from eureka_ml_insights.metrics.metrics_base import ExactMatch
 from eureka_ml_insights.metrics.reports import (
     BiLevelCountAggregator,
     CountAggregator,
-    AverageAggregator,
 )
 
 
@@ -59,7 +58,7 @@ class GSM8K_PIPELINE(ExperimentConfig):
                                     #"answer": "ground_truth",
                                 }
                             ),
-                            #! 
+                            #! Sampled
                             SamplerTransform(sample_count=5, random_seed=99),
                             MultiplyTransform(n_repeats=1),
                         ],
@@ -222,3 +221,179 @@ class GSM8K_PIPELINE5Run(GSM8K_PIPELINE):
             n_repeats=5
         )
         return pipeline
+
+
+###########################
+# MUTATED
+###########################
+
+class GSM8K_MUTATED_PIPELINE(ExperimentConfig):
+    """This class specifies the config for running mutated GSM8K benchmark on any model"""
+
+    def configure_pipeline(
+        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
+    ) -> PipelineConfig:
+
+        # data preprocessing
+        self.data_processing_comp = PromptProcessingConfig(
+            component_type=PromptProcessing,
+            data_reader_config=DataSetConfig(
+                HFDataReader,
+                {
+                    "path": "/home/t-uenorisa/eureka-ml-insights/data/gsm8k_to_python_intervene_on_raw/Factual_datasets",
+                    "split": "validation",
+                    "from_disk": True,
+                    "transform": SequenceTransform(
+                        [
+                            ColumnRename(
+                                name_mapping={
+                                    "question": "prompt",
+                                    "answer": "ground_truth",
+                                }
+                            ),
+                            #! Sampled
+                            SamplerTransform(sample_count=5, random_seed=99),
+                            MultiplyTransform(n_repeats=1),
+                        ],
+                    ),
+                },
+            ),
+            prompt_template_path=os.path.join(
+                os.path.dirname(__file__), "../prompt_templates/gsm8k_templates/zeroshot.jinja"
+            ),
+            output_dir=os.path.join(self.log_dir, "data_processing_output"),
+        )
+
+        # inference component
+        self.inference_comp = InferenceConfig(
+            component_type=Inference,
+            model_config=model_config,
+            data_loader_config=DataSetConfig(
+                DataLoader,
+                {"path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl")},
+            ),
+            output_dir=os.path.join(self.log_dir, "inference_result"),
+            resume_from=resume_from,
+            max_concurrent=10,
+        )
+        # post process the response to extract the answer
+        self.data_post_processing = DataProcessingConfig(
+            component_type=DataProcessing,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            ColumnRename(
+                                name_mapping={
+                                    "model_output": "raw_output",
+                                }
+                            ),
+                            AddColumn("model_output"),
+                            GSM8KExtractAnswer("raw_output", "model_output"),
+                        ]
+                    ),
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "data_post_processing_output"),
+        )
+
+        # Configure the evaluation and reporting component for evaluation and dataset level aggregation
+        self.evalreporting_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.data_post_processing.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
+                },
+            ),
+            metric_config=MetricConfig(ExactMatch),
+            aggregator_configs=[
+                AggregatorConfig(
+                    CountAggregator,
+                    {
+                        "column_names": [
+                            "ExactMatch_result",
+                        ],
+                        #"group_by": "Year",
+                        "normalize": True,
+                        "filename_base": "ExactMatch",
+                    },
+                ),
+            ],
+            output_dir=os.path.join(self.log_dir, "eval_report"),
+        )
+
+        # Aggregate the results by a majority vote
+        # First, let us perform majority_vote
+        self.data_post_processing_addmv = DataProcessingConfig(
+            component_type=DataProcessing,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            ColumnRename(
+                                name_mapping={
+                                    "model_output": "raw_output",
+                                }
+                            ),
+                            AddColumn("model_output"),
+                            GSM8KExtractAnswer("raw_output", "model_output"),
+                            MajorityVoteTransform(id_col="data_point_id"),
+                            ColumnRename(
+                                name_mapping={
+                                    "model_output": "model_output_onerun",
+                                    "majority_vote": "model_output",
+                                }
+                            ),
+                        ]
+                    ),
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "data_addmv_output"),
+        )
+        # Second, compute eaxct match
+        self.postevalprocess_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.data_post_processing_addmv.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
+                },
+            ),
+            metric_config=MetricConfig(ExactMatch),
+            aggregator_configs=[
+                AggregatorConfig(
+                    BiLevelCountAggregator,
+                    {
+                        "column_names": [
+                            "ExactMatch_result",
+                        ],
+                        "first_groupby": "data_point_id",
+                        "filename_base": "MajorityVote",
+                        "normalize": True,
+                    },
+                ),
+            ],
+            output_dir=os.path.join(self.log_dir, "eval_report_majorityVote"),
+        )
+
+        # Configure the pipeline
+        return PipelineConfig(
+            [
+                self.data_processing_comp,
+                self.inference_comp,
+                self.data_post_processing,
+                self.evalreporting_comp,
+                self.data_post_processing_addmv,
+                self.postevalprocess_comp,
+            ],
+            self.log_dir,
+        )

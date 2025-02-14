@@ -10,7 +10,7 @@ import jsonlines
 import pandas as pd
 from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobClient, ContainerClient
-from datasets import load_dataset
+from datasets import load_dataset, load_from_disk
 from PIL import Image
 from tqdm import tqdm
 
@@ -514,6 +514,7 @@ class HFDataReader(DataReader):
         split: List[str] | str = "test",
         tasks: List[str] | str = None,
         transform: Optional[DFTransformBase] = None,
+        from_disk: bool = False,
         cache_dir: str = None,
         **kwargs,
     ):
@@ -525,12 +526,14 @@ class HFDataReader(DataReader):
             tasks: optional str or List of str, names of tasks (e.g., Math, Art,...).
             transform: optional list of Transforms, to apply after loading.
             cache_dir: optional str, local cache path.
+            from_disk: optional bool, if True, load from disk.
         """
         super().__init__(path=path, transform=transform, **kwargs)
         self.name = name
         self.split = split
         self.tasks = tasks
         self.cache_dir = cache_dir
+        self.from_disk = from_disk
 
     def _save_base64_to_image_file(self, image_base64: dict, cache_path: str) -> str:
         """
@@ -623,14 +626,22 @@ class HFDataReader(DataReader):
             self.tasks = [self.tasks]
         df_frames = []
         if self.tasks is None:
-            hf_dataset = load_dataset(self.path, name=self.name, cache_dir=self.cache_dir, split=self.split)
+            if self.from_disk:
+                dataset_dict = load_from_disk(self.path)
+                hf_dataset = [dataset_dict[split] for split in self.split]
+            else:
+                hf_dataset = load_dataset(self.path, name=self.name, cache_dir=self.cache_dir, split=self.split)
             for i, data_split in enumerate(hf_dataset):
                 task_df = self._hf_to_dataframe(data_split)
                 task_df["__hf_split"] = self.split[i]
                 df_frames.append(task_df)
         else:
             for task in self.tasks:
-                hf_dataset = load_dataset(self.path, task, name=self.name, cache_dir=self.cache_dir, split=self.split)
+                if self.from_disk:
+                    dataset_dict = load_from_disk(self.path)
+                    hf_dataset = [dataset_dict[split] for split in self.split]
+                else:
+                    hf_dataset = load_dataset(self.path, task, name=self.name, cache_dir=self.cache_dir, split=self.split)
                 for i, data_split in enumerate(hf_dataset):
                     task_df = self._hf_to_dataframe(data_split)
                     task_df["__hf_task"] = task
