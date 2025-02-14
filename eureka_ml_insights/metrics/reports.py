@@ -131,7 +131,7 @@ class AverageAggregator(NumericalAggregator):
         if len(data) == 0:
             averages = {col: 0 for col in self.column_names}
         else:
-            averages = {col: data[col].mean().round(3) for col in self.column_names}
+            averages = {col: round(data[col].mean(), 3) for col in self.column_names}
         self.aggregated_result = averages
 
     def _aggregate_grouped(self, data):
