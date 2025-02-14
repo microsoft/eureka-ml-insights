@@ -19,7 +19,7 @@ from eureka_ml_insights.data_utils import (
     SequenceTransform,
 )
 from eureka_ml_insights.data_utils.aime_utils import AIMEExtractAnswer
-from eureka_ml_insights.data_utils.data import DataLoader
+from eureka_ml_insights.data_utils.data import MMDataLoader
 from eureka_ml_insights.metrics.metrics_base import (
     ExactMatch,
     MetricBasedVerifier,
@@ -40,23 +40,30 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
         # this call to super will configure the initial prompt processing and final eval reporting comps that can be reused.
         super().configure_pipeline(model_config, resume_from, **kwargs)
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
-            SamplerTransform(random_seed=42, sample_count=2)
+            SamplerTransform(random_seed=40, sample_count=2)
         )
         component_configs = [self.data_processing_comp]
 
-        for i in range(1, 5):
+        for i in range(1, 3):
             # Student inference component
             self.student_inference_comp = InferenceConfig(
                 component_type=Inference,
                 model_config=model_config,
                 data_loader_config=DataSetConfig(
-                    DataLoader,
-                    {"path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl")},
+                    MMDataLoader,
+                    {
+                        "path": os.path.join(component_configs[-1].output_dir, "transformed_data.jsonl"),
+                    },
                 ),
                 output_dir=os.path.join(self.log_dir, f"student_inference_result_{i}"),
                 resume_from=resume_from,
                 chat_mode=True,
             )
+
+            if i > 1:
+                self.student_inference_comp.data_loader_config.init_args["misc_columns"] = ["previous_messages"]
+
+
             component_configs.append(self.student_inference_comp)
 
             # Metric based verification and filtering out the correct answers
@@ -72,8 +79,24 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                                 # extract and verify the student answer
                                 AIMEExtractAnswer(f"model_output", f"student_extracted_answer_{i}"),
                                 MetricBasedVerifier(ExactMatch, f"student_extracted_answer_{i}"),
+                            ]
+                        ),
+                    },
+                ),
+                output_dir=os.path.join(self.log_dir, f"verification_{i}"),
+            )
+            component_configs.append(self.verificaiton_comp)
+            self.filtering_comp = DataProcessingConfig(
+                component_type=DataProcessing,
+                data_reader_config=DataSetConfig(
+                    DataReader,
+                    {
+                        "path": os.path.join(self.verificaiton_comp.output_dir, "transformed_data.jsonl"),
+                        "format": ".jsonl",
+                        "transform": SequenceTransform(
+                            [
                                 # drop rows where verification_result is True
-                                RunPythonTransform(python_code="df = df[df['verification_result'] == 'correct']"),
+                                RunPythonTransform(python_code="df = df[df['verification_result'] != 'correct']"),
                                 ColumnRename(
                                     name_mapping={
                                         "verification_result": f"verification_result_{i}",
@@ -84,10 +107,9 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                         ),
                     },
                 ),
-                output_dir=os.path.join(self.log_dir, f"verification_{i}"),
+                output_dir=os.path.join(self.log_dir, f"filtering_{i}"),
             )
-            component_configs.append(self.verificaiton_comp)
-
+            component_configs.append(self.filtering_comp)
             # Create a new prompt with ground truth hinting
             self.hint_processing_comp = PromptProcessingConfig(
                 component_type=PromptProcessing,
@@ -110,13 +132,14 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                 component_type=Inference,
                 model_config=model_config,
                 data_loader_config=DataSetConfig(
-                    DataLoader,
-                    {"path": os.path.join(self.hint_processing_comp.output_dir, "transformed_data.jsonl")},
+                    MMDataLoader,
+                    {"path": os.path.join(self.hint_processing_comp.output_dir, "transformed_data.jsonl"),
+                    "misc_columns": ["previous_messages"]},
                 ),
                 output_dir=os.path.join(self.log_dir, f"teacher_inference_result_{i}"),
                 resume_from=resume_from,
                 max_concurrent=10,
-                chat_mode=True,
+                chat_mode=False,
             )
             component_configs.append(self.teacher_inference_comp)
 
@@ -144,7 +167,7 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
             component_configs.append(self.hint_prompt_processing)
 
         component_configs.append(self.evalreporting_comp)
-
+        print(component_configs)
         # Configure the pipeline
         return PipelineConfig(
             component_configs,
