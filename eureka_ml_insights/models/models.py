@@ -852,9 +852,9 @@ class Phi4HFModel(HuggingFaceModel):
 
     def model_template_fn(self, text_prompt, system_message=None):
         if system_message:
-            return f"<|im_start|>system<|im_sep|>\n{system_message}<|im_start|>user<|im_sep|>\n{text_prompt}<|im_end|>\n<|im_start|>assistant<|im_sep|>"
+            return f"<|im_start|>system<|im_sep|>\n{system_message}<|im_end|>\n<|im_start|>user<|im_sep|>\n{text_prompt}<|im_end|>\n<|im_start|>assistant<|im_sep|>\n"
         else:
-            return f"<|im_start|>user<|im_sep|>\n{text_prompt}<|im_end|>\n<|im_start|>assistant<|im_sep|>"
+            return f"<|im_start|>user<|im_sep|>\n{text_prompt}<|im_end|>\n<|im_start|>assistant<|im_sep|>\n"
 
 
 @dataclass
