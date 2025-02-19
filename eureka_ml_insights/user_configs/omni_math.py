@@ -35,6 +35,7 @@ from ..configs.config import (
     ModelConfig,
 )
 from ..configs.experiment_config import ExperimentConfig
+from eureka_ml_insights.configs.pvt_model_configs import TRAPI_GPT4O_2024_11_20_EVAL_CONFIG, OAI_GPT4O_2024_11_20_CONFIG, TRAPI_GCR_SHARED_O1_CONFIG
 
 class Omni_Math_PIPELINE(ExperimentConfig):
     """This class specifies the config for running any benchmark on any model"""
@@ -51,8 +52,8 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                    "split": "test",
                    "transform": SequenceTransform([
                     #    ColumnRename(name_mapping={"problem": "prompt"}),
-                    SamplerTransform(sample_count=5, random_seed=99),
-                       MultiplyTransform(n_repeats=1),
+                    #SamplerTransform(sample_count=5, random_seed=99),
+                    MultiplyTransform(n_repeats=1),
                    ]),
                 }
             ),
@@ -69,7 +70,7 @@ class Omni_Math_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
-            max_concurrent=5,
+            max_concurrent=10,
         )
 
         # eval data preprocessing
@@ -78,9 +79,11 @@ class Omni_Math_PIPELINE(ExperimentConfig):
             prompt_template_path=os.path.join(os.path.dirname(__file__), "../prompt_templates/omni_math_templates/omni_math_gpt_eval.jinja"),
             data_reader_config=DataSetConfig(
                 DataReader,
-                {"path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+                #{"path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+                {"path": resume_from,
                  "transform": SequenceTransform([
                      CopyColumn("model_output", "generated_solution"),
+                    SamplerTransform(sample_count=5, random_seed=99),
                  ])},
             ),
             output_dir=os.path.join(self.log_dir, "eval_data_processing_output"),
@@ -89,14 +92,17 @@ class Omni_Math_PIPELINE(ExperimentConfig):
         # inference component
         self.eval_inference_comp = InferenceConfig(
             component_type=Inference,
-            model_config=model_config,
+            model_config=TRAPI_GPT4O_2024_11_20_EVAL_CONFIG,
+            #model_config=OAI_GPT4O_2024_11_20_CONFIG,
+            #model_config=TRAPI_GCR_SHARED_O1_CONFIG,
             data_loader_config=DataSetConfig(
                 DataLoader,
                 {"path": os.path.join(self.eval_data_processing_comp.output_dir, "transformed_data.jsonl")},
+                #{"path": resume_from},
             ),
             output_dir=os.path.join(self.log_dir, "eval_inference_result"),
-            resume_from=resume_from,
-            max_concurrent=1,
+            #resume_from=resume_from,
+            max_concurrent=5,
         )
         
         self.eval_inf_data_processing_comp = DataProcessingConfig(
@@ -104,7 +110,8 @@ class Omni_Math_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    "path": os.path.join(self.eval_inference_comp.output_dir, "inference_result.jsonl"),
+                    #"path": os.path.join(self.eval_inference_comp.output_dir, "inference_result.jsonl"),
+                    "path": resume_from,
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
@@ -421,13 +428,14 @@ class Omni_Math_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    "path": os.path.join(self.maj_vote_data_post_processing.output_dir, "transformed_data.jsonl"),
+                    #"path": os.path.join(self.maj_vote_data_post_processing.output_dir, "transformed_data.jsonl"),
+                    "path": resume_from,
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
                             RunPythonTransform("df['highlevel_domain'] = df['domain'].apply(lambda x: list(set([y.split('->')[0] for y in x])))"),
                             RunPythonTransform("df['sub_domain'] = df['domain'].apply(lambda x: list(set([y.split('->')[1] for y in x])))"),
-                            RunPythonTransform("df['sec_sub_domain'] = df['domain'].apply(lambda x: list(set([y.split('->')[2] for y in x])))"),
+                            #RunPythonTransform("df['sec_sub_domain'] = df['domain'].apply(lambda x: list(set([y.split('->')[2] for y in x])))"),
                             # RunPythonTransform("df = df.explode(['highlevel_domain', 'sub_domain', 'sec_sub_domain'])"),
                         ]
                     ),
@@ -754,23 +762,23 @@ class Omni_Math_PIPELINE(ExperimentConfig):
         # Configure the pipeline
         return PipelineConfig(
             [
-                self.data_processing_comp,
-                self.inference_comp,
-                self.eval_data_processing_comp,
-                self.eval_inference_comp,
+                #self.data_processing_comp,
+                #self.inference_comp,
+                #self.eval_data_processing_comp,
+                #self.eval_inference_comp,
                 self.eval_inf_data_processing_comp,
                 self.evalreporting_comp,
-                self.bon_evalreporting_comp,
-                self.won_evalreporting_comp,
-                self.maj_vote_data_post_processing,
-                self.majvote_evalreporting_comp,
-                self.domain_eval_data_processing_comp,
-                self.domain_evalreporting_comp,
-                self.domain_majvote_evalreporting_comp,
-                self.sub_domain_evalreporting_comp,
-                self.sub_domain_majvote_evalreporting_comp,
-                self.sec_sub_domain_evalreporting_comp,
-                self.sec_sub_domain_majvote_evalreporting_comp,
+                #self.bon_evalreporting_comp,
+                #self.won_evalreporting_comp,
+                #self.maj_vote_data_post_processing,
+                #self.majvote_evalreporting_comp,
+                #self.domain_eval_data_processing_comp,
+                #self.domain_evalreporting_comp,
+                #self.domain_majvote_evalreporting_comp,
+                #self.sub_domain_evalreporting_comp,
+                #self.sub_domain_majvote_evalreporting_comp,
+                #self.sec_sub_domain_evalreporting_comp,
+                #self.sec_sub_domain_majvote_evalreporting_comp,
             ],
             self.log_dir,
         )
@@ -779,9 +787,9 @@ class Omni_Math_Parallel_PIPELINE(Omni_Math_PIPELINE):
     """This class specifies the config for running Omni Math benchmark 5 repeated times"""
 
     def configure_pipeline(
-        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
+            self, model_config: ModelConfig, resume_from: str = None, eval_model_config: ModelConfig = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
-        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
+        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from, eval_model_config=eval_model_config)
         # data preprocessing
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms[-1] = MultiplyTransform(n_repeats=5)
         return pipeline
