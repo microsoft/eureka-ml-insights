@@ -555,8 +555,7 @@ class AIME_PipelineTest(PipelineTest, unittest.TestCase):
 
     def test_outputs_exist(self) -> None:
         super().test_outputs_exist()
-        self.verify_n_aggregators(self.conf.component_configs[-3])
-
+        self.verify_n_aggregators(self.conf.component_configs[-2])
 
 class NPHARD_TSP_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):

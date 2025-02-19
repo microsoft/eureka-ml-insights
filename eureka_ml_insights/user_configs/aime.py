@@ -18,21 +18,24 @@ from eureka_ml_insights.core.eval_reporting import EvalReporting
 from eureka_ml_insights.data_utils import (
     AddColumn,
     ColumnRename,
-    CopyColumn,
     DataReader,
     HFDataReader,
     MajorityVoteTransform,
     MultiplyTransform,
-    ReplaceStringsTransform,
     SequenceTransform,
+    SamplerTransform,
+       CopyColumn,
+       ReplaceStringsTransform,
+
 )
 from eureka_ml_insights.data_utils.aime_utils import AIMEExtractAnswer
 from eureka_ml_insights.data_utils.data import DataLoader
 from eureka_ml_insights.metrics.aime_metrics import NumericMatch
+
 from eureka_ml_insights.metrics.reports import (
-    BiLevelAggregator,
     BiLevelCountAggregator,
     CountAggregator,
+    BiLevelAggregator,
 )
 
 # from eureka_ml_insights.data_utils.transform import MajorityVoteTransform
@@ -212,22 +215,21 @@ class AIME_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            CopyColumn(
+                        CopyColumn(
                                 column_name_src="NumericMatch_result",
                                 column_name_dst="NumericMatch_result_numeric",
                             ),
-                            ReplaceStringsTransform(
+                        ReplaceStringsTransform(
                                 columns=["NumericMatch_result_numeric"],
-                                mapping={"incorrect": "0", "correct": "1", "none": "NaN"},
-                                case=False,
-                            ),
+                                mapping={'incorrect': '0', 'correct': '1', 'none': 'NaN'},
+                                case=False)
                         ]
                     ),
                 },
             ),
             output_dir=os.path.join(self.log_dir, "posteval_data_post_processing_output"),
         )
-
+        
         # Aggregate the results by best of n
         # In this case, this is equivalent to taking the max on the numerical column of the metric.
         self.bon_evalreporting_comp = EvalReportingConfig(
@@ -236,30 +238,35 @@ class AIME_PIPELINE(ExperimentConfig):
                 DataReader,
                 {
                     "path": os.path.join(self.posteval_data_post_processing_comp.output_dir, "transformed_data.jsonl"),
-                    "format": ".jsonl",
+                    "format": ".jsonl"
                 },
             ),
             aggregator_configs=[
-                # the first three reports aggregate results by data_point_id and take the best out of N
+                # the first three reports aggregate results by ID and take the best out of N
                 AggregatorConfig(
                     BiLevelAggregator,
                     {
-                        "column_names": ["NumericMatch_result_numeric"],
-                        "first_groupby": "data_point_id",
+                        "column_names": [
+                            "NumericMatch_result_numeric"
+                        ],
+                        "first_groupby": "ID",
                         "filename_base": "NumericMatch_BestOfN",
-                        "agg_fn": "max",
+                        "agg_fn": "max"
                     },
                 ),
                 AggregatorConfig(
                     BiLevelAggregator,
                     {
-                        "column_names": ["NumericMatch_result_numeric"],
-                        "first_groupby": "data_point_id",
+                        "column_names": [
+                            "NumericMatch_result_numeric"
+                        ],
+                        "first_groupby": "ID", 
                         "second_groupby": "Year",
                         "filename_base": "NumericMatch_BestOfN_GroupBy_Year",
-                        "agg_fn": "max",
+                        "agg_fn": "max"
                     },
                 ),
+
             ],
             output_dir=os.path.join(self.log_dir, "bestofn_eval_report"),
         )
@@ -270,28 +277,32 @@ class AIME_PIPELINE(ExperimentConfig):
                 DataReader,
                 {
                     "path": os.path.join(self.posteval_data_post_processing_comp.output_dir, "transformed_data.jsonl"),
-                    "format": ".jsonl",
+                    "format": ".jsonl"
                 },
             ),
             aggregator_configs=[
-                # the first three reports aggregate results by data_point_id and take the best out of N
+                # the first three reports aggregate results by ID and take the best out of N
                 AggregatorConfig(
                     BiLevelAggregator,
                     {
-                        "column_names": ["NumericMatch_result_numeric"],
-                        "first_groupby": "data_point_id",
+                        "column_names": [
+                            "NumericMatch_result_numeric"
+                        ],
+                        "first_groupby": "ID",
                         "filename_base": "NumericMatch_WorstOfN",
-                        "agg_fn": "min",
+                        "agg_fn": "min"
                     },
                 ),
                 AggregatorConfig(
                     BiLevelAggregator,
                     {
-                        "column_names": ["NumericMatch_result_numeric"],
-                        "first_groupby": "data_point_id",
+                        "column_names": [
+                            "NumericMatch_result_numeric"
+                        ],
+                        "first_groupby": "ID", 
                         "second_groupby": "Year",
                         "filename_base": "NumericMatch_WorstOfN_GroupBy_Year",
-                        "agg_fn": "min",
+                        "agg_fn": "min"
                     },
                 ),
             ],
@@ -309,11 +320,10 @@ class AIME_PIPELINE(ExperimentConfig):
                 self.mv_evalreporting_comp,
                 self.posteval_data_post_processing_comp,
                 self.bon_evalreporting_comp,
-                self.won_evalreporting_comp,
+                self.won_evalreporting_comp
             ],
             self.log_dir,
         )
-
 
 class AIME_PIPELINE5Run(AIME_PIPELINE):
     """This class specifies the config for running AIME benchmark 5 repeated times"""
