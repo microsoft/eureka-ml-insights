@@ -199,8 +199,8 @@ class MMDataLoader(DataLoader):
 
         query_images = []
         for image in images:
-            query_image = self.load_image(image)
-            query_images.append(query_image)
+            # query_image = self.load_image(image)
+            query_images.append(image)
 
         return query_images
 

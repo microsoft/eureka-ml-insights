@@ -9,6 +9,7 @@ from .aime import (
     AIME_PIPELINE1024Run,
 )
 from .ba_calendar import BA_Calendar_Parallel_PIPELINE, BA_Calendar_PIPELINE
+from .ba_causal import BA_Causal_PIPELINE
 from .dna import DNA_PIPELINE
 from .drop import Drop_Experiment_Pipeline
 from .flenqa import FlenQA_Experiment_Pipeline
@@ -116,6 +117,7 @@ __all__ = [
     DNA_PIPELINE,
     BA_Calendar_PIPELINE,
     BA_Calendar_Parallel_PIPELINE,
+    BA_Causal_PIPELINE,
     ToxiGen_Discriminative_PIPELINE,
     ToxiGen_Generative_PIPELINE,
     Geo_Nondeterminism,

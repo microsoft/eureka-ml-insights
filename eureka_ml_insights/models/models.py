@@ -404,17 +404,26 @@ class OpenAICommonRequestResponseMixIn:
             messages.extend(previous_messages)
         user_content = text_prompt
         if query_images:
-            encoded_images = self.base64encode(query_images)
+            # encoded_images = self.base64encode(query_images)
+            encoded_images = query_images
+            # user_content = [
+            #     {"type": "text", "text": text_prompt},
+            #     {
+            #         "type": "image_url",
+            #         "image_url": {
+            #             "url": f"data:image/png;base64,{encoded_images[0]}",
+            #         },
+            #     },
+            # ]            
+            # print ("original user content", user_content)
             user_content = [
-                {"type": "text", "text": text_prompt},
-                {
-                    "type": "image_url",
-                    "image_url": {
-                        "url": f"data:image/png;base64,{encoded_images[0]}",
-                    },
-                },
+                {"type": "text", "text": text_prompt}
             ]
+            user_content = user_content + [{"type": "image_url", "image_url": {"url": f"data:image/png;base64,{x}"}} for x in encoded_images]
+            # print("new user content", user_content)
         messages.append({"role": "user", "content": user_content})
+        # print({"messages": messages})
+        # exit()
         return {"messages": messages}
 
     def get_response(self, request):
@@ -531,16 +540,24 @@ class OpenAIO1RequestResponseMixIn:
         if query_images and "o1-preview" in self.model_name:
             logging.warning("Images are not supported by OpenAI O1 preview model.")
         elif query_images:
-            encoded_images = self.base64encode(query_images)
+            # encoded_images = self.base64encode(query_images)
+            encoded_images = query_images
+            # user_content = [
+            #     {"type": "text", "text": text_prompt},
+            #     {
+            #         "type": "image_url",
+            #         "image_url": {
+            #             "url": f"data:image/png;base64,{encoded_images[0]}",
+            #         },
+            #     },
+            # ]
+            # print ("original user content", user_content)
             user_content = [
-                {"type": "text", "text": text_prompt},
-                {
-                    "type": "image_url",
-                    "image_url": {
-                        "url": f"data:image/png;base64,{encoded_images[0]}",
-                    },
-                },
+                {"type": "text", "text": text_prompt}
             ]
+            user_content = user_content + [{"type": "image_url", "image_url": {"url": f"data:image/png;base64,{x}"}} for x in encoded_images]
+            # print("new user content", user_content)
+            # exit()
 
         messages.append({"role": "user", "content": user_content})
         return {"messages": messages}
@@ -554,6 +571,7 @@ class OpenAIO1RequestResponseMixIn:
             top_p=self.top_p,
             frequency_penalty=self.frequency_penalty,
             presence_penalty=self.presence_penalty,
+            reasoning_effort=self.reasoning_effort,
             **request,
         )
         end_time = time.time()
@@ -576,6 +594,7 @@ class DirectOpenAIO1Model(OpenAIO1RequestResponseMixIn, DirectOpenAIClientMixIn,
     seed: int = 0
     frequency_penalty: float = 0
     presence_penalty: float = 0
+    reasoning_effort: str = "medium"
 
     def __post_init__(self):
         self.api_key = self.get_api_key()
@@ -595,6 +614,7 @@ class AzureOpenAIO1Model(OpenAIO1RequestResponseMixIn, AzureOpenAIClientMixIn, E
     seed: int = 0
     frequency_penalty: float = 0
     presence_penalty: float = 0
+    reasoning_effort: str = "medium"
     api_version: str = "2023-06-01-preview"
     auth_scope: str = "https://cognitiveservices.azure.com/.default"
 

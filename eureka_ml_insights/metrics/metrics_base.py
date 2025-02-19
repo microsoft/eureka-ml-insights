@@ -149,7 +149,7 @@ class CaseInsensitiveMatch(ExactMatch):
     """This class checks for a case-insensitive, but otherwise exact match."""
 
     def __evaluate__(self, answer_text, target_text, is_valid):
-        return super().__evaluate__(str(answer_text).lower(), str(target_text).lower(), is_valid)
+        return super().__evaluate__(str(answer_text).strip().lower(), str(target_text).strip().lower(), is_valid)
 
 
 class IdentityMetric(Metric):
