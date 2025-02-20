@@ -10,6 +10,7 @@ from eureka_ml_insights.data_utils.gsm8k_utils import GSM8KExtractAnswer
 
 log = logging.getLogger("GSM8K_ExtractAnswer_tests")
 
+
 class TestGSM8KAnswerExtract(unittest.TestCase):
     def setUp(self):
         self.testcases = {
@@ -20,11 +21,10 @@ class TestGSM8KAnswerExtract(unittest.TestCase):
             "%6": float("nan"),
             "t": float("nan"),
             "10": float("nan"),
-            "": float("nan")
+            "": float("nan"),
         }
         self.df = pd.DataFrame(columns=["raw_output", "model_output"])
         self.df["raw_output"] = self.testcases.keys()
-
 
     def test_answerextraction(self):
         transform = GSM8KExtractAnswer("raw_output", "model_output")
