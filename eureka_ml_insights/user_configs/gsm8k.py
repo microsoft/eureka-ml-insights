@@ -21,9 +21,11 @@ from eureka_ml_insights.data_utils import (
     ColumnRename,
     DataReader,
     HFDataReader,
+    HFLocalDataReader,
     MajorityVoteTransform,
     MultiplyTransform,
     SequenceTransform,
+    SamplerTransform,
 )
 from eureka_ml_insights.data_utils.data import DataLoader
 from eureka_ml_insights.data_utils.gsm8k_utils import GSM8KExtractAnswer
@@ -32,8 +34,6 @@ from eureka_ml_insights.metrics.reports import (
     BiLevelCountAggregator,
     CountAggregator,
 )
-
-# SAMPLE_COUNT = 2
 
 
 class GSM8K_PIPELINE(ExperimentConfig):
@@ -56,7 +56,7 @@ class GSM8K_PIPELINE(ExperimentConfig):
                 {
                     "path": "openai/gsm8k",
                     "split": "train",
-                    "name": "main",
+                    "tasks": "main",
                     "transform": SequenceTransform(
                         [
                             ColumnRename(
@@ -65,7 +65,7 @@ class GSM8K_PIPELINE(ExperimentConfig):
                                     # "answer": "ground_truth",
                                 }
                             ),
-                            # SamplerTransform(sample_count=SAMPLE_COUNT, random_seed=99),  #! Sample
+                            #SamplerTransform(sample_count=2, random_seed=99),  #! Sample
                             MultiplyTransform(n_repeats=int(n_repeats)),
                         ],
                     ),
@@ -241,6 +241,7 @@ class GSM8K_PIPELINE(ExperimentConfig):
 # MUTATED BENCHMARK
 # =============================
 
+SAMPLE_COUNT = 2
 
 class GSM8K_MUTATED_PIPELINE(ExperimentConfig):
     """This class specifies the config for running mutated GSM8K benchmark on any model"""
@@ -268,7 +269,7 @@ class GSM8K_MUTATED_PIPELINE(ExperimentConfig):
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
             data_reader_config=DataSetConfig(
-                HFDataReader,
+                HFLocalDataReader,
                 {
                     "path": path,
                     "split": "validation",
@@ -281,7 +282,7 @@ class GSM8K_MUTATED_PIPELINE(ExperimentConfig):
                                     "answer": "ground_truth",
                                 }
                             ),
-                            # SamplerTransform(sample_count=SAMPLE_COUNT, random_seed=99),  #! Sample
+                            SamplerTransform(sample_count=SAMPLE_COUNT, random_seed=99),  #! Sample
                             MultiplyTransform(n_repeats=int(n_repeats)),
                         ],
                     ),
