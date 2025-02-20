@@ -17,7 +17,7 @@ class GSM8KExtractAnswer(DFTransformBase):
 
 
     @staticmethod
-    def parse_output_answer(response):
+    def parse_output_answer(response: str) -> float:
         """
         Parse the input string to extract answer of a given GSM8K question.
         Parameters:
@@ -44,7 +44,10 @@ class GSM8KExtractAnswer(DFTransformBase):
                     hyp = None
             return hyp
 
-        answer = response.split('####')[-1].strip()
+        if '####' not in response:
+            return None
+        
+        answer = str(response).split('####')[-1].strip()
         numerical_value = str_to_float(answer)
 
         return numerical_value
