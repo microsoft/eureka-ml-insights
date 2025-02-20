@@ -72,7 +72,7 @@ class Omni_Math_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
-            max_concurrent=10,
+            max_concurrent=1,
         )
 
         # eval data preprocessing
@@ -86,7 +86,7 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                  "transform": SequenceTransform([
                      CopyColumn("model_output", "generated_solution"),
                     CopyColumn("n_output_tokens", "gen_solution_n_tokens"),
-                    CopyColumn("usage", "gen_solution_usage"),
+                    # CopyColumn("usage", "gen_solution_usage"),
                     # SamplerTransform(sample_count=5, random_seed=99),
                  ])},
             ),
@@ -119,7 +119,8 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            ExtractUsageTransform(model_config, usage_completion_read_col="gen_solution_usage"),
+                            #ExtractUsageTransform(model_config, usage_completion_read_col="gen_solution_usage"),
+                            ExtractUsageTransform(model_config),
                             ColumnRename(
                                 name_mapping={
                                     "model_output": "raw_output",
