@@ -29,7 +29,6 @@ class TestGSM8KAnswerExtract(unittest.TestCase):
     def test_answerextraction(self):
         transform = GSM8KExtractAnswer("raw_output", "model_output")
         transform.transform(self.df)
-        breakpoint()
         # Check values, accounting for NaN
         np.testing.assert_array_equal(self.df["model_output"].values, self.testcases.values())
 
