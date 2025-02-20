@@ -30,7 +30,7 @@ class TestGSM8KAnswerExtract(unittest.TestCase):
         transform = GSM8KExtractAnswer("raw_output", "model_output")
         transform.transform(self.df)
         # Check values, accounting for NaN
-        np.testing.assert_array_equal(self.df["model_output"].values, self.testcases.values())
+        np.testing.assert_array_equal(self.df["model_output"].values, list(self.testcases.values()))
 
 
 if __name__ == "__main__":
