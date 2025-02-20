@@ -427,7 +427,7 @@ class ExtractUsageTransform:
 
     model_config: ModelConfig # config used for the experiment
     usage_completion_output_col: str = "usage_completion" # default name of the column where completion numbers will be stored for all models
-
+    usage_completion_read_col: str = None # name of the column where completion numbers are stored for each model
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Transforms the dataframe by extracting the .
@@ -436,17 +436,18 @@ class ExtractUsageTransform:
         Returns:
             pd.DataFrame: Transformed dataframe with completion token numbers in completion_usage_col.
         """
-        usage_completion_read_col = None
-        if (self.model_config.class_name is GeminiModel):
-            usage_completion_read_col = "candidates_token_count"
-        elif (self.model_config.class_name is ClaudeModel):
-            usage_completion_read_col = "output_tokens"
-        elif (self.model_config.class_name is AzureOpenAIO1Model
-              or self.model_config.class_name is AzureOpenAIModel 
-              or self.model_config.class_name is LlamaServerlessAzureRestEndpointModel
-              or self.model_config.class_name is DirectOpenAIModel 
-              or self.model_config.class_name is DirectOpenAIO1Model):
-            usage_completion_read_col = "completion_tokens"
+        usage_completion_read_col = self.usage_completion_read_col
+        if usage_completion_read_col:
+            if (self.model_config.class_name is GeminiModel):
+                usage_completion_read_col = "candidates_token_count"
+            elif (self.model_config.class_name is ClaudeModel):
+                usage_completion_read_col = "output_tokens"
+            elif (self.model_config.class_name is AzureOpenAIO1Model
+                or self.model_config.class_name is AzureOpenAIModel 
+                or self.model_config.class_name is LlamaServerlessAzureRestEndpointModel
+                or self.model_config.class_name is DirectOpenAIModel 
+                or self.model_config.class_name is DirectOpenAIO1Model):
+                usage_completion_read_col = "completion_tokens"
         # if the model is one for which the usage of completion tokens is known, use that corresponding column for the model
         # otherwise, use the default "n_output_tokens" which is computed with a universal tokenizer as shown in TokenCounterTransform()
         if usage_completion_read_col:
