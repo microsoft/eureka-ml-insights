@@ -1,5 +1,6 @@
 import os
-from typing import Any
+from typing import Any, Optional
+import json
 
 from eureka_ml_insights.configs import (
     AggregatorConfig,
@@ -33,15 +34,20 @@ from eureka_ml_insights.metrics.reports import (
     CountAggregator,
 )
 
+#SAMPLE_COUNT = 20
 
 class GSM8K_PIPELINE(ExperimentConfig):
     """This class specifies the config for running GSM8K benchmark on any model"""
 
     def configure_pipeline(
-        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
-    ) -> PipelineConfig:
+        self, model_config: ModelConfig, resume_from: str = None, n_repeats: int = 1, **kwargs: dict[str, Any]
+        ) -> PipelineConfig:
 
-        # data preprocessing
+        #--------------------------------------
+        # Data preprocessing
+        #--------------------------------------
+        # * PromptProcessing: you can use this component to prepare your data for inference, apply transformation, or apply a Jinja prompt template.
+        
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
             data_reader_config=DataSetConfig(
@@ -52,15 +58,12 @@ class GSM8K_PIPELINE(ExperimentConfig):
                     "name": "main",
                     "transform": SequenceTransform(
                         [
-                            ColumnRename(
-                                name_mapping={
+                            ColumnRename(name_mapping={
                                     "question": "prompt",
                                     #"answer": "ground_truth",
-                                }
-                            ),
-                            #! Sampled
-                            SamplerTransform(sample_count=5, random_seed=99),
-                            MultiplyTransform(n_repeats=1),
+                                    }),
+                            #SamplerTransform(sample_count=SAMPLE_COUNT, random_seed=99),  #! Sampled
+                            MultiplyTransform(n_repeats=int(n_repeats)),
                         ],
                     ),
                 },
@@ -71,7 +74,10 @@ class GSM8K_PIPELINE(ExperimentConfig):
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
         )
 
-        # inference component
+        #--------------------------------------
+        # Inference
+        #--------------------------------------
+        # * Inference:  you can use this component to run your model on any processed data, for example running inference on the model subject to evaluation, or another model that is involved in the evaluation pipeline as an evaluator or judge.
         self.inference_comp = InferenceConfig(
             component_type=Inference,
             model_config=model_config,
@@ -83,7 +89,11 @@ class GSM8K_PIPELINE(ExperimentConfig):
             resume_from=resume_from,
             max_concurrent=10,
         )
-        # post process the response to extract the answer
+
+        #--------------------------------------
+        # Extract answer
+        #--------------------------------------
+        # * DataProcessing: you can use this component to to post-process the model outputs.
         self.data_post_processing = DataProcessingConfig(
             component_type=DataProcessing,
             data_reader_config=DataSetConfig(
@@ -109,7 +119,10 @@ class GSM8K_PIPELINE(ExperimentConfig):
             output_dir=os.path.join(self.log_dir, "data_post_processing_output"),
         )
 
-        # Configure the evaluation and reporting component for evaluation and dataset level aggregation
+        #--------------------------------------
+        # Evaluation (compute accuracy)
+        #--------------------------------------
+        # * EvalReporting: you can use this component to evaluate the model outputs using various metrics, aggregators and visualizers, and generate a report.
         self.evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
             data_reader_config=DataSetConfig(
@@ -136,8 +149,13 @@ class GSM8K_PIPELINE(ExperimentConfig):
             output_dir=os.path.join(self.log_dir, "eval_report"),
         )
 
-        # Aggregate the results by a majority vote
-        # First, let us perform majority_vote
+        # ====================================================
+        # For multi-run evaluation
+        # ====================================================
+        #--------------------------------------
+        # Aggregate the results (majority vote)
+        #--------------------------------------
+        
         self.data_post_processing_addmv = DataProcessingConfig(
             component_type=DataProcessing,
             data_reader_config=DataSetConfig(
@@ -168,7 +186,11 @@ class GSM8K_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "data_addmv_output"),
         )
-        # Second, compute eaxct match
+
+        #--------------------------------------
+        # Compute accuracy
+        #--------------------------------------
+
         self.postevalprocess_comp = EvalReportingConfig(
             component_type=EvalReporting,
             data_reader_config=DataSetConfig(
@@ -195,7 +217,7 @@ class GSM8K_PIPELINE(ExperimentConfig):
             output_dir=os.path.join(self.log_dir, "eval_report_majorityVote"),
         )
 
-        # Configure the pipeline
+        # Output pipeline config in order
         return PipelineConfig(
             [
                 self.data_processing_comp,
@@ -209,51 +231,58 @@ class GSM8K_PIPELINE(ExperimentConfig):
         )
 
 
-class GSM8K_PIPELINE5Run(GSM8K_PIPELINE):
-    """This class specifies the config for running GSM8K benchmark 5 repeated times"""
+# class GSM8K_PIPELINE5Run(GSM8K_PIPELINE):
+#     """This class specifies the config for running GSM8K benchmark 5 repeated times"""
 
-    def configure_pipeline(
-        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
-    ) -> PipelineConfig:
-        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
-        # data preprocessing
-        self.data_processing_comp.data_reader_config.init_args["transform"].transforms[-1] = MultiplyTransform(
-            n_repeats=5
-        )
-        return pipeline
+#     def configure_pipeline(
+#         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
+#     ) -> PipelineConfig:
+#         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
+
+#         # Replace MultiplyTransform transform argument
+#         self.data_processing_comp.data_reader_config.init_args["transform"].transforms[-1] = MultiplyTransform(
+#             n_repeats=5
+#         )
+#         return pipeline
 
 
-###########################
+# =============================
 # MUTATED
-###########################
+# =============================
 
 class GSM8K_MUTATED_PIPELINE(ExperimentConfig):
     """This class specifies the config for running mutated GSM8K benchmark on any model"""
 
     def configure_pipeline(
-        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
-    ) -> PipelineConfig:
+        self, model_config: ModelConfig, resume_from: str = None, mutation_type: str = 'Factual', n_repeats: int = 1, **kwargs: dict[str, Any]
+        ) -> PipelineConfig:
 
-        # data preprocessing
+        # Get data path for this mutation
+        with open("data/paths.json", "r") as f:
+            DATA_PATHS = json.load(f)
+        path = DATA_PATHS[mutation_type]
+
+        #--------------------------------------
+        # Data preprocessing
+        #--------------------------------------
+        # * PromptProcessing: you can use this component to prepare your data for inference, apply transformation, or apply a Jinja prompt template.
+
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
             data_reader_config=DataSetConfig(
                 HFDataReader,
                 {
-                    "path": "/home/t-uenorisa/eureka-ml-insights/data/gsm8k_to_python_intervene_on_raw/Factual_datasets",
+                    "path": path,
                     "split": "validation",
                     "from_disk": True,
                     "transform": SequenceTransform(
                         [
-                            ColumnRename(
-                                name_mapping={
+                            ColumnRename(name_mapping={
                                     "question": "prompt",
                                     "answer": "ground_truth",
-                                }
-                            ),
-                            #! Sampled
-                            SamplerTransform(sample_count=5, random_seed=99),
-                            MultiplyTransform(n_repeats=1),
+                                    }),
+                            #SamplerTransform(sample_count=SAMPLE_COUNT, random_seed=99),  #! Sampled
+                            MultiplyTransform(n_repeats=int(n_repeats)),
                         ],
                     ),
                 },
@@ -264,7 +293,10 @@ class GSM8K_MUTATED_PIPELINE(ExperimentConfig):
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
         )
 
-        # inference component
+        #--------------------------------------
+        # Inference
+        #--------------------------------------
+        # * Inference:  you can use this component to run your model on any processed data, for example running inference on the model subject to evaluation, or another model that is involved in the evaluation pipeline as an evaluator or judge.
         self.inference_comp = InferenceConfig(
             component_type=Inference,
             model_config=model_config,
@@ -276,7 +308,11 @@ class GSM8K_MUTATED_PIPELINE(ExperimentConfig):
             resume_from=resume_from,
             max_concurrent=10,
         )
-        # post process the response to extract the answer
+
+        #--------------------------------------
+        # Extract answer
+        #--------------------------------------
+        # * DataProcessing: post-process the model outputs
         self.data_post_processing = DataProcessingConfig(
             component_type=DataProcessing,
             data_reader_config=DataSetConfig(
@@ -300,6 +336,10 @@ class GSM8K_MUTATED_PIPELINE(ExperimentConfig):
             output_dir=os.path.join(self.log_dir, "data_post_processing_output"),
         )
 
+        #--------------------------------------
+        # Evaluation (compute accuracy)
+        #--------------------------------------
+        # * EvalReporting: you can use this component to evaluate the model outputs using various metrics, aggregators and visualizers, and generate a report.
         # Configure the evaluation and reporting component for evaluation and dataset level aggregation
         self.evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
@@ -315,9 +355,7 @@ class GSM8K_MUTATED_PIPELINE(ExperimentConfig):
                 AggregatorConfig(
                     CountAggregator,
                     {
-                        "column_names": [
-                            "ExactMatch_result",
-                        ],
+                        "column_names": ["ExactMatch_result",],
                         #"group_by": "Year",
                         "normalize": True,
                         "filename_base": "ExactMatch",
@@ -326,9 +364,13 @@ class GSM8K_MUTATED_PIPELINE(ExperimentConfig):
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
         )
-
-        # Aggregate the results by a majority vote
-        # First, let us perform majority_vote
+        
+        # ====================================================
+        # For multi-run evaluation
+        # ====================================================
+        #--------------------------------------
+        # Aggregate the results (majority vote)
+        #--------------------------------------
         self.data_post_processing_addmv = DataProcessingConfig(
             component_type=DataProcessing,
             data_reader_config=DataSetConfig(
@@ -338,27 +380,25 @@ class GSM8K_MUTATED_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            ColumnRename(
-                                name_mapping={
-                                    "model_output": "raw_output",
-                                }
-                            ),
+                            ColumnRename(name_mapping={"model_output": "raw_output"}),
                             AddColumn("model_output"),
                             GSM8KExtractAnswer("raw_output", "model_output"),
                             MajorityVoteTransform(id_col="data_point_id"),
-                            ColumnRename(
-                                name_mapping={
+                            ColumnRename(name_mapping={
                                     "model_output": "model_output_onerun",
                                     "majority_vote": "model_output",
-                                }
-                            ),
+                                    }),
                         ]
                     ),
                 },
             ),
             output_dir=os.path.join(self.log_dir, "data_addmv_output"),
         )
-        # Second, compute eaxct match
+
+        #--------------------------------------
+        # Compute accuracy
+        #--------------------------------------
+
         self.postevalprocess_comp = EvalReportingConfig(
             component_type=EvalReporting,
             data_reader_config=DataSetConfig(
@@ -373,9 +413,7 @@ class GSM8K_MUTATED_PIPELINE(ExperimentConfig):
                 AggregatorConfig(
                     BiLevelCountAggregator,
                     {
-                        "column_names": [
-                            "ExactMatch_result",
-                        ],
+                        "column_names": ["ExactMatch_result",],
                         "first_groupby": "data_point_id",
                         "filename_base": "MajorityVote",
                         "normalize": True,
@@ -385,7 +423,7 @@ class GSM8K_MUTATED_PIPELINE(ExperimentConfig):
             output_dir=os.path.join(self.log_dir, "eval_report_majorityVote"),
         )
 
-        # Configure the pipeline
+        # Output pipeline config in order
         return PipelineConfig(
             [
                 self.data_processing_comp,
