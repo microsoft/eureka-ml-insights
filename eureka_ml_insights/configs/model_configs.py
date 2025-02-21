@@ -14,6 +14,7 @@ from eureka_ml_insights.models import (
     Phi4HFModel,
     MistralServerlessAzureRestEndpointModel,
     RestEndpointModel,
+    TogetherModel,
     TestModel,
 )
 from eureka_ml_insights.models.models import AzureOpenAIModel
@@ -28,6 +29,24 @@ from .config import ModelConfig
 # Test model
 TEST_MODEL_CONFIG = ModelConfig(TestModel, {})
 
+# Together models
+TOGETHER_SECRET_KEY_PARAMS = {
+    "key_name": "your_togetherai_secret_key_name",
+    "local_keys_path": "keys/keys.json",
+    "key_vault_url": None,
+}
+
+TOGETHER_DEEPSEEK_R1_CONFIG = ModelConfig(
+    TogetherModel,
+    {
+        "model_name": "deepseek-ai/DeepSeek-R1",
+        "secret_key_params": TOGETHER_SECRET_KEY_PARAMS,
+        "temperature": 1.0,
+        # high max token limit for deep seek
+        # otherwise the answers may be cut in the middle
+        "max_tokens": 65536
+    },
+)
 # OpenAI models
 
 OPENAI_SECRET_KEY_PARAMS = {
