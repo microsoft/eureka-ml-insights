@@ -273,7 +273,6 @@ class GSM8K_MUTATED_PIPELINE(ExperimentConfig):
                 {
                     "path": path,
                     "split": "validation",
-                    "from_disk": True,
                     "transform": SequenceTransform(
                         [
                             ColumnRename(
