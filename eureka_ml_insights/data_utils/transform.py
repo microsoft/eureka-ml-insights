@@ -7,20 +7,20 @@ from typing import Dict, List
 import numpy as np
 import pandas as pd
 import tiktoken
+import json
+import logging
 
 from eureka_ml_insights.configs.config import ModelConfig
 from eureka_ml_insights.models import (
     ClaudeModel,
     GeminiModel,
     LlamaServerlessAzureRestEndpointModel,
-    LLaVAModel,
-    LLaVAHuggingFaceModel,
     MistralServerlessAzureRestEndpointModel,
     AzureOpenAIModel,
     DirectOpenAIModel,
     DirectOpenAIO1Model,
     AzureOpenAIO1Model,
-    RestEndpointModel,
+    TogetherModel
 )
 
 @dataclass
@@ -66,7 +66,7 @@ class RunPythonTransform(DFTransformBase):
     def __post_init__(self):
         # To avoid disastrous consequences, we only allow operations on the data frame.
         # Therefore, every statement in the python_code should be in the form of df['column_name'] = ... or df = ...
-        self.allowed_statement_prefixes = ["df = ", "df[", "import "]
+        self.allowed_statement_prefixes = ["df = ", "df[", "import ", "if "]
         # Similarly, we only allow a limited set of imports. To add to this safe list, create a PR.
         self.allowed_imports = ["ast", "math", "numpy"]
         self.validate()
@@ -189,6 +189,9 @@ class MultiColumnTransform(DFTransformBase):
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """Apply the transform to the columns."""
+        if df.empty:
+            logging.warn("The input dataframe is empty, no transformation was applied.")
+            return df
         self.validate(df)
         for column in self.columns:
             df[column] = df[column].apply(self._transform)
@@ -203,16 +206,19 @@ class ShuffleColumnsTransform(MultiColumnTransform):
 
     This class is meant to be used in MCQ benchmarks to shuffle answer choices
     across different letter options (e.g. shuffle what choice maps to 'A' vs 'B' vs 'C').
+    args:
+        columns: List[str]: the list of columns from the pandas frame to be reshuffled.
+        rng: np.random.Generator: the dedicated numpy generator for the shuffling. 
     """
 
     columns: List[str]
+    rng: np.random.Generator = np.random.default_rng(0)
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """For each row in df, shuffle values across these columns."""
         self.validate(df)
-
         def shuffle_row(row):
-            row[self.columns] = np.random.permutation(row[self.columns].values)
+            row[self.columns] = self.rng.permutation(row[self.columns].values)
             return row
 
         df = df.apply(shuffle_row, axis=1)
@@ -324,16 +330,31 @@ class PrependStringTransform(MultiColumnTransform):
 @dataclass
 class RegexTransform(MultiColumnTransform):
     """
-    Find occurrence of the pattern in selected columns.
+    Find the occurrence of the pattern in selected columns.
+    args:
+        columns: List of str or str, Column(s) to apply transform to.
+        prompt_pattern: str, pattern to search for
+        ignore_case: bool, True if the regex match should ignore the case
+        occurrence: str, "last" or "first" to indicate which of the occurrences to pick
     """
 
     columns: List[str] | str
     prompt_pattern: str
-    case: bool
+    ignore_case: bool = False
+    occurrence: str = "last"
 
     def _transform(self, sentence):
-        results = re.findall(self.prompt_pattern, sentence)
-        return results[0] if results else None
+        if self.ignore_case:
+            results = re.findall(self.prompt_pattern, sentence, flags=re.IGNORECASE)
+        else:
+            results = re.findall(self.prompt_pattern, sentence)
+        if results:
+            if (self.occurrence == "first"):
+                return results[0]
+            elif (self.occurrence == "last"):
+                return results[len(results) - 1]
+        else:
+            return None
 
 
 @dataclass
@@ -398,26 +419,55 @@ class MajorityVoteTransform:
         Returns:
             pd.DataFrame: Transformed dataframe with majority vote for each id_col.
         """
-        result_df = df.groupby(self.id_col).apply(self.majority_vote, self.model_output_col, self.model_label_column, self.majority_vote_col, self.majority_label_col, random_state=random_state)
-        return result_df
-    
-    @staticmethod
-    def majority_vote(group, model_output_col, model_label_col, majority_vote_col, majority_label_col, random_state:int=0):
+        # Step 1: Group by 'ID' and calculate the majority vote within each group
+        df[self.majority_vote_col] = df.groupby(self.id_col)[self.model_output_col].transform(
+            lambda x: x.dropna().mode().sample(n=1, random_state=random_state).iloc[0] if not x.dropna().mode().empty else pd.NA
+        )
+
+        return df
+
+@dataclass
+class ExtractUsageTransform:
+    """
+    Extracts token usage completion numbers (except prompt input tokens) for all models.
+    args:
+        model_config: config used for the experiment.
+        usage_completion_output_col: str, default name of the column where completion numbers will be stored for all models
+        prepend_completion_read_col: str, prepend string to add to the name of the usage column from which to read. Useful for cases when the usage column might have been renamed earlier in the pipeline.
+    """
+    model_config: ModelConfig
+    usage_completion_output_col: str = "usage_completion" 
+    prepend_completion_read_col: str = "" 
+
+    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Calculate majority vote for each group.
+        Transforms the dataframe by extracting the .
+
         Args:
-            group (pd.DataFrame): Input dataframe containing model_output_col, id_col and label.
-            model_output_col (str): Model output column name
-            model_label_col (str): Model label column name
-            majority_vote_col (str): Majority vote column name
-            majority_label_col (str): Majority label column name
+            df (pd.DataFrame): Input dataframe of inference results retrieved with the model_config.
+
         Returns:
-            pd.DataFrame: Transformed dataframe with majority vote for each id_col.
+            pd.DataFrame: Transformed dataframe with completion token numbers in completion_usage_col.
         """
-        x = group[model_output_col]
-        majority_value = x.dropna().mode().sample(n=1, random_state=random_state).iloc[0] if not x.dropna().mode().empty else pd.NA
-        group[majority_vote_col] = majority_value
-        if model_label_col:
-            group[majority_label_col] = group.loc[group[model_output_col] == majority_value, model_label_col].iloc[0]
-        return group
-    
+        usage_completion_read_col = None
+        if (self.model_config.class_name is GeminiModel):
+            usage_completion_read_col = "candidates_token_count"
+        elif (self.model_config.class_name is ClaudeModel):
+            usage_completion_read_col = "output_tokens"
+        elif (self.model_config.class_name is AzureOpenAIO1Model
+              or self.model_config.class_name is AzureOpenAIModel 
+              or self.model_config.class_name is LlamaServerlessAzureRestEndpointModel
+              or self.model_config.class_name is MistralServerlessAzureRestEndpointModel
+              or self.model_config.class_name is DirectOpenAIModel 
+              or self.model_config.class_name is DirectOpenAIO1Model
+              or self.model_config.class_name is TogetherModel):
+            usage_completion_read_col = "completion_tokens"
+        # if the model is one for which the usage of completion tokens is known, use that corresponding column for the model
+        # otherwise, use the default "n_output_tokens" which is computed with a universal tokenizer as shown in TokenCounterTransform()
+        if usage_completion_read_col:
+            df[self.usage_completion_output_col] = df[self.prepend_completion_read_col + "usage"].apply(lambda x: x[usage_completion_read_col])
+        elif self.prepend_completion_read_col + "n_output_tokens" in df.columns:
+            df[self.usage_completion_output_col] = df[self.prepend_completion_read_col + "n_output_tokens"]
+        else:
+            df[self.usage_completion_output_col] = np.nan
+        return df 
