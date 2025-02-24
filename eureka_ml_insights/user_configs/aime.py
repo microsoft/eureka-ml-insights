@@ -132,6 +132,20 @@ class AIME_PIPELINE(ExperimentConfig):
                         "filename_base": "NumericMatch_GroupBy",
                     },
                 ),
+
+                AggregatorConfig(
+                    BiLevelCountAggregator,
+                    {
+                        "column_names": [
+                            "NumericMatch_result",
+                        ],
+                        "first_groupby": "ID",
+                        "second_groupby": "Part",
+                        "filename_base": "NumericMatch_GroupBy_Part",
+                        "normalize": True,
+                    },
+                ),
+
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
         )
@@ -279,6 +293,19 @@ class AIME_PIPELINE(ExperimentConfig):
                     },
                 ),
 
+                AggregatorConfig(
+                    BiLevelCountAggregator,
+                    {
+                        "column_names": [
+                            "NumericMatch_result",
+                        ],
+                        "first_groupby": "ID",
+                        "second_groupby": "Part",
+                        "filename_base": "NumericMatch_BestOfN_GroupBy_Part",
+                        "normalize": True,
+                    },
+                ),
+                
             ],
             output_dir=os.path.join(self.log_dir, "bestofn_eval_report"),
         )
@@ -315,6 +342,19 @@ class AIME_PIPELINE(ExperimentConfig):
                         "second_groupby": "Year",
                         "filename_base": "NumericMatch_WorstOfN_GroupBy_Year",
                         "agg_fn": "min"
+                    },
+                ),
+
+                AggregatorConfig(
+                    BiLevelCountAggregator,
+                    {
+                        "column_names": [
+                            "NumericMatch_result",
+                        ],
+                        "first_groupby": "ID",
+                        "second_groupby": "Part",
+                        "filename_base": "NumericMatch_WorstOfN_GroupBy_Part",
+                        "normalize": True,
                     },
                 ),
             ],
