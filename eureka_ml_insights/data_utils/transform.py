@@ -427,10 +427,16 @@ class MajorityVoteTransform:
 
 @dataclass
 class ExtractUsageTransform:
-    """Extracts token usage completion numbers (except prompt input tokens) for all models"""
-
-    model_config: ModelConfig # config used for the experiment
-    usage_completion_output_col: str = "usage_completion" # default name of the column where completion numbers will be stored for all models
+    """
+    Extracts token usage completion numbers (except prompt input tokens) for all models.
+    args:
+        model_config: config used for the experiment.
+        usage_completion_output_col: str, default name of the column where completion numbers will be stored for all models
+        prepend_completion_read_col: str, prepend string to add to the name of the usage column from which to read. Useful for cases when the usage column might have been renamed earlier in the pipeline.
+    """
+    model_config: ModelConfig
+    usage_completion_output_col: str = "usage_completion" 
+    prepend_completion_read_col: str = "" 
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -458,9 +464,9 @@ class ExtractUsageTransform:
         # if the model is one for which the usage of completion tokens is known, use that corresponding column for the model
         # otherwise, use the default "n_output_tokens" which is computed with a universal tokenizer as shown in TokenCounterTransform()
         if usage_completion_read_col:
-            df[self.usage_completion_output_col] = df["usage"].apply(lambda x: x[usage_completion_read_col])
-        elif "n_output_tokens" in df.columns:
-            df[self.usage_completion_output_col] = df["n_output_tokens"]
+            df[self.usage_completion_output_col] = df[self.prepend_completion_read_col + "usage"].apply(lambda x: x[usage_completion_read_col])
+        elif self.prepend_completion_read_col + "n_output_tokens" in df.columns:
+            df[self.usage_completion_output_col] = df[self.prepend_completion_read_col + "n_output_tokens"]
         else:
             df[self.usage_completion_output_col] = np.nan
         return df 
