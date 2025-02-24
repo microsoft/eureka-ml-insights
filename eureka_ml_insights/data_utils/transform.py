@@ -16,14 +16,12 @@ from eureka_ml_insights.models import (
     ClaudeModel,
     GeminiModel,
     LlamaServerlessAzureRestEndpointModel,
-    LLaVAModel,
-    LLaVAHuggingFaceModel,
     MistralServerlessAzureRestEndpointModel,
     AzureOpenAIModel,
     DirectOpenAIModel,
     DirectOpenAIO1Model,
     AzureOpenAIO1Model,
-    RestEndpointModel,
+    TogetherModel
 )
 
 @dataclass
@@ -452,8 +450,10 @@ class ExtractUsageTransform:
         elif (self.model_config.class_name is AzureOpenAIO1Model
               or self.model_config.class_name is AzureOpenAIModel 
               or self.model_config.class_name is LlamaServerlessAzureRestEndpointModel
+              or self.model_config.class_name is MistralServerlessAzureRestEndpointModel
               or self.model_config.class_name is DirectOpenAIModel 
-              or self.model_config.class_name is DirectOpenAIO1Model):
+              or self.model_config.class_name is DirectOpenAIO1Model
+              or self.model_config.class_name is TogetherModel):
             usage_completion_read_col = "completion_tokens"
         # if the model is one for which the usage of completion tokens is known, use that corresponding column for the model
         # otherwise, use the default "n_output_tokens" which is computed with a universal tokenizer as shown in TokenCounterTransform()

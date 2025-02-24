@@ -19,7 +19,6 @@ from eureka_ml_insights.data_utils import (
     SequenceTransform,
     ShuffleColumnsTransform,
     MultiplyTransform,
-    SamplerTransform,
     MajorityVoteTransform,
     ColumnRename,
     AddColumn,
@@ -47,7 +46,7 @@ from eureka_ml_insights.configs import(
     DataJoinConfig
 )
 from eureka_ml_insights.configs import ExperimentConfig
-from eureka_ml_insights.configs.model_configs import TRAPI_GPT4O_2024_11_20_CONFIG, CLAUDE_3_5_SONNET_20241022_CONFIG
+from eureka_ml_insights.configs.model_configs import OAI_GPT4O_2024_11_20_CONFIG
 import numpy as np
 
 """This file contains user defined configuration classes for the GPQA dataset.
@@ -70,7 +69,6 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                     "split": "train",
                     "transform": SequenceTransform(
                         [
-                            # SamplerTransform(random_seed=42, sample_count=5),
                             CopyColumn(column_name_src="Correct Answer", column_name_dst="A"),
                             CopyColumn(column_name_src="Incorrect Answer 1", column_name_dst="B"),
                             CopyColumn(column_name_src="Incorrect Answer 2", column_name_dst="C"),
@@ -156,7 +154,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
         
         self.inference_llm_answer_extract = InferenceConfig(
             component_type=Inference,
-            model_config=TRAPI_GPT4O_2024_11_20_CONFIG,#CLAUDE_3_5_SONNET_20241022_CONFIG, #,
+            model_config=OAI_GPT4O_2024_11_20_CONFIG,
             data_loader_config=DataSetConfig(
                 MMDataLoader,
                 {"path": os.path.join(self.filter_empty_answer.output_dir, "transformed_data.jsonl")},
