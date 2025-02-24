@@ -10,4 +10,5 @@ dependencies:
   - pip:
       - deepspeed==0.14.4
       - flash-attn==2.6.3
+      - vllm==0.7.2
       - git+https://github.com/neelsj/LLaVA.git
