@@ -16,7 +16,6 @@ from eureka_ml_insights.data_utils.data import (
 )
 from eureka_ml_insights.data_utils.omni_math_utils import Omni_Math_ParseLabel, Omni_Math_ParseSolution
 from eureka_ml_insights.data_utils.transform import AddColumn, AddColumnAndData, ColumnRename, CopyColumn, ExtractUsageTransform, MajorityVoteTransform, MultiplyTransform, ReplaceStringsTransform, RunPythonTransform, SamplerTransform, SequenceTransform
-from eureka_ml_insights.metrics.ba_calendar_metrics import BACalendarMetric
 from eureka_ml_insights.metrics.reports import (
     AverageAggregator,
     BiLevelAggregator,
@@ -29,7 +28,6 @@ from ..configs.config import (
     DataSetConfig,
     EvalReportingConfig,
     InferenceConfig,
-    MetricConfig,
     PipelineConfig,
     PromptProcessingConfig,
     ModelConfig,
@@ -52,7 +50,6 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                    "path": "KbsdJames/Omni-MATH",
                    "split": "test",
                    "transform": SequenceTransform([
-                    # ColumnRename(name_mapping={"problem": "prompt"}),
                     # SamplerTransform(sample_count=100, random_seed=99),
                     MultiplyTransform(n_repeats=1),
                    ]),
@@ -83,11 +80,10 @@ class Omni_Math_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 DataReader,
                 {"path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
-                # {"path": resume_from,
                  "transform": SequenceTransform([
                      CopyColumn("model_output", "generated_solution"),
-                    CopyColumn("n_output_tokens", "gen_solution_n_tokens"),
-                    CopyColumn("usage", "gen_solution_usage"),
+                    ColumnRename("n_output_tokens", "gen_solution_n_output_tokens"),
+                    ColumnRename("usage", "gen_solution_usage"),
                     # SamplerTransform(sample_count=5, random_seed=99),
                  ])},
             ),
@@ -102,8 +98,8 @@ class Omni_Math_PIPELINE(ExperimentConfig):
             #model_config=TRAPI_GCR_SHARED_O1_CONFIG,
             data_loader_config=DataSetConfig(
                 DataLoader,
-                {"path": os.path.join(self.eval_data_processing_comp.output_dir, "transformed_data.jsonl")},
-                #{"path": resume_from},
+                {"path": os.path.join(self.eval_data_processing_comp.output_dir, "transformed_data.jsonl")
+                },
             ),
             output_dir=os.path.join(self.log_dir, "eval_inference_result"),
             resume_from=eval_resume_from,
@@ -116,12 +112,10 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                 DataReader,
                 {
                     "path": os.path.join(self.eval_inference_comp.output_dir, "inference_result.jsonl"),
-                    # "path": resume_from,
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            ExtractUsageTransform(model_config, usage_completion_read_col="gen_solution_usage"),
-                            #ExtractUsageTransform(model_config),
+                            ExtractUsageTransform(model_config, prepend_completion_read_col="gen_solution_"),
                             ColumnRename(
                                 name_mapping={
                                     "model_output": "raw_output",
