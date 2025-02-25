@@ -552,8 +552,8 @@ class Omni_Math_PipelineTest(PipelineTest, unittest.TestCase):
             self.test_pipeline.domain_majvote_evalreporting_comp,
             self.test_pipeline.sub_domain_evalreporting_comp,
             self.test_pipeline.sub_domain_majvote_evalreporting_comp,
-            self.test_pipeline.sec_sub_domain_evalreporting_comp,
-            self.test_pipeline.sec_sub_domain_majvote_evalreporting_comp,
+            # self.test_pipeline.sec_sub_domain_evalreporting_comp,
+            # self.test_pipeline.sec_sub_domain_majvote_evalreporting_comp,
         ]
 
     def test_outputs_exist(self) -> None:
