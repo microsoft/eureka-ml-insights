@@ -176,6 +176,7 @@ class RestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
     frequency_penalty: float = 0
     presence_penalty: float = 0
     do_sample: bool = True
+    timeout: int = None
 
     def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
         """Creates a request for the model."""
@@ -212,7 +213,7 @@ class RestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
     def get_response(self, request):
         # Get the model response and measure the time taken.
         start_time = time.time()
-        response = urllib.request.urlopen(request)
+        response = urllib.request.urlopen(request, timeout=self.timeout)
         end_time = time.time()
         # Parse the response and return the model output.
         res = json.loads(response.read())
@@ -225,6 +226,8 @@ class RestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
             # Print the headers - they include the request ID and the timestamp, which are useful for debugging.
             logging.info(e.info())
             logging.info(e.read().decode("utf8", "ignore"))
+        else:
+            logging.info("The request failed with: "+ str(e))
         return False
 
 
@@ -237,6 +240,7 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
     model_name: str = None
     stream: bool = False
     auth_scope: str = "https://cognitiveservices.azure.com/.default"
+    timeout: int = None
 
     def __post_init__(self):
         try:
@@ -272,7 +276,7 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
 
     def get_response(self, request):
         start_time = time.time()
-        response = urllib.request.urlopen(request)
+        response = urllib.request.urlopen(request, timeout=self.timeout)
         end_time = time.time()
         res = json.loads(response.read())
         self.model_output = res["choices"][0]["message"]["content"]
@@ -286,6 +290,8 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
             # Print the headers - they include the request ID and the timestamp, which are useful for debugging.
             logging.info(e.info())
             logging.info(e.read().decode("utf8", "ignore"))
+        else:
+            logging.info("The request failed with: "+ str(e))
         return False
 
 
@@ -416,7 +422,7 @@ class OpenAICommonRequestResponseMixIn:
         completion = self.client.chat.completions.create(
             model=self.model_name,
             top_p=self.top_p,
-            seed=self.seed,
+            # seed=self.seed,
             frequency_penalty=self.frequency_penalty,
             presence_penalty=self.presence_penalty,
             temperature=self.temperature,
@@ -509,7 +515,7 @@ class DirectOpenAIModel(OpenAICommonRequestResponseMixIn, DirectOpenAIClientMixI
 
 class OpenAIO1RequestResponseMixIn:
     
-    def create_request(self, prompt, query_images=None, system_message=None, previous_messages=None):
+    def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
         messages = []
         if system_message and "o1-preview" in self.model_name:
             logging.warning("System and developer messages are not supported by OpenAI O1 preview model.")
@@ -521,7 +527,7 @@ class OpenAIO1RequestResponseMixIn:
         if previous_messages:
             messages.extend(previous_messages)
         
-        user_content = prompt
+        user_content = text_prompt
         if query_images and "o1-preview" in self.model_name:
             logging.warning("Images are not supported by OpenAI O1 preview model.")
         elif query_images:
@@ -601,7 +607,7 @@ class AzureOpenAIO1Model(OpenAIO1RequestResponseMixIn, AzureOpenAIClientMixIn, E
 class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
     """This class is used to interact with Gemini models through the python api."""
 
-    timeout: int = 60
+    timeout: int = 600
     model_name: str = None
     temperature: float = 0
     max_tokens: int = 2000
@@ -693,7 +699,46 @@ class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
         # Any other case will be re attempted again, do_return = False.
         return False
 
+@dataclass
+class TogetherModel(OpenAICommonRequestResponseMixIn, KeyBasedAuthMixIn, EndpointModel):
+    """This class is used to interact with Together models through the together python api."""
 
+    timeout: int = 600
+    model_name: str = None
+    temperature: float = 0
+    max_tokens: int = 65536
+    top_p: float = 0.95
+    presence_penalty: float = 0
+    stop=["<｜end▁of▁sentence｜>"]
+
+    def __post_init__(self):
+        from together import Together
+        self.api_key = self.get_api_key()
+        self.client = Together(api_key=self.api_key)
+    
+    def get_response(self, request):
+        start_time = time.time()
+        completion = self.client.chat.completions.create(
+            model=self.model_name,
+            top_p=self.top_p,
+            presence_penalty=self.presence_penalty,
+            temperature=self.temperature,
+            max_tokens=self.max_tokens,
+            stop = self.stop,
+            **request,
+        )
+        
+        end_time = time.time()
+        openai_response = completion.model_dump()
+        self.model_output = openai_response["choices"][0]["message"]["content"]
+        self.response_time = end_time - start_time
+        if "usage" in openai_response:
+            return {"usage": openai_response["usage"]}
+
+    def handle_request_error(self, e):
+        logging.warning(e)
+        return False
+    
 @dataclass
 class HuggingFaceModel(Model):
     """This class is used to run a self-hosted language model via HuggingFace apis."""
@@ -706,6 +751,9 @@ class HuggingFaceModel(Model):
     do_sample: bool = True
     apply_model_template: bool = True
 
+    quantize: bool = False
+    use_flash_attn: bool = False
+
     def __post_init__(self):
         # The device need to be set before get_model() is called
         self.device = self.pick_available_device()
@@ -713,8 +761,28 @@ class HuggingFaceModel(Model):
 
     def get_model(self):
         from transformers import AutoModelForCausalLM, AutoTokenizer
+        import torch
 
-        self.model = AutoModelForCausalLM.from_pretrained(self.model_name).to(self.device)
+        quantization_config = None
+        if self.quantize:
+            from transformers import BitsAndBytesConfig
+
+            logging.info("Quantizing model")
+            # specify how to quantize the model
+            quantization_config = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_compute_dtype=torch.float16,
+            )
+
+        self.model = AutoModelForCausalLM.from_pretrained(
+            self.model_name,
+            torch_dtype=torch.float16,
+            quantization_config=quantization_config,
+            device_map=self.device,
+            use_flash_attention_2=self.use_flash_attn,
+        )
+
+
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, use_fast=False)
 
     def pick_available_device(self):
@@ -810,11 +878,26 @@ class Phi3HFModel(HuggingFaceModel):
 
 
 @dataclass
+class Phi4HFModel(HuggingFaceModel):
+    """This class is used to run a self-hosted PHI3 model via HuggingFace apis."""
+
+    def __post_init__(self):
+        super().__post_init__()
+        if "microsoft/phi-4" not in self.model_name:
+            logging.warning(
+                "This model class applies a template to the prompt that is specific to Phi-4 models"
+                "but your model is not a Phi-4 model."
+            )
+
+    def model_template_fn(self, text_prompt, system_message=None):
+        if system_message:
+            return f"<|im_start|>system<|im_sep|>\n{system_message}<|im_start|>user<|im_sep|>\n{text_prompt}<|im_end|>\n<|im_start|>assistant<|im_sep|>"
+        else:
+            return f"<|im_start|>user<|im_sep|>\n{text_prompt}<|im_end|>\n<|im_start|>assistant<|im_sep|>"
+
+@dataclass
 class LLaVAHuggingFaceModel(HuggingFaceModel):
     """This class is used to run a self-hosted LLaVA model via HuggingFace apis."""
-
-    quantize: bool = False
-    use_flash_attn: bool = False
 
     def __post_init__(self):
         super().__post_init__()
@@ -833,6 +916,7 @@ class LLaVAHuggingFaceModel(HuggingFaceModel):
             LlavaNextProcessor,
         )
 
+        quantization_config = None
         if self.quantize:
             from transformers import BitsAndBytesConfig
 
@@ -844,39 +928,22 @@ class LLaVAHuggingFaceModel(HuggingFaceModel):
             )
 
         if "v1.6" in self.model_name:
-            if self.quantize:
-                self.model = LlavaNextForConditionalGeneration.from_pretrained(
-                    self.model_name,
-                    torch_dtype=torch.float16,
-                    quantization_config=quantization_config,
-                    device_map=self.device,
-                    use_flash_attention_2=self.use_flash_attn,
-                )
-            else:
-                self.model = LlavaNextForConditionalGeneration.from_pretrained(
-                    self.model_name,
-                    torch_dtype=torch.float16,
-                    device_map=self.device,
-                    use_flash_attention_2=self.use_flash_attn,
-                )
-
+            self.model = LlavaNextForConditionalGeneration.from_pretrained(
+                self.model_name,
+                torch_dtype=torch.float16,
+                quantization_config=quantization_config,
+                device_map=self.device,
+                use_flash_attention_2=self.use_flash_attn,
+            )
             self.processor = LlavaNextProcessor.from_pretrained(self.model_name)
         else:
-            if self.quantize:
-                self.model = LlavaForConditionalGeneration.from_pretrained(
-                    self.model_name,
-                    torch_dtype=torch.float16,
-                    quantization_config=quantization_config,
-                    device_map=self.device,
-                    use_flash_attention_2=self.use_flash_attn,
-                )
-            else:
-                self.model = LlavaForConditionalGeneration.from_pretrained(
-                    self.model_name,
-                    torch_dtype=torch.float16,
-                    device_map=self.device,
-                    use_flash_attention_2=self.use_flash_attn,
-                )
+            self.model = LlavaForConditionalGeneration.from_pretrained(
+                self.model_name,
+                torch_dtype=torch.float16,
+                quantization_config=quantization_config,
+                device_map=self.device,
+                use_flash_attention_2=self.use_flash_attn,
+            )
 
             self.processor = AutoProcessor.from_pretrained(self.model_name)
 
@@ -1000,6 +1067,92 @@ class LLaVAModel(LLaVAHuggingFaceModel):
 
         self.model_output = self.tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
         self.response_time = end_time - start_time
+
+
+@dataclass
+class vLLMModel(Model):
+    """This class is used to run a self-hosted language model via vLLM apis."""
+
+    model_name: str = None
+    trust_remote_code: bool = False
+    tensor_parallel_size: int = 1
+    dtype: str = "auto"
+    quantization: str = None
+    seed: int = 0
+    gpu_memory_utilization: float = 0.9
+    cpu_offload_gb: float = 0
+
+    temperature: float = 0.001
+    top_p: float = 0.95
+    top_k: int = -1
+    max_tokens: int = 2000
+    apply_model_template: bool = False
+
+    def __post_init__(self):
+        # vLLM automatically picks an available devices when get_model() is called
+        self.get_model()
+
+    def get_model(self):
+        from vllm import LLM
+
+        self.model = LLM(
+            model=self.model_name,
+            trust_remote_code=self.trust_remote_code,
+            tensor_parallel_size=self.tensor_parallel_size,
+            dtype=self.dtype,
+            quantization=self.quantization,
+            seed=self.seed,
+            gpu_memory_utilization=self.gpu_memory_utilization,
+            cpu_offload_gb=self.cpu_offload_gb,
+        )
+        
+    def _generate(self, text_prompt, query_images=None):
+        from vllm import SamplingParams
+
+        sampling_params = SamplingParams(
+            temperature=self.temperature,
+            top_p=self.top_p,
+            top_k=self.top_k,
+            max_tokens=self.max_tokens,
+        )
+    
+        start_time = time.time()
+        outputs = self.model.generate(text_prompt, sampling_params)
+        end_time = time.time()
+        
+        self.model_output = outputs[0].outputs[0].text
+
+        self.response_time = end_time - start_time
+
+    def generate(self, text_prompt, query_images=None, system_message=None):
+        response_dict = {}
+
+        if text_prompt:
+            if self.apply_model_template:
+                text_prompt = self.model_template_fn(text_prompt, system_message)
+
+            try:
+                meta_response = self._generate(text_prompt, query_images=query_images)
+                if meta_response:
+                    response_dict.update(meta_response)
+                self.is_valid = True
+
+            except Exception as e:
+                logging.warning(e)
+                self.is_valid = False
+
+        response_dict.update(
+            {
+                "model_output": self.model_output,
+                "is_valid": self.is_valid,
+                "response_time": self.response_time,
+                "n_output_tokens": self.count_tokens(),
+            }
+        )
+        return response_dict
+
+    def model_template_fn(self, text_prompt, system_message=None):
+        raise NotImplementedError
 
 
 @dataclass

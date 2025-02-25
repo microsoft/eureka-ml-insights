@@ -1,4 +1,3 @@
-from .aime import AIME_PIPELINE
 from .aime import (
     AIME_PIPELINE,
     AIME_PIPELINE5Run,
@@ -18,7 +17,10 @@ from .dna import DNA_PIPELINE
 from .drop import Drop_Experiment_Pipeline
 from .flenqa import FlenQA_Experiment_Pipeline
 from .geometer import GEOMETER_PIPELINE
-from .gpqa import GPQA_Experiment_Pipeline
+from .gpqa import ( 
+    GPQA_Experiment_Pipeline,
+    GPQA_PIPELINE_5Run
+)
 from .ifeval import IFEval_PIPELINE
 from .image_understanding.object_detection import (
     OBJECT_DETECTION_PAIRS_LOCAL_PIPELINE,
@@ -59,6 +61,7 @@ from .nondeterminism import (
     Kitab_Nondeterminism,
     MMMU_Nondeterminism,
 )
+from .nphard_tsp import NPHARD_TSP_PIPELINE, NPHARD_TSP_PIPELINE_MULTIPLE_RUNS
 from .toxigen import (
     ToxiGen_Discriminative_PIPELINE,
     ToxiGen_Generative_PIPELINE,
@@ -108,6 +111,7 @@ __all__ = [
     IFEval_PIPELINE,
     FlenQA_Experiment_Pipeline,
     GPQA_Experiment_Pipeline,
+    GPQA_PIPELINE_5Run,
     Drop_Experiment_Pipeline,
     GEOMETER_PIPELINE,
     MMMU_BASELINE_PIPELINE,
@@ -135,4 +139,6 @@ __all__ = [
     AIME_PIPELINE256Run,
     AIME_PIPELINE512Run,
     AIME_PIPELINE1024Run,
+    NPHARD_TSP_PIPELINE,
+    NPHARD_TSP_PIPELINE_MULTIPLE_RUNS,
 ]

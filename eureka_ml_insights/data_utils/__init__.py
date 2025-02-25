@@ -39,7 +39,7 @@ from .transform import (
     ShuffleColumnsTransform,
     MajorityVoteTransform,
     TokenCounterTransform,
-    ExtractUsageTransform,
+    ExtractUsageTransform
 )
 
 __all__ = [
