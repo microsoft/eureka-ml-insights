@@ -419,12 +419,34 @@ class MajorityVoteTransform:
         Returns:
             pd.DataFrame: Transformed dataframe with majority vote for each id_col.
         """
-        # Step 1: Group by 'ID' and calculate the majority vote within each group
-        df[self.majority_vote_col] = df.groupby(self.id_col)[self.model_output_col].transform(
-            lambda x: x.dropna().mode().sample(n=1, random_state=random_state).iloc[0] if not x.dropna().mode().empty else pd.NA
-        )
+        # # Step 1: Group by 'ID' and calculate the majority vote within each group
+        # df[self.majority_vote_col] = df.groupby(self.id_col)[self.model_output_col].transform(
+        #     lambda x: x.dropna().mode().sample(n=1, random_state=random_state).iloc[0] if not x.dropna().mode().empty else pd.NA
+        # )
+        # return df
+        
+        result_df = df.groupby(self.id_col).apply(self.majority_vote, self.model_output_col, self.model_label_column, self.majority_vote_col, self.majority_label_col, random_state=random_state)
+        return result_df
 
-        return df
+    @staticmethod
+    def majority_vote(group, model_output_col, model_label_col, majority_vote_col, majority_label_col, random_state:int=0):
+        """
+        Calculate majority vote for each group.
+        Args:
+            group (pd.DataFrame): Input dataframe containing model_output_col, id_col and label.
+            model_output_col (str): Model output column name
+            model_label_col (str): Model label column name
+            majority_vote_col (str): Majority vote column name
+            majority_label_col (str): Majority label column name
+        Returns:
+            pd.DataFrame: Transformed dataframe with majority vote for each id_col.
+        """
+        x = group[model_output_col]
+        majority_value = x.dropna().mode().sample(n=1, random_state=random_state).iloc[0] if not x.dropna().mode().empty else pd.NA
+        group[majority_vote_col] = majority_value
+        if model_label_col:
+            group[majority_label_col] = group.loc[group[model_output_col] == majority_value, model_label_col].iloc[0]
+        return group
 
 @dataclass
 class ExtractUsageTransform:
