@@ -273,7 +273,8 @@ class TEST_BA_Calendar_PIPELINE(BA_Calendar_PIPELINE):
 class TEST_Omni_Math_PIPELINE(Omni_Math_PIPELINE):
     # Test config the BA Calendar benchmark with TestModel and TestDataLoader
     def configure_pipeline(self):
-        config = super().configure_pipeline(model_config=ModelConfig(GenericTestModel, {}))
+        config = super().configure_pipeline(model_config=ModelConfig(GenericTestModel, {}),
+                                            eval_model_config=ModelConfig(GenericTestModel, {}))
         self.inference_comp.data_loader_config.class_name = TestDataLoader
         self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
