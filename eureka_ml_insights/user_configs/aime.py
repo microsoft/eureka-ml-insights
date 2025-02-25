@@ -26,6 +26,7 @@ from eureka_ml_insights.data_utils import (
     SamplerTransform,
        CopyColumn,
        ReplaceStringsTransform,
+       ExtractUsageTransform,
 
 )
 from eureka_ml_insights.data_utils.aime_utils import AIMEExtractAnswer
@@ -103,6 +104,7 @@ class AIME_PIPELINE(ExperimentConfig):
                             ),
                             AddColumn("model_output"),
                             AIMEExtractAnswer("raw_output", "model_output"),
+                            ExtractUsageTransform(model_config),                        
                         ]
                     ),
                 },
@@ -145,6 +147,18 @@ class AIME_PIPELINE(ExperimentConfig):
                         "normalize": True,
                     },
                 ),
+                
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "usage_completion"
+                        ],
+                        "first_groupby": "ID",
+                        "filename_base": "UsageCompletion",
+                         "agg_fn": "sum"
+                    },
+                ),
 
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
@@ -157,17 +171,10 @@ class AIME_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+                    "path": os.path.join(self.data_post_processing.output_dir, "transformed_data.jsonl"),
                     "format": ".jsonl",
                     "transform": SequenceTransform(
-                        [
-                            ColumnRename(
-                                name_mapping={
-                                    "model_output": "raw_output",
-                                }
-                            ),
-                            AddColumn("model_output"),
-                            AIMEExtractAnswer("raw_output", "model_output"),
+                        [                         
                             MajorityVoteTransform(id_col="ID"),
                             ColumnRename(
                                 name_mapping={
@@ -228,6 +235,18 @@ class AIME_PIPELINE(ExperimentConfig):
                         "normalize": True,
                     },
                 ),
+
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "usage_completion"
+                        ],
+                        "first_groupby": "ID",
+                        "filename_base": "UsageCompletion",
+                         "agg_fn": "sum"
+                    },
+                ),              
             ],
             output_dir=os.path.join(self.log_dir, "eval_report_majorityVote"),
         )
@@ -306,6 +325,18 @@ class AIME_PIPELINE(ExperimentConfig):
                     },
                 ),
                 
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "usage_completion"
+                        ],
+                        "first_groupby": "ID",
+                        "filename_base": "UsageCompletion_BestOfN",
+                         "agg_fn": "sum"
+                    },
+                ),
+                
             ],
             output_dir=os.path.join(self.log_dir, "bestofn_eval_report"),
         )
@@ -357,6 +388,19 @@ class AIME_PIPELINE(ExperimentConfig):
                         "normalize": True,
                     },
                 ),
+
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "usage_completion"
+                        ],
+                        "first_groupby": "ID",
+                        "filename_base": "UsageCompletion_WorstOfN",
+                         "agg_fn": "sum"
+                    },
+                ),
+                
             ],
             output_dir=os.path.join(self.log_dir, "worstofn_eval_report"),
         )
@@ -413,6 +457,7 @@ class AIME_PIPELINE5Run_2025(AIME_PIPELINE):
                                     "Answer": "ground_truth",
                                 }
                             ),
+                            #SamplerTransform( random_seed=0,sample_count=2),
                         ],
                     ),
                 },
