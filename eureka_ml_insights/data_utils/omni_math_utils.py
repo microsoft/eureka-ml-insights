@@ -73,32 +73,4 @@ class Omni_Math_ParseSolution(DFTransformBase):
         model_label = data[label] if label in data else ''
         return model_label
 
-    # @staticmethod
-    # def parse_output_answer(response):
-    #     """
-    #     Parse the input string to extract the model judgement.
-    #     Parameters:
-    #         response (str): Input string containing model judgement as '## Equivalence Judgement: X '.
-    #     Returns: 
-    #         dict: A dict of extracted final answer and model based judgement.
-    #     """
-    #     if response is None or response == '':
-    #         return {}
-
-    #     parts = response.split("## ")
-    #     data = {}
-        
-    #     for part in parts[1:]:
-    #         lines = part.strip().split("\n")
-    #         title = lines[0].strip().replace('#', '').replace('*', '').lower()
-    #         content = "\n".join(lines[1:]).strip()
-            
-    #         if title == "Justification":
-    #             data[title] = content
-    #         else:
-    #             data[title] = lines[1].strip() if len(lines) > 1 else ''
-    #     label = 'Student Final Answer'.lower()
-    #     return data[label] if label in data else ''
-    
-
     

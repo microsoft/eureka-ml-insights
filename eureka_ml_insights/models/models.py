@@ -1154,18 +1154,6 @@ class vLLMModel(Model):
     def model_template_fn(self, text_prompt, system_message=None):
         raise NotImplementedError
 
-
-class Phi4_vLLMModel(vLLMModel, Phi4HFModel):
-    """This class is used to run a self-hosted Phi4 model via vLLM apis."""
-
-    def __post_init__(self):
-        super().__post_init__()
-        if "microsoft/phi-4" not in self.model_name or "phi" not in self.model_name:
-            logging.warning(
-                "This model class applies a template to the prompt that is specific to Phi-4 models"
-                "but your model is not a Phi-4 model."
-            )
-
 @dataclass
 class ClaudeModel(EndpointModel, KeyBasedAuthMixIn):
     """This class is used to interact with Claude models through the python api."""
