@@ -93,9 +93,6 @@ class Omni_Math_PIPELINE(ExperimentConfig):
         self.eval_inference_comp = InferenceConfig(
             component_type=Inference,
             model_config=eval_model_config,
-            # model_config=TRAPI_GPT4O_2024_11_20_EVAL_CONFIG,
-            # model_config=OAI_GPT4O_2024_11_20_CONFIG,
-            #model_config=TRAPI_GCR_SHARED_O1_CONFIG,
             data_loader_config=DataSetConfig(
                 DataLoader,
                 {"path": os.path.join(self.eval_data_processing_comp.output_dir, "transformed_data.jsonl")
@@ -435,8 +432,7 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                         [
                             RunPythonTransform("df['highlevel_domain'] = df['domain'].apply(lambda x: list(set([y.split('->')[0] for y in x])))"),
                             RunPythonTransform("df['sub_domain'] = df['domain'].apply(lambda x: list(set([y.split('->')[1] for y in x])))"),
-                            #RunPythonTransform("df['sec_sub_domain'] = df['domain'].apply(lambda x: list(set([y.split('->')[2] for y in x])))"),
-                            # RunPythonTransform("df = df.explode(['highlevel_domain', 'sub_domain', 'sec_sub_domain'])"),
+                            RunPythonTransform("df['sec_sub_domain'] = df['domain'].apply(lambda x: list(set([y.split('->')[-1] for y in x])))"),
                         ]
                     ),
                 },
@@ -455,8 +451,7 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            RunPythonTransform("df = df.explode(['highlevel_domain'])"), #, 'sub_domain', 'sec_sub_domain'])"),
-                            # RunPythonTransform("df = df[df['data_repeat_id'] == 'repeat_0']"),
+                            RunPythonTransform("df = df.explode(['highlevel_domain'])"),
                         ]
                     ),
                 },
@@ -520,7 +515,7 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            RunPythonTransform("df = df.explode(['highlevel_domain'])"), #, 'sub_domain', 'sec_sub_domain'])"),
+                            RunPythonTransform("df = df.explode(['highlevel_domain'])"),
                             RunPythonTransform("df = df[df['data_repeat_id'] == 'repeat_0']"),
                         ]
                     ),
@@ -560,8 +555,7 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            RunPythonTransform("df = df.explode(['sub_domain'])"), #, 'sub_domain', 'sec_sub_domain'])"),
-                            # RunPythonTransform("df = df[df['data_repeat_id'] == 'repeat_0']"),
+                            RunPythonTransform("df = df.explode(['sub_domain'])"),
                         ]
                     ),
                 },
@@ -624,7 +618,7 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            RunPythonTransform("df = df.explode(['sub_domain'])"), #, 'sub_domain', 'sec_sub_domain'])"),
+                            RunPythonTransform("df = df.explode(['sub_domain'])"),
                             RunPythonTransform("df = df[df['data_repeat_id'] == 'repeat_0']"),
                         ]
                     ),
@@ -664,8 +658,7 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            RunPythonTransform("df = df.explode(['sec_sub_domain'])"), #, 'sub_domain', 'sec_sub_domain'])"),
-                            # RunPythonTransform("df = df[df['data_repeat_id'] == 'repeat_0']"),
+                            RunPythonTransform("df = df.explode(['sec_sub_domain'])"),
                         ]
                     ),
                 },
@@ -729,7 +722,7 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            RunPythonTransform("df = df.explode(['sec_sub_domain'])"), #, 'sub_domain', 'sec_sub_domain'])"),
+                            RunPythonTransform("df = df.explode(['sec_sub_domain'])"),
                             RunPythonTransform("df = df[df['data_repeat_id'] == 'repeat_0']"),
                         ]
                     ),
@@ -777,8 +770,8 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                 self.domain_majvote_evalreporting_comp,
                 self.sub_domain_evalreporting_comp,
                 self.sub_domain_majvote_evalreporting_comp,
-                #self.sec_sub_domain_evalreporting_comp,
-                #self.sec_sub_domain_majvote_evalreporting_comp,
+                self.sec_sub_domain_evalreporting_comp,
+                self.sec_sub_domain_majvote_evalreporting_comp,
             ],
             self.log_dir,
         )
@@ -801,7 +794,6 @@ class Omni_Math_ExtractUsage_PIPELINE(Omni_Math_PIPELINE):
     def configure_pipeline(
             self, model_config: ModelConfig, resume_from: str = None, eval_model_config: ModelConfig = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
-        # pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from, eval_model_config=eval_model_config)
         # data preprocessing
         self.usage_data_processing_comp = DataProcessingConfig(
             component_type=DataProcessing,
@@ -945,8 +937,7 @@ class Omni_Math_ExtractUsage_PIPELINE(Omni_Math_PIPELINE):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            RunPythonTransform("df = df.explode(['sub_domain'])"), #, 'sub_domain', 'sec_sub_domain'])"),
-                            # RunPythonTransform("df = df[df['data_repeat_id'] == 'repeat_0']"),
+                            RunPythonTransform("df = df.explode(['sub_domain'])"),
                         ]
                     ),
                 },
@@ -973,8 +964,7 @@ class Omni_Math_ExtractUsage_PIPELINE(Omni_Math_PIPELINE):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            RunPythonTransform("df = df.explode(['sec_sub_domain'])"), #, 'sub_domain', 'sec_sub_domain'])"),
-                            # RunPythonTransform("df = df[df['data_repeat_id'] == 'repeat_0']"),
+                            RunPythonTransform("df = df.explode(['sec_sub_domain'])"),
                         ]
                     ),
                 },
@@ -1001,6 +991,7 @@ class Omni_Math_ExtractUsage_PIPELINE(Omni_Math_PIPELINE):
                 self.usage_domain_eval_data_processing_comp,
                 self.usage_domain_evalreporting_comp,
                 self.usage_sub_domain_evalreporting_comp,
+                self.usage_sec_sub_domain_evalreporting_comp,
             ],
             self.log_dir,
         )
