@@ -127,7 +127,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                             "BACalendarMetric_specific_times_programmatic_check",
                             "BACalendarMetric_priority_programmatic_check",
                         ],
-                        "filename_base": "OverallMetrics_AllRuns",
+                        "filename_base": "OverallMetrics_Separate_Runs",
                         "group_by": "data_repeat_id",
                     },
                 ),
@@ -146,7 +146,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                             "BACalendarMetric_specific_times_programmatic_check",
                             "BACalendarMetric_priority_programmatic_check"
                         ], 
-                        "first_groupby": "data_point_id", 
+                        "first_groupby": "data_repeat_id", 
                         "filename_base": "OverallMetrics_Avg",
                         "agg_fn": "mean"
                     }),
@@ -163,7 +163,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                             "BACalendarMetric_specific_times_programmatic_check",
                             "BACalendarMetric_priority_programmatic_check"
                         ], 
-                        "first_groupby": ["data_point_id", "BACalendarMetric_constrainedness_bucket"], 
+                        "first_groupby": ["data_repeat_id", "BACalendarMetric_constrainedness_bucket"], 
                         "second_groupby": "BACalendarMetric_constrainedness_bucket",
                         "filename_base": "OverallMetrics_Avg_by_constrainedness",
                         "agg_fn": "mean"
