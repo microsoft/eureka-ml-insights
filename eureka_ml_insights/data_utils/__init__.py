@@ -79,4 +79,5 @@ __all__ = [
     TokenCounterTransform,
     MajorityVoteTransform,
     NumpyEncoder,
+    ExtractUsageTransform,
 ]
