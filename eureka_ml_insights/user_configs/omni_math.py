@@ -33,7 +33,7 @@ from ..configs.config import (
     ModelConfig,
 )
 from ..configs.experiment_config import ExperimentConfig
-from eureka_ml_insights.configs.pvt_model_configs import TRAPI_GPT4O_2024_11_20_EVAL_CONFIG, OAI_GPT4O_2024_11_20_CONFIG, TRAPI_GCR_SHARED_O1_CONFIG
+# from eureka_ml_insights.configs.pvt_model_configs import TRAPI_GPT4O_2024_11_20_EVAL_CONFIG, OAI_GPT4O_2024_11_20_CONFIG, TRAPI_GCR_SHARED_O1_CONFIG
 
 class Omni_Math_PIPELINE(ExperimentConfig):
     """This class specifies the config for running any benchmark on any model"""
@@ -93,7 +93,8 @@ class Omni_Math_PIPELINE(ExperimentConfig):
         # inference component
         self.eval_inference_comp = InferenceConfig(
             component_type=Inference,
-            model_config=TRAPI_GPT4O_2024_11_20_EVAL_CONFIG,
+            model_config=eval_model_config,
+            # model_config=TRAPI_GPT4O_2024_11_20_EVAL_CONFIG,
             # model_config=OAI_GPT4O_2024_11_20_CONFIG,
             #model_config=TRAPI_GCR_SHARED_O1_CONFIG,
             data_loader_config=DataSetConfig(
