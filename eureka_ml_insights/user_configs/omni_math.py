@@ -80,9 +80,9 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                 DataReader,
                 {"path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
                  "transform": SequenceTransform([
-                     CopyColumn("model_output", "generated_solution"),
-                    ColumnRename("n_output_tokens", "gen_solution_n_output_tokens"),
-                    ColumnRename("usage", "gen_solution_usage"),
+                    CopyColumn("model_output", "generated_solution"),
+                    ColumnRename(name_mapping={"n_output_tokens":"gen_solution_n_output_tokens",
+                                               "usage": "gen_solution_usage"}),
                     # SamplerTransform(sample_count=5, random_seed=99),
                  ])},
             ),
