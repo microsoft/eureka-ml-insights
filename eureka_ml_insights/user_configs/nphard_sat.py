@@ -76,7 +76,7 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
                 {"path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl")},
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"), 
-            resume_from=resume_from,            
+            resume_from=resume_from,
             max_concurrent=1,
         )
 
@@ -151,7 +151,27 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
                     "second_groupby": "category",
                     "filename_base": "NPHardSATMetric_GroupBy_Category_AllRuns", 
                     "normalize": True
-                }),       
+                }),     
+
+                # the next two reports take the average and std for all repeats
+                # for generating category and 
+                # the resulting numbers are the average and std of N pass@1 scores, where N is number of repeats
+                AggregatorConfig(BiLevelCountAggregator, 
+                {
+                    "column_names": ["NPHardSATMetric_result"], 
+                    "first_groupby": "data_repeat_id", 
+                    "filename_base": "NPHardSATMetric_AllRuns",
+                    "normalize": True
+                }),
+                AggregatorConfig(BiLevelCountAggregator,
+                {
+                    "column_names": ["NPHardSATMetric_result"], 
+                    "first_groupby": ["data_repeat_id", "category", "num_var"],
+                    "second_groupby": ["category", "num_var"],
+                    "filename_base": "NPHardSATMetric_GroupBy_Category_num_var_AllRuns",
+                    "normalize": True
+                }),
+
                 # # two similar reports for average completion usage
                 AggregatorConfig(BiLevelAggregator, 
                 {
@@ -365,8 +385,8 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
                 self.data_post_processing_addmv,
                 self.mv_evalreporting_comp,
                 self.posteval_data_post_processing_comp,
-                self.bon_evalreporting_comp,
-                self.won_evalreporting_comp   
+                # self.bon_evalreporting_comp,
+                # self.won_evalreporting_comp   
             ],
             self.log_dir,
         )
