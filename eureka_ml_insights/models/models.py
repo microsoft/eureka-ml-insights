@@ -515,7 +515,7 @@ class DirectOpenAIModel(OpenAICommonRequestResponseMixIn, DirectOpenAIClientMixI
         self.client = self.get_client()
 
 
-class OpenAIO1RequestResponseMixIn:
+class OpenAIOModelsRequestResponseMixIn:
     
     def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
         messages = []
@@ -549,16 +549,29 @@ class OpenAIO1RequestResponseMixIn:
 
     def get_response(self, request):
         start_time = time.time()
-        completion = self.client.chat.completions.create(
-            model=self.model_name,
-            seed=self.seed,
-            temperature=self.temperature,
-            top_p=self.top_p,
-            frequency_penalty=self.frequency_penalty,
-            presence_penalty=self.presence_penalty,
-            reasoning_effort=self.reasoning_effort,
-            **request,
-        )
+        if "o1-preview" in self.model_name:
+            if self.reasoning_effort == "high":
+                logging.error("Reasoning effort is not supported by OpenAI O1 preview model.")
+            completion = self.client.chat.completions.create(
+                model=self.model_name,
+                seed=self.seed,
+                temperature=self.temperature,
+                top_p=self.top_p,
+                frequency_penalty=self.frequency_penalty,
+                presence_penalty=self.presence_penalty,
+                **request,
+            )
+        else:
+            completion = self.client.chat.completions.create(
+                model=self.model_name,
+                seed=self.seed,
+                temperature=self.temperature,
+                top_p=self.top_p,
+                frequency_penalty=self.frequency_penalty,
+                presence_penalty=self.presence_penalty,
+                reasoning_effort=self.reasoning_effort,
+                **request,
+            )
         end_time = time.time()
         openai_response = completion.model_dump()
         self.model_output = openai_response["choices"][0]["message"]["content"]
@@ -568,7 +581,7 @@ class OpenAIO1RequestResponseMixIn:
 
 
 @dataclass
-class DirectOpenAIO1Model(OpenAIO1RequestResponseMixIn, DirectOpenAIClientMixIn, EndpointModel):
+class DirectOpenAIOModel(OpenAIOModelsRequestResponseMixIn, DirectOpenAIClientMixIn, EndpointModel):
     model_name: str = None
     temperature: float = 1
     # Not used currently, because the API throws:
@@ -587,7 +600,7 @@ class DirectOpenAIO1Model(OpenAIO1RequestResponseMixIn, DirectOpenAIClientMixIn,
 
 
 @dataclass
-class AzureOpenAIO1Model(OpenAIO1RequestResponseMixIn, AzureOpenAIClientMixIn, EndpointModel):
+class AzureOpenAIOModel(OpenAIOModelsRequestResponseMixIn, AzureOpenAIClientMixIn, EndpointModel):
     url: str = None
     model_name: str = None
     temperature: float = 1
