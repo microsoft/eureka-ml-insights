@@ -3,10 +3,10 @@ replace the placeholders with your own keys.json file, secret key names, and end
 You can also add your custom models here by following the same pattern as the existing configs. """
 
 from eureka_ml_insights.models import (
-    AzureOpenAIO1Model,
+    AzureOpenAIOModel,
     ClaudeModel,
     DirectOpenAIModel,
-    DirectOpenAIO1Model,
+    DirectOpenAIOModel,
     GeminiModel,
     LlamaServerlessAzureRestEndpointModel,
     LLaVAHuggingFaceModel,
@@ -55,8 +55,33 @@ OPENAI_SECRET_KEY_PARAMS = {
     "key_vault_url": None,
 }
 
+OAI_O3_MINI_HIGH_CONFIG = ModelConfig(
+    DirectOpenAIOModel,
+    {
+        "model_name": "o3-mini-2025-01-31",
+        "reasoning_effort": "high",
+        "secret_key_params": OPENAI_SECRET_KEY_PARAMS,
+    },
+)
+
+OAI_O3_MINI_CONFIG = ModelConfig(
+    DirectOpenAIOModel,
+    {
+        "model_name": "o3-mini-2025-01-31",
+        "secret_key_params": OPENAI_SECRET_KEY_PARAMS,
+    },
+)
+
+OAI_O1_CONFIG = ModelConfig(
+    DirectOpenAIOModel,
+    {
+        "model_name": "o1",
+        "secret_key_params": OPENAI_SECRET_KEY_PARAMS,
+    },
+)
+
 OAI_O1_PREVIEW_CONFIG = ModelConfig(
-    DirectOpenAIO1Model,
+    DirectOpenAIOModel,
     {
         "model_name": "o1-preview",
         "secret_key_params": OPENAI_SECRET_KEY_PARAMS,
@@ -64,7 +89,7 @@ OAI_O1_PREVIEW_CONFIG = ModelConfig(
 )
 
 OAI_O1_PREVIEW_AUZRE_CONFIG = ModelConfig(
-    AzureOpenAIO1Model,
+    AzureOpenAIOModel,
     {
         "model_name": "o1-preview",
         "url": "your/endpoint/url",

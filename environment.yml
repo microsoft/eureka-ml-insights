@@ -154,7 +154,7 @@ dependencies:
   - numpy=1.26.4=py311h08b1b3b_0
   - numpy-base=1.26.4=py311hf175353_0
   - omegaconf=2.3.0=pyhd8ed1ab_0
-  - openai=1.35.5=pyhd8ed1ab_0
+  - openai=1.60.2
   - openh264=2.1.1=h4ff587b_0
   - openjpeg=2.4.0=h3ad879b_0
   - openssl=3.3.0=hd590300_0
