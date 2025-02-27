@@ -348,7 +348,7 @@ class TEST_GSM8K_PIPELINE(GSM8K_PIPELINE):
         self.inference_comp.data_loader_config.class_name = TestDataLoader
         self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
-    
+
 
 class TEST_NPHARD_TSP_PIPELINE(NPHARD_TSP_PIPELINE_MULTIPLE_RUNS):
     # Test config the spatial reasoning benchmark with the TestDataLoader

@@ -510,11 +510,11 @@ class HFDataReader(DataReader):
     def __init__(
         self,
         path: str,
-        hf_name: str = None,
         split: List[str] | str = "test",
         tasks: List[str] | str = None,
         transform: Optional[DFTransformBase] = None,
         cache_dir: str = None,
+        load_data_from_disk: bool = False,
         **kwargs,
     ):
         """
@@ -529,10 +529,9 @@ class HFDataReader(DataReader):
         """
         super().__init__(path=path, transform=transform, **kwargs)
         self.split = split
-        self.hf_name = hf_name
         self.tasks = tasks
         self.cache_dir = cache_dir
-
+        self.load_data_from_disk = load_data_from_disk
 
     def _save_base64_to_image_file(self, image_base64: dict, cache_path: str) -> str:
         """
@@ -625,91 +624,25 @@ class HFDataReader(DataReader):
             self.tasks = [self.tasks]
         df_frames = []
         if self.tasks is None:
-            hf_dataset = load_dataset(self.path, cache_dir=self.cache_dir, split=self.split)
-            for i, data_split in enumerate(hf_dataset):
-                task_df = self._hf_to_dataframe(data_split)
-                task_df["__hf_split"] = self.split[i]
-                df_frames.append(task_df)
-        else:
-            for task in self.tasks:
-                hf_dataset = load_dataset(self.path, task, cache_dir=self.cache_dir, split=self.split)
-                for i, data_split in enumerate(hf_dataset):
-                    task_df = self._hf_to_dataframe(data_split)
-                    task_df["__hf_task"] = task
-                    task_df["__hf_split"] = self.split[i]
-                    df_frames.append(task_df)
-        return pd.concat(df_frames)
-
-
-class HFLocalDataReader(DataReader):
-    """This is a HuggingFace DataReader that loads data hosted locally to infer on
-    using HF load_dataset method."""
-
-    def __init__(
-        self,
-        path: str,
-        split: List[str] | str = "test",
-        tasks: List[str] | str = None,
-        transform: Optional[DFTransformBase] = None,
-        **kwargs,
-    ):
-        """
-        Initializes a HFLocalDataReader.
-        args:
-            path: str, Huggingface specific path.
-            split: optional str or List of str, names of splits (e.g., val, test,...).
-            tasks: optional str or List of str, names of tasks (e.g., Math, Art,...). 
-                (This is passed into load_dataset parameter 'name' — dataset configuration name.)
-            transform: optional list of Transforms, to apply after loading.
-            cache_dir: optional str, local cache path.
-            from_disk: optional bool, if True, load from disk.
-        """
-        super().__init__(path=path, transform=transform, **kwargs)
-        self.split = split
-        self.tasks = tasks
-
-
-    def _hf_to_dataframe(self, hf_dataset):
-        """
-        Converts a huggingface dataset object to a Pandas dataframe.
-        args:
-            hf_dataset: huggingface dataset, object to convert.
-        returns:
-            df: Pandas dataframe, converted from a huggingface dataset.
-        """
-        df = hf_dataset.to_pandas()
-        return df
-
-
-    def _load_dataset(self) -> pd.DataFrame:
-        """
-        Loads a set of huggingface datasets specified as a list of splits or tasks (as provided to the class init).
-        Each dataset is loaded, processed to a Pandas dataframe and then merged to a single dataframe
-        Each dataframe has the task and split name added to a column before the merge
-        returns:
-            pd.concat(df_frames): Pandas dataframe, concatenated Pandas dataframe.
-        """
-        if not isinstance(self.split, list):
-            self.split = [self.split]
-        if self.tasks is not None and not isinstance(self.tasks, list):
-            self.tasks = [self.tasks]
-        df_frames = []
-        if self.tasks is None:
-            dataset_dict = load_from_disk(self.path)
-            hf_dataset = [dataset_dict[split] for split in self.split]
-            for i, data_split in enumerate(hf_dataset):
-                task_df = self._hf_to_dataframe(data_split)
-                task_df["__hf_split"] = self.split[i]
-                df_frames.append(task_df)
-        else:
-            for task in self.tasks:
+            if self.load_data_from_disk:
                 dataset_dict = load_from_disk(self.path)
                 hf_dataset = [dataset_dict[split] for split in self.split]
+            else:
+                hf_dataset = load_dataset(self.path, cache_dir=self.cache_dir, split=self.split)
+            for i, data_split in enumerate(hf_dataset):
+                task_df = self._hf_to_dataframe(data_split)
+                task_df["__hf_split"] = self.split[i]
+                df_frames.append(task_df)
+        else:
+            for task in self.tasks:
+                if self.load_data_from_disk:
+                    dataset_dict = load_from_disk(self.path)
+                    hf_dataset = [dataset_dict[task][split] for split in self.split]
+                else:
+                    hf_dataset = load_dataset(self.path, task, cache_dir=self.cache_dir, split=self.split)
                 for i, data_split in enumerate(hf_dataset):
                     task_df = self._hf_to_dataframe(data_split)
                     task_df["__hf_task"] = task
                     task_df["__hf_split"] = self.split[i]
                     df_frames.append(task_df)
         return pd.concat(df_frames)
-
-
