@@ -399,13 +399,14 @@ class TokenCounterTransform(MultiColumnTransform):
 
 @dataclass
 class MajorityVoteTransform:
-    """Applies the majority vote transformation to the specified model output column per id_col."""
+    """Applies the majority vote transformation to the specified model output column per id_col.
+       If model_label_column is provided, the corresponding label or score of the majority vote output will also be added."""
 
     model_output_col: str = "model_output"  # Default column name for model outputs
-    model_label_column: str = None  # Default column name for model labels
+    model_label_column: str = None  # Column name for model labels or scores corresponding to model outputs
     id_col: str = "data_point_id"  # Default column name for IDs
-    majority_vote_col: str = "majority_vote"
-    majority_label_col: str = "majority_label"
+    majority_vote_col: str = "majority_vote" # Default column name for storing majority vote
+    majority_label_col: str = "majority_label" # Default column name for storing label corresponding to majority vote output
 
     def transform(self, df: pd.DataFrame, random_state:int=0) -> pd.DataFrame:
         """
