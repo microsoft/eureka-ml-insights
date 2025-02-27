@@ -6,6 +6,7 @@ import time
 import urllib.request
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+import random
 
 import anthropic
 import tiktoken
@@ -1153,6 +1154,71 @@ class vLLMModel(Model):
 
     def model_template_fn(self, text_prompt, system_message=None):
         raise NotImplementedError
+    
+
+@dataclass
+class LocalVLLMModel(Model, OpenAICommonRequestResponseMixIn):
+    """This class is used when you have multiple vLLM servers running locally."""
+
+    model_name: str = None
+    ports: list = None
+    clients: list = None
+    max_tokens: int = 2000
+
+    def __post_init__(self):
+        self.prepare_clients()
+
+    def prepare_clients(self):
+        from openai import OpenAI as OpenAIClient
+        import requests
+
+        # Populate self.clients with healthy servers
+        self.clients = []
+        potential_urls = ['http://0.0.0.0:' + port for port in self.ports]
+        session = requests.Session()
+        for url in potential_urls:
+            try:
+                session.get(url+'/health')
+                self.clients.append(OpenAIClient(base_url=url + '/v1', api_key = 'none'))
+            except:
+                pass
+        if len(self.clients) == 0:
+            raise Exception("No healthy servers found!")
+        
+    def _generate(self, request):
+
+        # Similar logic as OpenAICommonRequestResponseMixIn
+        # except we don't just use one fixed client.
+        start_time = time.time()
+        client = random.choice(self.clients)
+        completion = client.chat.completions.create(
+            model=self.model_name,
+            max_tokens=self.max_tokens,
+            **request
+        )
+        end_time = time.time()
+        raw_output = completion.model_dump()
+        
+        return {
+            "model_output": raw_output["choices"][0]["message"]["content"],
+            "response_time": end_time - start_time,
+            "n_tokens": raw_output["usage"]["completion_tokens"]
+        }
+
+    def generate(self, text_prompt, query_images=None, system_message=None):
+        response_dict = {}
+
+        if text_prompt:
+            # Format request for OpenAI API using create_request from OpenAIRequestResponseMixIn
+            request = self.create_request(text_prompt, query_images, system_message)
+            try:
+                response_dict.update(self._generate(request))
+                response_dict['is_valid'] = True
+            except Exception as e:
+                logging.warning(e)
+                response_dict['is_valid'] = False
+
+        return response_dict
 
 
 @dataclass
