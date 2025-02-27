@@ -1154,7 +1154,6 @@ class vLLMModel(Model):
     def model_template_fn(self, text_prompt, system_message=None):
         raise NotImplementedError
 
-
 @dataclass
 class ClaudeModel(EndpointModel, KeyBasedAuthMixIn):
     """This class is used to interact with Claude models through the python api."""
