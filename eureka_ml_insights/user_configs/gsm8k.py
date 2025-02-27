@@ -267,7 +267,7 @@ class GSM8K_MUTATED_PIPELINE(GSM8K_PIPELINE):
         # -----------------------------
         # Retrieve data and pre-process
         # -----------------------------
-        with open("data/paths.json", "r") as f:
+        with open("data/paths_gsm8k.json", "r") as f:
             DATA_PATHS = json.load(f)
         path = DATA_PATHS[mutation_type]
 
