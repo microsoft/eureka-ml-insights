@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 import anthropic
 import tiktoken
-from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+from azure.identity import AzureCliCredential, DefaultAzureCredential, get_bearer_token_provider
 
 from eureka_ml_insights.secret_management import get_secret
 
@@ -256,7 +256,8 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
             }
         except ValueError:
             self.bearer_token_provider = get_bearer_token_provider(
-                DefaultAzureCredential(), self.auth_scope
+                #DefaultAzureCredential(), self.auth_scope
+                AzureCliCredential(), self.auth_scope
             )
             self.headers = {
                 "Content-Type": "application/json",
@@ -444,7 +445,8 @@ class AzureOpenAIClientMixIn:
         from openai import AzureOpenAI
 
         token_provider = get_bearer_token_provider(
-            DefaultAzureCredential(), self.auth_scope
+            #DefaultAzureCredential(), self.auth_scope
+            AzureCliCredential(), self.auth_scope
         )
         return AzureOpenAI(
             azure_endpoint=self.url,
@@ -467,7 +469,13 @@ class DirectOpenAIClientMixIn(KeyBasedAuthMixIn):
     def get_client(self):
         from openai import OpenAI
 
+        #return OpenAI(
+        #    api_key=self.api_key,
+        #)
         return OpenAI(
+            #base_url="http://0.0.0.0:8000/v1",
+            #base_url="http://0.0.0.0:8001/v1",
+            base_url="http://0.0.0.0:8003/v1",
             api_key=self.api_key,
         )
 
@@ -554,6 +562,7 @@ class OpenAIO1RequestResponseMixIn:
             top_p=self.top_p,
             frequency_penalty=self.frequency_penalty,
             presence_penalty=self.presence_penalty,
+            reasoning_effort=self.reasoning_effort,
             **request,
         )
         end_time = time.time()
@@ -576,6 +585,7 @@ class DirectOpenAIO1Model(OpenAIO1RequestResponseMixIn, DirectOpenAIClientMixIn,
     seed: int = 0
     frequency_penalty: float = 0
     presence_penalty: float = 0
+    reasoning_effort: str = None
 
     def __post_init__(self):
         self.api_key = self.get_api_key()
@@ -595,6 +605,7 @@ class AzureOpenAIO1Model(OpenAIO1RequestResponseMixIn, AzureOpenAIClientMixIn, E
     seed: int = 0
     frequency_penalty: float = 0
     presence_penalty: float = 0
+    reasoning_effort: str = None
     api_version: str = "2023-06-01-preview"
     auth_scope: str = "https://cognitiveservices.azure.com/.default"
 
@@ -1151,8 +1162,8 @@ class vLLMModel(Model):
         )
         return response_dict
 
-    def model_template_fn(self, text_prompt, system_message=None):
-        raise NotImplementedError
+    #def model_template_fn(self, text_prompt, system_message=None):
+    #    raise NotImplementedError
 
 @dataclass
 class ClaudeModel(EndpointModel, KeyBasedAuthMixIn):

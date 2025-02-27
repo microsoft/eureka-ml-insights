@@ -16,7 +16,7 @@ if __name__ == "__main__":
         "--model_config", type=str, nargs="?", help="The name of the model config to use.", default=None
     )
     parser.add_argument(
-        "--eval_model_config", type=str, nargs="?", help="The name of the eval model config to use.", default=None
+        "--eval_model_config", type=str, nargs="?", help="The name of the model config to use.", default=None
     )
     parser.add_argument(
         "--exp_logdir", type=str, help="The name of the subdirectory in which to save the logs.", default=None
@@ -46,7 +46,6 @@ if __name__ == "__main__":
             init_args["model_config"] = getattr(model_configs, args.model_config)
         except AttributeError:
             raise ValueError(f"Model config class {args.model_config} not found.")
-        
     if args.eval_model_config:
         try:
             init_args["eval_model_config"] = getattr(model_configs, args.eval_model_config)
