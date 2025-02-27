@@ -15,6 +15,7 @@ from .models import (
     Phi4HFModel,
     RestEndpointModel,
     TestModel,
+    vLLMModel,
     TogetherModel
 )
 
@@ -35,5 +36,6 @@ __all__ = [
     LLaVAModel,
     RestEndpointModel,
     TestModel,
+    vLLMModel,
     TogetherModel
 ]
