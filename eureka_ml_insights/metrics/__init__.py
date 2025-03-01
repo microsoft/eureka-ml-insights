@@ -10,12 +10,13 @@ from .metrics_base import (
     SubstringExistsMatch,
 )
 from .mmmu_metrics import MMMUMetric
+from .nphard_tsp_metrics import NPHardTSPMetric
 from .reports import (
     Aggregator,
     AverageAggregator,
     AverageSTDDevAggregator,
-    BiLevelAggregator,
     BiLevelCountAggregator,
+    BiLevelAggregator,
     CocoDetectionAggregator,
     CountAggregator,
     MaxAggregator,
@@ -56,4 +57,5 @@ __all__ = [
     MMMUMetric,
     MaxTokenF1ScoreMetric,
     ValueFilteredAggregator,
+    NPHardTSPMetric,
 ]
