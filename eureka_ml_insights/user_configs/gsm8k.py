@@ -295,10 +295,9 @@ class GSM8K_MUTATED_PIPELINE(GSM8K_PIPELINE):
                 SamplerTransform(sample_count=int(sample_count), random_seed=99)
             )
 
-        if int(n_repeats) > 1:
-            self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
-                MultiplyTransform(n_repeats=int(n_repeats)),
-            )
+        self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
+            MultiplyTransform(n_repeats=int(n_repeats)),
+        )
 
         if prompt_template_name is not None:
             self.data_processing_comp.prompt_template_path = os.path.join(
