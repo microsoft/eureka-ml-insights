@@ -37,19 +37,22 @@ class BA_Causal_PIPELINE(ExperimentConfig):
         data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
             prompt_template_path=os.path.join(
-                os.path.dirname(__file__), "../prompt_templates/ba_causal_templates/ba_causal_prompt.jinja"
+                # os.path.dirname(__file__), "../prompt_templates/ba_causal_templates/ba_causal_prompt.jinja"
+                # os.path.dirname(__file__), "../prompt_templates/ba_causal_templates/ba_causal_descriptive.jinja"
+                os.path.dirname(__file__), "../prompt_templates/ba_causal_templates/ba_causal_step.jinja"
             ),
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    "path": os.path.join("/mnt/c/Users/vidhishab/OneDrive - Microsoft/Research/code/local_benchmark_data/Natasha_benchmarks/datasets/datasets/ba-causal/sorted_instances.jsonl"),
+                    "path": os.path.join("/mnt/c/Users/vidhishab/OneDrive - Microsoft/Research/code/local_benchmark_data/Natasha_benchmarks/datasets/datasets/ba-causal/sorted_instances_2.jsonl"),
                     "transform": SequenceTransform(
                         [
                             AddColumn("ground_truth"),
                             AddColumn("images"),
                             RunPythonTransform("df['ground_truth'] = df['metadata'].apply(lambda x: x['answer'])"),
                             RunPythonTransform("df['images'] = df['metadata'].apply(lambda x: x['inputs']+x['options'])"),
-                            # ColumnRename(name_mapping={"task_prompt": "prompt"}),
+                            # RunPythonTransform("df['images'] = df['metadata'].apply(lambda x: x['inputs_large']+x['options_large'])"),
+                            # RunPythonTransform("df['images'] = df['metadata'].apply(lambda x: x['single_image'])"),
                             # SamplerTransform(sample_count=10, random_seed=99)
                         ]
                     ),
@@ -71,6 +74,7 @@ class BA_Causal_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
+            max_concurrent=5
         )
 
         # # Configure the evaluation and reporting component.
