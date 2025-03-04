@@ -1,6 +1,7 @@
 from .config import (
     AggregatorConfig,
     DataJoinConfig,
+    DataUnionConfig,
     DataProcessingConfig,
     DataSetConfig,
     EvalReportingConfig,
@@ -18,6 +19,7 @@ __all__ = [
     MetricConfig,
     AggregatorConfig,
     DataJoinConfig,
+    DataUnionConfig,
     DataProcessingConfig,
     PromptProcessingConfig,
     InferenceConfig,

@@ -9,10 +9,7 @@ from .aime import (
     AIME_PIPELINE1024Run,
 )
 from .aime_seq import AIME_SEQ_PIPELINE
-from .ba_calendar import (
-        BA_Calendar_PIPELINE,
-        BA_Calendar_Parallel_PIPELINE,
-)
+from .ba_calendar import BA_Calendar_Parallel_PIPELINE, BA_Calendar_PIPELINE
 from .dna import DNA_PIPELINE
 from .drop import Drop_Experiment_Pipeline
 from .flenqa import FlenQA_Experiment_Pipeline

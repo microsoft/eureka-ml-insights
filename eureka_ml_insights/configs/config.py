@@ -98,6 +98,16 @@ class DataJoinConfig(DataProcessingConfig):
     other_data_reader_config: UtilityClassConfigType = None
     pandas_merge_args: dict = None
 
+@dataclass
+class DataUnionConfig(DataProcessingConfig):
+    """Config class for the data union component
+    Args:
+        other_data_reader_config (UtilityClassConfig): The data reader config for the dataset to be joined with the main dataset
+        output_data_columns (list): List of columns (subset of input columns) to keep in the transformed data output file
+    """
+
+    other_data_reader_config: UtilityClassConfigType = None
+    output_data_columns: List[str] = None
 
 @dataclass
 class InferenceConfig(ComponentConfig):

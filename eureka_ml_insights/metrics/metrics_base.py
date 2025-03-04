@@ -45,6 +45,7 @@ class CompositeMetric(Metric):
 
 class ClassicMetric(Metric):
     """This class is a base class for metrics that require ground truths and predictions."""
+
     def __init__(self, model_output_col: str = "model_output"):
         super().__init__()
         self.model_output_col = model_output_col
@@ -63,6 +64,7 @@ class ClassicMetric(Metric):
         )
         return data
 
+
 class MetricBasedVerifier:
     def __init__(self, metric_class, model_output_col: str = "model_output"):
         self.model_output_col = model_output_col
@@ -74,12 +76,13 @@ class MetricBasedVerifier:
         data.rename(columns={self.metric_class.__name__ + "_result": "verification_result"}, inplace=True)
         return data
 
-        
+
 class DetectionMetric(Metric):
     """
     This class is for the detection metric, where access is needed to the image
     and ground truth is stored in an external file.
     """
+
     def __init__(self, model_output_col: str = "model_output"):
         super().__init__()
         self.model_output_col = model_output_col
@@ -114,7 +117,9 @@ class MultipleChoiceMetric(ClassicMetric):
     def evaluate(self, data):
         self.validate_data(data)
         data[self.__class__.__name__ + "_result"] = data.apply(
-            lambda x: self.__evaluate__(x[self.model_output_col], x["ground_truth"], x["target_options"], x["is_valid"]),
+            lambda x: self.__evaluate__(
+                x[self.model_output_col], x["ground_truth"], x["target_options"], x["is_valid"]
+            ),
             axis=1,
         )
         return data

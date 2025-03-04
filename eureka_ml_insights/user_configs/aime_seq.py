@@ -4,12 +4,13 @@ from typing import Any
 from eureka_ml_insights.configs import (
     DataProcessingConfig,
     DataSetConfig,
+    DataUnionConfig,
     InferenceConfig,
     ModelConfig,
     PipelineConfig,
     PromptProcessingConfig,
 )
-from eureka_ml_insights.core import DataProcessing, Inference, PromptProcessing
+from eureka_ml_insights.core import DataProcessing, Inference, PromptProcessing, DataUnion
 from eureka_ml_insights.data_utils import (
     AddColumnAndData,
     ColumnRename,
@@ -39,11 +40,12 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
 
         # this call to super will configure the initial prompt processing and final eval reporting comps that can be reused.
         super().configure_pipeline(model_config, resume_from, **kwargs)
+                
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
-            SamplerTransform(random_seed=40, sample_count=2)
+            SamplerTransform(random_seed=40, sample_count=1)
         )
         component_configs = [self.data_processing_comp]
-
+        verificaiton_comps = []
         for i in range(1, 3):
             # Student inference component
             self.student_inference_comp = InferenceConfig(
@@ -61,12 +63,12 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
             )
 
             if i > 1:
+                # if this is not the first iteration, we need to add the previous messages to the data loader config
                 self.student_inference_comp.data_loader_config.init_args["misc_columns"] = ["previous_messages"]
-
-
             component_configs.append(self.student_inference_comp)
 
-            # Metric based verification and filtering out the correct answers
+            
+            # Answer extraction and metric-based verification 
             self.verificaiton_comp = DataProcessingConfig(
                 component_type=DataProcessing,
                 data_reader_config=DataSetConfig(
@@ -79,13 +81,46 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                                 # extract and verify the student answer
                                 AIMEExtractAnswer(f"model_output", f"student_extracted_answer_{i}"),
                                 MetricBasedVerifier(ExactMatch, f"student_extracted_answer_{i}"),
+                                AddColumnAndData("attempt_id", i),
                             ]
                         ),
                     },
                 ),
                 output_dir=os.path.join(self.log_dir, f"verification_{i}"),
             )
+            verificaiton_comps.append(self.verificaiton_comp)
             component_configs.append(self.verificaiton_comp)
+
+            # Variable maintaining link to the most recent inference result results to be used for evaluation
+            self.last_inference_result_join_comp = self.verificaiton_comp
+            # we want to add the results of this inference round to the final inference result directory
+            if i > 1:
+                self.last_inference_result_join_comp = verificaiton_comps[-2]
+                verification_cols_so_far = [f"verification_result_{j}" for j in range(1, i)]
+                extracted_ans_cols_so_far = [f"student_extracted_answer_{j}" for j in range(1, i)]
+                self.last_inference_result_join_comp = DataUnionConfig(
+                    component_type=DataUnion,
+                    data_reader_config=DataSetConfig(
+                        DataReader,
+                        {
+                            "path": os.path.join(self.verificaiton_comp.output_dir, "transformed_data.jsonl"),
+                            "format": ".jsonl",
+
+                        },
+                    ),
+                    other_data_reader_config=DataSetConfig(
+                        DataReader,
+                        {
+                            "path": os.path.join(self.last_inference_result_join_comp.output_dir, "transformed_data.jsonl"),
+                            "format": ".jsonl",
+                        },
+                    ),
+                    output_data_columns=["attempt_id", "model_output", "uid", "prompt", "ground_truth", "Year", "ID"] + verification_cols_so_far + extracted_ans_cols_so_far,
+                    output_dir=os.path.join(self.log_dir, f"last_inference_result_join_{i}"),
+                )
+                component_configs.append(self.last_inference_result_join_comp)
+            
+            # filtering out the row with correct answer
             self.filtering_comp = DataProcessingConfig(
                 component_type=DataProcessing,
                 data_reader_config=DataSetConfig(
@@ -97,12 +132,6 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                             [
                                 # drop rows where verification_result is True
                                 RunPythonTransform(python_code="df = df[df['verification_result'] != 'correct']"),
-                                ColumnRename(
-                                    name_mapping={
-                                        "verification_result": f"verification_result_{i}",
-                                        "model_output": f"student_output_{i}",
-                                    }
-                                ),
                             ]
                         ),
                     },
@@ -118,6 +147,15 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                     {
                         "path": os.path.join(self.verificaiton_comp.output_dir, "transformed_data.jsonl"),
                         "format": ".jsonl",
+                        "transform": SequenceTransform(
+                            [
+                                ColumnRename(
+                                    name_mapping={
+                                        "verification_result": f"verification_result_{i}",
+                                        "model_output": f"student_output_{i}",
+                                    }),
+                            ]
+                        ),
                     },
                 ),
                 prompt_template_path=os.path.join(
@@ -166,6 +204,10 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
             )
             component_configs.append(self.hint_prompt_processing)
 
+
+        self.evalreporting_comp.data_reader_config.init_args["path"] = os.path.join(
+            self.last_inference_result_join_comp.output_dir, "transformed_data.jsonl"
+        )
         component_configs.append(self.evalreporting_comp)
         print(component_configs)
         # Configure the pipeline
