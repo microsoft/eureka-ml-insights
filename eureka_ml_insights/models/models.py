@@ -468,6 +468,7 @@ class DirectOpenAIClientMixIn(KeyBasedAuthMixIn):
         from openai import OpenAI
 
         return OpenAI(
+            base_url=self.base_url,
             api_key=self.api_key,
         )
 
@@ -507,6 +508,7 @@ class DirectOpenAIModel(OpenAICommonRequestResponseMixIn, DirectOpenAIClientMixI
     presence_penalty: float = 0
     seed: int = 0
     api_version: str = "2023-06-01-preview"
+    base_url: str = "https://api.openai.com/v1"
 
     def __post_init__(self):
         self.api_key = self.get_api_key()
@@ -576,6 +578,7 @@ class DirectOpenAIO1Model(OpenAIO1RequestResponseMixIn, DirectOpenAIClientMixIn,
     seed: int = 0
     frequency_penalty: float = 0
     presence_penalty: float = 0
+    base_url: str = "https://api.openai.com/v1"
 
     def __post_init__(self):
         self.api_key = self.get_api_key()
