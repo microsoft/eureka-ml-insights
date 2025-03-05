@@ -45,6 +45,7 @@ class DataUnion(DataProcessing):
             concat_df = other_df
         elif len(other_df.columns) == 0:
             concat_df = df
+        self.output_data_columns = [col for col in self.output_data_columns if col in concat_df.columns]
         if (len(concat_df.columns) > 0):
             concat_df = self.get_desired_columns(concat_df)
         concat_df = concat_df.drop_duplicates()
