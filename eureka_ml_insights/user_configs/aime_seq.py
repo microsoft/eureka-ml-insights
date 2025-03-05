@@ -28,11 +28,29 @@ from eureka_ml_insights.metrics.metrics_base import (
 
 from .aime import AIME_PIPELINE
 
-# from eureka_ml_insights.data_utils.transform import MajorityVoteTransform
-
+DEFAULT_N_ITER = 2
 
 class AIME_SEQ_PIPELINE(AIME_PIPELINE):
     """This class specifies the config for running AIME benchmark on any model"""
+
+    def get_result_columns(self, i: int) -> list[str]:
+        """Get the desired result columns to be saved for the given iteration
+        Args:
+            i (int): The iteration number
+        Returns:
+            list[str]: The list of columns to be saved
+        """
+        verification_cols_so_far = [f"verification_result_{j}" for j in range(1, i)]
+        extracted_ans_cols_so_far = [f"student_extracted_answer_{j}" for j in range(1, i)]
+        return [
+            "attempt_id",
+            "model_output",
+            "uid",
+            "prompt",
+            "ground_truth",
+            "Year",
+            "ID",
+        ] + verification_cols_so_far + extracted_ans_cols_so_far
 
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
@@ -40,21 +58,29 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
 
         # this call to super will configure the initial prompt processing and final eval reporting comps that can be reused.
         super().configure_pipeline(model_config, resume_from, **kwargs)
-                
+
+        n_iter = kwargs.get("n_iter", DEFAULT_N_ITER + 1)
+        
+        # list of verification components used in the pipeline
+        verificaiton_comps = []
+        
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
             SamplerTransform(random_seed=40, sample_count=1)
         )
+
         component_configs = [self.data_processing_comp]
-        verificaiton_comps = []
-        for i in range(1, 3):
-            # Student inference component
+        for i in range(1, n_iter + 1):
+            # Student inference component, reads prompts from the last prompt processing component
+            last_prompt_proc_comp = component_configs[-1]
             self.student_inference_comp = InferenceConfig(
                 component_type=Inference,
                 model_config=model_config,
                 data_loader_config=DataSetConfig(
                     MMDataLoader,
                     {
-                        "path": os.path.join(component_configs[-1].output_dir, "transformed_data.jsonl"),
+                        "path": os.path.join(last_prompt_proc_comp.output_dir, "transformed_data.jsonl"),
+                        # if this is not the first iteration, we need to add the previous messages to the data loader config
+                        "misc_columns": ["previous_messages"] if i > 1 else None,
                     },
                 ),
                 output_dir=os.path.join(self.log_dir, f"student_inference_result_{i}"),
@@ -62,9 +88,6 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                 chat_mode=True,
             )
 
-            if i > 1:
-                # if this is not the first iteration, we need to add the previous messages to the data loader config
-                self.student_inference_comp.data_loader_config.init_args["misc_columns"] = ["previous_messages"]
             component_configs.append(self.student_inference_comp)
 
             
@@ -92,12 +115,10 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
             component_configs.append(self.verificaiton_comp)
 
             # Variable maintaining link to the most recent inference result results to be used for evaluation
+            # This will be updated to point to the concatenation of results from all iterations
             self.last_inference_result_join_comp = self.verificaiton_comp
-            # we want to add the results of this inference round to the final inference result directory
+            
             if i > 1:
-                self.last_inference_result_join_comp = verificaiton_comps[-2]
-                verification_cols_so_far = [f"verification_result_{j}" for j in range(1, i)]
-                extracted_ans_cols_so_far = [f"student_extracted_answer_{j}" for j in range(1, i)]
                 self.last_inference_result_join_comp = DataUnionConfig(
                     component_type=DataUnion,
                     data_reader_config=DataSetConfig(
@@ -111,16 +132,17 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                     other_data_reader_config=DataSetConfig(
                         DataReader,
                         {
-                            "path": os.path.join(self.last_inference_result_join_comp.output_dir, "transformed_data.jsonl"),
+                            "path": os.path.join(self.verificaiton_comps[-2].output_dir, "transformed_data.jsonl"),
                             "format": ".jsonl",
                         },
                     ),
-                    output_data_columns=["attempt_id", "model_output", "uid", "prompt", "ground_truth", "Year", "ID"] + verification_cols_so_far + extracted_ans_cols_so_far,
+                    output_data_columns=self.get_result_columns(i),
                     output_dir=os.path.join(self.log_dir, f"last_inference_result_join_{i}"),
                 )
                 component_configs.append(self.last_inference_result_join_comp)
             
-            # filtering out the row with correct answer
+
+            # Filtering out the rows with correct answer
             self.filtering_comp = DataProcessingConfig(
                 component_type=DataProcessing,
                 data_reader_config=DataSetConfig(
@@ -128,18 +150,15 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                     {
                         "path": os.path.join(self.verificaiton_comp.output_dir, "transformed_data.jsonl"),
                         "format": ".jsonl",
-                        "transform": SequenceTransform(
-                            [
-                                # drop rows where verification_result is True
-                                RunPythonTransform(python_code="df = df[df['verification_result'] != 'correct']"),
-                            ]
-                        ),
+                        "transform": RunPythonTransform(python_code="df = df[df['verification_result'] != 'correct']"),
                     },
                 ),
                 output_dir=os.path.join(self.log_dir, f"filtering_{i}"),
             )
             component_configs.append(self.filtering_comp)
-            # Create a new prompt with ground truth hinting
+
+
+            # Create a new prompt to ask the teacher model to provide hints.
             self.hint_processing_comp = PromptProcessingConfig(
                 component_type=PromptProcessing,
                 data_reader_config=DataSetConfig(
@@ -147,15 +166,11 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                     {
                         "path": os.path.join(self.verificaiton_comp.output_dir, "transformed_data.jsonl"),
                         "format": ".jsonl",
-                        "transform": SequenceTransform(
-                            [
-                                ColumnRename(
-                                    name_mapping={
-                                        "verification_result": f"verification_result_{i}",
-                                        "model_output": f"student_output_{i}",
-                                    }),
-                            ]
-                        ),
+                        "transform": ColumnRename(
+                            name_mapping={
+                                            "verification_result": f"verification_result_{i}",
+                                            "model_output": f"student_output_{i}",
+                                         }),
                     },
                 ),
                 prompt_template_path=os.path.join(
@@ -165,51 +180,44 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
             )
             component_configs.append(self.hint_processing_comp)
 
-            # Inference component for the teacher model to provide hints
+            # Inference component to ask teacher model to provide hints
             self.teacher_inference_comp = InferenceConfig(
                 component_type=Inference,
                 model_config=model_config,
                 data_loader_config=DataSetConfig(
                     MMDataLoader,
                     {"path": os.path.join(self.hint_processing_comp.output_dir, "transformed_data.jsonl"),
-                    "misc_columns": ["previous_messages"]},
+                     "misc_columns": ["previous_messages"]},
                 ),
                 output_dir=os.path.join(self.log_dir, f"teacher_inference_result_{i}"),
-                resume_from=resume_from,
                 max_concurrent=10,
                 chat_mode=False,
             )
             component_configs.append(self.teacher_inference_comp)
 
-            # Prompt processing for the stundent to try again
-            self.hint_prompt_processing = PromptProcessingConfig(
+            # Prompt processing to ask the stundent to try again
+            self.prompt_processing_with_hint = PromptProcessingConfig(
                 component_type=PromptProcessing,
                 data_reader_config=DataSetConfig(
                     DataReader,
                     {
                         "path": os.path.join(self.teacher_inference_comp.output_dir, "inference_result.jsonl"),
                         "format": ".jsonl",
-                        "transform": SequenceTransform(
-                            [
-                                ColumnRename(name_mapping={"model_output": "teacher_hint"}),
-                                AddColumnAndData("attempt_id", i),
-                            ]
-                        ),
+                        "transform": ColumnRename(name_mapping={"model_output": "teacher_hint"}),
                     },
                 ),
-                prompt_template_path=os.path.join(
-                    os.path.dirname(__file__), "../prompt_templates/aime_templates/prompt_w_hint.jinja"
-                ),
+                prompt_template_path=os.path.join(os.path.dirname(__file__), "../prompt_templates/aime_templates/prompt_w_hint.jinja"),
                 output_dir=os.path.join(self.log_dir, f"teacher_hint_prompt_{i}"),
             )
-            component_configs.append(self.hint_prompt_processing)
+            component_configs.append(self.prompt_processing_with_hint)
 
-
+        # Pass the combined results from all iterations to the eval reporting component
         self.evalreporting_comp.data_reader_config.init_args["path"] = os.path.join(
             self.last_inference_result_join_comp.output_dir, "transformed_data.jsonl"
         )
+
         component_configs.append(self.evalreporting_comp)
-        print(component_configs)
+
         # Configure the pipeline
         return PipelineConfig(
             component_configs,
