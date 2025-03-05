@@ -28,6 +28,9 @@ class AIMEExtractAnswer(DFTransformBase):
 
         # Try to find an answer in the "Final Answer: X" format
         match = re.search(r"Final Answer:\s*([\$]?-?[\d,]+(?:\.\d+)?%?)", response)
+        # If not found, try to find an answer in the "Final Answer: [X]" format
+        if not match:
+            match = re.search(r"Final Answer:\s*\[([\$]?-?[\d,]+(?:\.\d+)?%?)\]", response)
         if match:
             answer_str = match.group(1)
             # Remove $ and commas, handle percentages for numerical comparison
