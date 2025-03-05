@@ -285,9 +285,8 @@ class ReplaceStringsTransform(MultiColumnTransform):
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         self.validate(df)
         for column in self.columns:
-            for column in self.columns:
-                df[column] = df[column].replace(self.mapping)
-
+            for source, target in self.mapping.items():
+                df[column] = df[column].str.replace(source, target, case=self.case, regex=False)
         return df
 
 
