@@ -205,7 +205,6 @@ class GSM8K_PIPELINE(ExperimentConfig):
 
         return PipelineConfig(pipeline_steps, self.log_dir)
 
-
     def _configure_multirun_steps(self) -> list[Any]:
         """
         Builds and returns all additional aggregator configs and post-eval steps
@@ -368,9 +367,7 @@ class GSM8K_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    "path": os.path.join(
-                        self.postprocessing_majorityvote_comp.output_dir, "transformed_data.jsonl"
-                    ),
+                    "path": os.path.join(self.postprocessing_majorityvote_comp.output_dir, "transformed_data.jsonl"),
                     "format": ".jsonl",
                 },
             ),
@@ -397,9 +394,11 @@ class GSM8K_PIPELINE(ExperimentConfig):
             self.evalreporting_majorityvote_comp,
         ]
 
+
 # =============================
 # MUTATED GSM8K BENCHMARK
 # =============================
+
 
 class GSM8K_MUTATED_PIPELINE(GSM8K_PIPELINE):
     """This class specifies the config for running mutated GSM8K benchmark on any model"""
