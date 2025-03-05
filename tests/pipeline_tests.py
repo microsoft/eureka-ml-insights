@@ -308,12 +308,13 @@ class TEST_MMMU_PIPELINE(MMMU_BASELINE_PIPELINE):
 class TEST_GPQA_PIPELINE(GPQA_Experiment_Pipeline):
     # Test config the GPQA benchmark with TestModel and TestDataLoader
     def configure_pipeline(self):
-        config = super().configure_pipeline(model_config=ModelConfig(GenericTestModel, {}))
+        config = super().configure_pipeline(model_config=ModelConfig(MultipleChoiceTestModel, {}))
         self.inference_comp.data_loader_config.class_name = TestDataLoader
         self.inference_comp.data_loader_config.init_args = {
             "path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl"),
             "n_iter": N_ITER,
         }
+        self.inference_llm_answer_extract.model_config = ModelConfig(GenericTestModel, {})
         return config
 
 

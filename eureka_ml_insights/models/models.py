@@ -454,10 +454,12 @@ class AzureOpenAIClientMixIn:
 
     def handle_request_error(self, e):
         # if the error is due to a content filter, there is no need to retry
-        if e.code == "content_filter":
+        if hasattr(e, 'code') and e.code == "content_filter":
             logging.warning("Content filtered.")
             response = None
             return response, False, True
+        else:
+            logging.warning(str(e))
         return False
 
 
@@ -468,6 +470,7 @@ class DirectOpenAIClientMixIn(KeyBasedAuthMixIn):
         from openai import OpenAI
 
         return OpenAI(
+            base_url=self.base_url,
             api_key=self.api_key,
         )
 
@@ -507,13 +510,14 @@ class DirectOpenAIModel(OpenAICommonRequestResponseMixIn, DirectOpenAIClientMixI
     presence_penalty: float = 0
     seed: int = 0
     api_version: str = "2023-06-01-preview"
+    base_url: str = "https://api.openai.com/v1"
 
     def __post_init__(self):
         self.api_key = self.get_api_key()
         self.client = self.get_client()
 
 
-class OpenAIO1RequestResponseMixIn:
+class OpenAIOModelsRequestResponseMixIn:
     
     def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
         messages = []
@@ -547,15 +551,29 @@ class OpenAIO1RequestResponseMixIn:
 
     def get_response(self, request):
         start_time = time.time()
-        completion = self.client.chat.completions.create(
-            model=self.model_name,
-            seed=self.seed,
-            temperature=self.temperature,
-            top_p=self.top_p,
-            frequency_penalty=self.frequency_penalty,
-            presence_penalty=self.presence_penalty,
-            **request,
-        )
+        if "o1-preview" in self.model_name:
+            if self.reasoning_effort == "high":
+                logging.error("Reasoning effort is not supported by OpenAI O1 preview model.")
+            completion = self.client.chat.completions.create(
+                model=self.model_name,
+                seed=self.seed,
+                temperature=self.temperature,
+                top_p=self.top_p,
+                frequency_penalty=self.frequency_penalty,
+                presence_penalty=self.presence_penalty,
+                **request,
+            )
+        else:
+            completion = self.client.chat.completions.create(
+                model=self.model_name,
+                seed=self.seed,
+                temperature=self.temperature,
+                top_p=self.top_p,
+                frequency_penalty=self.frequency_penalty,
+                presence_penalty=self.presence_penalty,
+                reasoning_effort=self.reasoning_effort,
+                **request,
+            )
         end_time = time.time()
         openai_response = completion.model_dump()
         self.model_output = openai_response["choices"][0]["message"]["content"]
@@ -565,7 +583,7 @@ class OpenAIO1RequestResponseMixIn:
 
 
 @dataclass
-class DirectOpenAIO1Model(OpenAIO1RequestResponseMixIn, DirectOpenAIClientMixIn, EndpointModel):
+class DirectOpenAIOModel(OpenAIOModelsRequestResponseMixIn, DirectOpenAIClientMixIn, EndpointModel):
     model_name: str = None
     temperature: float = 1
     # Not used currently, because the API throws:
@@ -576,6 +594,8 @@ class DirectOpenAIO1Model(OpenAIO1RequestResponseMixIn, DirectOpenAIClientMixIn,
     seed: int = 0
     frequency_penalty: float = 0
     presence_penalty: float = 0
+    reasoning_effort: str = "medium"
+    base_url: str = "https://api.openai.com/v1"
 
     def __post_init__(self):
         self.api_key = self.get_api_key()
@@ -583,7 +603,7 @@ class DirectOpenAIO1Model(OpenAIO1RequestResponseMixIn, DirectOpenAIClientMixIn,
 
 
 @dataclass
-class AzureOpenAIO1Model(OpenAIO1RequestResponseMixIn, AzureOpenAIClientMixIn, EndpointModel):
+class AzureOpenAIOModel(OpenAIOModelsRequestResponseMixIn, AzureOpenAIClientMixIn, EndpointModel):
     url: str = None
     model_name: str = None
     temperature: float = 1
@@ -595,6 +615,7 @@ class AzureOpenAIO1Model(OpenAIO1RequestResponseMixIn, AzureOpenAIClientMixIn, E
     seed: int = 0
     frequency_penalty: float = 0
     presence_penalty: float = 0
+    reasoning_effort: str = "medium"
     api_version: str = "2023-06-01-preview"
     auth_scope: str = "https://cognitiveservices.azure.com/.default"
 
