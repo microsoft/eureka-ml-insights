@@ -10,7 +10,12 @@ from eureka_ml_insights.configs import (
     PipelineConfig,
     PromptProcessingConfig,
 )
-from eureka_ml_insights.core import DataProcessing, Inference, PromptProcessing, DataUnion
+from eureka_ml_insights.core import (
+    DataProcessing,
+    DataUnion,
+    Inference,
+    PromptProcessing,
+)
 from eureka_ml_insights.data_utils import (
     AddColumnAndData,
     ColumnRename,
@@ -30,6 +35,13 @@ from .aime import AIME_PIPELINE
 
 DEFAULT_N_ITER = 2
 
+
+resume_from_dict = {
+    1: "/home/sayouse/git/eureka-ml-insights/logs/AIME_SEQ_PIPELINE/2025-03-04-21-07-09.687511/student_inference_result_1/inference_result.jsonl",
+    2: None,
+}
+
+
 class AIME_SEQ_PIPELINE(AIME_PIPELINE):
     """This class specifies the config for running AIME benchmark on any model"""
 
@@ -42,15 +54,19 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
         """
         verification_cols_so_far = [f"verification_result_{j}" for j in range(1, i)]
         extracted_ans_cols_so_far = [f"student_extracted_answer_{j}" for j in range(1, i)]
-        return [
-            "attempt_id",
-            "model_output",
-            "uid",
-            "prompt",
-            "ground_truth",
-            "Year",
-            "ID",
-        ] + verification_cols_so_far + extracted_ans_cols_so_far
+        return (
+            [
+                "attempt_id",
+                "model_output",
+                "uid",
+                "prompt",
+                "ground_truth",
+                "Year",
+                "ID",
+            ]
+            + verification_cols_so_far
+            + extracted_ans_cols_so_far
+        )
 
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
@@ -60,10 +76,10 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
         super().configure_pipeline(model_config, resume_from, **kwargs)
 
         n_iter = kwargs.get("n_iter", DEFAULT_N_ITER)
-        
+
         # list of verification components used in the pipeline
         verification_comps = []
-        
+
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
             SamplerTransform(random_seed=40, sample_count=1)
         )
@@ -84,14 +100,13 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                     },
                 ),
                 output_dir=os.path.join(self.log_dir, f"student_inference_result_{i}"),
-                resume_from=resume_from,
+                resume_from=resume_from_dict.get(i, None),
                 chat_mode=True,
             )
 
             component_configs.append(self.student_inference_comp)
 
-            
-            # Answer extraction and metric-based verification 
+            # Answer extraction and metric-based verification
             self.verification_comp = DataProcessingConfig(
                 component_type=DataProcessing,
                 data_reader_config=DataSetConfig(
@@ -117,7 +132,7 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
             # Variable maintaining link to the most recent inference result results to be used for evaluation
             # This will be updated to point to the concatenation of results from all iterations
             self.last_inference_result_join_comp = self.verification_comp
-            
+
             if i > 1:
                 self.last_inference_result_join_comp = DataUnionConfig(
                     component_type=DataUnion,
@@ -126,7 +141,6 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                         {
                             "path": os.path.join(self.verification_comp.output_dir, "transformed_data.jsonl"),
                             "format": ".jsonl",
-
                         },
                     ),
                     other_data_reader_config=DataSetConfig(
@@ -140,7 +154,6 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                     output_dir=os.path.join(self.log_dir, f"last_inference_result_join_{i}"),
                 )
                 component_configs.append(self.last_inference_result_join_comp)
-            
 
             # Filtering out the rows with correct answer
             self.filtering_comp = DataProcessingConfig(
@@ -157,7 +170,6 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
             )
             component_configs.append(self.filtering_comp)
 
-
             # Create a new prompt to ask the teacher model to provide hints.
             self.hint_processing_comp = PromptProcessingConfig(
                 component_type=PromptProcessing,
@@ -168,9 +180,10 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                         "format": ".jsonl",
                         "transform": ColumnRename(
                             name_mapping={
-                                            "verification_result": f"verification_result_{i}",
-                                            "model_output": f"student_output_{i}",
-                                         }),
+                                "verification_result": f"verification_result_{i}",
+                                "model_output": f"student_output_{i}",
+                            }
+                        ),
                     },
                 ),
                 prompt_template_path=os.path.join(
@@ -186,8 +199,10 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                 model_config=model_config,
                 data_loader_config=DataSetConfig(
                     MMDataLoader,
-                    {"path": os.path.join(self.hint_processing_comp.output_dir, "transformed_data.jsonl"),
-                     "misc_columns": ["previous_messages"]},
+                    {
+                        "path": os.path.join(self.hint_processing_comp.output_dir, "transformed_data.jsonl"),
+                        "misc_columns": ["previous_messages"],
+                    },
                 ),
                 output_dir=os.path.join(self.log_dir, f"teacher_inference_result_{i}"),
                 max_concurrent=10,
@@ -206,7 +221,9 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                         "transform": ColumnRename(name_mapping={"model_output": "teacher_hint"}),
                     },
                 ),
-                prompt_template_path=os.path.join(os.path.dirname(__file__), "../prompt_templates/aime_templates/prompt_w_hint.jinja"),
+                prompt_template_path=os.path.join(
+                    os.path.dirname(__file__), "../prompt_templates/aime_templates/prompt_w_hint.jinja"
+                ),
                 output_dir=os.path.join(self.log_dir, f"teacher_hint_prompt_{i}"),
             )
             component_configs.append(self.prompt_processing_with_hint)

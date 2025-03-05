@@ -14,10 +14,7 @@ from .dna import DNA_PIPELINE
 from .drop import Drop_Experiment_Pipeline
 from .flenqa import FlenQA_Experiment_Pipeline
 from .geometer import GEOMETER_PIPELINE
-from .gpqa import ( 
-    GPQA_Experiment_Pipeline,
-    GPQA_PIPELINE_5Run
-)
+from .gpqa import GPQA_Experiment_Pipeline, GPQA_PIPELINE_5Run
 from .ifeval import IFEval_PIPELINE
 from .image_understanding.object_detection import (
     OBJECT_DETECTION_PAIRS_LOCAL_PIPELINE,

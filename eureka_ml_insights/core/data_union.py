@@ -25,9 +25,9 @@ class DataUnion(DataProcessing):
         """
         super().__init__(data_reader_config, output_dir, output_data_columns)
         self.other_data_reader = other_data_reader_config.class_name(**other_data_reader_config.init_args)
-                
+
     @classmethod
-    def from_config(cls, config):        
+    def from_config(cls, config):
         return cls(
             config.data_reader_config,
             config.output_dir,
@@ -46,7 +46,7 @@ class DataUnion(DataProcessing):
         elif len(other_df.columns) == 0:
             concat_df = df
         self.output_data_columns = [col for col in self.output_data_columns if col in concat_df.columns]
-        if (len(concat_df.columns) > 0):
+        if len(concat_df.columns) > 0:
             concat_df = self.get_desired_columns(concat_df)
         concat_df = concat_df.drop_duplicates()
         self.write_output(concat_df)

@@ -21,7 +21,7 @@ class AIMEExtractAnswer(DFTransformBase):
         Parse the input string to extract answer of a given AIME question.
         Parameters:
             response (str): Input string containing answer X in the form of "Final Answer: X".
-        Returns: 
+        Returns:
             numerical_value (float): A numeric value representing the model's answer.
         """
         numerical_value = None
@@ -40,7 +40,7 @@ class AIMEExtractAnswer(DFTransformBase):
             else:
                 try:
                     numerical_value = float(answer_str)
-                except ValueError as e:
+                except ValueError:
                     numerical_value = None
 
         return numerical_value

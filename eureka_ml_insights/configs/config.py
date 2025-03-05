@@ -98,6 +98,7 @@ class DataJoinConfig(DataProcessingConfig):
     other_data_reader_config: UtilityClassConfigType = None
     pandas_merge_args: dict = None
 
+
 @dataclass
 class DataUnionConfig(DataProcessingConfig):
     """Config class for the data union component
@@ -108,6 +109,7 @@ class DataUnionConfig(DataProcessingConfig):
 
     other_data_reader_config: UtilityClassConfigType = None
     output_data_columns: List[str] = None
+
 
 @dataclass
 class InferenceConfig(ComponentConfig):

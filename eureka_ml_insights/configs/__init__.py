@@ -1,9 +1,9 @@
 from .config import (
     AggregatorConfig,
     DataJoinConfig,
-    DataUnionConfig,
     DataProcessingConfig,
     DataSetConfig,
+    DataUnionConfig,
     EvalReportingConfig,
     InferenceConfig,
     MetricConfig,
