@@ -19,7 +19,11 @@ from eureka_ml_insights.models import (
     GeminiModel,
     LlamaServerlessAzureRestEndpointModel,
     MistralServerlessAzureRestEndpointModel,
-    TogetherModel,
+    AzureOpenAIModel,
+    DirectOpenAIModel,
+    DirectOpenAIOModel,
+    AzureOpenAIOModel,
+    TogetherModel
 )
 
 
@@ -66,7 +70,7 @@ class RunPythonTransform(DFTransformBase):
     def __post_init__(self):
         # To avoid disastrous consequences, we only allow operations on the data frame.
         # Therefore, every statement in the python_code should be in the form of df['column_name'] = ... or df = ...
-        self.allowed_statement_prefixes = ["df = ", "df[", "import ", "if "]
+        self.allowed_statement_prefixes = ["df = ", "df[", "import "]
         # Similarly, we only allow a limited set of imports. To add to this safe list, create a PR.
         self.allowed_imports = ["ast", "math", "numpy"]
         self.validate()
@@ -458,15 +462,13 @@ class ExtractUsageTransform:
             usage_completion_read_col = "candidates_token_count"
         elif self.model_config.class_name is ClaudeModel:
             usage_completion_read_col = "output_tokens"
-        elif (
-            self.model_config.class_name is AzureOpenAIO1Model
-            or self.model_config.class_name is AzureOpenAIModel
-            or self.model_config.class_name is LlamaServerlessAzureRestEndpointModel
-            or self.model_config.class_name is MistralServerlessAzureRestEndpointModel
-            or self.model_config.class_name is DirectOpenAIModel
-            or self.model_config.class_name is DirectOpenAIO1Model
-            or self.model_config.class_name is TogetherModel
-        ):
+        elif (self.model_config.class_name is AzureOpenAIOModel
+              or self.model_config.class_name is AzureOpenAIModel 
+              or self.model_config.class_name is LlamaServerlessAzureRestEndpointModel
+              or self.model_config.class_name is MistralServerlessAzureRestEndpointModel
+              or self.model_config.class_name is DirectOpenAIModel 
+              or self.model_config.class_name is DirectOpenAIOModel
+              or self.model_config.class_name is TogetherModel):
             usage_completion_read_col = "completion_tokens"
         # if the model is one for which the usage of completion tokens is known, use that corresponding column for the model
         # otherwise, use the default "n_output_tokens" which is computed with a universal tokenizer as shown in TokenCounterTransform()
