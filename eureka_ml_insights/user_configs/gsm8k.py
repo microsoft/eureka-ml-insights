@@ -21,6 +21,7 @@ from eureka_ml_insights.data_utils import (
     ColumnRename,
     CopyColumn,
     DataReader,
+    ExtractUsageTransform,
     HFDataReader,
     MajorityVoteTransform,
     MapStringsTransform,
@@ -50,10 +51,9 @@ class GSM8K_PIPELINE(ExperimentConfig):
     ) -> PipelineConfig:
 
         # --------------------------------------
-        # Data preprocessing
+        # * Data preprocessing
         # --------------------------------------
-        # * PromptProcessing:
-        # prepare data for inference, apply transformation, or apply a Jinja prompt template.
+        # Prepare data for inference, apply transformation, or apply a Jinja prompt template.
 
         self.preprocessing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
@@ -70,7 +70,7 @@ class GSM8K_PIPELINE(ExperimentConfig):
                                     "question": "prompt",
                                 }
                             ),
-                            # SamplerTransform(sample_count=5, random_seed=99),
+                            # SamplerTransform(sample_count=3, random_seed=99),
                             MultiplyTransform(n_repeats=int(n_repeats)),
                         ],
                     ),
@@ -83,11 +83,10 @@ class GSM8K_PIPELINE(ExperimentConfig):
         )
 
         # --------------------------------------
-        # Inference
+        # * Inference
         # --------------------------------------
-        # * Inference:  run your model on any processed data,
-        # for example running inference on the model subject to evaluation,
-        # or another model that is involved in the evaluation pipeline as an evaluator or judge.
+        # Run model on any processed data
+
         self.inference_comp = InferenceConfig(
             component_type=Inference,
             model_config=model_config,
@@ -101,15 +100,38 @@ class GSM8K_PIPELINE(ExperimentConfig):
         )
 
         # --------------------------------------
-        # Extract answer
+        # * Extract usage
         # --------------------------------------
-        # * DataProcessing: you can use this component to to post-process the model outputs.
-        self.postprocessing_comp = DataProcessingConfig(
+        # Get token usage information
+
+        self.usage_extraction_comp = DataProcessingConfig(
             component_type=DataProcessing,
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
                     "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            ExtractUsageTransform(model_config),
+                        ]
+                    ),
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "data_usage_extraction"),
+        )
+
+        # --------------------------------------
+        # * Extract answer
+        # --------------------------------------
+        # Extract answer from raw model output
+
+        self.postprocessing_comp = DataProcessingConfig(
+            component_type=DataProcessing,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.usage_extraction_comp.output_dir, "transformed_data.jsonl"),
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
@@ -130,10 +152,10 @@ class GSM8K_PIPELINE(ExperimentConfig):
         )
 
         # --------------------------------------
-        # Evaluation (compute accuracy)
+        # * Evaluation
         # --------------------------------------
-        # * EvalReporting: evaluate the model outputs using various metrics, aggregators
-        # and visualizers, and generate a report.
+        # Report metrics and aggregate results
+
         self.evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
             data_reader_config=DataSetConfig(
@@ -155,196 +177,229 @@ class GSM8K_PIPELINE(ExperimentConfig):
                         "filename_base": "ExactMatch",
                     },
                 ),
+                # Get average usage across all data points
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": ["usage_completion"],
+                        "first_groupby": "data_point_id",
+                        "filename_base": "UsageCompletion_Mean",
+                        "agg_fn": "mean",
+                    },
+                ),
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
         )
 
-        if int(n_repeats) > 1:
-
-            self.evalreporting_comp.aggregator_configs.extend(
-                [
-                    # Separate run accuracy (pass@1 for each repeat)
-                    AggregatorConfig(
-                        CountAggregator,
-                        {
-                            "column_names": ["ExactMatch_result"],
-                            "group_by": "data_repeat_id",
-                            "filename_base": "ExactMatch_SeparateRuns",
-                            "normalize": True,
-                        },
-                    ),
-                    # All-run accuracy (mean and std of pass@1 across repeats)
-                    AggregatorConfig(
-                        BiLevelCountAggregator,
-                        {
-                            "column_names": ["ExactMatch_result"],
-                            "first_groupby": "data_repeat_id",
-                            "filename_base": "ExactMatch_AverageOfRuns",
-                            "normalize": True,
-                        },
-                    ),
-                ]
-            )
-
-            # --------------------------------------
-            # Post-eval best-of-N/worst-of-N
-            # --------------------------------------
-
-            # Convert "ExactMatch_result" from correct/incorrect => 1/0
-            self.posteval_data_numeric_comp = DataProcessingConfig(
-                component_type=DataProcessing,
-                data_reader_config=DataSetConfig(
-                    DataReader,
-                    {
-                        "path": os.path.join(self.evalreporting_comp.output_dir, "metric_results.jsonl"),
-                        "format": ".jsonl",
-                        "transform": SequenceTransform(
-                            [
-                                CopyColumn("ExactMatch_result", "ExactMatch_result_numeric"),
-                                MapStringsTransform(
-                                    columns=["ExactMatch_result_numeric"],
-                                    mapping={"correct": "1", "incorrect": "0", "none": "NaN"},
-                                ),
-                            ]
-                        ),
-                    },
-                ),
-                output_dir=os.path.join(self.log_dir, "data_posteval_numeric_output"),
-            )
-
-            # Best-of-n aggregator
-            self.bestofn_evalreporting_comp = EvalReportingConfig(
-                component_type=EvalReporting,
-                data_reader_config=DataSetConfig(
-                    DataReader,
-                    {
-                        "path": os.path.join(self.posteval_data_numeric_comp.output_dir, "transformed_data.jsonl"),
-                        "format": ".jsonl",
-                    },
-                ),
-                aggregator_configs=[
-                    AggregatorConfig(
-                        BiLevelAggregator,
-                        {
-                            "column_names": ["ExactMatch_result_numeric"],
-                            "first_groupby": "data_point_id",
-                            "filename_base": "ExactMatch_BestOfN",
-                            "agg_fn": "max",
-                        },
-                    ),
-                ],
-                output_dir=os.path.join(self.log_dir, "eval_report_bestofn"),
-            )
-
-            # Worst-of-n aggregator
-            self.worstofn_evalreporting_comp = EvalReportingConfig(
-                component_type=EvalReporting,
-                data_reader_config=DataSetConfig(
-                    DataReader,
-                    {
-                        "path": os.path.join(self.posteval_data_numeric_comp.output_dir, "transformed_data.jsonl"),
-                        "format": ".jsonl",
-                    },
-                ),
-                aggregator_configs=[
-                    AggregatorConfig(
-                        BiLevelAggregator,
-                        {
-                            "column_names": ["ExactMatch_result_numeric"],
-                            "first_groupby": "data_point_id",
-                            "filename_base": "ExactMatch_WorstOfN",
-                            "agg_fn": "min",
-                        },
-                    ),
-                ],
-                output_dir=os.path.join(self.log_dir, "eval_report_worstofn"),
-            )
-
-            # --------------------------------------
-            # Majority voting for multiple runs
-            # --------------------------------------
-            self.postprocessing_majorityvote_comp = DataProcessingConfig(
-                component_type=DataProcessing,
-                data_reader_config=DataSetConfig(
-                    DataReader,
-                    {
-                        "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
-                        "format": ".jsonl",
-                        "transform": SequenceTransform(
-                            [
-                                ColumnRename(
-                                    name_mapping={
-                                        "model_output": "raw_output",
-                                    }
-                                ),
-                                AddColumn("model_output"),
-                                GSM8KExtractAnswer("raw_output", "model_output"),
-                                GSM8KExtractAnswer("answer", "ground_truth"),
-                                MajorityVoteTransform(id_col="data_point_id"),
-                                ColumnRename(
-                                    name_mapping={
-                                        "model_output": "model_output_onerun",
-                                        "majority_vote": "model_output",
-                                    }
-                                ),
-                            ]
-                        ),
-                    },
-                ),
-                output_dir=os.path.join(self.log_dir, "data_postprocessing_output_majorityvote"),
-            )
-
-            self.evalreporting_majorityvote_comp = EvalReportingConfig(
-                component_type=EvalReporting,
-                data_reader_config=DataSetConfig(
-                    DataReader,
-                    {
-                        "path": os.path.join(
-                            self.postprocessing_majorityvote_comp.output_dir, "transformed_data.jsonl"
-                        ),
-                        "format": ".jsonl",
-                    },
-                ),
-                metric_config=MetricConfig(ExactMatch),
-                aggregator_configs=[
-                    AggregatorConfig(
-                        BiLevelCountAggregator,
-                        {
-                            "column_names": ["ExactMatch_result"],
-                            "first_groupby": "data_point_id",
-                            "filename_base": "MajorityVote",
-                            "normalize": True,
-                        },
-                    ),
-                ],
-                output_dir=os.path.join(self.log_dir, "eval_report_majorityvote"),
-            )
-
         pipeline_steps = [
             self.preprocessing_comp,
             self.inference_comp,
+            self.usage_extraction_comp,
             self.postprocessing_comp,
             self.evalreporting_comp,
         ]
 
         if int(n_repeats) > 1:
-            pipeline_steps.extend(
-                [
-                    self.posteval_data_numeric_comp,
-                    self.bestofn_evalreporting_comp,
-                    self.worstofn_evalreporting_comp,
-                    self.postprocessing_majorityvote_comp,
-                    self.evalreporting_majorityvote_comp,
-                ]
-            )
+            multirun_steps = self._configure_multirun_steps()
+            pipeline_steps.extend(multirun_steps)
 
         return PipelineConfig(pipeline_steps, self.log_dir)
 
 
+    def _configure_multirun_steps(self) -> list[Any]:
+        """
+        Builds and returns all additional aggregator configs and post-eval steps
+        needed for multi-run analysis: separate/average of runs, best-of-n,
+        worst-of-n, usage stats, and majority voting.
+        """
+
+        # Extend aggregator configs on the existing evalreporting_comp
+        self.evalreporting_comp.aggregator_configs.extend(
+            [
+                # Separate run accuracy (pass@1 for each repeat)
+                AggregatorConfig(
+                    CountAggregator,
+                    {
+                        "column_names": ["ExactMatch_result"],
+                        "group_by": "data_repeat_id",
+                        "filename_base": "ExactMatch_SeparateRuns",
+                        "normalize": True,
+                    },
+                ),
+                # All-run accuracy (mean and std of pass@1 across repeats)
+                AggregatorConfig(
+                    BiLevelCountAggregator,
+                    {
+                        "column_names": ["ExactMatch_result"],
+                        "first_groupby": "data_repeat_id",
+                        "filename_base": "ExactMatch_AverageOfRuns",
+                        "normalize": True,
+                    },
+                ),
+                # Calculate usage stats per repeat
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": ["usage_completion"],
+                        "first_groupby": "data_repeat_id",
+                        "filename_base": "UsageCompletion_MeanofN",
+                        "agg_fn": "mean",
+                    },
+                ),
+                # Sums usage across all repeats for each data point
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": ["usage_completion"],
+                        "first_groupby": "data_point_id",
+                        "filename_base": "UsageCompletion_AllN",
+                        "agg_fn": "sum",
+                    },
+                ),
+            ]
+        )
+
+        # Convert "ExactMatch_result" from correct/incorrect => 1/0
+        self.posteval_data_numeric_comp = DataProcessingConfig(
+            component_type=DataProcessing,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.evalreporting_comp.output_dir, "metric_results.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            CopyColumn("ExactMatch_result", "ExactMatch_result_numeric"),
+                            MapStringsTransform(
+                                columns=["ExactMatch_result_numeric"],
+                                mapping={"correct": "1", "incorrect": "0", "none": "NaN"},
+                            ),
+                        ]
+                    ),
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "data_posteval_numeric_output"),
+        )
+
+        # Best-of-n aggregator
+        self.bestofn_evalreporting_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.posteval_data_numeric_comp.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
+                },
+            ),
+            aggregator_configs=[
+                # Measures fraction of data points solved by at least one attempt
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": ["ExactMatch_result_numeric"],
+                        "first_groupby": "data_point_id",
+                        "filename_base": "ExactMatch_BestOfN",
+                        "agg_fn": "max",
+                    },
+                ),
+            ],
+            output_dir=os.path.join(self.log_dir, "eval_report_bestofn"),
+        )
+
+        # Worst-of-n aggregator
+        self.worstofn_evalreporting_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.posteval_data_numeric_comp.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
+                },
+            ),
+            aggregator_configs=[
+                # Measures fraction of data points correct on every attempt.
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": ["ExactMatch_result_numeric"],
+                        "first_groupby": "data_point_id",
+                        "filename_base": "ExactMatch_WorstOfN",
+                        "agg_fn": "min",
+                    },
+                ),
+            ],
+            output_dir=os.path.join(self.log_dir, "eval_report_worstofn"),
+        )
+
+        # Majority voting for multiple runs
+        self.postprocessing_majorityvote_comp = DataProcessingConfig(
+            component_type=DataProcessing,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            ColumnRename(
+                                name_mapping={
+                                    "model_output": "raw_output",
+                                }
+                            ),
+                            AddColumn("model_output"),
+                            GSM8KExtractAnswer("raw_output", "model_output"),
+                            GSM8KExtractAnswer("answer", "ground_truth"),
+                            MajorityVoteTransform(id_col="data_point_id"),
+                            ColumnRename(
+                                name_mapping={
+                                    "model_output": "model_output_onerun",
+                                    "majority_vote": "model_output",
+                                }
+                            ),
+                        ]
+                    ),
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "data_postprocessing_output_majorityvote"),
+        )
+
+        self.evalreporting_majorityvote_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(
+                        self.postprocessing_majorityvote_comp.output_dir, "transformed_data.jsonl"
+                    ),
+                    "format": ".jsonl",
+                },
+            ),
+            metric_config=MetricConfig(ExactMatch),
+            aggregator_configs=[
+                AggregatorConfig(
+                    BiLevelCountAggregator,
+                    {
+                        "column_names": ["ExactMatch_result"],
+                        "first_groupby": "data_point_id",
+                        "filename_base": "MajorityVote",
+                        "normalize": True,
+                    },
+                ),
+            ],
+            output_dir=os.path.join(self.log_dir, "eval_report_majorityvote"),
+        )
+
+        return [
+            self.posteval_data_numeric_comp,
+            self.bestofn_evalreporting_comp,
+            self.worstofn_evalreporting_comp,
+            self.postprocessing_majorityvote_comp,
+            self.evalreporting_majorityvote_comp,
+        ]
+
 # =============================
 # MUTATED GSM8K BENCHMARK
 # =============================
-
 
 class GSM8K_MUTATED_PIPELINE(GSM8K_PIPELINE):
     """This class specifies the config for running mutated GSM8K benchmark on any model"""
