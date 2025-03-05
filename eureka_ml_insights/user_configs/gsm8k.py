@@ -23,8 +23,8 @@ from eureka_ml_insights.data_utils import (
     DataReader,
     HFDataReader,
     MajorityVoteTransform,
+    MapStringsTransform,
     MultiplyTransform,
-    ReplaceStringsTransform,
     SamplerTransform,
     SequenceTransform,
 )
@@ -201,11 +201,9 @@ class GSM8K_PIPELINE(ExperimentConfig):
                         "transform": SequenceTransform(
                             [
                                 CopyColumn("ExactMatch_result", "ExactMatch_result_numeric"),
-                                # AddColumn("ExactMatch_result_numeric"),
-                                ReplaceStringsTransform(
+                                MapStringsTransform(
                                     columns=["ExactMatch_result_numeric"],
                                     mapping={"correct": "1", "incorrect": "0", "none": "NaN"},
-                                    case=False,
                                 ),
                             ]
                         ),
