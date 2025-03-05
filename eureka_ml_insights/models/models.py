@@ -1138,7 +1138,7 @@ class vLLMModel(Model):
         )
     
         start_time = time.time()
-        outputs = self.model.generate(text_prompt, sampling_params)
+        outputs = self.model.chat(text_prompt, sampling_params)
         end_time = time.time()
         
         self.model_output = outputs[0].outputs[0].text
@@ -1149,8 +1149,7 @@ class vLLMModel(Model):
         response_dict = {}
 
         if text_prompt:
-            if self.apply_model_template:
-                text_prompt = self.model_template_fn(text_prompt, system_message)
+            text_prompt = self.model_template_fn(text_prompt, system_message)
 
             try:
                 meta_response = self._generate(text_prompt, query_images=query_images)
@@ -1173,7 +1172,13 @@ class vLLMModel(Model):
         return response_dict
 
     def model_template_fn(self, text_prompt, system_message=None):
-        raise NotImplementedError
+        if system_message:
+            return [
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": text_prompt},
+            ]
+        else:
+            return [{"role": "user", "content": text_prompt}]
 
 
 @dataclass
