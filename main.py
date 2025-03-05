@@ -21,6 +21,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--resume_from", type=str, help="The path to the inference_result.jsonl to resume from.", default=None
     )
+    parser.add_argument("--local_vllm", action="store_true", help="Deploy/use local vllm for inference.")
+    parser.add_argument("--ports", type=str, nargs="*", help="Ports where vllm model is already hosted.", default=None)
+    parser.add_argument("--num_servers", type=int, help="Number of servers to deploy.", default=None)
     init_args = {}
 
     # catch any unknown arguments
@@ -38,7 +41,30 @@ if __name__ == "__main__":
             logging.info(f"Unknown arguments: {unknown_args} will be sent as is to the experiment config class.")
 
     experiment_config_class = args.exp_config
-    if args.model_config:
+
+    if args.local_vllm and args.model_config:
+        from eureka_ml_insights.configs.config import ModelConfig
+        from eureka_ml_insights.models import LocalVLLMModel
+        try:
+            model_config = getattr(model_configs, args.model_config)
+            if isinstance(model_config, ModelConfig):
+                model_config.init_args["ports"] = args.ports
+                model_config.init_args["num_servers"] = args.num_servers if args.num_servers else 1
+            init_args["model_config"] = model_config
+            # Logic above is that certain deployment parameters like ports and num_servers
+            # can be variable and so we allow them to be overridden by command line args.
+        except:
+            # If there's no config, create one.
+            init_args["model_config"] = ModelConfig(
+                LocalVLLMModel,
+                {
+                    "model_name": args.model_config,
+                    "ports": args.ports,
+                    "num_servers": args.num_servers if args.num_servers else 1
+                }
+            )
+
+    elif args.model_config:
         try:
             init_args["model_config"] = getattr(model_configs, args.model_config)
         except AttributeError:
@@ -55,3 +81,12 @@ if __name__ == "__main__":
     logging.info(f"Saving experiment logs in {pipeline_config.log_dir}.")
     pipeline = Pipeline(pipeline_config.component_configs, pipeline_config.log_dir)
     pipeline.run()
+
+    # Shut down vllm servers.
+    if args.local_vllm:
+        try:
+            from eureka_ml_insights.models.models import LocalVLLMDeploymentHandler
+            LocalVLLMDeploymentHandler.shutdown_servers()
+        except:
+            logging.warning("Failed to shut down local vllm servers.")
+    
