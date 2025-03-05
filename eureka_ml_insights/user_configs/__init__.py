@@ -8,15 +8,13 @@ from .aime import (
     AIME_PIPELINE512Run,
     AIME_PIPELINE1024Run,
 )
+from .aime_seq import AIME_SEQ_PIPELINE
 from .ba_calendar import BA_Calendar_Parallel_PIPELINE, BA_Calendar_PIPELINE
 from .dna import DNA_PIPELINE
 from .drop import Drop_Experiment_Pipeline
 from .flenqa import FlenQA_Experiment_Pipeline
 from .geometer import GEOMETER_PIPELINE
-from .gpqa import ( 
-    GPQA_Experiment_Pipeline,
-    GPQA_PIPELINE_5Run
-)
+from .gpqa import GPQA_Experiment_Pipeline, GPQA_PIPELINE_5Run
 from .ifeval import IFEval_PIPELINE
 from .image_understanding.object_detection import (
     OBJECT_DETECTION_PAIRS_LOCAL_PIPELINE,
@@ -134,6 +132,7 @@ __all__ = [
     AIME_PIPELINE256Run,
     AIME_PIPELINE512Run,
     AIME_PIPELINE1024Run,
+    AIME_SEQ_PIPELINE,
     NPHARD_TSP_PIPELINE,
     NPHARD_TSP_PIPELINE_MULTIPLE_RUNS,
 ]
