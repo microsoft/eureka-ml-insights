@@ -59,10 +59,10 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
         # this call to super will configure the initial prompt processing and final eval reporting comps that can be reused.
         super().configure_pipeline(model_config, resume_from, **kwargs)
 
-        n_iter = kwargs.get("n_iter", DEFAULT_N_ITER + 1)
+        n_iter = kwargs.get("n_iter", DEFAULT_N_ITER)
         
         # list of verification components used in the pipeline
-        verificaiton_comps = []
+        verification_comps = []
         
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
             SamplerTransform(random_seed=40, sample_count=1)
@@ -92,7 +92,7 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
 
             
             # Answer extraction and metric-based verification 
-            self.verificaiton_comp = DataProcessingConfig(
+            self.verification_comp = DataProcessingConfig(
                 component_type=DataProcessing,
                 data_reader_config=DataSetConfig(
                     DataReader,
@@ -111,12 +111,12 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                 ),
                 output_dir=os.path.join(self.log_dir, f"verification_{i}"),
             )
-            verificaiton_comps.append(self.verificaiton_comp)
-            component_configs.append(self.verificaiton_comp)
+            verification_comps.append(self.verification_comp)
+            component_configs.append(self.verification_comp)
 
             # Variable maintaining link to the most recent inference result results to be used for evaluation
             # This will be updated to point to the concatenation of results from all iterations
-            self.last_inference_result_join_comp = self.verificaiton_comp
+            self.last_inference_result_join_comp = self.verification_comp
             
             if i > 1:
                 self.last_inference_result_join_comp = DataUnionConfig(
@@ -124,7 +124,7 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                     data_reader_config=DataSetConfig(
                         DataReader,
                         {
-                            "path": os.path.join(self.verificaiton_comp.output_dir, "transformed_data.jsonl"),
+                            "path": os.path.join(self.verification_comp.output_dir, "transformed_data.jsonl"),
                             "format": ".jsonl",
 
                         },
@@ -132,7 +132,7 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                     other_data_reader_config=DataSetConfig(
                         DataReader,
                         {
-                            "path": os.path.join(self.verificaiton_comps[-2].output_dir, "transformed_data.jsonl"),
+                            "path": os.path.join(verification_comps[-2].output_dir, "transformed_data.jsonl"),
                             "format": ".jsonl",
                         },
                     ),
@@ -148,7 +148,7 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                 data_reader_config=DataSetConfig(
                     DataReader,
                     {
-                        "path": os.path.join(self.verificaiton_comp.output_dir, "transformed_data.jsonl"),
+                        "path": os.path.join(self.verification_comp.output_dir, "transformed_data.jsonl"),
                         "format": ".jsonl",
                         "transform": RunPythonTransform(python_code="df = df[df['verification_result'] != 'correct']"),
                     },
@@ -164,7 +164,7 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                 data_reader_config=DataSetConfig(
                     DataReader,
                     {
-                        "path": os.path.join(self.verificaiton_comp.output_dir, "transformed_data.jsonl"),
+                        "path": os.path.join(self.filtering_comp.output_dir, "transformed_data.jsonl"),
                         "format": ".jsonl",
                         "transform": ColumnRename(
                             name_mapping={
