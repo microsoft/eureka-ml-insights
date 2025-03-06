@@ -2,12 +2,14 @@
 
 import json
 import logging
+import random
+import re
 import requests
 import time
 import urllib.request
 from abc import ABC, abstractmethod
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-import random
 
 import anthropic
 import tiktoken
@@ -1157,7 +1159,7 @@ class vLLMModel(Model):
         raise NotImplementedError
     
 
-class LocalVLLMDeploymentHandler:
+class _LocalVLLMDeploymentHandler:
     """This class is used to handle the deployment of vLLM servers."""
 
     # Chose against dataclass here so we have the option to accept kwargs
@@ -1241,22 +1243,35 @@ class LocalVLLMDeploymentHandler:
         return healthy_ports
     
     def deploy_servers(self):
-        logging.info(f"No vLLM servers are running. Starting {self.num_servers} new servers at {self.ports}.")
-        import os, subprocess, sys, datetime
-        
-        env = os.environ.copy()
-        env['NUM_SERVERS'] = str(self.num_servers)
-        env['CURRENT_PYTHON_EXEC'] = sys.executable
-        env['GPU_SKIP'] = str(self.pipeline_parallel_size * self.tensor_parallel_size)
+        """Deploy vLLM servers in background threads using the specified parameters."""
 
+        logging.info(f"No vLLM servers are running. Starting {self.num_servers} new servers at {self.ports}.")
+        import os, datetime
+
+        gpus_per_port = self.pipeline_parallel_size * self.tensor_parallel_size
         date = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S.%f")
         log_dir = os.path.join("logs", "local_vllm_deployment_logs", f"{date}")
         os.makedirs(log_dir)
-        env['LOCAL_VLLM_LOG_DIR'] = log_dir
+
+        executor = ThreadPoolExecutor(max_workers=self.num_servers)
+        futures = [executor.submit(lambda index: self.deploy_server(index, gpus_per_port, log_dir), i) for i in range(self.num_servers)]
+
+    def deploy_server(self, index: int, gpus_per_port: int, log_dir: str):
+        """Deploy a single vLLM server using gpus_per_port many gpus starting at index*gpus_per_port."""
+        
+        import os, subprocess
+
+        port = 8000 + index
+        first_gpu = index * gpus_per_port
+        last_gpu = first_gpu + gpus_per_port - 1
+        devices = ",".join(str(gpu_num) for gpu_num in range(first_gpu, last_gpu + 1))
+        log_file = os.path.join(log_dir, f"{port}.log")
 
         command = [
-            os.path.dirname(os.path.abspath(__file__)) + "/vllm_deployment_script.sh",
-            "--model", self.model_name,
+            "CUDA_VISIBLE_DEVICES=" + devices,
+            "vllm serve",
+            self.model_name,
+            "--port", str(port),
             "--tensor_parallel_size", str(self.tensor_parallel_size),
             "--pipeline_parallel_size", str(self.pipeline_parallel_size),
             "--dtype", self.dtype,
@@ -1269,17 +1284,11 @@ class LocalVLLMDeploymentHandler:
             command.append(self.quantization)
         if self.trust_remote_code:
             command.append("--trust_remote_code")
+        #command.append(">> " + log_file + " 2>&1 &")
+        command = " ".join(command)
         logging.info(f"Running command: {command}")
-        response = subprocess.run(command, text=True, env=env)
-        return response
-    
-    @classmethod
-    def shutdown_servers(cls):
-        # Consider whether this is appropriate since it will probably kill all vLLM servers.
-        import subprocess
-        logging.info(f"Shutting down vLLM servers.")
-        command = [f'pgrep -f "vllm.entrypoints.openai.api_server --model" | xargs kill -INT']
-        subprocess.run(command, shell=True)
+        with open(log_file, 'w') as log_writer:
+            subprocess.run(command, shell=True, stdout=log_writer, stderr=log_writer)
 
         
 @dataclass
@@ -1301,7 +1310,7 @@ class LocalVLLMModel(Model, OpenAICommonRequestResponseMixIn):
 
     # Deployment handler
     ports: list = None
-    handler: LocalVLLMDeploymentHandler = None
+    handler: _LocalVLLMDeploymentHandler = None
 
     # Inference parameters
     temperature: float = 0.01
@@ -1312,7 +1321,7 @@ class LocalVLLMModel(Model, OpenAICommonRequestResponseMixIn):
     def __post_init__(self):
         if not self.model_name:
             raise ValueError("LocalVLLM model_name must be specified.")
-        self.handler = LocalVLLMDeploymentHandler(
+        self.handler = _LocalVLLMDeploymentHandler(
             model_name=self.model_name,
             num_servers=self.num_servers,
             trust_remote_code=self.trust_remote_code,
@@ -1351,7 +1360,7 @@ class LocalVLLMModel(Model, OpenAICommonRequestResponseMixIn):
         response_dict = {}
 
         if text_prompt:
-            # Format request for OpenAI API using create_request from OpenAIRequestResponseMixIn
+            # Format request for OpenAI API using create_request from OpenAICommonRequestResponseMixIn
             request = self.create_request(text_prompt, query_images, system_message)
             try:
                 response_dict.update(self._generate(request))

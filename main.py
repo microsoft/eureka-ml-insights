@@ -81,12 +81,3 @@ if __name__ == "__main__":
     logging.info(f"Saving experiment logs in {pipeline_config.log_dir}.")
     pipeline = Pipeline(pipeline_config.component_configs, pipeline_config.log_dir)
     pipeline.run()
-
-    # Shut down vllm servers.
-    if args.local_vllm:
-        try:
-            from eureka_ml_insights.models.models import LocalVLLMDeploymentHandler
-            LocalVLLMDeploymentHandler.shutdown_servers()
-        except:
-            logging.warning("Failed to shut down local vllm servers.")
-    
