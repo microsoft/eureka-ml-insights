@@ -37,9 +37,9 @@ class BA_Causal_PIPELINE(ExperimentConfig):
         data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
             prompt_template_path=os.path.join(
-                os.path.dirname(__file__), "../prompt_templates/ba_causal_templates/ba_causal_prompt.jinja"
+                # os.path.dirname(__file__), "../prompt_templates/ba_causal_templates/ba_causal_prompt.jinja"
                 # os.path.dirname(__file__), "../prompt_templates/ba_causal_templates/ba_causal_descriptive.jinja"
-                # os.path.dirname(__file__), "../prompt_templates/ba_causal_templates/ba_causal_step.jinja"
+                os.path.dirname(__file__), "../prompt_templates/ba_causal_templates/ba_causal_step.jinja"
             ),
             data_reader_config=DataSetConfig(
                 DataReader,

@@ -19,6 +19,7 @@ from eureka_ml_insights.data_utils.transform import (
     MajorityVoteTransform,
     MultiplyTransform,
     RunPythonTransform,
+    SamplerTransform,
     SequenceTransform,
 )
 from eureka_ml_insights.metrics.ba_calendar_metrics import BACalendarMetric
@@ -60,6 +61,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                         [
                             ColumnRename(name_mapping={"task_prompt": "prompt"}),
                             MultiplyTransform(n_repeats=1),
+                            # SamplerTransform(sample_count=20, random_seed=99),
                         ]
                     ),
                 },

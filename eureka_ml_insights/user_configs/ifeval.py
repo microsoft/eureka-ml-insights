@@ -13,7 +13,7 @@ from eureka_ml_insights.data_utils.data import (
     DataReader,
     HFDataReader,
 )
-from eureka_ml_insights.data_utils.transform import RunPythonTransform
+from eureka_ml_insights.data_utils.transform import RunPythonTransform, SamplerTransform
 from eureka_ml_insights.metrics.ifeval_metrics import IFEvalMetric
 from eureka_ml_insights.metrics.reports import (
     AverageAggregator,
@@ -49,6 +49,7 @@ class IFEval_PIPELINE(ExperimentConfig):
                 {
                     "path": "google/IFEval",
                     "split": "train",
+                    # "transform": SamplerTransform(sample_count=20, random_seed=99),
                 },
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
