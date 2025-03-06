@@ -1070,7 +1070,7 @@ class LLaVAModel(LLaVAHuggingFaceModel):
 
 
 @dataclass
-class vLLMModel(Model):
+class VLLMModel(Model):
     """This class is used to run a self-hosted language model via vLLM apis.
     This class uses the chat() functionality of vLLM which applies a template included in the HF model files.
     If the model files do not include a template, no template will be applied.
