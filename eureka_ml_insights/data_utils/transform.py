@@ -1,5 +1,4 @@
 import ast
-import logging
 import re
 from abc import abstractmethod
 from dataclasses import dataclass, field
@@ -8,24 +7,22 @@ from typing import Dict, List
 import numpy as np
 import pandas as pd
 import tiktoken
+import json
+import logging
 
 from eureka_ml_insights.configs.config import ModelConfig
+
 from eureka_ml_insights.models import (
-    AzureOpenAIModel,
-    AzureOpenAIO1Model,
     ClaudeModel,
-    DirectOpenAIModel,
-    DirectOpenAIO1Model,
     GeminiModel,
     LlamaServerlessAzureRestEndpointModel,
     MistralServerlessAzureRestEndpointModel,
     AzureOpenAIModel,
     DirectOpenAIModel,
-    DirectOpenAIO1Model,
-    AzureOpenAIO1Model,
+    DirectOpenAIOModel,
+    AzureOpenAIOModel,
     TogetherModel
 )
-
 
 @dataclass
 class DFTransformBase:
@@ -212,7 +209,7 @@ class ShuffleColumnsTransform(MultiColumnTransform):
     across different letter options (e.g. shuffle what choice maps to 'A' vs 'B' vs 'C').
     args:
         columns: List[str]: the list of columns from the pandas frame to be reshuffled.
-        rng: np.random.Generator: the dedicated numpy generator for the shuffling.
+        rng: np.random.Generator: the dedicated numpy generator for the shuffling. 
     """
 
     columns: List[str]
@@ -221,7 +218,6 @@ class ShuffleColumnsTransform(MultiColumnTransform):
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """For each row in df, shuffle values across these columns."""
         self.validate(df)
-
         def shuffle_row(row):
             row[self.columns] = self.rng.permutation(row[self.columns].values)
             return row
@@ -291,6 +287,7 @@ class ReplaceStringsTransform(MultiColumnTransform):
         for column in self.columns:
             for source, target in self.mapping.items():
                 df[column] = df[column].str.replace(source, target, case=self.case, regex=False)
+
         return df
 
 
@@ -353,9 +350,9 @@ class RegexTransform(MultiColumnTransform):
         else:
             results = re.findall(self.prompt_pattern, sentence)
         if results:
-            if self.occurrence == "first":
+            if (self.occurrence == "first"):
                 return results[0]
-            elif self.occurrence == "last":
+            elif (self.occurrence == "last"):
                 return results[len(results) - 1]
         else:
             return None
@@ -409,7 +406,7 @@ class MajorityVoteTransform:
     id_col: str = "data_point_id"  # Default column name for IDs
     majority_vote_col: str = "majority_vote"
 
-    def transform(self, df: pd.DataFrame, random_state: int = 0) -> pd.DataFrame:
+    def transform(self, df: pd.DataFrame, random_state:int=0) -> pd.DataFrame:
         """
         Transforms the dataframe by calculating the majority vote of model_output_col per id_col.
         If the 'model_output' is NaN, it will be droped before calculating the majority vote.
@@ -423,15 +420,10 @@ class MajorityVoteTransform:
         """
         # Step 1: Group by 'ID' and calculate the majority vote within each group
         df[self.majority_vote_col] = df.groupby(self.id_col)[self.model_output_col].transform(
-            lambda x: (
-                x.dropna().mode().sample(n=1, random_state=random_state).iloc[0]
-                if not x.dropna().mode().empty
-                else pd.NA
-            )
+            lambda x: x.dropna().mode().sample(n=1, random_state=random_state).iloc[0] if not x.dropna().mode().empty else pd.NA
         )
 
         return df
-
 
 @dataclass
 class ExtractUsageTransform:
@@ -442,10 +434,9 @@ class ExtractUsageTransform:
         usage_completion_output_col: str, default name of the column where completion numbers will be stored for all models
         prepend_completion_read_col: str, prepend string to add to the name of the usage column from which to read. Useful for cases when the usage column might have been renamed earlier in the pipeline.
     """
-
     model_config: ModelConfig
-    usage_completion_output_col: str = "usage_completion"
-    prepend_completion_read_col: str = ""
+    usage_completion_output_col: str = "usage_completion" 
+    prepend_completion_read_col: str = "" 
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -458,26 +449,24 @@ class ExtractUsageTransform:
             pd.DataFrame: Transformed dataframe with completion token numbers in completion_usage_col.
         """
         usage_completion_read_col = None
-        if self.model_config.class_name is GeminiModel:
+        if (self.model_config.class_name is GeminiModel):
             usage_completion_read_col = "candidates_token_count"
-        elif self.model_config.class_name is ClaudeModel:
+        elif (self.model_config.class_name is ClaudeModel):
             usage_completion_read_col = "output_tokens"
-        elif (self.model_config.class_name is AzureOpenAIO1Model
+        elif (self.model_config.class_name is AzureOpenAIOModel
               or self.model_config.class_name is AzureOpenAIModel 
               or self.model_config.class_name is LlamaServerlessAzureRestEndpointModel
               or self.model_config.class_name is MistralServerlessAzureRestEndpointModel
               or self.model_config.class_name is DirectOpenAIModel 
-              or self.model_config.class_name is DirectOpenAIO1Model
+              or self.model_config.class_name is DirectOpenAIOModel
               or self.model_config.class_name is TogetherModel):
             usage_completion_read_col = "completion_tokens"
         # if the model is one for which the usage of completion tokens is known, use that corresponding column for the model
         # otherwise, use the default "n_output_tokens" which is computed with a universal tokenizer as shown in TokenCounterTransform()
         if usage_completion_read_col:
-            df[self.usage_completion_output_col] = df[self.prepend_completion_read_col + "usage"].apply(
-                lambda x: x[usage_completion_read_col]
-            )
+            df[self.usage_completion_output_col] = df[self.prepend_completion_read_col + "usage"].apply(lambda x: x[usage_completion_read_col])
         elif self.prepend_completion_read_col + "n_output_tokens" in df.columns:
             df[self.usage_completion_output_col] = df[self.prepend_completion_read_col + "n_output_tokens"]
         else:
             df[self.usage_completion_output_col] = np.nan
-        return df
+        return df 
