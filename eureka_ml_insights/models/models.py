@@ -2,11 +2,14 @@
 
 import json
 import logging
+import random
+import re
+import requests
 import time
 import urllib.request
 from abc import ABC, abstractmethod
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-import random
 
 import anthropic
 import tiktoken
@@ -1156,41 +1159,189 @@ class vLLMModel(Model):
         raise NotImplementedError
     
 
+class _LocalVLLMDeploymentHandler:
+    """This class is used to handle the deployment of vLLM servers."""
+
+    # Chose against dataclass here so we have the option to accept kwargs
+    # and pass them to the vLLM deployment script.
+    def __init__(
+        self,
+        model_name: str = None,
+        num_servers: int = 1,
+        trust_remote_code: bool = False,
+        tensor_parallel_size: int = 1,
+        pipeline_parallel_size: int = 1,
+        dtype: str = "auto",
+        quantization: str = None,
+        seed: int = 0,
+        gpu_memory_utilization: float = 0.9,
+        cpu_offload_gb: float = 0,
+        ports: list = None,
+    ):
+        if not model_name:
+            raise ValueError("LocalVLLM model_name must be specified.")
+        self.model_name = model_name
+        self.num_servers = num_servers
+        self.trust_remote_code = trust_remote_code
+        self.tensor_parallel_size = tensor_parallel_size
+        self.pipeline_parallel_size = pipeline_parallel_size
+        self.dtype = dtype
+        self.quantization = quantization
+        self.seed = seed
+        self.gpu_memory_utilization = gpu_memory_utilization
+        self.cpu_offload_gb = cpu_offload_gb
+
+        self.ports = ports
+        self.session = requests.Session()
+        self.clients = self._get_clients()
+
+    def _get_clients(self):
+        '''Get clients to access vllm servers, by checking for running servers and deploying if necessary.'''
+        from openai import OpenAI as OpenAIClient
+
+        # If the user passes ports, check if the servers are running and populate clients accordingly.
+        if self.ports:
+            healthy_server_urls = ['http://0.0.0.0:' + port + '/v1' for port in self.get_healthy_ports()]
+            if len(healthy_server_urls) > 0:
+                logging.info(f"Found {len(healthy_server_urls)} healthy servers.")
+                return [OpenAIClient(base_url=url, api_key = 'none') for url in healthy_server_urls]
+
+        # Even if the user doesn't pass ports, we can check if there happen to be deployed servers.
+        # There is no guarantee that the servers are hosting the correct model.
+        self.ports = [str(8000 + i) for i in range(self.num_servers)]
+        healthy_server_urls = ['http://0.0.0.0:' + port + '/v1' for port in self.get_healthy_ports()]
+        if len(healthy_server_urls) == self.num_servers:
+            logging.info(f"Found {len(healthy_server_urls)} healthy servers.")
+            return [OpenAIClient(base_url=url, api_key = 'none') for url in healthy_server_urls]
+        
+        # If that didn't work, let's deploy and wait for servers to come online.
+        self.deploy_servers()
+        server_start_time = time.time()
+        while time.time() - server_start_time < 600:
+            time.sleep(10)
+            healthy_ports = self.get_healthy_ports()
+            if len(healthy_ports) == self.num_servers:
+                logging.info(f"All {self.num_servers} servers are online.")
+                healthy_server_urls = ['http://0.0.0.0:' + port + '/v1' for port in healthy_ports]
+                return [OpenAIClient(base_url=url, api_key = 'none') for url in healthy_server_urls]
+            else:
+                logging.info(f"Waiting for {self.num_servers - len(healthy_ports)} more servers to come online.")
+        
+        if len(self.clients) == 0:
+            raise RuntimeError(f"Failed to start servers.")
+
+    def get_healthy_ports(self) -> list[str]:
+        """Check if servers are running."""
+
+        healthy_ports = []
+        for port in self.ports:
+            try:
+                self.session.get('http://0.0.0.0:' + port +'/health')
+                healthy_ports.append(port)
+            except:
+                pass
+        return healthy_ports
+    
+    def deploy_servers(self):
+        """Deploy vLLM servers in background threads using the specified parameters."""
+
+        logging.info(f"No vLLM servers are running. Starting {self.num_servers} new servers at {self.ports}.")
+        import os, datetime
+
+        gpus_per_port = self.pipeline_parallel_size * self.tensor_parallel_size
+        date = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S.%f")
+        log_dir = os.path.join("logs", "local_vllm_deployment_logs", f"{date}")
+        os.makedirs(log_dir)
+
+        executor = ThreadPoolExecutor(max_workers=self.num_servers)
+        futures = [executor.submit(lambda index: self.deploy_server(index, gpus_per_port, log_dir), i) for i in range(self.num_servers)]
+
+    def deploy_server(self, index: int, gpus_per_port: int, log_dir: str):
+        """Deploy a single vLLM server using gpus_per_port many gpus starting at index*gpus_per_port."""
+        
+        import os, subprocess
+
+        port = 8000 + index
+        first_gpu = index * gpus_per_port
+        last_gpu = first_gpu + gpus_per_port - 1
+        devices = ",".join(str(gpu_num) for gpu_num in range(first_gpu, last_gpu + 1))
+        log_file = os.path.join(log_dir, f"{port}.log")
+
+        command = [
+            "CUDA_VISIBLE_DEVICES=" + devices,
+            "vllm serve",
+            self.model_name,
+            "--port", str(port),
+            "--tensor_parallel_size", str(self.tensor_parallel_size),
+            "--pipeline_parallel_size", str(self.pipeline_parallel_size),
+            "--dtype", self.dtype,
+            "--seed", str(self.seed),
+            "--gpu_memory_utilization", str(self.gpu_memory_utilization),
+            "--cpu_offload_gb", str(self.cpu_offload_gb)
+        ]
+        if self.quantization:
+            command.append("--quantization")
+            command.append(self.quantization)
+        if self.trust_remote_code:
+            command.append("--trust_remote_code")
+        #command.append(">> " + log_file + " 2>&1 &")
+        command = " ".join(command)
+        logging.info(f"Running command: {command}")
+        with open(log_file, 'w') as log_writer:
+            subprocess.run(command, shell=True, stdout=log_writer, stderr=log_writer)
+
+        
 @dataclass
 class LocalVLLMModel(Model, OpenAICommonRequestResponseMixIn):
     """This class is used when you have multiple vLLM servers running locally."""
 
     model_name: str = None
+
+    # Deployment parameters
+    num_servers: int = 1
+    trust_remote_code: bool = False
+    tensor_parallel_size: int = 1
+    pipeline_parallel_size: int = 1
+    dtype: str = "auto"
+    quantization: str = None
+    seed: int = 0
+    gpu_memory_utilization: float = 0.9
+    cpu_offload_gb: float = 0
+
+    # Deployment handler
     ports: list = None
-    clients: list = None
+    handler: _LocalVLLMDeploymentHandler = None
+
+    # Inference parameters
+    temperature: float = 0.01
+    top_p: float = .95
+    top_k: int = -1
     max_tokens: int = 2000
 
     def __post_init__(self):
-        self.prepare_clients()
+        if not self.model_name:
+            raise ValueError("LocalVLLM model_name must be specified.")
+        self.handler = _LocalVLLMDeploymentHandler(
+            model_name=self.model_name,
+            num_servers=self.num_servers,
+            trust_remote_code=self.trust_remote_code,
+            pipeline_parallel_size=self.pipeline_parallel_size,
+            tensor_parallel_size=self.tensor_parallel_size,
+            dtype=self.dtype,
+            quantization=self.quantization,
+            seed=self.seed,
+            gpu_memory_utilization=self.gpu_memory_utilization,
+            cpu_offload_gb=self.cpu_offload_gb,
+            ports=self.ports,
+        )
 
-    def prepare_clients(self):
-        from openai import OpenAI as OpenAIClient
-        import requests
-
-        # Populate self.clients with healthy servers
-        self.clients = []
-        potential_urls = ['http://0.0.0.0:' + port for port in self.ports]
-        session = requests.Session()
-        for url in potential_urls:
-            try:
-                session.get(url+'/health')
-                self.clients.append(OpenAIClient(base_url=url + '/v1', api_key = 'none'))
-            except:
-                pass
-        if len(self.clients) == 0:
-            raise Exception("No healthy servers found!")
-        
     def _generate(self, request):
 
-        # Similar logic as OpenAICommonRequestResponseMixIn
-        # except we don't just use one fixed client.
+        # Similar logic as OpenAICommonRequestResponseMixIn.
+        # If OpenAICommonRequestResponseMixIn is adapted for threadsafety,
+        # I think there's a way to use it even with multiple clients.
         start_time = time.time()
-        client = random.choice(self.clients)
+        client = random.choice(self.handler.clients)
         completion = client.chat.completions.create(
             model=self.model_name,
             max_tokens=self.max_tokens,
@@ -1202,14 +1353,14 @@ class LocalVLLMModel(Model, OpenAICommonRequestResponseMixIn):
         return {
             "model_output": raw_output["choices"][0]["message"]["content"],
             "response_time": end_time - start_time,
-            "n_tokens": raw_output["usage"]["completion_tokens"]
+            "n_output_tokens": raw_output["usage"]["completion_tokens"]
         }
 
     def generate(self, text_prompt, query_images=None, system_message=None):
         response_dict = {}
 
         if text_prompt:
-            # Format request for OpenAI API using create_request from OpenAIRequestResponseMixIn
+            # Format request for OpenAI API using create_request from OpenAICommonRequestResponseMixIn
             request = self.create_request(text_prompt, query_images, system_message)
             try:
                 response_dict.update(self._generate(request))
