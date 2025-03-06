@@ -1071,7 +1071,10 @@ class LLaVAModel(LLaVAHuggingFaceModel):
 
 @dataclass
 class vLLMModel(Model):
-    """This class is used to run a self-hosted language model via vLLM apis."""
+    """This class is used to run a self-hosted language model via vLLM apis.
+    This class uses the chat() functionality of vLLM which applies a template included in the HF model files.
+    If the model files do not include a template, no template will be applied.
+    """
 
     model_name: str = None
     trust_remote_code: bool = False
@@ -1086,7 +1089,6 @@ class vLLMModel(Model):
     top_p: float = 0.95
     top_k: int = -1
     max_tokens: int = 2000
-    apply_model_template: bool = False
 
     def __post_init__(self):
         # vLLM automatically picks an available devices when get_model() is called
