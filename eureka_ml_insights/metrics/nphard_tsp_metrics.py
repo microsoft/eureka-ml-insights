@@ -1,9 +1,9 @@
 import logging
 
-from .metrics_base import Metric
+from .metrics_base import Metric, CompositeMetric
 
 
-class NPHardTSPMetric(Metric):
+class NPHardTSPMetric(CompositeMetric):
     """
     A metric class for evaluating solutions to the Traveling Salesman Problem (TSP).
     A prediction is considered correct if it is a valid TSP tour and matches one of the optimal solutions.
@@ -24,23 +24,6 @@ class NPHardTSPMetric(Metric):
         Returns:
             tuple: (bool, float): Whether the path is valid and its length (if valid). Length is None if invalid.
         """
-        # Ensure the path is not empty and has the correct number of cities
-        if not path or len(path) != len(cities) + 1:
-            logging.info("Invalid: Path is empty or has incorrect number of nodes.")
-            return False, None
-
-        # Ensure the path starts and ends at the same city
-        if path[0] != path[-1]:
-            logging.info("Invalid: Path does not start and end at the same city.")
-            return False, None
-
-        # Ensure all cities are visited exactly once (except the start/end city)
-        unique_cities_in_path = set(path[:-1])  # Exclude the last city
-        unique_cities = set(cities)
-
-        if unique_cities_in_path != unique_cities:
-            logging.info("Invalid: Path does not include all cities exactly once.")
-            return False, None
 
         # If a distance matrix is provided, calculate the path length
         path_length = 0
@@ -53,6 +36,36 @@ class NPHardTSPMetric(Metric):
             except (IndexError, ValueError):
                 logging.info("Invalid: Path contains cities not in the provided distance matrix.")
                 return False, None
+
+        # Ensure the path is not empty and has the correct number of cities
+        if not path or len(path) != len(cities) + 1:
+            logging.info("Invalid: Path is empty or has incorrect number of nodes.")
+            return False, path_length
+
+        # Ensure the path starts and ends at the same city
+        if path[0] != path[-1]:
+            logging.info("Invalid: Path does not start and end at the same city.")
+            return False, path_length
+
+        # Ensure all cities are visited exactly once (except the start/end city)
+        unique_cities_in_path = set(path[:-1])  # Exclude the last city
+        unique_cities = set(cities)
+
+        if unique_cities_in_path != unique_cities:
+            logging.info("Invalid: Path does not include all cities exactly once.")
+            return False, path_length
+
+        # # If a distance matrix is provided, calculate the path length
+        # path_length = 0
+        # if distance_matrix:
+        #     try:
+        #         for i in range(len(path) - 1):
+        #             start = cities.index(path[i])
+        #             end = cities.index(path[i + 1])
+        #             path_length += distance_matrix[start][end]
+        #     except (IndexError, ValueError):
+        #         logging.info("Invalid: Path contains cities not in the provided distance matrix.")
+        #         return False, None
 
         return True, path_length
 
@@ -85,14 +98,21 @@ class NPHardTSPMetric(Metric):
         # Validate the TSP tour and compute its length
         is_tsp_path_valid, total_tsp_path_length = self.is_valid_tsp_path(tour, cities, weight_matrix_curr)
 
+        dist_path_gt = 0
+
+        if total_tsp_path_length is not None:
+            dist_path_gt = abs(total_tsp_path_length - ground_truth_curr)
+
+        # dist_path_gt = abs(total_tsp_path_length - ground_truth_curr)
+
         # The prediction is incorrect if the tour is invalid or the length is incorrect
         if not is_tsp_path_valid or total_tsp_path_length != ground_truth_curr:
-            return "incorrect"
+            return {"results": "incorrect", "dist_results": dist_path_gt} #"incorrect"
 
         # Check if the predicted tour is one of the optimal solutions
         is_tsp_tour_present = self.is_tour_present(optimal_tour_curr, tour_string)
 
         if not is_tsp_tour_present:
-            return "incorrect"
+            return {"results": "incorrect", "dist_results": dist_path_gt} #"incorrect"
 
-        return "correct"
+        return {"results": "correct", "dist_results": dist_path_gt} #"correct"

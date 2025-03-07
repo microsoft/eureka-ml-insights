@@ -35,7 +35,7 @@ from eureka_ml_insights.data_utils import (
 from eureka_ml_insights.data_utils.nphard_tsp_utils import (
     NPHARDTSPExtractAnswer,
 )
-from eureka_ml_insights.metrics import CountAggregator, NPHardTSPMetric, BiLevelAggregator, BiLevelCountAggregator
+from eureka_ml_insights.metrics import CountAggregator, NPHardTSPMetric, BiLevelAggregator, BiLevelCountAggregator, AverageAggregator, AverageSTDDevAggregator
 
 """This file contains user defined configuration classes for the Traveling Salesman Problem (TSP).
 """
@@ -51,7 +51,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 HFDataReader,
                 {
-                    "path": "GeoMeterData/nphard_tsp2",
+                    "path": "GeoMeterData/nphard_tsp1",
                     "split": "train",
                     "transform": SequenceTransform(
                         [
@@ -63,6 +63,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             prompt_template_path=os.path.join(                
                 # os.path.dirname(__file__), "../prompt_templates/nphard_tsp_templates/Template_tsp_o1.jinja"
                 os.path.dirname(__file__), "../prompt_templates/nphard_tsp_templates/Template_tsp_cot.jinja"
+                # os.path.dirname(__file__), "../prompt_templates/nphard_tsp_templates/Template_tsp_gemini_flash.jinja"
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
         )
@@ -120,17 +121,26 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             metric_config=MetricConfig(NPHardTSPMetric),
             aggregator_configs=[
                 # the first two reports aggregate the metrics per experiment repeat
-                # each repeat can be considered as an individual pass@1 score                
+                # each repeat can be considered as an individual pass@1 score    
+
+                AggregatorConfig(AverageSTDDevAggregator, 
+                {
+                    "column_names": ["NPHardTSPMetric_dist_results"],
+                    # "group_by": "data_repeat_id",
+                    "filename_base": "NPHardTSPMetric_dist_results_SeparateRuns",
+                    "normalize": True,
+                }),
+
                 AggregatorConfig(CountAggregator, 
                 {
-                    "column_names": ["NPHardTSPMetric_result"],
+                    "column_names": ["NPHardTSPMetric_results"],
                     "group_by": "data_repeat_id",
-                    "filename_base": "NPHardTSPMetric_result_SeparateRuns",
+                    "filename_base": "NPHardTSPMetric_results_SeparateRuns",
                     "normalize": True,
                 }),
                 AggregatorConfig(CountAggregator, 
                 {
-                    "column_names": ["NPHardTSPMetric_result"],
+                    "column_names": ["NPHardTSPMetric_results"],
                     "group_by": ["data_repeat_id", "category"],
                     "filename_base": "NPHardTSPMetric_GroupBy_Category_SeparateRuns",
                     "normalize": True,
@@ -139,14 +149,14 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                 # the resulting numbers are the average and std of N pass@1 scores, where N is number of repeats
                 AggregatorConfig(BiLevelCountAggregator, 
                 {
-                    "column_names": ["NPHardTSPMetric_result"], 
+                    "column_names": ["NPHardTSPMetric_results"], 
                     "first_groupby": "data_repeat_id", 
                     "filename_base": "NPHardTSPMetric_AllRuns",
                     "normalize": True
                 }),
                 AggregatorConfig(BiLevelCountAggregator, 
                 {
-                    "column_names": ["NPHardTSPMetric_result"], 
+                    "column_names": ["NPHardTSPMetric_results"], 
                     "first_groupby": ["data_repeat_id", "category"], 
                     "second_groupby": "category",
                     "filename_base": "NPHardTSPMetric_GroupBy_Category_AllRuns", 
@@ -221,7 +231,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                     BiLevelCountAggregator,
                     {
                         "column_names": [
-                            "NPHardTSPMetric_result",
+                            "NPHardTSPMetric_results",
                         ],
                         "first_groupby": "data_point_id",
                         "filename_base": "MajorityVote",
@@ -245,11 +255,11 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                     "transform": SequenceTransform(
                         [
                         CopyColumn(
-                                column_name_src="NPHardTSPMetric_result",
-                                column_name_dst="NPHardTSPMetric_result_numeric",
+                                column_name_src="NPHardTSPMetric_results",
+                                column_name_dst="NPHardTSPMetric_results_numeric",
                             ),
                         ReplaceStringsTransform(
-                                columns=["NPHardTSPMetric_result_numeric"],
+                                columns=["NPHardTSPMetric_results_numeric"],
                                 mapping={'incorrect': '0', 'correct': '1', 'none': 'NaN'},
                                 case=False)
                         ]
@@ -276,7 +286,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                     BiLevelAggregator,
                     {
                         "column_names": [
-                            "NPHardTSPMetric_result_numeric"
+                            "NPHardTSPMetric_results_numeric"
                         ],
                         "first_groupby": "data_point_id",
                         "filename_base": "NPHardTSPMetric_BestOfN",
@@ -287,7 +297,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                     BiLevelAggregator,
                     {
                         "column_names": [
-                            "NPHardTSPMetric_result_numeric"
+                            "NPHardTSPMetric_results_numeric"
                         ],
                         "first_groupby": "data_point_id", 
                         "second_groupby": "category",
@@ -328,7 +338,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                     BiLevelAggregator,
                     {
                         "column_names": [
-                            "NPHardTSPMetric_result_numeric"
+                            "NPHardTSPMetric_results_numeric"
                         ],
                         "first_groupby": "data_point_id",
                         "filename_base": "NPHardTSPMetric_WorstOfN",
@@ -339,7 +349,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                     BiLevelAggregator,
                     {
                         "column_names": [
-                            "NPHardTSPMetric_result_numeric"
+                            "NPHardTSPMetric_results_numeric"
                         ],
                         "first_groupby": "data_point_id", 
                         "second_groupby": "category",
@@ -383,6 +393,6 @@ class NPHARD_TSP_PIPELINE_MULTIPLE_RUNS(NPHARD_TSP_PIPELINE):
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         # data preprocessing
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
-            MultiplyTransform(n_repeats=2)
+            MultiplyTransform(n_repeats=5)
         )
         return pipeline
