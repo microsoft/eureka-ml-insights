@@ -10,7 +10,7 @@ from eureka_ml_insights.data_utils import (
     MMDataLoader,
     SequenceTransform,
 )
-from eureka_ml_insights.data_utils.transform import AddColumn, RegexTransform, RunPythonTransform, SamplerTransform
+from eureka_ml_insights.data_utils.transform import AddColumn, CopyColumn, RegexTransform, RunPythonTransform, SamplerTransform
 from eureka_ml_insights.metrics import CountAggregator, GeoMCQMetric
 
 from eureka_ml_insights.configs import(
@@ -50,9 +50,9 @@ class BA_Causal_PIPELINE(ExperimentConfig):
                             AddColumn("ground_truth"),
                             AddColumn("images"),
                             RunPythonTransform("df['ground_truth'] = df['metadata'].apply(lambda x: x['answer'])"),
-                            # RunPythonTransform("df['images'] = df['metadata'].apply(lambda x: x['inputs']+x['options'])"),
+                            RunPythonTransform("df['images'] = df['metadata'].apply(lambda x: x['inputs']+x['options'])"),
                             # RunPythonTransform("df['images'] = df['metadata'].apply(lambda x: x['inputs_large']+x['options_large'])"),
-                            RunPythonTransform("df['images'] = df['metadata'].apply(lambda x: x['single_image'])"),
+                            # RunPythonTransform("df['images'] = df['metadata'].apply(lambda x: x['single_image'])"),
                             # SamplerTransform(sample_count=10, random_seed=99)
                         ]
                     ),
@@ -86,6 +86,7 @@ class BA_Causal_PIPELINE(ExperimentConfig):
                     "path": os.path.join(inference_comp.output_dir, "inference_result.jsonl"),
                     "format": ".jsonl",
                     "transform": SequenceTransform([
+                        CopyColumn("model_output", "raw_output"),
                         RegexTransform(
                                 columns="model_output",
                                 prompt_pattern=r"Answer: (\w)(?=\s|\W|$)",
