@@ -385,8 +385,8 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
                 self.data_post_processing_addmv,
                 self.mv_evalreporting_comp,
                 self.posteval_data_post_processing_comp,
-                # self.bon_evalreporting_comp,
-                # self.won_evalreporting_comp   
+                self.bon_evalreporting_comp,
+                self.won_evalreporting_comp   
             ],
             self.log_dir,
         )
