@@ -87,7 +87,7 @@ class Drop_Experiment_Pipeline(ExperimentConfig):
                             RegexTransform(
                                 columns="model_output",
                                 prompt_pattern=r"My answer is (.+)",
-                                case=True,
+                                ignore_case=False,
                             ),
                             ImputeNA(columns="model_output", value=""),
                         ]

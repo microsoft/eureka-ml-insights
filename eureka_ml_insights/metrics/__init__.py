@@ -12,12 +12,13 @@ from .metrics_base import (
 from .mmmu_metrics import MMMUMetric
 from .nphard_sat_metrics import NPHardSATMetric
 
+from .nphard_tsp_metrics import NPHardTSPMetric
 from .reports import (
     Aggregator,
     AverageAggregator,
     AverageSTDDevAggregator,
-    BiLevelAggregator,
     BiLevelCountAggregator,
+    BiLevelAggregator,
     CocoDetectionAggregator,
     CountAggregator,
     MaxAggregator,
@@ -59,4 +60,5 @@ __all__ = [
     MaxTokenF1ScoreMetric,
     NPHardSATMetric,
     ValueFilteredAggregator,
+    NPHardTSPMetric,
 ]

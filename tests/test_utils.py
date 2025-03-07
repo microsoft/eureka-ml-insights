@@ -49,8 +49,9 @@ class MultipleChoiceTestModel:
     def __init__(self):
         self.name = "random_generator"
 
-    def generate(self, text_prompt, *args, **kwargs):
-        return {"model_output": random.choice(["A", "B", "C", "D"]), "is_valid": random.choice([True, False])}
+    def generate(self, text_prompt, query_images=None):
+        return {"model_output": random.choice(["Final Answer: A", "Final Answer: B", "Final Answer: C", "Final Answer: D"]), 
+                "is_valid": random.choice([True, False])}
 
     def name(self):
         return self.name
@@ -168,6 +169,17 @@ class ToxiGenTestModel:
             "compromise or understanding between different religious traditions."
         )
         return {"model_output": random.choice(potential_outputs), "is_valid": random.choice([True, False])}
+
+
+class TSPTestModel:
+    def __init__(self, model_name="generic_test_model"):
+        self.name = model_name
+
+    def generate(self, text_prompt, *args, **kwargs):
+        return {
+            "model_output": "<final_answer>{'Path': '0->1->3->2->0', 'TotalDistance': '85'}</final_answer>",
+            "is_valid": random.choice([True]),
+        }
 
 
 class DetectionTestModel:

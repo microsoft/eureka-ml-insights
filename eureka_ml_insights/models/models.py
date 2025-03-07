@@ -422,7 +422,7 @@ class OpenAICommonRequestResponseMixIn:
         completion = self.client.chat.completions.create(
             model=self.model_name,
             top_p=self.top_p,
-            seed=self.seed,
+            # seed=self.seed,
             frequency_penalty=self.frequency_penalty,
             presence_penalty=self.presence_penalty,
             temperature=self.temperature,
@@ -454,10 +454,12 @@ class AzureOpenAIClientMixIn:
 
     def handle_request_error(self, e):
         # if the error is due to a content filter, there is no need to retry
-        if e.code == "content_filter":
+        if hasattr(e, 'code') and e.code == "content_filter":
             logging.warning("Content filtered.")
             response = None
             return response, False, True
+        else:
+            logging.warning(str(e))
         return False
 
 
@@ -468,6 +470,7 @@ class DirectOpenAIClientMixIn(KeyBasedAuthMixIn):
         from openai import OpenAI
 
         return OpenAI(
+            base_url=self.base_url,
             api_key=self.api_key,
         )
 
@@ -507,13 +510,14 @@ class DirectOpenAIModel(OpenAICommonRequestResponseMixIn, DirectOpenAIClientMixI
     presence_penalty: float = 0
     seed: int = 0
     api_version: str = "2023-06-01-preview"
+    base_url: str = "https://api.openai.com/v1"
 
     def __post_init__(self):
         self.api_key = self.get_api_key()
         self.client = self.get_client()
 
 
-class OpenAIO1RequestResponseMixIn:
+class OpenAIOModelsRequestResponseMixIn:
     
     def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
         messages = []
@@ -547,15 +551,29 @@ class OpenAIO1RequestResponseMixIn:
 
     def get_response(self, request):
         start_time = time.time()
-        completion = self.client.chat.completions.create(
-            model=self.model_name,
-            seed=self.seed,
-            temperature=self.temperature,
-            top_p=self.top_p,
-            frequency_penalty=self.frequency_penalty,
-            presence_penalty=self.presence_penalty,
-            **request,
-        )
+        if "o1-preview" in self.model_name:
+            if self.reasoning_effort == "high":
+                logging.error("Reasoning effort is not supported by OpenAI O1 preview model.")
+            completion = self.client.chat.completions.create(
+                model=self.model_name,
+                seed=self.seed,
+                temperature=self.temperature,
+                top_p=self.top_p,
+                frequency_penalty=self.frequency_penalty,
+                presence_penalty=self.presence_penalty,
+                **request,
+            )
+        else:
+            completion = self.client.chat.completions.create(
+                model=self.model_name,
+                seed=self.seed,
+                temperature=self.temperature,
+                top_p=self.top_p,
+                frequency_penalty=self.frequency_penalty,
+                presence_penalty=self.presence_penalty,
+                reasoning_effort=self.reasoning_effort,
+                **request,
+            )
         end_time = time.time()
         openai_response = completion.model_dump()
         self.model_output = openai_response["choices"][0]["message"]["content"]
@@ -565,7 +583,7 @@ class OpenAIO1RequestResponseMixIn:
 
 
 @dataclass
-class DirectOpenAIO1Model(OpenAIO1RequestResponseMixIn, DirectOpenAIClientMixIn, EndpointModel):
+class DirectOpenAIOModel(OpenAIOModelsRequestResponseMixIn, DirectOpenAIClientMixIn, EndpointModel):
     model_name: str = None
     temperature: float = 1
     # Not used currently, because the API throws:
@@ -576,6 +594,8 @@ class DirectOpenAIO1Model(OpenAIO1RequestResponseMixIn, DirectOpenAIClientMixIn,
     seed: int = 0
     frequency_penalty: float = 0
     presence_penalty: float = 0
+    reasoning_effort: str = "medium"
+    base_url: str = "https://api.openai.com/v1"
 
     def __post_init__(self):
         self.api_key = self.get_api_key()
@@ -583,7 +603,7 @@ class DirectOpenAIO1Model(OpenAIO1RequestResponseMixIn, DirectOpenAIClientMixIn,
 
 
 @dataclass
-class AzureOpenAIO1Model(OpenAIO1RequestResponseMixIn, AzureOpenAIClientMixIn, EndpointModel):
+class AzureOpenAIOModel(OpenAIOModelsRequestResponseMixIn, AzureOpenAIClientMixIn, EndpointModel):
     url: str = None
     model_name: str = None
     temperature: float = 1
@@ -595,6 +615,7 @@ class AzureOpenAIO1Model(OpenAIO1RequestResponseMixIn, AzureOpenAIClientMixIn, E
     seed: int = 0
     frequency_penalty: float = 0
     presence_penalty: float = 0
+    reasoning_effort: str = "medium"
     api_version: str = "2023-06-01-preview"
     auth_scope: str = "https://cognitiveservices.azure.com/.default"
 
@@ -607,7 +628,7 @@ class AzureOpenAIO1Model(OpenAIO1RequestResponseMixIn, AzureOpenAIClientMixIn, E
 class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
     """This class is used to interact with Gemini models through the python api."""
 
-    timeout: int = 60
+    timeout: int = 600
     model_name: str = None
     temperature: float = 0
     max_tokens: int = 2000
@@ -699,7 +720,46 @@ class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
         # Any other case will be re attempted again, do_return = False.
         return False
 
+@dataclass
+class TogetherModel(OpenAICommonRequestResponseMixIn, KeyBasedAuthMixIn, EndpointModel):
+    """This class is used to interact with Together models through the together python api."""
 
+    timeout: int = 600
+    model_name: str = None
+    temperature: float = 0
+    max_tokens: int = 65536
+    top_p: float = 0.95
+    presence_penalty: float = 0
+    stop=["<｜end▁of▁sentence｜>"]
+
+    def __post_init__(self):
+        from together import Together
+        self.api_key = self.get_api_key()
+        self.client = Together(api_key=self.api_key)
+    
+    def get_response(self, request):
+        start_time = time.time()
+        completion = self.client.chat.completions.create(
+            model=self.model_name,
+            top_p=self.top_p,
+            presence_penalty=self.presence_penalty,
+            temperature=self.temperature,
+            max_tokens=self.max_tokens,
+            stop = self.stop,
+            **request,
+        )
+        
+        end_time = time.time()
+        openai_response = completion.model_dump()
+        self.model_output = openai_response["choices"][0]["message"]["content"]
+        self.response_time = end_time - start_time
+        if "usage" in openai_response:
+            return {"usage": openai_response["usage"]}
+
+    def handle_request_error(self, e):
+        logging.warning(e)
+        return False
+    
 @dataclass
 class HuggingFaceModel(Model):
     """This class is used to run a self-hosted language model via HuggingFace apis."""
@@ -1028,6 +1088,99 @@ class LLaVAModel(LLaVAHuggingFaceModel):
 
         self.model_output = self.tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
         self.response_time = end_time - start_time
+
+
+@dataclass
+class VLLMModel(Model):
+    """This class is used to run a self-hosted language model via vLLM apis.
+    This class uses the chat() functionality of vLLM which applies a template included in the HF model files.
+    If the model files do not include a template, no template will be applied.
+    """
+
+    model_name: str = None
+    trust_remote_code: bool = False
+    tensor_parallel_size: int = 1
+    dtype: str = "auto"
+    quantization: str = None
+    seed: int = 0
+    gpu_memory_utilization: float = 0.9
+    cpu_offload_gb: float = 0
+
+    temperature: float = 0.001
+    top_p: float = 0.95
+    top_k: int = -1
+    max_tokens: int = 2000
+
+    def __post_init__(self):
+        # vLLM automatically picks an available devices when get_model() is called
+        self.get_model()
+
+    def get_model(self):
+        from vllm import LLM
+
+        self.model = LLM(
+            model=self.model_name,
+            trust_remote_code=self.trust_remote_code,
+            tensor_parallel_size=self.tensor_parallel_size,
+            dtype=self.dtype,
+            quantization=self.quantization,
+            seed=self.seed,
+            gpu_memory_utilization=self.gpu_memory_utilization,
+            cpu_offload_gb=self.cpu_offload_gb,
+        )
+        
+    def _generate(self, text_prompt, query_images=None):
+        from vllm import SamplingParams
+
+        sampling_params = SamplingParams(
+            temperature=self.temperature,
+            top_p=self.top_p,
+            top_k=self.top_k,
+            max_tokens=self.max_tokens,
+        )
+    
+        start_time = time.time()
+        outputs = self.model.chat(text_prompt, sampling_params)
+        end_time = time.time()
+        
+        self.model_output = outputs[0].outputs[0].text
+
+        self.response_time = end_time - start_time
+
+    def generate(self, text_prompt, query_images=None, system_message=None):
+        response_dict = {}
+
+        if text_prompt:
+            messages = self.create_request(text_prompt, system_message)
+
+            try:
+                meta_response = self._generate(messages, query_images=query_images)
+                if meta_response:
+                    response_dict.update(meta_response)
+                self.is_valid = True
+
+            except Exception as e:
+                logging.warning(e)
+                self.is_valid = False
+
+        response_dict.update(
+            {
+                "model_output": self.model_output,
+                "is_valid": self.is_valid,
+                "response_time": self.response_time,
+                "n_output_tokens": self.count_tokens(),
+            }
+        )
+        return response_dict
+
+    def create_request(self, text_prompt, system_message=None):
+        if system_message:
+            return [
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": text_prompt},
+            ]
+        else:
+            return [{"role": "user", "content": text_prompt}]
 
 
 @dataclass

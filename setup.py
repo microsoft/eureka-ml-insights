@@ -24,7 +24,7 @@ setup(
         'jsonlines>=2.0.0',
         'pandas>=2.2.1',
         'pillow>=10.0.1',
-        'torch==2.1.2',
+        'torch==2.5.1',
         'numpy==1.26.4',
         'tqdm>=4.65.0',
         'jinja2>=3.1.3',
@@ -40,6 +40,7 @@ setup(
         'bitsandbytes>=0.42.0',
         'accelerate>=0.21.0',
         'pycocotools>=2.0.8',
+        'vllm==0.7.2',
     ],
     classifiers=[
         # Full list at https://pypi.org/classifiers/
