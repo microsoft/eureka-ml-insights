@@ -1130,10 +1130,10 @@ class VLLMModel(Model):
         response_dict = {}
 
         if text_prompt:
-            text_prompt = self.model_template_fn(text_prompt, system_message)
+            messages = self.create_request(text_prompt, system_message)
 
             try:
-                meta_response = self._generate(text_prompt, query_images=query_images)
+                meta_response = self._generate(messages, query_images=query_images)
                 if meta_response:
                     response_dict.update(meta_response)
                 self.is_valid = True
@@ -1152,7 +1152,7 @@ class VLLMModel(Model):
         )
         return response_dict
 
-    def model_template_fn(self, text_prompt, system_message=None):
+    def create_request(self, text_prompt, system_message=None):
         if system_message:
             return [
                 {"role": "system", "content": system_message},
