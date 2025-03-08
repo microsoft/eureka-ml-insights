@@ -1185,6 +1185,8 @@ class ClaudeModel(EndpointModel, KeyBasedAuthMixIn):
     max_tokens: int = 2000
     top_p: float = 0.95
     timeout: int = 60
+    thinking_enabled: bool = False
+    thinking_budget: int = 16000
 
     def __post_init__(self):
         super().__post_init__()
@@ -1220,11 +1222,13 @@ class ClaudeModel(EndpointModel, KeyBasedAuthMixIn):
 
     def get_response(self, request):
         start_time = time.time()
+        thinking = {"type": "enabled", "budget": self.thinking_budget} if self.thinking_enabled else None
         completion = self.client.messages.create(
             model=self.model_name,
             **request,
             temperature=self.temperature,
             top_p=self.top_p,
+            thinking=thinking,
             max_tokens=self.max_tokens,
         )
         end_time = time.time()
