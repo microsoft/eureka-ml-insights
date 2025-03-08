@@ -1192,8 +1192,6 @@ class ClaudeModel(EndpointModel, KeyBasedAuthMixIn):
     max_tokens: int = 2000
     top_p: float = 0.95
     timeout: int = 60
-    thinking_enabled: bool = False
-    thinking_budget: int = 16000
 
     def __post_init__(self):
         super().__post_init__()
@@ -1229,13 +1227,11 @@ class ClaudeModel(EndpointModel, KeyBasedAuthMixIn):
 
     def get_response(self, request):
         start_time = time.time()
-        thinking = {"type": "enabled", "budget": self.thinking_budget} if self.thinking_enabled else None
         completion = self.client.messages.create(
             model=self.model_name,
             **request,
             temperature=self.temperature,
             top_p=self.top_p,
-            thinking=thinking,
             max_tokens=self.max_tokens,
         )
         end_time = time.time()
@@ -1247,6 +1243,46 @@ class ClaudeModel(EndpointModel, KeyBasedAuthMixIn):
     def handle_request_error(self, e):
         return False
 
+@dataclass
+class ClaudeReasoningModel(ClaudeModel):
+    """This class is used to interact with Claude reasoning models through the python api."""
+
+    model_name: str = None
+    temperature: float = 1.
+    max_tokens: int = 20000
+    timeout: int = 600
+    thinking_enabled: bool = True
+    thinking_budget: int = 16000
+    top_p: float = None
+
+    def get_response(self, request):
+        if self.top_p is not None:
+            logging.warning("top_p is not supported for claude reasoning models as of 03/08/2025. It will be ignored.")
+
+        start_time = time.time()
+        thinking = {"type": "enabled", "budget_tokens": self.thinking_budget} if self.thinking_enabled else None
+        completion = self.client.messages.create(
+            model=self.model_name,
+            **request,
+            temperature=self.temperature,
+            thinking=thinking,
+            max_tokens=self.max_tokens,
+        )
+        end_time = time.time()
+
+        # Loop through completion.content to find the text output
+        for content in completion.content:
+            if content.type == 'text':
+                self.model_output = content.text
+                break
+            elif content.type == 'thinking':
+                self.thinking_output = content.thinking
+            elif content.type == 'redacted_thinking':
+                self.redacted_thinking_output = content.data
+
+        self.response_time = end_time - start_time
+        if hasattr(completion, "usage"):
+            return {"usage": completion.usage.to_dict()}
 
 @dataclass
 class TestModel(Model):
