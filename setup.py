@@ -13,7 +13,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
-        'anthropic>=0.30.0',
+        'anthropic>=0.49.0',
         'azure-ai-textanalytics>=5.3.0',
         'azure-core>=1.29.5',
         'azure-keyvault-secrets>=4.8.0',
