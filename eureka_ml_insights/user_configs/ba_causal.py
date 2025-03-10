@@ -90,7 +90,7 @@ class BA_Causal_PIPELINE(ExperimentConfig):
                         RegexTransform(
                                 columns="model_output",
                                 prompt_pattern=r"Answer: (\w)(?=\s|\W|$)",
-                                case=False,
+                                ignore_case=False,
                             ),
                         RunPythonTransform("df['complexity_bucket'] = df['metadata'].apply(lambda x: round(math.floor(x['complexity'] / 0.01) * 0.1, 4))", global_imports=["math"]),
                     ])
