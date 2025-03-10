@@ -87,7 +87,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
         )
 
         if resume_logdir:
-            self.log_dir = resume_logdir
+            self.log_dir = resume_from.split("/")[0:len(resume_from.split("/")) - 1]
 
         # Configure the evaluation and reporting component for evaluation and dataset level aggregation
         self.evalreporting_comp = EvalReportingConfig(

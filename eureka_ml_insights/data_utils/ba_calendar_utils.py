@@ -31,9 +31,9 @@ class BA_Calendar_ExtractAnswer(DFTransformBase):
         
         response = response.replace("**", "").replace("\n", "")
 
-        match = re.search(r"(?i)(?<=Final Answer: ).*", response)
+        match = re.findall(r"(?i)(?<=Final Answer: )(\w+)(?=\s|\W|$)", response)
         
         if match:
-            answer = match.group(0).strip()
+            answer = match[len(match) - 1]
 
         return answer

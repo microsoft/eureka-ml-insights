@@ -301,6 +301,11 @@ class BACalendarMetric(CompositeMetric):
         return {'specific_times_programmatic_check': result}
 
     def compute_constrainedness_programmatic(self, instance):
+        """
+        Compute the constrainedness of the problem based on the constraints and availability.
+        The constrainedness is defined as (1 - the ratio of feasible slots to total slots).
+        The higher the constrainedness, the more constrained the problem is.
+        """
         params = instance['params']
         constraints = instance['constraints']
         metadata = instance['metadata']
