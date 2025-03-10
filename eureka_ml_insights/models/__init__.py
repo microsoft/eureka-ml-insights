@@ -1,9 +1,9 @@
 from .models import (
     AzureOpenAIModel,
-    AzureOpenAIO1Model,
+    AzureOpenAIOModel,
     ClaudeModel,
     DirectOpenAIModel,
-    DirectOpenAIO1Model,
+    DirectOpenAIOModel,
     GeminiModel,
     HuggingFaceModel,
     KeyBasedAuthMixIn,
@@ -15,13 +15,13 @@ from .models import (
     Phi4HFModel,
     RestEndpointModel,
     TestModel,
-    vLLMModel,
+    VLLMModel,
     TogetherModel
 )
 
 __all__ = [
-    AzureOpenAIO1Model,
-    DirectOpenAIO1Model,
+    AzureOpenAIOModel,
+    DirectOpenAIOModel,
     HuggingFaceModel,
     KeyBasedAuthMixIn,
     LLaVAHuggingFaceModel,
@@ -36,6 +36,6 @@ __all__ = [
     LLaVAModel,
     RestEndpointModel,
     TestModel,
-    vLLMModel,
+    VLLMModel,
     TogetherModel
 ]
