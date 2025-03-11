@@ -294,6 +294,7 @@ DEEPSEEK_R1_CONFIG = ModelConfig(
             "key_vault_url": None,
         },
         "max_tokens": 32768,
+        # the timeout parameter is passed to urllib.request.urlopen(request, timeout=self.timeout)
         "timeout": 600,
     },
 )
