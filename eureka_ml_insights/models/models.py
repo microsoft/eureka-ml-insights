@@ -1274,7 +1274,6 @@ class ClaudeReasoningModel(ClaudeModel):
         for content in completion.content:
             if content.type == 'text':
                 self.model_output = content.text
-                break
             elif content.type == 'thinking':
                 self.thinking_output = content.thinking
             elif content.type == 'redacted_thinking':
