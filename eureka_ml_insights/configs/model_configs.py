@@ -5,6 +5,7 @@ You can also add your custom models here by following the same pattern as the ex
 from eureka_ml_insights.models import (
     AzureOpenAIOModel,
     ClaudeModel,
+    ClaudeReasoningModel,
     DirectOpenAIModel,
     DirectOpenAIOModel,
     GeminiModel,
@@ -197,6 +198,19 @@ CLAUDE_3_5_SONNET_CONFIG = ModelConfig(
     {
         "secret_key_params": CLAUDE_SECRET_KEY_PARAMS,
         "model_name": "claude-3-5-sonnet-20240620",
+    },
+)
+
+CLAUDE_3_7_SONNET_THINKING_CONFIG = ModelConfig(
+    ClaudeReasoningModel,
+    {
+        "secret_key_params": CLAUDE_SECRET_KEY_PARAMS,
+        "model_name": "claude-3-7-sonnet-20250219",
+        "thinking_enabled": True,
+        "thinking_budget": 16000,
+        "max_tokens": 20000, # This number should always be higher than the thinking budget
+        "temperature": 1.0, # As of 03/08/2025, thinking only works with temperature 1.0
+        "timeout": 600, # We set a timeout of 10 minutes for thinking
     },
 )
 
