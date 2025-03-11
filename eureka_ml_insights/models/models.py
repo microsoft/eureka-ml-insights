@@ -389,6 +389,32 @@ class MistralServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
         body = str.encode(json.dumps(data))
         return urllib.request.Request(self.url, body, self.headers)
 
+@dataclass
+class DeepseekR1ServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
+    # setting temperature to 0.6 as suggested in https://huggingface.co/deepseek-ai/DeepSeek-R1
+    temperature: float = 0.6
+    max_tokens: int = 4096
+    top_p: float = 0.95
+    presence_penalty: float = 0
+
+    def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
+        messages = []
+        if system_message:
+            messages.append({"role": "system", "content": system_message})
+        if previous_messages:
+            messages.extend(previous_messages)
+        if query_images:
+            raise NotImplementedError("Images are not supported for DeepseekR1ServerlessAzureRestEndpointModel endpoints.")
+        messages.append({"role": "user", "content": text_prompt})
+        data = {
+            "messages": messages,
+            "max_tokens": self.max_tokens,
+            "temperature": self.temperature,
+            "top_p": self.top_p,
+            "presence_penalty": self.presence_penalty,
+        }
+        body = str.encode(json.dumps(data))
+        return urllib.request.Request(self.url, body, self.headers)
 
 @dataclass
 class OpenAICommonRequestResponseMixIn:
