@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import os
 import time
@@ -40,6 +39,7 @@ class Inference(Component):
             chat_mode (bool): optional. If True, the model will be used in chat mode, where a history of messages will be maintained in "previous_messages" column.
         """
         super().__init__(output_dir)
+        self.model_config = model_config
         self.model = model_config.class_name(**model_config.init_args)
         self.data_loader = data_config.class_name(**data_config.init_args)
         self.writer = JsonLinesWriter(os.path.join(output_dir, "inference_result.jsonl"))
@@ -170,7 +170,7 @@ class Inference(Component):
 
     def run(self):
         if self.max_concurrent > 1:
-            asyncio.run(self._run_par())
+            self._run_par()
         else:
             self._run()
 
@@ -205,23 +205,7 @@ class Inference(Component):
                     data.update(response_dict)
                     writer.write(data)
 
-    from functools import partial
-
-    async def run_in_excutor(self, model_inputs, executor):
-        """Run model.generate in a ThreadPoolExecutor.
-        args:
-            model_inputs (tuple): args and kwargs to be passed to the model.generate function.
-            executor (ThreadPoolExecutor): ThreadPoolExecutor instance.
-        """
-        loop = asyncio.get_event_loop()
-
-        # function to run in executor with args and kwargs
-        def sub_func(model_inputs):
-            return self.model.generate(*model_inputs[0], **model_inputs[1])
-
-        return await loop.run_in_executor(executor, sub_func, model_inputs)
-
-    async def _run_par(self):
+    def _run_par(self):
         """parallel inference"""
         concurrent_inputs = []
         concurrent_metadata = []
@@ -240,8 +224,8 @@ class Inference(Component):
 
                     # if batch is ready for concurrent inference
                     elif len(concurrent_inputs) >= self.max_concurrent:
-                        with ThreadPoolExecutor() as executor:
-                            await self.run_batch(concurrent_inputs, concurrent_metadata, writer, executor)
+                        with ThreadPoolExecutor(max_workers=self.max_concurrent) as executor:
+                            self.run_batch(concurrent_inputs, concurrent_metadata, writer, executor)
                         concurrent_inputs = []
                         concurrent_metadata = []
                     # add data to batch for concurrent inference
@@ -249,10 +233,10 @@ class Inference(Component):
                     concurrent_metadata.append(data)
                 # if data loader is exhausted but there are remaining data points that did not form a full batch
                 if concurrent_inputs:
-                    with ThreadPoolExecutor() as executor:
-                        await self.run_batch(concurrent_inputs, concurrent_metadata, writer, executor)
+                    with ThreadPoolExecutor(max_workers=self.max_concurrent) as executor:
+                        self.run_batch(concurrent_inputs, concurrent_metadata, writer, executor)
 
-    async def run_batch(self, concurrent_inputs, concurrent_metadata, writer, executor):
+    def run_batch(self, concurrent_inputs, concurrent_metadata, writer, executor):
         """Run a batch of inferences concurrently using ThreadPoolExecutor.
         args:
             concurrent_inputs (list): list of inputs to the model.generate function.
@@ -260,10 +244,15 @@ class Inference(Component):
             writer (JsonLinesWriter): JsonLinesWriter instance to write the results.
             executor (ThreadPoolExecutor): ThreadPoolExecutor instance.
         """
-        tasks = [asyncio.create_task(self.run_in_excutor(input_data, executor)) for input_data in concurrent_inputs]
-        results = await asyncio.gather(*tasks)
-        for i in range(len(concurrent_inputs)):
-            data, response_dict = concurrent_metadata[i], results[i]
+        def sub_func(model_inputs):
+            # create a new instance of the model for thread-data-safety purposes
+            model = self.model_config.class_name(**self.model_config.init_args)
+            model.chat_mode = self.chat_mode
+            return model.generate(*model_inputs[0], **model_inputs[1])
+
+        results = executor.map(sub_func, concurrent_inputs)
+        for i, result in enumerate(results):
+            data, response_dict = concurrent_metadata[i], result
             self.validate_response_dict(response_dict)
             # prepare results for writing
             data.update(response_dict)
