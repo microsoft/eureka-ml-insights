@@ -3,16 +3,17 @@ replace the placeholders with your own keys.json file, secret key names, and end
 You can also add your custom models here by following the same pattern as the existing configs. """
 
 from eureka_ml_insights.models import (
-    AzureOpenAIO1Model,
+    AzureOpenAIOModel,
     ClaudeModel,
     DirectOpenAIModel,
-    DirectOpenAIO1Model,
+    DirectOpenAIOModel,
     GeminiModel,
     LlamaServerlessAzureRestEndpointModel,
     LLaVAHuggingFaceModel,
     LLaVAModel,
     Phi4HFModel,
     MistralServerlessAzureRestEndpointModel,
+    DeepseekR1ServerlessAzureRestEndpointModel,
     RestEndpointModel,
     TogetherModel,
     TestModel,
@@ -55,8 +56,33 @@ OPENAI_SECRET_KEY_PARAMS = {
     "key_vault_url": None,
 }
 
+OAI_O3_MINI_HIGH_CONFIG = ModelConfig(
+    DirectOpenAIOModel,
+    {
+        "model_name": "o3-mini-2025-01-31",
+        "reasoning_effort": "high",
+        "secret_key_params": OPENAI_SECRET_KEY_PARAMS,
+    },
+)
+
+OAI_O3_MINI_CONFIG = ModelConfig(
+    DirectOpenAIOModel,
+    {
+        "model_name": "o3-mini-2025-01-31",
+        "secret_key_params": OPENAI_SECRET_KEY_PARAMS,
+    },
+)
+
+OAI_O1_CONFIG = ModelConfig(
+    DirectOpenAIOModel,
+    {
+        "model_name": "o1",
+        "secret_key_params": OPENAI_SECRET_KEY_PARAMS,
+    },
+)
+
 OAI_O1_PREVIEW_CONFIG = ModelConfig(
-    DirectOpenAIO1Model,
+    DirectOpenAIOModel,
     {
         "model_name": "o1-preview",
         "secret_key_params": OPENAI_SECRET_KEY_PARAMS,
@@ -64,7 +90,7 @@ OAI_O1_PREVIEW_CONFIG = ModelConfig(
 )
 
 OAI_O1_PREVIEW_AUZRE_CONFIG = ModelConfig(
-    AzureOpenAIO1Model,
+    AzureOpenAIOModel,
     {
         "model_name": "o1-preview",
         "url": "your/endpoint/url",
@@ -254,5 +280,21 @@ AIF_NT_MISTRAL_LARGE_2_2407_CONFIG = ModelConfig(
             "key_vault_url": None,
         },
         "model_name": "Mistral-large-2407",
+    },
+)
+
+# DeepSeek R1 Endpoints on Azure
+DEEPSEEK_R1_CONFIG = ModelConfig(
+    DeepseekR1ServerlessAzureRestEndpointModel,
+    {
+        "url": "your/endpoint/url",
+        "secret_key_params": {
+            "key_name": "your_deepseek_r1_secret_key_name",
+            "local_keys_path": "keys/keys.json",
+            "key_vault_url": None,
+        },
+        "max_tokens": 32768,
+        # the timeout parameter is passed to urllib.request.urlopen(request, timeout=self.timeout) in ServerlessAzureRestEndpointModel
+        "timeout": 600,
     },
 )

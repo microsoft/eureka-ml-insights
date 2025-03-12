@@ -180,7 +180,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                     "transform": SequenceTransform(
                         [
                             # drop all columns except the uid and model_output
-                            RunPythonTransform("if 'data_repeat_id' in df.columns: df = df[['data_repeat_id','data_point_id', 'model_output']]"),
+                            RunPythonTransform("df = df[[col for col in ['data_repeat_id','data_point_id', 'model_output'] if col in df.columns]]"),
                             RegexTransform(
                                 columns="model_output",
                                 prompt_pattern=r"Final Answer: (\w)(?=\s|\W|$)",
@@ -206,7 +206,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                         [
                             # consolidate model_output_y to replace the original model_output whenever empty
                             # the initial if statement checks whether there has been a join beforehand
-                            RunPythonTransform("if 'model_output_x' in df.columns: df['model_output'] = df.apply(lambda row: row['model_output_y'] if row['model_output_x'] == '' else row['model_output_x'], axis=1)"),
+                            RunPythonTransform("df['model_output'] = df.apply(lambda row: row['model_output'] if 'model_output_x' not in row else row['model_output_y'] if row['model_output_x'] == '' else row['model_output_x'], axis=1)"),
                         ]
                     ),
                 },
