@@ -244,6 +244,7 @@ class Inference(Component):
             writer (JsonLinesWriter): JsonLinesWriter instance to write the results.
             executor (ThreadPoolExecutor): ThreadPoolExecutor instance.
         """
+
         def sub_func(model_inputs):
             # create a new instance of the model for thread-data-safety purposes
             model = self.model_config.class_name(**self.model_config.init_args)
