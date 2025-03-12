@@ -21,7 +21,8 @@ from eureka_ml_insights.models import (
     DirectOpenAIModel,
     DirectOpenAIOModel,
     AzureOpenAIOModel,
-    TogetherModel
+    TogetherModel,
+    DeepseekR1ServerlessAzureRestEndpointModel
 )
 
 @dataclass
@@ -457,6 +458,7 @@ class ExtractUsageTransform:
               or self.model_config.class_name is AzureOpenAIModel 
               or self.model_config.class_name is LlamaServerlessAzureRestEndpointModel
               or self.model_config.class_name is MistralServerlessAzureRestEndpointModel
+              or self.model_config.class_name is DeepseekR1ServerlessAzureRestEndpointModel
               or self.model_config.class_name is DirectOpenAIModel 
               or self.model_config.class_name is DirectOpenAIOModel
               or self.model_config.class_name is TogetherModel):

@@ -11,11 +11,12 @@ from .models import (
     LLaVAHuggingFaceModel,
     LLaVAModel,
     MistralServerlessAzureRestEndpointModel,
+    DeepseekR1ServerlessAzureRestEndpointModel,
     Phi3HFModel,
     Phi4HFModel,
     RestEndpointModel,
     TestModel,
-    vLLMModel,
+    VLLMModel,
     TogetherModel
 )
 
@@ -33,9 +34,10 @@ __all__ = [
     ClaudeModel,
     MistralServerlessAzureRestEndpointModel,
     LlamaServerlessAzureRestEndpointModel,
+    DeepseekR1ServerlessAzureRestEndpointModel,
     LLaVAModel,
     RestEndpointModel,
     TestModel,
-    vLLMModel,
+    VLLMModel,
     TogetherModel
 ]

@@ -389,6 +389,32 @@ class MistralServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
         body = str.encode(json.dumps(data))
         return urllib.request.Request(self.url, body, self.headers)
 
+@dataclass
+class DeepseekR1ServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
+    # setting temperature to 0.6 as suggested in https://huggingface.co/deepseek-ai/DeepSeek-R1
+    temperature: float = 0.6
+    max_tokens: int = 4096
+    top_p: float = 0.95
+    presence_penalty: float = 0
+
+    def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
+        messages = []
+        if system_message:
+            messages.append({"role": "system", "content": system_message})
+        if previous_messages:
+            messages.extend(previous_messages)
+        if query_images:
+            raise NotImplementedError("Images are not supported for DeepseekR1ServerlessAzureRestEndpointModel endpoints.")
+        messages.append({"role": "user", "content": text_prompt})
+        data = {
+            "messages": messages,
+            "max_tokens": self.max_tokens,
+            "temperature": self.temperature,
+            "top_p": self.top_p,
+            "presence_penalty": self.presence_penalty,
+        }
+        body = str.encode(json.dumps(data))
+        return urllib.request.Request(self.url, body, self.headers)
 
 @dataclass
 class OpenAICommonRequestResponseMixIn:
@@ -1091,8 +1117,11 @@ class LLaVAModel(LLaVAHuggingFaceModel):
 
 
 @dataclass
-class vLLMModel(Model):
-    """This class is used to run a self-hosted language model via vLLM apis."""
+class VLLMModel(Model):
+    """This class is used to run a self-hosted language model via vLLM apis.
+    This class uses the chat() functionality of vLLM which applies a template included in the HF model files.
+    If the model files do not include a template, no template will be applied.
+    """
 
     model_name: str = None
     trust_remote_code: bool = False
@@ -1107,7 +1136,6 @@ class vLLMModel(Model):
     top_p: float = 0.95
     top_k: int = -1
     max_tokens: int = 2000
-    apply_model_template: bool = False
 
     def __post_init__(self):
         # vLLM automatically picks an available devices when get_model() is called
@@ -1138,7 +1166,7 @@ class vLLMModel(Model):
         )
     
         start_time = time.time()
-        outputs = self.model.generate(text_prompt, sampling_params)
+        outputs = self.model.chat(text_prompt, sampling_params)
         end_time = time.time()
         
         self.model_output = outputs[0].outputs[0].text
@@ -1149,11 +1177,10 @@ class vLLMModel(Model):
         response_dict = {}
 
         if text_prompt:
-            if self.apply_model_template:
-                text_prompt = self.model_template_fn(text_prompt, system_message)
+            messages = self.create_request(text_prompt, system_message)
 
             try:
-                meta_response = self._generate(text_prompt, query_images=query_images)
+                meta_response = self._generate(messages, query_images=query_images)
                 if meta_response:
                     response_dict.update(meta_response)
                 self.is_valid = True
@@ -1172,8 +1199,14 @@ class vLLMModel(Model):
         )
         return response_dict
 
-    def model_template_fn(self, text_prompt, system_message=None):
-        raise NotImplementedError
+    def create_request(self, text_prompt, system_message=None):
+        if system_message:
+            return [
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": text_prompt},
+            ]
+        else:
+            return [{"role": "user", "content": text_prompt}]
 
 
 @dataclass

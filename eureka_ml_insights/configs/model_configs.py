@@ -13,6 +13,7 @@ from eureka_ml_insights.models import (
     LLaVAModel,
     Phi4HFModel,
     MistralServerlessAzureRestEndpointModel,
+    DeepseekR1ServerlessAzureRestEndpointModel,
     RestEndpointModel,
     TogetherModel,
     TestModel,
@@ -279,5 +280,21 @@ AIF_NT_MISTRAL_LARGE_2_2407_CONFIG = ModelConfig(
             "key_vault_url": None,
         },
         "model_name": "Mistral-large-2407",
+    },
+)
+
+# DeepSeek R1 Endpoints on Azure
+DEEPSEEK_R1_CONFIG = ModelConfig(
+    DeepseekR1ServerlessAzureRestEndpointModel,
+    {
+        "url": "your/endpoint/url",
+        "secret_key_params": {
+            "key_name": "your_deepseek_r1_secret_key_name",
+            "local_keys_path": "keys/keys.json",
+            "key_vault_url": None,
+        },
+        "max_tokens": 32768,
+        # the timeout parameter is passed to urllib.request.urlopen(request, timeout=self.timeout) in ServerlessAzureRestEndpointModel
+        "timeout": 600,
     },
 )
