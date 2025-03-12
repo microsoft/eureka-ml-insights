@@ -463,6 +463,7 @@ class ExtractUsageTransform:
             usage_completion_read_col = "completion_tokens"
         # if the model is one for which the usage of completion tokens is known, use that corresponding column for the model
         # otherwise, use the default "n_output_tokens" which is computed with a universal tokenizer as shown in TokenCounterTransform()
+        self.validate(df)
         if usage_completion_read_col:
             df[self.usage_completion_output_col] = df.apply(lambda x: self._extract_usage(x, usage_completion_read_col), axis=1)
         elif self.prepend_completion_read_col + "n_output_tokens" in df.columns:
@@ -471,6 +472,13 @@ class ExtractUsageTransform:
             df[self.usage_completion_output_col] = np.nan
         return df 
     
+    def validate(self, df: pd.DataFrame, usage_completion_read_col: str) -> pd.DataFrame:
+        """Check that all columns to be transformed are present actually in the data frame."""
+        if usage_completion_read_col and self.prepend_completion_read_col+'usage' not in df.columns:
+            raise ValueError(f"The {self.prepend_completion_read_col + 'usage'} column is not present in the data frame.")
+        if self.prepend_completion_read_col + "n_output_tokens" not in df.columns:
+            raise ValueError(f"The {self.prepend_completion_read_col + 'n_output_tokens'} column is not present in the data frame.")
+
     def _extract_usage(self, row, usage_completion_read_col):
         """
         Extracts the token usage for a given row if is_valid is True. 
@@ -479,6 +487,6 @@ class ExtractUsageTransform:
         Returns:
             int: The token usage for the row.
         """
-        if not pd.isna(row['usage']) and usage_completion_read_col in row['usage']:
+        if not pd.isna(row[self.prepend_completion_read_col + 'usage']) and usage_completion_read_col in row[self.prepend_completion_read_col + 'usage']:
             return row[self.prepend_completion_read_col + "usage"][usage_completion_read_col]
         return np.nan
