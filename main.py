@@ -53,7 +53,7 @@ if __name__ == "__main__":
             init_args["model_config"] = model_config
             # Logic above is that certain deployment parameters like ports and num_servers
             # can be variable and so we allow them to be overridden by command line args.
-        except:
+        except AttributeError:
             # If there's no config, create one.
             init_args["model_config"] = ModelConfig(
                 LocalVLLMModel,

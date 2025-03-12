@@ -269,11 +269,11 @@ PHI4_LOCAL_CONFIG = ModelConfig(
         "ports": ["8002", "8003"],
     },
 )
-QWENVL_LOCAL_CONFIG = ModelConfig(
+QWQ32B_LOCAL_CONFIG = ModelConfig(
     LocalVLLMModel,
     {
         # this name must match the vllm deployment name/path
-        "model_name": "Qwen/Qwen2.5-VL-7B-Instruct",
+        "model_name": "Qwen/QwQ-32B",
         # certain args will get passed to the vllm serve command
         "tensor_parallel_size": 2,
     },
