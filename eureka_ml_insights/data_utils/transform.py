@@ -436,7 +436,8 @@ class ExtractUsageTransform:
     """
     model_config: ModelConfig
     usage_completion_output_col: str = "usage_completion" 
-    prepend_completion_read_col: str = "" 
+    usage_column: str = "usage"
+    n_tokens_column: str = "n_output_tokens" 
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -466,18 +467,18 @@ class ExtractUsageTransform:
         self.validate(df)
         if usage_completion_read_col:
             df[self.usage_completion_output_col] = df.apply(lambda x: self._extract_usage(x, usage_completion_read_col), axis=1)
-        elif self.prepend_completion_read_col + "n_output_tokens" in df.columns:
-            df[self.usage_completion_output_col] = df[self.prepend_completion_read_col + "n_output_tokens"]
+        elif self.n_tokens_column in df.columns:
+            df[self.usage_completion_output_col] = df[self.self.n_tokens_column]
         else:
             df[self.usage_completion_output_col] = np.nan
         return df 
     
     def validate(self, df: pd.DataFrame, usage_completion_read_col: str) -> pd.DataFrame:
         """Check that all columns to be transformed are present actually in the data frame."""
-        if usage_completion_read_col and self.prepend_completion_read_col+'usage' not in df.columns:
-            raise ValueError(f"The {self.prepend_completion_read_col + 'usage'} column is not present in the data frame.")
-        elif self.prepend_completion_read_col + "n_output_tokens" not in df.columns:
-            raise ValueError(f"The {self.prepend_completion_read_col + 'n_output_tokens'} column is not present in the data frame.")
+        if usage_completion_read_col and self.usage_column not in df.columns:
+            raise ValueError(f"The {self.usage_column} column is not present in the data frame.")
+        elif self.n_tokens_column not in df.columns:
+            raise ValueError(f"The {self.n_tokens_column + 'n_output_tokens'} column is not present in the data frame.")
 
     def _extract_usage(self, row, usage_completion_read_col):
         """
