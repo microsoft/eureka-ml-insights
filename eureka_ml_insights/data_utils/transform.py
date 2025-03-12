@@ -478,7 +478,7 @@ class ExtractUsageTransform:
         if usage_completion_read_col and self.usage_column not in df.columns:
             raise ValueError(f"The {self.usage_column} column is not present in the data frame.")
         elif self.n_tokens_column not in df.columns:
-            raise ValueError(f"The {self.n_tokens_column + 'n_output_tokens'} column is not present in the data frame.")
+            raise ValueError(f"The {self.n_tokens_column} column is not present in the data frame.")
 
     def _extract_usage(self, row, usage_completion_read_col):
         """
@@ -488,6 +488,6 @@ class ExtractUsageTransform:
         Returns:
             int: The token usage for the row.
         """
-        if not pd.isna(row[self.prepend_completion_read_col + 'usage']) and usage_completion_read_col in row[self.prepend_completion_read_col + 'usage']:
-            return row[self.prepend_completion_read_col + "usage"][usage_completion_read_col]
+        if not pd.isna(row[self.usage_column]) and usage_completion_read_col in row[self.usage_column]:
+            return row[self.usage_column][usage_completion_read_col]
         return np.nan
