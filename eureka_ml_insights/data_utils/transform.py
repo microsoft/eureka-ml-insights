@@ -487,9 +487,22 @@ class ExtractUsageTransform:
         # if the model is one for which the usage of completion tokens is known, use that corresponding column for the model
         # otherwise, use the default "n_output_tokens" which is computed with a universal tokenizer as shown in TokenCounterTransform()
         if usage_completion_read_col:
-            df[self.usage_completion_output_col] = df[self.prepend_completion_read_col + "usage"].apply(lambda x: x[usage_completion_read_col])
+            df[self.usage_completion_output_col] = df.apply(lambda x: self._extract_usage(x, usage_completion_read_col), axis=1)
         elif self.prepend_completion_read_col + "n_output_tokens" in df.columns:
             df[self.usage_completion_output_col] = df[self.prepend_completion_read_col + "n_output_tokens"]
         else:
             df[self.usage_completion_output_col] = np.nan
-        return df 
+        return df
+
+    def _extract_usage(self, row, usage_completion_read_col):
+        """
+        Extracts the token usage for a given row is is_valid is True. 
+        Args:
+            row (pd.Series): A row of the dataframe.
+        Returns:
+            int: The token usage for the row.
+        """
+        if row[self.prepend_completion_read_col + "is_valid"]:
+            return row[self.prepend_completion_read_col + "usage"][usage_completion_read_col]
+        return np.nan
+

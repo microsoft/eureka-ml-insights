@@ -70,6 +70,7 @@ class Omni_Math_PIPELINE(ExperimentConfig):
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
             max_concurrent=5,
+            #requests_per_minute=5
         )
 
         # eval data preprocessing
@@ -82,7 +83,8 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                  "transform": SequenceTransform([
                     CopyColumn("model_output", "generated_solution"),
                     ColumnRename(name_mapping={"n_output_tokens":"gen_solution_n_output_tokens",
-                                               "usage": "gen_solution_usage"}),
+                                               "usage": "gen_solution_usage",
+                                               "is_valid": "gen_solution_is_valid"}),
                     # SamplerTransform(sample_count=5, random_seed=99),
                  ])},
             ),
@@ -792,7 +794,7 @@ class Omni_Math_ExtractUsage_PIPELINE(Omni_Math_PIPELINE):
     """This class specifies the config for running Omni Math benchmark 5 repeated times"""
 
     def configure_pipeline(
-            self, model_config: ModelConfig, resume_from: str = None, eval_model_config: ModelConfig = None, **kwargs: dict[str, Any]
+            self, model_config: ModelConfig, resume_from: str = None, eval_resume_from: str = None, eval_model_config: ModelConfig = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
         # data preprocessing
         self.usage_data_processing_comp = DataProcessingConfig(
@@ -800,11 +802,11 @@ class Omni_Math_ExtractUsage_PIPELINE(Omni_Math_PIPELINE):
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    "path": resume_from,
+                    "path": eval_resume_from,
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            ExtractUsageTransform(model_config),
+                            ExtractUsageTransform(model_config, prepend_completion_read_col="gen_solution_"),
                         ]
                     ),
                 },
