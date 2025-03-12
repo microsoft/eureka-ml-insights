@@ -473,7 +473,7 @@ class ExtractUsageTransform:
     
     def _extract_usage(self, row, usage_completion_read_col):
         """
-        Extracts the token usage for a given row is is_valid is True. 
+        Extracts the token usage for a given row if is_valid is True. 
         Args:
             row (pd.Series): A row of the dataframe.
         Returns:
