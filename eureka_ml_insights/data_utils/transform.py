@@ -476,7 +476,7 @@ class ExtractUsageTransform:
         """Check that all columns to be transformed are present actually in the data frame."""
         if usage_completion_read_col and self.prepend_completion_read_col+'usage' not in df.columns:
             raise ValueError(f"The {self.prepend_completion_read_col + 'usage'} column is not present in the data frame.")
-        if self.prepend_completion_read_col + "n_output_tokens" not in df.columns:
+        elif self.prepend_completion_read_col + "n_output_tokens" not in df.columns:
             raise ValueError(f"The {self.prepend_completion_read_col + 'n_output_tokens'} column is not present in the data frame.")
 
     def _extract_usage(self, row, usage_completion_read_col):
