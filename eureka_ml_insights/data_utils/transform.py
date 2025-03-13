@@ -431,8 +431,9 @@ class ExtractUsageTransform:
     Extracts token usage completion numbers (except prompt input tokens) for all models.
     args:
         model_config: config used for the experiment.
-        usage_completion_output_col: str, default name of the column where completion numbers will be stored for all models
-        prepend_completion_read_col: str, prepend string to add to the name of the usage column from which to read. Useful for cases when the usage column might have been renamed earlier in the pipeline.
+        usage_completion_output_col: str, default name of the column where completion numbers will be stored for model
+        usage_column: str, default name of the column where usage information is stored for model
+        n_tokens_column: str, default name of the column where number of tokens is stored for model
     """
     model_config: ModelConfig
     usage_completion_output_col: str = "usage_completion" 
