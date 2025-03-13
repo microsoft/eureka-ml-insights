@@ -4,6 +4,7 @@ import json
 import logging
 import random
 import requests
+import threading
 import time
 import urllib.request
 from abc import ABC, abstractmethod
@@ -1343,10 +1344,19 @@ class _LocalVLLMDeploymentHandler:
         with open(log_file, 'w') as log_writer:
             subprocess.run(command, shell=True, stdout=log_writer, stderr=log_writer)
 
+
+local_vllm_model_lock = threading.Lock()
+local_vllm_deployment_handlers : dict[str, _LocalVLLMDeploymentHandler] = {}
+    
         
 @dataclass
 class LocalVLLMModel(Model, OpenAICommonRequestResponseMixIn):
-    """This class is used when you have multiple vLLM servers running locally."""
+    """This class is used for vLLM servers running locally.
+    
+    In case the servers are already deployed, specify the
+    model_name and the ports at which the servers are hosted.
+    Otherwise instantiating will initiate a deployment with
+    any deployment parameters specified."""
 
     model_name: str = None
 
@@ -1374,19 +1384,27 @@ class LocalVLLMModel(Model, OpenAICommonRequestResponseMixIn):
     def __post_init__(self):
         if not self.model_name:
             raise ValueError("LocalVLLM model_name must be specified.")
-        self.handler = _LocalVLLMDeploymentHandler(
-            model_name=self.model_name,
-            num_servers=self.num_servers,
-            trust_remote_code=self.trust_remote_code,
-            pipeline_parallel_size=self.pipeline_parallel_size,
-            tensor_parallel_size=self.tensor_parallel_size,
-            dtype=self.dtype,
-            quantization=self.quantization,
-            seed=self.seed,
-            gpu_memory_utilization=self.gpu_memory_utilization,
-            cpu_offload_gb=self.cpu_offload_gb,
-            ports=self.ports,
-        )
+        self.handler = self._get_local_vllm_deployment_handler()
+        
+    def _get_local_vllm_deployment_handler(self):
+        if self.model_name not in local_vllm_deployment_handlers:
+            with local_vllm_model_lock:
+                if self.model_name not in local_vllm_deployment_handlers:
+                    local_vllm_deployment_handlers['self.model_name'] = _LocalVLLMDeploymentHandler(
+                        model_name=self.model_name,
+                        num_servers=self.num_servers,
+                        trust_remote_code=self.trust_remote_code,
+                        pipeline_parallel_size=self.pipeline_parallel_size,
+                        tensor_parallel_size=self.tensor_parallel_size,
+                        dtype=self.dtype,
+                        quantization=self.quantization,
+                        seed=self.seed,
+                        gpu_memory_utilization=self.gpu_memory_utilization,
+                        cpu_offload_gb=self.cpu_offload_gb,
+                        ports=self.ports,
+                    )
+
+        return local_vllm_deployment_handlers['self.model_name']
 
     def _generate(self, request):
 
