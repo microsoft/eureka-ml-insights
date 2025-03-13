@@ -69,8 +69,8 @@ class Omni_Math_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
-            max_concurrent=5,
-            #requests_per_minute=5
+            max_concurrent=1,
+            requests_per_minute=5
         )
 
         # eval data preprocessing
