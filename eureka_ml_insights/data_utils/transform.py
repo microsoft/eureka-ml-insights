@@ -465,7 +465,7 @@ class ExtractUsageTransform:
             usage_completion_read_col = "completion_tokens"
         # if the model is one for which the usage of completion tokens is known, use that corresponding column for the model
         # otherwise, use the default "n_output_tokens" which is computed with a universal tokenizer as shown in TokenCounterTransform()
-        self.validate(df)
+        self.validate(df, usage_completion_read_col)
         if usage_completion_read_col:
             df[self.usage_completion_output_col] = df.apply(lambda x: self._extract_usage(x, usage_completion_read_col), axis=1)
         elif self.n_tokens_column in df.columns:
