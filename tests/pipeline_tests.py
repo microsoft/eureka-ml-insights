@@ -540,7 +540,6 @@ class KITAB_ONE_BOOK_CONSTRAINT_PIPELINE_PipelineTest(PipelineTest, unittest.Tes
         return TEST_KITAB_ONE_BOOK_CONSTRAINT_PIPELINE().pipeline_config
 
 
-@unittest.skipIf("skip_tests_with_missing_ds" in os.environ, "Missing public dataset. TODO: revert")
 class GPQA_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_GPQA_PIPELINE().pipeline_config
