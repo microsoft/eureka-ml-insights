@@ -77,7 +77,7 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"), 
             resume_from=resume_from,
-            max_concurrent=1,
+            max_concurrent=10,
         )
 
         # post process the response to extract the answer
@@ -407,49 +407,3 @@ class NPHARD_SAT_PIPELINE_MULTIPLE_RUNS(NPHARD_SAT_PIPELINE):
 
 
 ##################
-
-
-        # # Configure the evaluation and reporting component.
-        # self.evalreporting_comp = EvalReportingConfig(
-        #     component_type=EvalReporting,
-        #     data_reader_config=DataSetConfig(
-        #         DataReader,
-        #         {
-        #             "path": os.path.join(self.data_post_processing.output_dir, "transformed_data.jsonl"),                    
-        #             "format": ".jsonl",
-        #         },
-        #     ),
-        #     metric_config=MetricConfig(NPHardSATMetric),
-        #     aggregator_configs=[
-        #         AggregatorConfig(CountAggregator, {"column_names": ["NPHardSATMetric_result"], "normalize": True}),
-        #     ],
-        #     output_dir=os.path.join(self.log_dir, "eval_report"),
-        # )
-
-        # # Aggregate the results by a majority vote.
-        # self.postevalprocess_comp = EvalReportingConfig(
-        #     component_type=EvalReporting,
-        #     data_reader_config=DataSetConfig(
-        #         DataReader,
-        #         {
-        #             "path": os.path.join(self.data_post_processing.output_dir, "transformed_data.jsonl"),
-        #             "format": ".jsonl",
-        #             "transform": SequenceTransform(
-        #                 [
-        #                     MajorityVoteTransform(id_col="data_point_id"),
-        #                     ColumnRename(
-        #                         name_mapping={
-        #                             "model_output": "model_output_onerun",
-        #                             "majority_vote": "model_output",
-        #                         }
-        #                     ),
-        #                 ]
-        #             ),
-        #         },
-        #     ),
-        #     metric_config=MetricConfig(NPHardSATMetric),
-        #     aggregator_configs=[
-        #         AggregatorConfig(CountAggregator, {"column_names": ["NPHardSATMetric_result"], "normalize": True}),
-        #     ],
-        #     output_dir=os.path.join(self.log_dir, "eval_report_majorityVote"),
-        # )

@@ -33,7 +33,7 @@ TEST_MODEL_CONFIG = ModelConfig(TestModel, {})
 # Together models
 TOGETHER_SECRET_KEY_PARAMS = {
     "key_name": "your_togetherai_secret_key_name",
-    "local_keys_path": "keys/keys.json",
+    "local_keys_path": "keys/aifeval-vault-azure-net.json",
     "key_vault_url": None,
 }
 
@@ -42,12 +42,15 @@ TOGETHER_DEEPSEEK_R1_CONFIG = ModelConfig(
     {
         "model_name": "deepseek-ai/DeepSeek-R1",
         "secret_key_params": TOGETHER_SECRET_KEY_PARAMS,
-        "temperature": 1.0,
+        "temperature": 0.6,
         # high max token limit for deep seek
         # otherwise the answers may be cut in the middle
-        "max_tokens": 65536
+        "max_tokens": 65536,
+        # "max_tokens": 32768,
+        "timeout": 600
     },
 )
+
 # OpenAI models
 
 OPENAI_SECRET_KEY_PARAMS = {
@@ -287,10 +290,10 @@ AIF_NT_MISTRAL_LARGE_2_2407_CONFIG = ModelConfig(
 DEEPSEEK_R1_CONFIG = ModelConfig(
     DeepseekR1ServerlessAzureRestEndpointModel,
     {
-        "url": "your/endpoint/url",
+        "url": "https://deepseek-r1-reasoning.westus.models.ai.azure.com/v1/chat/completions",
         "secret_key_params": {
-            "key_name": "your_deepseek_r1_secret_key_name",
-            "local_keys_path": "keys/keys.json",
+            "key_name": "lit-deepseek-r1",
+            "local_keys_path": "keys/aifeval-vault-azure-net.json",
             "key_vault_url": None,
         },
         "max_tokens": 32768,
@@ -298,3 +301,63 @@ DEEPSEEK_R1_CONFIG = ModelConfig(
         "timeout": 600,
     },
 )
+
+DEEPSEEK_R1_CONFIG_2 = ModelConfig(
+    DeepseekR1ServerlessAzureRestEndpointModel,
+    {
+        "url": "https://deepseek-r1-reasoning-2.westus.models.ai.azure.com/v1/chat/completions",
+        "secret_key_params": {
+            "key_name": "lit-deepseek-r1-2",
+            "local_keys_path": "keys/aifeval-vault-azure-net.json",
+            "key_vault_url": None,
+        },
+        "max_tokens": 32768,
+        "timeout": 600
+    },
+)
+
+DEEPSEEK_R1_CONFIG_3 = ModelConfig(
+    DeepseekR1ServerlessAzureRestEndpointModel,
+    {
+        "url": "https://deepseek-r1-reasoning-3.westus.models.ai.azure.com/v1/chat/completions",
+        "secret_key_params": {
+            "key_name": "lit-deepseek-r1-3",
+            "local_keys_path": "keys/aifeval-vault-azure-net.json",
+            "key_vault_url": None,
+        },
+        "max_tokens": 32768,
+        "timeout": 600
+    },
+)
+
+
+AIF_NT_DEEPSEEK_R1_CONFIG = ModelConfig(
+    DeepseekR1ServerlessAzureRestEndpointModel,
+    {
+        "url": "https://DeepSeek-R1-aif-nt.eastus.models.ai.azure.com/v1/chat/completions",
+        "secret_key_params": {
+            "key_name": "aif-nt-deepseek-r1",
+            "local_keys_path": "keys/aifeval-vault-azure-net.json",
+            "key_vault_url": "https://aifeval.vault.azure.net",
+        },
+        "max_tokens": 32768,
+        "timeout": 1200
+    },
+)
+
+
+# # DeepSeek R1 Endpoints on Azure
+# DEEPSEEK_R1_CONFIG = ModelConfig(
+#     DeepseekR1ServerlessAzureRestEndpointModel,
+#     {
+#         "url": "your/endpoint/url",
+#         "secret_key_params": {
+#             "key_name": "your_deepseek_r1_secret_key_name",
+#             "local_keys_path": "keys/keys.json",
+#             "key_vault_url": None,
+#         },
+#         "max_tokens": 32768,
+#         # the timeout parameter is passed to urllib.request.urlopen(request, timeout=self.timeout) in ServerlessAzureRestEndpointModel
+#         "timeout": 600,
+#     },
+# )
