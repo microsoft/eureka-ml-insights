@@ -9,8 +9,8 @@ from dataclasses import dataclass
 
 import anthropic
 import tiktoken
-from azure.identity import DefaultAzureCredential, get_bearer_token_provider
-
+from azure.identity import get_bearer_token_provider
+from azure.identity import DefaultAzureCredential
 from eureka_ml_insights.secret_management import get_secret
 
 
@@ -395,6 +395,32 @@ class MistralServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
         body = str.encode(json.dumps(data))
         return urllib.request.Request(self.url, body, self.headers)
 
+@dataclass
+class DeepseekR1ServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
+    # setting temperature to 0.6 as suggested in https://huggingface.co/deepseek-ai/DeepSeek-R1
+    temperature: float = 0.6
+    max_tokens: int = 4096
+    top_p: float = 0.95
+    presence_penalty: float = 0
+
+    def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
+        messages = []
+        if system_message:
+            messages.append({"role": "system", "content": system_message})
+        if previous_messages:
+            messages.extend(previous_messages)
+        if query_images:
+            raise NotImplementedError("Images are not supported for DeepseekR1ServerlessAzureRestEndpointModel endpoints.")
+        messages.append({"role": "user", "content": text_prompt})
+        data = {
+            "messages": messages,
+            "max_tokens": self.max_tokens,
+            "temperature": self.temperature,
+            "top_p": self.top_p,
+            "presence_penalty": self.presence_penalty,
+        }
+        body = str.encode(json.dumps(data))
+        return urllib.request.Request(self.url, body, self.headers)
 
 @dataclass
 class OpenAICommonRequestResponseMixIn:
@@ -463,10 +489,12 @@ class AzureOpenAIClientMixIn:
 
     def handle_request_error(self, e):
         # if the error is due to a content filter, there is no need to retry
-        if e.code == "content_filter":
+        if hasattr(e, 'code') and e.code == "content_filter":
             logging.warning("Content filtered.")
             response = None
             return response, False, True
+        else:
+            logging.warning(str(e))
         return False
 
 
@@ -477,6 +505,7 @@ class DirectOpenAIClientMixIn(KeyBasedAuthMixIn):
         from openai import OpenAI
 
         return OpenAI(
+            base_url=self.base_url,
             api_key=self.api_key,
         )
 
@@ -516,14 +545,14 @@ class DirectOpenAIModel(OpenAICommonRequestResponseMixIn, DirectOpenAIClientMixI
     presence_penalty: float = 0
     seed: int = 0
     api_version: str = "2023-06-01-preview"
+    base_url: str = "https://api.openai.com/v1"
 
     def __post_init__(self):
         self.api_key = self.get_api_key()
         self.client = self.get_client()
 
 
-class OpenAIO1RequestResponseMixIn:
-
+class OpenAIOModelsRequestResponseMixIn:
     def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
         messages = []
         if system_message and "o1-preview" in self.model_name:
@@ -556,15 +585,29 @@ class OpenAIO1RequestResponseMixIn:
 
     def get_response(self, request):
         start_time = time.time()
-        completion = self.client.chat.completions.create(
-            model=self.model_name,
-            seed=self.seed,
-            temperature=self.temperature,
-            top_p=self.top_p,
-            frequency_penalty=self.frequency_penalty,
-            presence_penalty=self.presence_penalty,
-            **request,
-        )
+        if "o1-preview" in self.model_name:
+            if self.reasoning_effort == "high":
+                logging.error("Reasoning effort is not supported by OpenAI O1 preview model.")
+            completion = self.client.chat.completions.create(
+                model=self.model_name,
+                seed=self.seed,
+                temperature=self.temperature,
+                top_p=self.top_p,
+                frequency_penalty=self.frequency_penalty,
+                presence_penalty=self.presence_penalty,
+                **request,
+            )
+        else:
+            completion = self.client.chat.completions.create(
+                model=self.model_name,
+                seed=self.seed,
+                temperature=self.temperature,
+                top_p=self.top_p,
+                frequency_penalty=self.frequency_penalty,
+                presence_penalty=self.presence_penalty,
+                reasoning_effort=self.reasoning_effort,
+                **request,
+            )
         end_time = time.time()
         openai_response = completion.model_dump()
         model_output = openai_response["choices"][0]["message"]["content"]
@@ -579,7 +622,7 @@ class OpenAIO1RequestResponseMixIn:
 
 
 @dataclass
-class DirectOpenAIO1Model(OpenAIO1RequestResponseMixIn, DirectOpenAIClientMixIn, EndpointModel):
+class DirectOpenAIOModel(OpenAIOModelsRequestResponseMixIn, DirectOpenAIClientMixIn, EndpointModel):
     model_name: str = None
     temperature: float = 1
     # Not used currently, because the API throws:
@@ -590,6 +633,8 @@ class DirectOpenAIO1Model(OpenAIO1RequestResponseMixIn, DirectOpenAIClientMixIn,
     seed: int = 0
     frequency_penalty: float = 0
     presence_penalty: float = 0
+    reasoning_effort: str = "medium"
+    base_url: str = "https://api.openai.com/v1"
 
     def __post_init__(self):
         self.api_key = self.get_api_key()
@@ -597,7 +642,7 @@ class DirectOpenAIO1Model(OpenAIO1RequestResponseMixIn, DirectOpenAIClientMixIn,
 
 
 @dataclass
-class AzureOpenAIO1Model(OpenAIO1RequestResponseMixIn, AzureOpenAIClientMixIn, EndpointModel):
+class AzureOpenAIOModel(OpenAIOModelsRequestResponseMixIn, AzureOpenAIClientMixIn, EndpointModel):
     url: str = None
     model_name: str = None
     temperature: float = 1
@@ -609,6 +654,7 @@ class AzureOpenAIO1Model(OpenAIO1RequestResponseMixIn, AzureOpenAIClientMixIn, E
     seed: int = 0
     frequency_penalty: float = 0
     presence_penalty: float = 0
+    reasoning_effort: str = "medium"
     api_version: str = "2023-06-01-preview"
     auth_scope: str = "https://cognitiveservices.azure.com/.default"
 
@@ -1116,8 +1162,11 @@ class LLaVAModel(LLaVAHuggingFaceModel):
 
 
 @dataclass
-class vLLMModel(Model):
-    """This class is used to run a self-hosted language model via vLLM apis."""
+class VLLMModel(Model):
+    """This class is used to run a self-hosted language model via vLLM apis.
+    This class uses the chat() functionality of vLLM which applies a template included in the HF model files.
+    If the model files do not include a template, no template will be applied.
+    """
 
     model_name: str = None
     trust_remote_code: bool = False
@@ -1132,7 +1181,6 @@ class vLLMModel(Model):
     top_p: float = 0.95
     top_k: int = -1
     max_tokens: int = 2000
-    apply_model_template: bool = False
 
     def __post_init__(self):
         # vLLM automatically picks an available devices when get_model() is called
@@ -1163,7 +1211,7 @@ class vLLMModel(Model):
         )
 
         start_time = time.time()
-        outputs = self.model.generate(text_prompt, sampling_params)
+        outputs = self.model.chat(text_prompt, sampling_params)
         end_time = time.time()
 
         model_output = outputs[0].outputs[0].text
@@ -1179,10 +1227,10 @@ class vLLMModel(Model):
         response_time = None
         is_valid = False
         if text_prompt:
-            if self.apply_model_template:
-                text_prompt = self.model_template_fn(text_prompt, system_message)
+            messages = self.create_request(text_prompt, system_message)
             try:
-                model_response = self._generate(text_prompt, query_images=query_images)
+                model_response = self._generate(messages, query_images=query_images)
+
                 if model_response:
                     response_dict.update(model_response)
                     model_output = model_response["model_output"]
@@ -1203,8 +1251,14 @@ class vLLMModel(Model):
         )
         return response_dict
 
-    def model_template_fn(self, text_prompt, system_message=None):
-        raise NotImplementedError
+    def create_request(self, text_prompt, system_message=None):
+        if system_message:
+            return [
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": text_prompt},
+            ]
+        else:
+            return [{"role": "user", "content": text_prompt}]
 
 
 @dataclass
@@ -1272,6 +1326,45 @@ class ClaudeModel(EndpointModel, KeyBasedAuthMixIn):
     def handle_request_error(self, e):
         return False
 
+@dataclass
+class ClaudeReasoningModel(ClaudeModel):
+    """This class is used to interact with Claude reasoning models through the python api."""
+
+    model_name: str = None
+    temperature: float = 1.
+    max_tokens: int = 20000
+    timeout: int = 600
+    thinking_enabled: bool = True
+    thinking_budget: int = 16000
+    top_p: float = None
+
+    def get_response(self, request):
+        if self.top_p is not None:
+            logging.warning("top_p is not supported for claude reasoning models as of 03/08/2025. It will be ignored.")
+
+        start_time = time.time()
+        thinking = {"type": "enabled", "budget_tokens": self.thinking_budget} if self.thinking_enabled else None
+        completion = self.client.messages.create(
+            model=self.model_name,
+            **request,
+            temperature=self.temperature,
+            thinking=thinking,
+            max_tokens=self.max_tokens,
+        )
+        end_time = time.time()
+
+        # Loop through completion.content to find the text output
+        for content in completion.content:
+            if content.type == 'text':
+                self.model_output = content.text
+            elif content.type == 'thinking':
+                self.thinking_output = content.thinking
+            elif content.type == 'redacted_thinking':
+                self.redacted_thinking_output = content.data
+
+        self.response_time = end_time - start_time
+        if hasattr(completion, "usage"):
+            return {"usage": completion.usage.to_dict()}
 
 @dataclass
 class TestModel(Model):
