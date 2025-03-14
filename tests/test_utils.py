@@ -51,7 +51,8 @@ class MultipleChoiceTestModel:
 
     def generate(self, text_prompt, query_images=None):
         return {"model_output": random.choice(["Final Answer: A", "Final Answer: B", "Final Answer: C", "Final Answer: D"]), 
-                "is_valid": random.choice([True, False])}
+                "is_valid": random.choice([True, False]),
+                "n_output_tokens": 3}
 
     def name(self):
         return self.name
@@ -111,7 +112,9 @@ class GenericTestModel:
         self.name = model_name
 
     def generate(self, text_prompt, *args, **kwargs):
-        return {"model_output": "Generic model output", "is_valid": random.choice([True, False])}
+        return {"model_output": "Generic model output", 
+                "is_valid": random.choice([True, False]),
+                "n_output_tokens": 3}
 
 
 class DNAEvaluationInferenceTestModel:
