@@ -389,6 +389,32 @@ class MistralServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
         body = str.encode(json.dumps(data))
         return urllib.request.Request(self.url, body, self.headers)
 
+@dataclass
+class DeepseekR1ServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
+    # setting temperature to 0.6 as suggested in https://huggingface.co/deepseek-ai/DeepSeek-R1
+    temperature: float = 0.6
+    max_tokens: int = 4096
+    top_p: float = 0.95
+    presence_penalty: float = 0
+
+    def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
+        messages = []
+        if system_message:
+            messages.append({"role": "system", "content": system_message})
+        if previous_messages:
+            messages.extend(previous_messages)
+        if query_images:
+            raise NotImplementedError("Images are not supported for DeepseekR1ServerlessAzureRestEndpointModel endpoints.")
+        messages.append({"role": "user", "content": text_prompt})
+        data = {
+            "messages": messages,
+            "max_tokens": self.max_tokens,
+            "temperature": self.temperature,
+            "top_p": self.top_p,
+            "presence_penalty": self.presence_penalty,
+        }
+        body = str.encode(json.dumps(data))
+        return urllib.request.Request(self.url, body, self.headers)
 
 @dataclass
 class OpenAICommonRequestResponseMixIn:
@@ -1243,6 +1269,45 @@ class ClaudeModel(EndpointModel, KeyBasedAuthMixIn):
     def handle_request_error(self, e):
         return False
 
+@dataclass
+class ClaudeReasoningModel(ClaudeModel):
+    """This class is used to interact with Claude reasoning models through the python api."""
+
+    model_name: str = None
+    temperature: float = 1.
+    max_tokens: int = 20000
+    timeout: int = 600
+    thinking_enabled: bool = True
+    thinking_budget: int = 16000
+    top_p: float = None
+
+    def get_response(self, request):
+        if self.top_p is not None:
+            logging.warning("top_p is not supported for claude reasoning models as of 03/08/2025. It will be ignored.")
+
+        start_time = time.time()
+        thinking = {"type": "enabled", "budget_tokens": self.thinking_budget} if self.thinking_enabled else None
+        completion = self.client.messages.create(
+            model=self.model_name,
+            **request,
+            temperature=self.temperature,
+            thinking=thinking,
+            max_tokens=self.max_tokens,
+        )
+        end_time = time.time()
+
+        # Loop through completion.content to find the text output
+        for content in completion.content:
+            if content.type == 'text':
+                self.model_output = content.text
+            elif content.type == 'thinking':
+                self.thinking_output = content.thinking
+            elif content.type == 'redacted_thinking':
+                self.redacted_thinking_output = content.data
+
+        self.response_time = end_time - start_time
+        if hasattr(completion, "usage"):
+            return {"usage": completion.usage.to_dict()}
 
 @dataclass
 class TestModel(Model):

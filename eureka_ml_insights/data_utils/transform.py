@@ -14,6 +14,7 @@ from eureka_ml_insights.configs.config import ModelConfig
 
 from eureka_ml_insights.models import (
     ClaudeModel,
+    ClaudeReasoningModel,
     GeminiModel,
     LlamaServerlessAzureRestEndpointModel,
     MistralServerlessAzureRestEndpointModel,
@@ -21,7 +22,8 @@ from eureka_ml_insights.models import (
     DirectOpenAIModel,
     DirectOpenAIOModel,
     AzureOpenAIOModel,
-    TogetherModel
+    TogetherModel,
+    DeepseekR1ServerlessAzureRestEndpointModel
 )
 
 @dataclass
@@ -453,16 +455,20 @@ class ExtractUsageTransform:
         usage_completion_read_col = None
         if (self.model_config.class_name is GeminiModel):
             usage_completion_read_col = "candidates_token_count"
-        elif (self.model_config.class_name is ClaudeModel):
+        elif (self.model_config.class_name is ClaudeModel
+              or self.model_config.class_name is ClaudeReasoningModel):
             usage_completion_read_col = "output_tokens"
         elif (self.model_config.class_name is AzureOpenAIOModel
               or self.model_config.class_name is AzureOpenAIModel 
               or self.model_config.class_name is LlamaServerlessAzureRestEndpointModel
               or self.model_config.class_name is MistralServerlessAzureRestEndpointModel
+              or self.model_config.class_name is DeepseekR1ServerlessAzureRestEndpointModel
               or self.model_config.class_name is DirectOpenAIModel 
               or self.model_config.class_name is DirectOpenAIOModel
               or self.model_config.class_name is TogetherModel):
             usage_completion_read_col = "completion_tokens"
+        else:
+            logging.warn(f"Model {self.model_config.class_name} is not recognized for extracting completion token usage.")
         # if the model is one for which the usage of completion tokens is known, use that corresponding column for the model
         # otherwise, use the default "n_output_tokens" which is computed with a universal tokenizer as shown in TokenCounterTransform()
         self.validate(df, usage_completion_read_col)
