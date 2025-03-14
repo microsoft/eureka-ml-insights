@@ -1390,7 +1390,7 @@ class LocalVLLMModel(Model, OpenAICommonRequestResponseMixIn):
         if self.model_name not in local_vllm_deployment_handlers:
             with local_vllm_model_lock:
                 if self.model_name not in local_vllm_deployment_handlers:
-                    local_vllm_deployment_handlers['self.model_name'] = _LocalVLLMDeploymentHandler(
+                    local_vllm_deployment_handlers[self.model_name] = _LocalVLLMDeploymentHandler(
                         model_name=self.model_name,
                         num_servers=self.num_servers,
                         trust_remote_code=self.trust_remote_code,
@@ -1404,7 +1404,7 @@ class LocalVLLMModel(Model, OpenAICommonRequestResponseMixIn):
                         ports=self.ports,
                     )
 
-        return local_vllm_deployment_handlers['self.model_name']
+        return local_vllm_deployment_handlers[self.model_name]
 
     def _generate(self, request):
 
