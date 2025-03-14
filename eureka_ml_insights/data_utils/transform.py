@@ -475,7 +475,7 @@ class ExtractUsageTransform:
         return df 
     
     def validate(self, df: pd.DataFrame, usage_completion_read_col: str) -> pd.DataFrame:
-        """Check that all columns to be transformed are present actually in the data frame."""
+        """Check that usage_columns or n_tokens_columns are present actually in the data frame."""
         if usage_completion_read_col and self.usage_column not in df.columns:
             raise ValueError(f"The {self.usage_column} column is not present in the data frame.")
         elif self.n_tokens_column not in df.columns:
