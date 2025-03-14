@@ -448,7 +448,7 @@ class ExtractUsageTransform:
             df (pd.DataFrame): Input dataframe of inference results retrieved with the model_config.
 
         Returns:
-            pd.DataFrame: Transformed dataframe with completion token numbers in completion_usage_col.
+            pd.DataFrame: Transformed dataframe with completion token numbers in usage_completion_output_col.
         """
         usage_completion_read_col = None
         if (self.model_config.class_name is GeminiModel):
@@ -475,7 +475,11 @@ class ExtractUsageTransform:
         return df 
     
     def validate(self, df: pd.DataFrame, usage_completion_read_col: str) -> pd.DataFrame:
-        """Check that usage_columns or n_tokens_columns are present actually in the data frame."""
+        """Check that usage_columns or n_tokens_columns are present actually in the data frame.
+        Args:
+            df (pd.DataFrame): Input dataframe containing model_output_col and id_col.
+            usage_completion_read_col (str): The column name for token extraction.
+        """
         if usage_completion_read_col and self.usage_column not in df.columns:
             raise ValueError(f"The {self.usage_column} column is not present in the data frame.")
         elif self.n_tokens_column not in df.columns:
@@ -486,6 +490,7 @@ class ExtractUsageTransform:
         Extracts the token usage for a given row if usage column and corresponding completion column exists. 
         Args:
             row (pd.Series): A row of the dataframe.
+            usage_completion_read_col (str): The column name to extract the token usage from.
         Returns:
             int: The token usage for the row.
         """
