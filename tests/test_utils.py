@@ -111,7 +111,9 @@ class GenericTestModel:
         self.name = model_name
 
     def generate(self, text_prompt, *args, **kwargs):
-        return {"model_output": "Generic model output", "is_valid": random.choice([True, False])}
+        return {"model_output": "Generic model output", 
+                "is_valid": random.choice([True, False]),
+                "n_output_tokens": 3}
 
 
 class DNAEvaluationInferenceTestModel:

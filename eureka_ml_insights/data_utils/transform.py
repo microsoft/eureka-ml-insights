@@ -475,7 +475,7 @@ class ExtractUsageTransform:
         if usage_completion_read_col:
             df[self.usage_completion_output_col] = df.apply(lambda x: self._extract_usage(x, usage_completion_read_col), axis=1)
         elif self.n_tokens_column in df.columns:
-            df[self.usage_completion_output_col] = df[self.self.n_tokens_column]
+            df[self.usage_completion_output_col] = df[self.n_tokens_column]
         else:
             df[self.usage_completion_output_col] = np.nan
         return df 
