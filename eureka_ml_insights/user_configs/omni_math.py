@@ -49,7 +49,7 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                    "path": "KbsdJames/Omni-MATH",
                    "split": "test",
                    "transform": SequenceTransform([
-                    # SamplerTransform(sample_count=100, random_seed=99),
+                    #SamplerTransform(sample_count=10, random_seed=99),
                     MultiplyTransform(n_repeats=1),
                    ]),
                 }
@@ -69,8 +69,8 @@ class Omni_Math_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
-            max_concurrent=1,
-            requests_per_minute=5
+            max_concurrent=5,
+            #requests_per_minute=5
         )
 
         # eval data preprocessing
