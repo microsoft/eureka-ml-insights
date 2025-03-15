@@ -39,7 +39,6 @@ class Inference(Component):
             chat_mode (bool): optional. If True, the model will be used in chat mode, where a history of messages will be maintained in "previous_messages" column.
         """
         super().__init__(output_dir)
-        self.model_config = model_config
         self.model = model_config.class_name(**model_config.init_args)
         self.data_loader = data_config.class_name(**data_config.init_args)
         self.writer = JsonLinesWriter(os.path.join(output_dir, "inference_result.jsonl"))
@@ -246,10 +245,7 @@ class Inference(Component):
         """
 
         def sub_func(model_inputs):
-            # create a new instance of the model for thread-data-safety purposes
-            model = self.model_config.class_name(**self.model_config.init_args)
-            model.chat_mode = self.chat_mode
-            return model.generate(*model_inputs[0], **model_inputs[1])
+            return self.model.generate(*model_inputs[0], **model_inputs[1])
 
         results = executor.map(sub_func, concurrent_inputs)
         for i, result in enumerate(results):
