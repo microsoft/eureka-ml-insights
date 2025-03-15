@@ -1160,8 +1160,12 @@ class LLaVAModel(LLaVAHuggingFaceModel):
             )
             end_time = time.time()
 
-        self.model_output = self.tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
-        self.response_time = end_time - start_time
+        model_output = self.tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
+        response_time = end_time - start_time
+        return {
+            "model_output": model_output,
+            "response_time": response_time,
+        }
 
 
 @dataclass
