@@ -9,8 +9,8 @@ from dataclasses import dataclass
 
 import anthropic
 import tiktoken
-from azure.identity import get_bearer_token_provider
-from azure.identity import DefaultAzureCredential
+from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+
 from eureka_ml_insights.secret_management import get_secret
 
 
@@ -288,7 +288,7 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
             "response_time": response_time,
         }
         if "usage" in res:
-            return response_dict.update({"usage": res["usage"]})
+            response_dict.update({"usage": res["usage"]})
         return response_dict
 
     def handle_request_error(self, e):
@@ -395,6 +395,7 @@ class MistralServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
         body = str.encode(json.dumps(data))
         return urllib.request.Request(self.url, body, self.headers)
 
+
 @dataclass
 class DeepseekR1ServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
     # setting temperature to 0.6 as suggested in https://huggingface.co/deepseek-ai/DeepSeek-R1
@@ -410,7 +411,9 @@ class DeepseekR1ServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointMode
         if previous_messages:
             messages.extend(previous_messages)
         if query_images:
-            raise NotImplementedError("Images are not supported for DeepseekR1ServerlessAzureRestEndpointModel endpoints.")
+            raise NotImplementedError(
+                "Images are not supported for DeepseekR1ServerlessAzureRestEndpointModel endpoints."
+            )
         messages.append({"role": "user", "content": text_prompt})
         data = {
             "messages": messages,
@@ -421,6 +424,7 @@ class DeepseekR1ServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointMode
         }
         body = str.encode(json.dumps(data))
         return urllib.request.Request(self.url, body, self.headers)
+
 
 @dataclass
 class OpenAICommonRequestResponseMixIn:
@@ -470,7 +474,7 @@ class OpenAICommonRequestResponseMixIn:
             "response_time": response_time,
         }
         if "usage" in openai_response:
-            return response_dict.update({"usage": openai_response["usage"]})
+            response_dict.update({"usage": openai_response["usage"]})
         return response_dict
 
 
@@ -489,7 +493,7 @@ class AzureOpenAIClientMixIn:
 
     def handle_request_error(self, e):
         # if the error is due to a content filter, there is no need to retry
-        if hasattr(e, 'code') and e.code == "content_filter":
+        if hasattr(e, "code") and e.code == "content_filter":
             logging.warning("Content filtered.")
             response = None
             return response, False, True
@@ -617,7 +621,7 @@ class OpenAIOModelsRequestResponseMixIn:
             "response_time": response_time,
         }
         if "usage" in openai_response:
-            return response_dict.update({"usage": openai_response["usage"]})
+            response_dict.update({"usage": openai_response["usage"]})
         return response_dict
 
 
@@ -706,6 +710,7 @@ class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
 
     def get_response(self, request):
         start_time = time.time()
+        gemini_response = None
         try:
             gemini_response = self.model.generate_content(
                 request,
@@ -717,9 +722,7 @@ class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
             model_output = gemini_response.parts[0].text
             response_time = end_time - start_time
         except Exception as e:
-            is_non_transient_issue = self.handle_gemini_error(e, gemini_response)
-        if not is_non_transient_issue:
-            raise e
+            self.handle_gemini_error(e, gemini_response)
 
         response_dict = {
             "model_output": model_output,
@@ -755,7 +758,7 @@ class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
             logging.warning(
                 f"Attempt failed due to explicitly blocked input prompt: {e} Block Reason {gemini_response.prompt_feedback.block_reason}"
             )
-            return True
+
         # Handling cases where the model implicitly blocks prompts and does not provide an explicit block reason for it but rather an empty content.
         # In these cases, there is no need to make a new attempt as the model will continue to implicitly block the request, do_return = True.
         # Note that, in some cases, the model may still provide a finish reason as shown here https://ai.google.dev/api/generate-content?authuser=2#FinishReason
@@ -771,11 +774,11 @@ class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
                 logging.warning(
                     f"Safety Ratings for the first answer candidate are: {gemini_response.candidates[0].safety_ratings}"
                 )
-            return True
-        # Any other case will be re attempted again, do_return = False.
-        return False
+
+        raise e
 
     def handle_request_error(self, e):
+        # Any error case not handled in handle_gemini_error will be attempted again, do_return = False.
         return False
 
 
@@ -1326,12 +1329,13 @@ class ClaudeModel(EndpointModel, KeyBasedAuthMixIn):
     def handle_request_error(self, e):
         return False
 
+
 @dataclass
 class ClaudeReasoningModel(ClaudeModel):
     """This class is used to interact with Claude reasoning models through the python api."""
 
     model_name: str = None
-    temperature: float = 1.
+    temperature: float = 1.0
     max_tokens: int = 20000
     timeout: int = 600
     thinking_enabled: bool = True
@@ -1339,6 +1343,11 @@ class ClaudeReasoningModel(ClaudeModel):
     top_p: float = None
 
     def get_response(self, request):
+        model_output = None
+        response_time = None
+        thinking_output = None
+        redacted_thinking_output = None
+        response_dict = {}
         if self.top_p is not None:
             logging.warning("top_p is not supported for claude reasoning models as of 03/08/2025. It will be ignored.")
 
@@ -1355,16 +1364,24 @@ class ClaudeReasoningModel(ClaudeModel):
 
         # Loop through completion.content to find the text output
         for content in completion.content:
-            if content.type == 'text':
-                self.model_output = content.text
-            elif content.type == 'thinking':
-                self.thinking_output = content.thinking
-            elif content.type == 'redacted_thinking':
-                self.redacted_thinking_output = content.data
+            if content.type == "text":
+                model_output = content.text
+            elif content.type == "thinking":
+                thinking_output = content.thinking
+            elif content.type == "redacted_thinking":
+                redacted_thinking_output = content.data
 
-        self.response_time = end_time - start_time
+        response_time = end_time - start_time
+        response_dict = {
+            "model_output": model_output,
+            "response_time": response_time,
+            "thinking_output": thinking_output,
+            "redacted_thinking_output": redacted_thinking_output,
+        }
         if hasattr(completion, "usage"):
-            return {"usage": completion.usage.to_dict()}
+            response_dict.update({"usage": completion.usage.to_dict()})
+        return response_dict
+
 
 @dataclass
 class TestModel(Model):
