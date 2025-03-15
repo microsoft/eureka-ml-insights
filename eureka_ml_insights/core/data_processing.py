@@ -71,5 +71,7 @@ class DataProcessing(Component):
         # data reader loads data into a pandas dataframe and applies any transformations
         input_df = self.data_reader.load_dataset()
         logging.info(f"input has: {len(input_df)} rows, and the columns are: {input_df.columns}.")
-        input_df = self.get_desired_columns(input_df)
+        # if input_df is not empty, select the desired columns
+        if not input_df.empty:
+            input_df = self.get_desired_columns(input_df)
         self.write_output(input_df)
