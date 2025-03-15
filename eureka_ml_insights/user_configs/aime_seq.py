@@ -141,7 +141,7 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                     other_data_reader_config=DataSetConfig(
                         DataReader,
                         {
-                            "path": os.path.join(last_agg_dir.output_dir, "transformed_data.jsonl"),
+                            "path": os.path.join(last_agg_dir, "transformed_data.jsonl"),
                             "format": ".jsonl",
                         },
                     ),
