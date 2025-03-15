@@ -50,7 +50,7 @@ if __name__ == "__main__":
             if isinstance(model_config, ModelConfig):
                 model_config.init_args["ports"] = args.ports
                 model_config.init_args["num_servers"] = args.num_servers if args.num_servers else 1
-            init_args["model_config"] = model_config
+                init_args["model_config"] = model_config
             # Logic above is that certain deployment parameters like ports and num_servers
             # can be variable and so we allow them to be overridden by command line args.
         except AttributeError:
@@ -81,3 +81,7 @@ if __name__ == "__main__":
     logging.info(f"Saving experiment logs in {pipeline_config.log_dir}.")
     pipeline = Pipeline(pipeline_config.component_configs, pipeline_config.log_dir)
     pipeline.run()
+
+    if args.local_vllm:
+        from eureka_ml_insights.models.models import _LocalVLLMDeploymentHandler
+        _LocalVLLMDeploymentHandler.shutdown_servers()

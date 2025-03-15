@@ -133,6 +133,7 @@ class EndpointModel(Model):
         model_output = None
         is_valid = False
         response_time = None
+        n_output_tokens = None
 
         while attempts < self.num_retries:
             try:
@@ -141,6 +142,7 @@ class EndpointModel(Model):
                     response_dict.update(model_response)
                     model_output = model_response["model_output"]
                     response_time = model_response["response_time"]
+                    n_output_tokens = model_response.get("n_output_tokens", None)
                 if self.chat_mode:
                     previous_messages = self.update_chat_history(query_text, model_output, *args, **kwargs)
 
@@ -160,7 +162,7 @@ class EndpointModel(Model):
                 "is_valid": is_valid,
                 "model_output": model_output,
                 "response_time": response_time,
-                "n_output_tokens": self.count_tokens(model_output, is_valid),
+                "n_output_tokens": n_output_tokens or self.count_tokens(model_output, is_valid),
             }
         )
         if self.chat_mode:
@@ -477,7 +479,10 @@ class OpenAICommonRequestResponseMixIn:
             "response_time": response_time,
         }
         if "usage" in openai_response:
-            response_dict.update({"usage": openai_response["usage"]})
+            usage = openai_response["usage"]
+            response_dict.update({"usage": usage})
+            if isinstance(usage, dict) and "completion_tokens" in usage:
+                response_dict.update({"n_output_tokens": usage["completion_tokens"]})
         return response_dict
 
 
@@ -1273,9 +1278,12 @@ class VLLMModel(Model):
 
 class _LocalVLLMDeploymentHandler:
     """This class is used to handle the deployment of vLLM servers."""
-
     # Chose against dataclass here so we have the option to accept kwargs
     # and pass them to the vLLM deployment script.
+
+    # Used to store references to logs of the servers, since those contain PIDs for shutdown.
+    logs = []
+
     def __init__(
         self,
         model_name: str = None,
@@ -1339,8 +1347,8 @@ class _LocalVLLMDeploymentHandler:
             else:
                 logging.info(f"Waiting for {self.num_servers - len(healthy_ports)} more servers to come online.")
         
-        if len(self.clients) == 0:
-            raise RuntimeError(f"Failed to start servers.")
+        if len(self.clients) != self.num_servers:
+            raise RuntimeError(f"Failed to start all servers.")
 
     def get_healthy_ports(self) -> list[str]:
         """Check if servers are running."""
@@ -1366,22 +1374,23 @@ class _LocalVLLMDeploymentHandler:
         os.makedirs(log_dir)
 
         for index in range(self.num_servers):
+            port = 8000 + index
+            log_file = os.path.join(log_dir, f"{port}.log")
+            self.logs.append(log_file)
             background_thread = threading.Thread(
-                target = lambda: self.deploy_server(index, gpus_per_port, log_dir)
+                target = lambda: self.deploy_server(index, gpus_per_port, log_file)
             )
             background_thread.daemon = True
             background_thread.start()
 
-    def deploy_server(self, index: int, gpus_per_port: int, log_dir: str):
+    def deploy_server(self, index: int, gpus_per_port: int, log_file: str):
         """Deploy a single vLLM server using gpus_per_port many gpus starting at index*gpus_per_port."""
         
-        import os, subprocess
-
+        import subprocess
         port = 8000 + index
         first_gpu = index * gpus_per_port
         last_gpu = first_gpu + gpus_per_port - 1
         devices = ",".join(str(gpu_num) for gpu_num in range(first_gpu, last_gpu + 1))
-        log_file = os.path.join(log_dir, f"{port}.log")
 
         command = [
             "CUDA_VISIBLE_DEVICES=" + devices,
@@ -1400,11 +1409,26 @@ class _LocalVLLMDeploymentHandler:
             command.append(self.quantization)
         if self.trust_remote_code:
             command.append("--trust_remote_code")
-        #command.append(">> " + log_file + " 2>&1 &")
         command = " ".join(command)
         logging.info(f"Running command: {command}")
         with open(log_file, 'w') as log_writer:
             subprocess.run(command, shell=True, stdout=log_writer, stderr=log_writer)
+
+    @classmethod
+    def shutdown_servers(cls):
+        """Shutdown all vLLM servers deployed during this run."""
+
+        import re, os, signal
+        for log_file in cls.logs:
+            with open(log_file, "r") as f:
+                for line in f:
+                    if "Started server process" in line:
+                        match = re.search(r"\d+", line)
+                        if match:
+                            pid = int(match.group())
+                            logging.info(f"Shutting down server with PID {pid}.")
+                            os.kill(pid, signal.SIGINT)
+                            break
 
 
 local_vllm_model_lock = threading.Lock()
@@ -1412,7 +1436,7 @@ local_vllm_deployment_handlers : dict[str, _LocalVLLMDeploymentHandler] = {}
     
         
 @dataclass
-class LocalVLLMModel(Model, OpenAICommonRequestResponseMixIn):
+class LocalVLLMModel(OpenAICommonRequestResponseMixIn, EndpointModel):
     """This class is used for vLLM servers running locally.
     
     In case the servers are already deployed, specify the
@@ -1442,11 +1466,17 @@ class LocalVLLMModel(Model, OpenAICommonRequestResponseMixIn):
     top_p: float = .95
     top_k: int = -1
     max_tokens: int = 2000
+    frequency_penalty: float = 0
+    presence_penalty: float = 0
 
     def __post_init__(self):
         if not self.model_name:
             raise ValueError("LocalVLLM model_name must be specified.")
         self.handler = self._get_local_vllm_deployment_handler()
+
+    @property
+    def client(self):
+        return random.choice(self.handler.clients)
         
     def _get_local_vllm_deployment_handler(self):
         if self.model_name not in local_vllm_deployment_handlers:
@@ -1467,42 +1497,9 @@ class LocalVLLMModel(Model, OpenAICommonRequestResponseMixIn):
                     )
 
         return local_vllm_deployment_handlers[self.model_name]
-
-    def _generate(self, request):
-
-        # Similar logic as OpenAICommonRequestResponseMixIn.
-        # If OpenAICommonRequestResponseMixIn is adapted for threadsafety,
-        # I think there's a way to use it even with multiple clients.
-        start_time = time.time()
-        client = random.choice(self.handler.clients)
-        completion = client.chat.completions.create(
-            model=self.model_name,
-            max_tokens=self.max_tokens,
-            **request
-        )
-        end_time = time.time()
-        raw_output = completion.model_dump()
-        
-        return {
-            "model_output": raw_output["choices"][0]["message"]["content"],
-            "response_time": end_time - start_time,
-            "n_output_tokens": raw_output["usage"]["completion_tokens"]
-        }
-
-    def generate(self, text_prompt, query_images=None, system_message=None):
-        response_dict = {}
-
-        if text_prompt:
-            # Format request for OpenAI API using create_request from OpenAICommonRequestResponseMixIn
-            request = self.create_request(text_prompt, query_images, system_message)
-            try:
-                response_dict.update(self._generate(request))
-                response_dict['is_valid'] = True
-            except Exception as e:
-                logging.warning(e)
-                response_dict['is_valid'] = False
-
-        return response_dict
+    
+    def handle_request_error(self, e):
+        return False
 
 
 @dataclass
