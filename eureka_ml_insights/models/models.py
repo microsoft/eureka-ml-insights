@@ -8,7 +8,6 @@ import threading
 import time
 import urllib.request
 from abc import ABC, abstractmethod
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 
 import anthropic
@@ -1307,8 +1306,12 @@ class _LocalVLLMDeploymentHandler:
         log_dir = os.path.join("logs", "local_vllm_deployment_logs", f"{date}")
         os.makedirs(log_dir)
 
-        executor = ThreadPoolExecutor(max_workers=self.num_servers)
-        futures = [executor.submit(lambda index: self.deploy_server(index, gpus_per_port, log_dir), i) for i in range(self.num_servers)]
+        for index in range(self.num_servers):
+            background_thread = threading.Thread(
+                target = lambda: self.deploy_server(index, gpus_per_port, log_dir)
+            )
+            background_thread.daemon = True
+            background_thread.start()
 
     def deploy_server(self, index: int, gpus_per_port: int, log_dir: str):
         """Deploy a single vLLM server using gpus_per_port many gpus starting at index*gpus_per_port."""
