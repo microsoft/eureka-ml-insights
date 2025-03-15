@@ -19,6 +19,7 @@ from eureka_ml_insights.core import (
 from eureka_ml_insights.data_utils import (
     AddColumnAndData,
     ColumnRename,
+    CopyColumn,
     DataReader,
     RunPythonTransform,
     SamplerTransform,
@@ -33,40 +34,26 @@ from eureka_ml_insights.metrics.metrics_base import (
 
 from .aime import AIME_PIPELINE
 
-DEFAULT_N_ITER = 2
-
-
-resume_from_dict = {
-    1: "/home/sayouse/git/eureka-ml-insights/logs/AIME_SEQ_PIPELINE/2025-03-04-21-07-09.687511/student_inference_result_1/inference_result.jsonl",
-    2: None,
-}
+DEFAULT_N_ITER = 3
+RESULT_COLS = [
+    "attempt_id",
+    "model_output",
+    "uid",
+    "prompt",
+    "ground_truth",
+    "Year",
+    "ID",
+    "student_extracted_answer",
+    "verification_result"
+]
+resume_from_dict = {}
 
 
 class AIME_SEQ_PIPELINE(AIME_PIPELINE):
     """This class specifies the config for running AIME benchmark on any model"""
 
-    def get_result_columns(self, i: int) -> list[str]:
-        """Get the desired result columns to be saved for the given iteration
-        Args:
-            i (int): The iteration number
-        Returns:
-            list[str]: The list of columns to be saved
-        """
-        verification_cols_so_far = [f"verification_result_{j}" for j in range(1, i)]
-        extracted_ans_cols_so_far = [f"student_extracted_answer_{j}" for j in range(1, i)]
-        return (
-            [
-                "attempt_id",
-                "model_output",
-                "uid",
-                "prompt",
-                "ground_truth",
-                "Year",
-                "ID",
-            ]
-            + verification_cols_so_far
-            + extracted_ans_cols_so_far
-        )
+
+
 
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
@@ -76,10 +63,6 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
         super().configure_pipeline(model_config, resume_from, **kwargs)
 
         n_iter = kwargs.get("n_iter", DEFAULT_N_ITER)
-
-        self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
-            SamplerTransform(random_seed=40, sample_count=1)
-        )
 
         component_configs = [self.data_processing_comp]
         for i in range(1, n_iter + 1):
@@ -114,9 +97,12 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                         "transform": SequenceTransform(
                             [
                                 # extract and verify the student answer
-                                AIMEExtractAnswer(f"model_output", f"student_extracted_answer_{i}"),
-                                MetricBasedVerifier(ExactMatch, f"student_extracted_answer_{i}"),
+                                AIMEExtractAnswer(f"model_output", f"student_extracted_answer"),
+                                MetricBasedVerifier(ExactMatch, f"student_extracted_answer"),
                                 AddColumnAndData("attempt_id", i),
+                                CopyColumn(
+                                    column_name_src="model_output",
+                                    column_name_dst=f"student_output")
                             ]
                         ),
                     },
@@ -145,7 +131,7 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                             "format": ".jsonl",
                         },
                     ),
-                    output_data_columns=self.get_result_columns(i),
+                    output_data_columns=RESULT_COLS,
                     output_dir=os.path.join(self.log_dir, f"last_inference_result_join_{i}"),
                 )
                 last_agg_dir = self.last_inference_result_join_comp.output_dir
@@ -176,12 +162,6 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                     {
                         "path": os.path.join(self.filtering_comp.output_dir, "transformed_data.jsonl"),
                         "format": ".jsonl",
-                        "transform": ColumnRename(
-                            name_mapping={
-                                "verification_result": f"verification_result_{i}",
-                                "model_output": f"student_output_{i}",
-                            }
-                        ),
                     },
                 ),
                 prompt_template_path=os.path.join(
@@ -228,8 +208,9 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
 
         # Pass the combined results from all iterations to the eval reporting component
         self.evalreporting_comp.data_reader_config.init_args["path"] = os.path.join(
-            self.last_inference_result_join_comp.output_dir, "transformed_data.jsonl"
+            last_agg_dir, "transformed_data.jsonl"
         )
+        self.evalreporting_comp.metric_config.init_args["model_output_col"] = "student_extracted_answer"
 
         component_configs.append(self.evalreporting_comp)
 
