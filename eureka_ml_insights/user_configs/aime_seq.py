@@ -77,9 +77,6 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
 
         n_iter = kwargs.get("n_iter", DEFAULT_N_ITER)
 
-        # list of verification components used in the pipeline
-        verification_comps = []
-
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
             SamplerTransform(random_seed=40, sample_count=1)
         )
@@ -126,12 +123,10 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                 ),
                 output_dir=os.path.join(self.log_dir, f"verification_{i}"),
             )
-            verification_comps.append(self.verification_comp)
             component_configs.append(self.verification_comp)
 
             # Variable maintaining link to the most recent inference result results to be used for evaluation
             # This will be updated to point to the concatenation of results from all iterations
-            self.last_inference_result_join_comp = self.verification_comp
 
             if i > 1:
                 self.last_inference_result_join_comp = DataUnionConfig(
@@ -146,15 +141,18 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                     other_data_reader_config=DataSetConfig(
                         DataReader,
                         {
-                            "path": os.path.join(verification_comps[-2].output_dir, "transformed_data.jsonl"),
+                            "path": os.path.join(last_agg_dir.output_dir, "transformed_data.jsonl"),
                             "format": ".jsonl",
                         },
                     ),
                     output_data_columns=self.get_result_columns(i),
                     output_dir=os.path.join(self.log_dir, f"last_inference_result_join_{i}"),
                 )
+                last_agg_dir = self.last_inference_result_join_comp.output_dir
                 component_configs.append(self.last_inference_result_join_comp)
-
+            else:
+                last_agg_dir = self.verification_comp.output_dir
+            
             # Filtering out the rows with correct answer
             self.filtering_comp = DataProcessingConfig(
                 component_type=DataProcessing,
