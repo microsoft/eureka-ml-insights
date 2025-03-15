@@ -223,3 +223,4 @@ class Inference(Component):
         self.validate_response_dict(response_dict)
         data.update(response_dict)
         return data
+      
