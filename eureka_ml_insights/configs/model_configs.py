@@ -12,6 +12,7 @@ from eureka_ml_insights.models import (
     LlamaServerlessAzureRestEndpointModel,
     LLaVAHuggingFaceModel,
     LLaVAModel,
+    LocalVLLMModel,
     Phi4HFModel,
     MistralServerlessAzureRestEndpointModel,
     DeepseekR1ServerlessAzureRestEndpointModel,
@@ -294,6 +295,27 @@ AIF_NT_MISTRAL_LARGE_2_2407_CONFIG = ModelConfig(
             "key_vault_url": None,
         },
         "model_name": "Mistral-large-2407",
+    },
+)
+
+# Local VLLM Models
+# Adapt to your local deployments, or give enough info for vllm deployment.
+PHI4_LOCAL_CONFIG = ModelConfig(
+    LocalVLLMModel,
+    {
+        # this name must match the vllm deployment name/path
+        "model_name": "microsoft/phi-4",
+        # specify ports in case the model is already deployed
+        "ports": ["8002", "8003"],
+    },
+)
+QWQ32B_LOCAL_CONFIG = ModelConfig(
+    LocalVLLMModel,
+    {
+        # this name must match the vllm deployment name/path
+        "model_name": "Qwen/QwQ-32B",
+        # certain args will get passed to the vllm serve command
+        "tensor_parallel_size": 2,
     },
 )
 
