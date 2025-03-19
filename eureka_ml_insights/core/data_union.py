@@ -27,6 +27,7 @@ class DataUnion(DataProcessing):
         super().__init__(data_reader_config, output_dir, output_data_columns)
         self.other_data_reader = other_data_reader_config.class_name(**other_data_reader_config.init_args)
         self.dedupe_cols = dedupe_cols
+
     @classmethod
     def from_config(cls, config):
         return cls(

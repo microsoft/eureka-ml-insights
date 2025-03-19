@@ -22,7 +22,6 @@ from eureka_ml_insights.data_utils import (
     CopyColumn,
     DataReader,
     RunPythonTransform,
-    SamplerTransform,
     SequenceTransform,
 )
 from eureka_ml_insights.data_utils.aime_utils import AIMEExtractAnswer
@@ -45,16 +44,13 @@ RESULT_COLS = [
     "ID",
     "student_extracted_answer",
     "verification_result",
-    "usage"
+    "usage",
 ]
 resume_from_dict = {}
 
 
 class AIME_SEQ_PIPELINE(AIME_PIPELINE):
     """This class specifies the config for running AIME benchmark on any model"""
-
-
-
 
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
@@ -101,9 +97,7 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                                 AIMEExtractAnswer(f"model_output", f"student_extracted_answer"),
                                 MetricBasedVerifier(ExactMatch, f"student_extracted_answer"),
                                 AddColumnAndData("attempt_id", i),
-                                CopyColumn(
-                                    column_name_src="model_output",
-                                    column_name_dst=f"student_output")
+                                CopyColumn(column_name_src="model_output", column_name_dst=f"student_output"),
                             ]
                         ),
                     },
@@ -140,7 +134,7 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                 component_configs.append(self.last_inference_result_join_comp)
             else:
                 last_agg_dir = self.verification_comp.output_dir
-            
+
             # Filtering out the rows with correct answer
             self.filtering_comp = DataProcessingConfig(
                 component_type=DataProcessing,
