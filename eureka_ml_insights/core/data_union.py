@@ -14,6 +14,7 @@ class DataUnion(DataProcessing):
         output_dir: str,
         other_data_reader_config,
         output_data_columns: Optional[List[str]] = None,
+        dedupe_cols: Optional[List[str]] = None,
     ) -> None:
         """
         args:
@@ -25,7 +26,7 @@ class DataUnion(DataProcessing):
         """
         super().__init__(data_reader_config, output_dir, output_data_columns)
         self.other_data_reader = other_data_reader_config.class_name(**other_data_reader_config.init_args)
-
+        self.dedupe_cols = dedupe_cols
     @classmethod
     def from_config(cls, config):
         return cls(
@@ -33,6 +34,7 @@ class DataUnion(DataProcessing):
             config.output_dir,
             config.other_data_reader_config,
             config.output_data_columns,
+            config.dedupe_cols,
         )
 
     def run(self):
@@ -48,5 +50,6 @@ class DataUnion(DataProcessing):
         self.output_data_columns = [col for col in self.output_data_columns if col in concat_df.columns]
         if len(concat_df.columns) > 0:
             concat_df = self.get_desired_columns(concat_df)
-        concat_df = concat_df.drop_duplicates()
+        if self.dedupe_cols:
+            concat_df = concat_df.drop_duplicates(subset=self.dedupe_cols)
         self.write_output(concat_df)

@@ -44,7 +44,8 @@ RESULT_COLS = [
     "Year",
     "ID",
     "student_extracted_answer",
-    "verification_result"
+    "verification_result",
+    "usage"
 ]
 resume_from_dict = {}
 
@@ -132,6 +133,7 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                         },
                     ),
                     output_data_columns=RESULT_COLS,
+                    dedupe_cols=["ID", "attempt_id"],
                     output_dir=os.path.join(self.log_dir, f"last_inference_result_join_{i}"),
                 )
                 last_agg_dir = self.last_inference_result_join_comp.output_dir

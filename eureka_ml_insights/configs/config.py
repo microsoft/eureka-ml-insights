@@ -109,6 +109,7 @@ class DataUnionConfig(DataProcessingConfig):
 
     other_data_reader_config: UtilityClassConfigType = None
     output_data_columns: List[str] = None
+    dedupe_cols: List[str] = None
 
 
 @dataclass
