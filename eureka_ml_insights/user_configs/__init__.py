@@ -14,6 +14,9 @@ from .ba_calendar import (
         BA_Calendar_Parallel_PIPELINE,
         BA_Calendar_RunEvals_PIPELINE,
 )
+
+from .aime2025_seq import AIME2025_SEQ_PIPELINE
+from .ba_calendar import BA_Calendar_Parallel_PIPELINE, BA_Calendar_PIPELINE
 from .dna import DNA_PIPELINE
 from .drop import Drop_Experiment_Pipeline
 from .flenqa import FlenQA_Experiment_Pipeline

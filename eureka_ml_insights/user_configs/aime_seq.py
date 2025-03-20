@@ -50,6 +50,12 @@ RESULT_COLS = [
 resume_from_dict = {}
 
 
+
+resume_from_dict = {
+    1: None,
+    2: None,
+}
+
 class AIME_SEQ_PIPELINE(AIME_PIPELINE):
     """This class specifies the config for running AIME benchmark on any model"""
 
