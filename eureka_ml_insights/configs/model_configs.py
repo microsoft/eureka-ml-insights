@@ -5,14 +5,17 @@ You can also add your custom models here by following the same pattern as the ex
 from eureka_ml_insights.models import (
     AzureOpenAIOModel,
     ClaudeModel,
+    ClaudeReasoningModel,
     DirectOpenAIModel,
     DirectOpenAIOModel,
     GeminiModel,
     LlamaServerlessAzureRestEndpointModel,
     LLaVAHuggingFaceModel,
     LLaVAModel,
+    LocalVLLMModel,
     Phi4HFModel,
     MistralServerlessAzureRestEndpointModel,
+    DeepseekR1ServerlessAzureRestEndpointModel,
     RestEndpointModel,
     TogetherModel,
     TestModel,
@@ -200,6 +203,19 @@ CLAUDE_3_5_SONNET_CONFIG = ModelConfig(
     },
 )
 
+CLAUDE_3_7_SONNET_THINKING_CONFIG = ModelConfig(
+    ClaudeReasoningModel,
+    {
+        "secret_key_params": CLAUDE_SECRET_KEY_PARAMS,
+        "model_name": "claude-3-7-sonnet-20250219",
+        "thinking_enabled": True,
+        "thinking_budget": 16000,
+        "max_tokens": 20000, # This number should always be higher than the thinking budget
+        "temperature": 1.0, # As of 03/08/2025, thinking only works with temperature 1.0
+        "timeout": 600, # We set a timeout of 10 minutes for thinking
+    },
+)
+
 CLAUDE_3_5_SONNET_20241022_CONFIG = ModelConfig(
     ClaudeModel,
     {
@@ -281,5 +297,42 @@ AIF_NT_MISTRAL_LARGE_2_2407_CONFIG = ModelConfig(
             "key_vault_url": None,
         },
         "model_name": "Mistral-large-2407",
+    },
+)
+
+# Local VLLM Models
+# Adapt to your local deployments, or give enough info for vllm deployment.
+PHI4_LOCAL_CONFIG = ModelConfig(
+    LocalVLLMModel,
+    {
+        # this name must match the vllm deployment name/path
+        "model_name": "microsoft/phi-4",
+        # specify ports in case the model is already deployed
+        "ports": ["8002", "8003"],
+    },
+)
+QWQ32B_LOCAL_CONFIG = ModelConfig(
+    LocalVLLMModel,
+    {
+        # this name must match the vllm deployment name/path
+        "model_name": "Qwen/QwQ-32B",
+        # certain args will get passed to the vllm serve command
+        "tensor_parallel_size": 2,
+    },
+)
+
+# DeepSeek R1 Endpoints on Azure
+DEEPSEEK_R1_CONFIG = ModelConfig(
+    DeepseekR1ServerlessAzureRestEndpointModel,
+    {
+        "url": "your/endpoint/url",
+        "secret_key_params": {
+            "key_name": "your_deepseek_r1_secret_key_name",
+            "local_keys_path": "keys/keys.json",
+            "key_vault_url": None,
+        },
+        "max_tokens": 32768,
+        # the timeout parameter is passed to urllib.request.urlopen(request, timeout=self.timeout) in ServerlessAzureRestEndpointModel
+        "timeout": 600,
     },
 )

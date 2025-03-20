@@ -2,6 +2,9 @@
 
 import json
 import logging
+import random
+import requests
+import threading
 import time
 import urllib.request
 from abc import ABC, abstractmethod
@@ -13,6 +16,7 @@ from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 
 from eureka_ml_insights.secret_management import get_secret
 
+
 @dataclass
 class Model(ABC):
     """This class is used to define the structure of a model class.
@@ -20,29 +24,27 @@ class Model(ABC):
     containing the model_output, is_valid, and other relevant information.
     """
 
-    model_output: str = None
-    is_valid: bool = False
-    response_time: float = None
-    n_output_tokens: int = None
     chat_mode: bool = False
-    previous_messages: list = None
 
     @abstractmethod
     def generate(self, text_prompt, *args, **kwargs):
         raise NotImplementedError
 
-    def count_tokens(self):
+    def count_tokens(self, model_output: str = None, is_valid: bool = False):
         """
         This method uses tiktoken tokenizer to count the number of tokens in the response.
         See: https://github.com/openai/openai-cookbook/blob/main/examples/How_to_count_tokens_with_tiktoken.ipynb
+        args:
+            model_output (str): the text response from the model.
+            is_valid (bool): whether the response is valid or not.
         returns:
             n_output_tokens (int): the number of tokens in the text response.
         """
         encoding = tiktoken.get_encoding("cl100k_base")
-        if self.model_output is None or not self.is_valid:
+        if model_output is None or not is_valid:
             return None
         else:
-            n_output_tokens = len(encoding.encode(self.model_output))
+            n_output_tokens = len(encoding.encode(model_output))
             return n_output_tokens
 
     def base64encode(self, query_images):
@@ -100,18 +102,19 @@ class EndpointModel(Model):
         # must return the model output and the response time
         raise NotImplementedError
 
-    def update_chat_history(self, query_text, *args, **kwargs):
+    def update_chat_history(self, query_text, model_output, *args, **kwargs):
         """
         This method is used to update the chat history with the model response.
         args:
             query_text (str): the text prompt to generate the response.
+            model_output (str): the text response from the model.
         returns:
             previous_messages (list): a list of messages in the chat history.
         """
         previous_messages = kwargs.get("previous_messages", [])
         previous_messages.append({"role": "user", "content": query_text})
-        previous_messages.append({"role": "assistant", "content": self.model_output})
-        self.previous_messages = previous_messages
+        previous_messages.append({"role": "assistant", "content": model_output})
+        return previous_messages
 
     def generate(self, query_text, *args, **kwargs):
         """
@@ -127,38 +130,43 @@ class EndpointModel(Model):
         response_dict = {}
         request = self.create_request(query_text, *args, **kwargs)
         attempts = 0
+        model_output = None
+        is_valid = False
+        response_time = None
+        n_output_tokens = None
+
         while attempts < self.num_retries:
             try:
-                meta_response = self.get_response(request)
+                model_response = self.get_response(request)
+                if model_response:
+                    response_dict.update(model_response)
+                    model_output = model_response["model_output"]
+                    response_time = model_response["response_time"]
+                    n_output_tokens = model_response.get("n_output_tokens", None)
                 if self.chat_mode:
-                    self.update_chat_history(query_text, *args, **kwargs)
-                if meta_response:
-                    response_dict.update(meta_response)
-                self.is_valid = True
+                    previous_messages = self.update_chat_history(query_text, model_output, *args, **kwargs)
+
+                is_valid = True
                 break
             except Exception as e:
                 logging.warning(f"Attempt {attempts+1}/{self.num_retries} failed: {e}")
                 do_return = self.handle_request_error(e)
                 if do_return:
-                    self.model_output = None
-                    self.is_valid = False
                     break
                 attempts += 1
         else:
             logging.warning("All attempts failed.")
-            self.is_valid = False
-            self.model_output = None
 
         response_dict.update(
             {
-                "is_valid": self.is_valid,
-                "model_output": self.model_output,
-                "response_time": self.response_time,
-                "n_output_tokens": self.count_tokens(),
+                "is_valid": is_valid,
+                "model_output": model_output,
+                "response_time": response_time,
+                "n_output_tokens": n_output_tokens or self.count_tokens(model_output, is_valid),
             }
         )
         if self.chat_mode:
-            response_dict.update({"previous_messages": self.previous_messages})
+            response_dict.update({"previous_messages": previous_messages})
         return response_dict
 
     @abstractmethod
@@ -217,8 +225,9 @@ class RestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
         end_time = time.time()
         # Parse the response and return the model output.
         res = json.loads(response.read())
-        self.model_output = res["output"]
-        self.response_time = end_time - start_time
+        model_output = res["output"]
+        response_time = end_time - start_time
+        return {"model_output": model_output, "response_time": response_time}
 
     def handle_request_error(self, e):
         if isinstance(e, urllib.error.HTTPError):
@@ -227,7 +236,7 @@ class RestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
             logging.info(e.info())
             logging.info(e.read().decode("utf8", "ignore"))
         else:
-            logging.info("The request failed with: "+ str(e))
+            logging.info("The request failed with: " + str(e))
         return False
 
 
@@ -248,24 +257,22 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
             self.headers = {
                 "Content-Type": "application/json",
                 "Authorization": ("Bearer " + self.api_key),
-                # The behavior of the API when extra parameters are indicated in the payload. 
-                # Using pass-through makes the API to pass the parameter to the underlying model. 
-                # Use this value when you want to pass parameters that you know the underlying model can support. 
+                # The behavior of the API when extra parameters are indicated in the payload.
+                # Using pass-through makes the API to pass the parameter to the underlying model.
+                # Use this value when you want to pass parameters that you know the underlying model can support.
                 # https://learn.microsoft.com/en-us/azure/machine-learning/reference-model-inference-chat-completions?view=azureml-api-2
-                "extra-parameters": "pass-through"
+                "extra-parameters": "pass-through",
             }
         except ValueError:
-            self.bearer_token_provider = get_bearer_token_provider(
-                DefaultAzureCredential(), self.auth_scope
-            )
+            self.bearer_token_provider = get_bearer_token_provider(DefaultAzureCredential(), self.auth_scope)
             self.headers = {
                 "Content-Type": "application/json",
                 "Authorization": ("Bearer " + self.bearer_token_provider()),
-                # The behavior of the API when extra parameters are indicated in the payload. 
-                # Using pass-through makes the API to pass the parameter to the underlying model. 
+                # The behavior of the API when extra parameters are indicated in the payload.
+                # Using pass-through makes the API to pass the parameter to the underlying model.
                 # Use this value when you want to pass parameters that you know the underlying model can support.
                 # https://learn.microsoft.com/en-us/azure/machine-learning/reference-model-inference-chat-completions?view=azureml-api-2
-                "extra-parameters": "pass-through"
+                "extra-parameters": "pass-through",
             }
 
     @abstractmethod
@@ -279,10 +286,15 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
         response = urllib.request.urlopen(request, timeout=self.timeout)
         end_time = time.time()
         res = json.loads(response.read())
-        self.model_output = res["choices"][0]["message"]["content"]
-        self.response_time = end_time - start_time
+        model_output = res["choices"][0]["message"]["content"]
+        response_time = end_time - start_time
+        response_dict = {
+            "model_output": model_output,
+            "response_time": response_time,
+        }
         if "usage" in res:
-            return {"usage": res["usage"]}
+            response_dict.update({"usage": res["usage"]})
+        return response_dict
 
     def handle_request_error(self, e):
         if isinstance(e, urllib.error.HTTPError):
@@ -291,7 +303,7 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
             logging.info(e.info())
             logging.info(e.read().decode("utf8", "ignore"))
         else:
-            logging.info("The request failed with: "+ str(e))
+            logging.info("The request failed with: " + str(e))
         return False
 
 
@@ -332,7 +344,6 @@ class LlamaServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
                 },
             ]
         messages.append({"role": "user", "content": user_content})
-
 
         data = {
             "messages": messages,
@@ -391,6 +402,36 @@ class MistralServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
 
 
 @dataclass
+class DeepseekR1ServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
+    # setting temperature to 0.6 as suggested in https://huggingface.co/deepseek-ai/DeepSeek-R1
+    temperature: float = 0.6
+    max_tokens: int = 4096
+    top_p: float = 0.95
+    presence_penalty: float = 0
+
+    def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
+        messages = []
+        if system_message:
+            messages.append({"role": "system", "content": system_message})
+        if previous_messages:
+            messages.extend(previous_messages)
+        if query_images:
+            raise NotImplementedError(
+                "Images are not supported for DeepseekR1ServerlessAzureRestEndpointModel endpoints."
+            )
+        messages.append({"role": "user", "content": text_prompt})
+        data = {
+            "messages": messages,
+            "max_tokens": self.max_tokens,
+            "temperature": self.temperature,
+            "top_p": self.top_p,
+            "presence_penalty": self.presence_penalty,
+        }
+        body = str.encode(json.dumps(data))
+        return urllib.request.Request(self.url, body, self.headers)
+
+
+@dataclass
 class OpenAICommonRequestResponseMixIn:
     """
     This mixin class defines the request and response handling for most OpenAI models.
@@ -431,10 +472,18 @@ class OpenAICommonRequestResponseMixIn:
         )
         end_time = time.time()
         openai_response = completion.model_dump()
-        self.model_output = openai_response["choices"][0]["message"]["content"]
-        self.response_time = end_time - start_time
+        model_output = openai_response["choices"][0]["message"]["content"]
+        response_time = end_time - start_time
+        response_dict = {
+            "model_output": model_output,
+            "response_time": response_time,
+        }
         if "usage" in openai_response:
-            return {"usage": openai_response["usage"]}
+            usage = openai_response["usage"]
+            response_dict.update({"usage": usage})
+            if isinstance(usage, dict) and "completion_tokens" in usage:
+                response_dict.update({"n_output_tokens": usage["completion_tokens"]})
+        return response_dict
 
 
 class AzureOpenAIClientMixIn:
@@ -443,9 +492,7 @@ class AzureOpenAIClientMixIn:
     def get_client(self):
         from openai import AzureOpenAI
 
-        token_provider = get_bearer_token_provider(
-            DefaultAzureCredential(), self.auth_scope
-        )
+        token_provider = get_bearer_token_provider(DefaultAzureCredential(), self.auth_scope)
         return AzureOpenAI(
             azure_endpoint=self.url,
             api_version=self.api_version,
@@ -454,7 +501,7 @@ class AzureOpenAIClientMixIn:
 
     def handle_request_error(self, e):
         # if the error is due to a content filter, there is no need to retry
-        if hasattr(e, 'code') and e.code == "content_filter":
+        if hasattr(e, "code") and e.code == "content_filter":
             logging.warning("Content filtered.")
             response = None
             return response, False, True
@@ -518,19 +565,18 @@ class DirectOpenAIModel(OpenAICommonRequestResponseMixIn, DirectOpenAIClientMixI
 
 
 class OpenAIOModelsRequestResponseMixIn:
-    
     def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
         messages = []
         if system_message and "o1-preview" in self.model_name:
             logging.warning("System and developer messages are not supported by OpenAI O1 preview model.")
         elif system_message:
-            # Developer messages are the new system messages: 
-            # Starting with o1-2024-12-17, o1 models support developer messages rather than system messages, 
+            # Developer messages are the new system messages:
+            # Starting with o1-2024-12-17, o1 models support developer messages rather than system messages,
             # to align with the chain of command behavior described in the model spec.
-            messages.append({"role": "developer", "content": system_message})        
+            messages.append({"role": "developer", "content": system_message})
         if previous_messages:
             messages.extend(previous_messages)
-        
+
         user_content = text_prompt
         if query_images and "o1-preview" in self.model_name:
             logging.warning("Images are not supported by OpenAI O1 preview model.")
@@ -576,10 +622,15 @@ class OpenAIOModelsRequestResponseMixIn:
             )
         end_time = time.time()
         openai_response = completion.model_dump()
-        self.model_output = openai_response["choices"][0]["message"]["content"]
-        self.response_time = end_time - start_time
+        model_output = openai_response["choices"][0]["message"]["content"]
+        response_time = end_time - start_time
+        response_dict = {
+            "model_output": model_output,
+            "response_time": response_time,
+        }
         if "usage" in openai_response:
-            return {"usage": openai_response["usage"]}
+            response_dict.update({"usage": openai_response["usage"]})
+        return response_dict
 
 
 @dataclass
@@ -618,7 +669,6 @@ class AzureOpenAIOModel(OpenAIOModelsRequestResponseMixIn, AzureOpenAIClientMixI
     reasoning_effort: str = "medium"
     api_version: str = "2023-06-01-preview"
     auth_scope: str = "https://cognitiveservices.azure.com/.default"
-
 
     def __post_init__(self):
         self.client = self.get_client()
@@ -660,7 +710,7 @@ class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
             self.model = genai.GenerativeModel(self.model_name)
         else:
             self.model = genai.GenerativeModel(self.model_name, system_instruction=system_message)
-        
+
         if query_images:
             return [text_prompt] + query_images
         else:
@@ -668,57 +718,77 @@ class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
 
     def get_response(self, request):
         start_time = time.time()
-        self.gemini_response = self.model.generate_content(
-            request,
-            generation_config=self.gen_config,
-            request_options={"timeout": self.timeout},
-            safety_settings=self.safety_settings,
-        )
-        end_time = time.time()
-        self.model_output = self.gemini_response.parts[0].text
-        self.response_time = end_time - start_time
-        if hasattr(self.gemini_response, "usage_metadata"):
+        gemini_response = None
+        try:
+            gemini_response = self.model.generate_content(
+                request,
+                generation_config=self.gen_config,
+                request_options={"timeout": self.timeout},
+                safety_settings=self.safety_settings,
+            )
+            end_time = time.time()
+            model_output = gemini_response.parts[0].text
+            response_time = end_time - start_time
+        except Exception as e:
+            self.handle_gemini_error(e, gemini_response)
+
+        response_dict = {
+            "model_output": model_output,
+            "response_time": response_time,
+        }
+        if hasattr(gemini_response, "usage_metadata"):
             try:
-                return {
-                    "usage": {
-                        "prompt_token_count": self.gemini_response.usage_metadata.prompt_token_count,
-                        "candidates_token_count": self.gemini_response.usage_metadata.candidates_token_count,
-                        "total_token_count": self.gemini_response.usage_metadata.total_token_count,
+                response_dict.update(
+                    {
+                        "usage": {
+                            "prompt_token_count": gemini_response.usage_metadata.prompt_token_count,
+                            "candidates_token_count": gemini_response.usage_metadata.candidates_token_count,
+                            "total_token_count": gemini_response.usage_metadata.total_token_count,
+                        }
                     }
-                }
+                )
             except AttributeError:
                 logging.warning("Usage metadata not found in the response.")
+        return response_dict
 
-    def handle_request_error(self, e):
+    def handle_gemini_error(self, e, gemini_response):
         """Handles exceptions originating from making requests to Gemini through the python api.
 
         args:
-            e (_type_): Exception occurred during getting a response.
-
+            e: Exception that occurred during getting a response.
+            gemini_response: The response object from the gemini model.
         returns:
             _type_: do_return (True if the call should not be attempted again).
         """
         # Handling cases where the model explicitly blocks prompts and provides a reason for it.
         # In these cases, there is no need to make a new attempt as the model will continue to explicitly block the request, do_return = True.
-        if e.__class__.__name__ == "ValueError" and self.gemini_response.prompt_feedback.block_reason > 0:
+        if e.__class__.__name__ == "ValueError" and gemini_response.prompt_feedback.block_reason > 0:
             logging.warning(
-                f"Attempt failed due to explicitly blocked input prompt: {e} Block Reason {self.gemini_response.prompt_feedback.block_reason}"
+                f"Attempt failed due to explicitly blocked input prompt: {e} Block Reason {gemini_response.prompt_feedback.block_reason}"
             )
-            return True
+
         # Handling cases where the model implicitly blocks prompts and does not provide an explicit block reason for it but rather an empty content.
         # In these cases, there is no need to make a new attempt as the model will continue to implicitly block the request, do_return = True.
         # Note that, in some cases, the model may still provide a finish reason as shown here https://ai.google.dev/api/generate-content?authuser=2#FinishReason
-        elif e.__class__.__name__ == "IndexError" and len(self.gemini_response.parts) == 0:
+        elif e.__class__.__name__ == "IndexError" and len(gemini_response.parts) == 0:
             logging.warning(f"Attempt failed due to implicitly blocked input prompt and empty model output: {e}")
             # For cases where there are some response candidates do_return is still True because in most cases these candidates are incomplete.
             # Trying again may not necessarily help, unless in high temperature regimes.
-            if len(self.gemini_response.candidates) > 0:
-                logging.warning(f"The response is not empty and has : {len(self.gemini_response.candidates)} candidates")
-                logging.warning(f"Finish Reason for the first answer candidate is: {self.gemini_response.candidates[0].finish_reason}")
-                logging.warning(f"Safety Ratings for the first answer candidate are: {self.gemini_response.candidates[0].safety_ratings}")
-            return True
-        # Any other case will be re attempted again, do_return = False.
+            if len(gemini_response.candidates) > 0:
+                logging.warning(f"The response is not empty and has : {len(gemini_response.candidates)} candidates")
+                logging.warning(
+                    f"Finish Reason for the first answer candidate is: {gemini_response.candidates[0].finish_reason}"
+                )
+                logging.warning(
+                    f"Safety Ratings for the first answer candidate are: {gemini_response.candidates[0].safety_ratings}"
+                )
+
+        raise e
+
+    def handle_request_error(self, e):
+        # Any error case not handled in handle_gemini_error will be attempted again, do_return = False.
         return False
+
 
 @dataclass
 class TogetherModel(OpenAICommonRequestResponseMixIn, KeyBasedAuthMixIn, EndpointModel):
@@ -730,13 +800,14 @@ class TogetherModel(OpenAICommonRequestResponseMixIn, KeyBasedAuthMixIn, Endpoin
     max_tokens: int = 65536
     top_p: float = 0.95
     presence_penalty: float = 0
-    stop=["<｜end▁of▁sentence｜>"]
+    stop = ["<｜end▁of▁sentence｜>"]
 
     def __post_init__(self):
         from together import Together
+
         self.api_key = self.get_api_key()
         self.client = Together(api_key=self.api_key)
-    
+
     def get_response(self, request):
         start_time = time.time()
         completion = self.client.chat.completions.create(
@@ -745,21 +816,26 @@ class TogetherModel(OpenAICommonRequestResponseMixIn, KeyBasedAuthMixIn, Endpoin
             presence_penalty=self.presence_penalty,
             temperature=self.temperature,
             max_tokens=self.max_tokens,
-            stop = self.stop,
+            stop=self.stop,
             **request,
         )
-        
+
         end_time = time.time()
         openai_response = completion.model_dump()
-        self.model_output = openai_response["choices"][0]["message"]["content"]
-        self.response_time = end_time - start_time
+        model_output = openai_response["choices"][0]["message"]["content"]
+        response_time = end_time - start_time
+        response_dict = {
+            "model_output": model_output,
+            "response_time": response_time,
+        }
         if "usage" in openai_response:
-            return {"usage": openai_response["usage"]}
+            response_dict.update({"usage": openai_response["usage"]})
+        return response_dict
 
     def handle_request_error(self, e):
-        logging.warning(e)
         return False
-    
+
+
 @dataclass
 class HuggingFaceModel(Model):
     """This class is used to run a self-hosted language model via HuggingFace apis."""
@@ -781,8 +857,8 @@ class HuggingFaceModel(Model):
         self.get_model()
 
     def get_model(self):
-        from transformers import AutoModelForCausalLM, AutoTokenizer
         import torch
+        from transformers import AutoModelForCausalLM, AutoTokenizer
 
         quantization_config = None
         if self.quantize:
@@ -802,7 +878,6 @@ class HuggingFaceModel(Model):
             device_map=self.device,
             use_flash_attention_2=self.use_flash_attn,
         )
-
 
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, use_fast=False)
 
@@ -844,11 +919,15 @@ class HuggingFaceModel(Model):
         end_time = time.time()
         sequence_length = inputs["input_ids"].shape[1]
         new_output_ids = output_ids[:, sequence_length:]
-        self.model_output = self.tokenizer.batch_decode(
+        model_output = self.tokenizer.batch_decode(
             new_output_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False
         )[0]
 
-        self.response_time = end_time - start_time
+        response_time = end_time - start_time
+        return {
+            "model_output": model_output,
+            "response_time": response_time,
+        }
 
     def generate(self, text_prompt, query_images=None, system_message=None):
         response_dict = {}
@@ -858,21 +937,19 @@ class HuggingFaceModel(Model):
                 text_prompt = self.model_template_fn(text_prompt, system_message)
 
             try:
-                meta_response = self._generate(text_prompt, query_images=query_images)
-                if meta_response:
-                    response_dict.update(meta_response)
-                self.is_valid = True
+                model_response = self._generate(text_prompt, query_images=query_images)
+                if model_response:
+                    response_dict.update(model_response)
+                is_valid = True
 
             except Exception as e:
                 logging.warning(e)
-                self.is_valid = False
+                is_valid = False
 
         response_dict.update(
             {
-                "model_output": self.model_output,
-                "is_valid": self.is_valid,
-                "response_time": self.response_time,
-                "n_output_tokens": self.count_tokens(),
+                "is_valid": is_valid,
+                "n_output_tokens": self.count_tokens(response_dict["model_output"], response_dict["is_valid"]),
             }
         )
         return response_dict
@@ -915,6 +992,7 @@ class Phi4HFModel(HuggingFaceModel):
             return f"<|im_start|>system<|im_sep|>\n{system_message}<|im_end|>\n<|im_start|>user<|im_sep|>\n{text_prompt}<|im_end|>\n<|im_start|>assistant<|im_sep|>\n"
         else:
             return f"<|im_start|>user<|im_sep|>\n{text_prompt}<|im_end|>\n<|im_start|>assistant<|im_sep|>\n"
+
 
 
 @dataclass
@@ -982,11 +1060,15 @@ class LLaVAHuggingFaceModel(HuggingFaceModel):
         end_time = time.time()
         sequence_length = inputs["input_ids"].shape[1]
         new_output_ids = output_ids[:, sequence_length:]
-        self.model_output = self.processor.batch_decode(
+        model_output = self.processor.batch_decode(
             new_output_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False
         )[0]
 
-        self.response_time = end_time - start_time
+        response_time = end_time - start_time
+        return {
+            "model_output": model_output,
+            "response_time": response_time,
+        }
 
     def generate(self, text_prompt, query_images=None, system_message=None):
 
@@ -1087,13 +1169,20 @@ class LLaVAModel(LLaVAHuggingFaceModel):
             )
             end_time = time.time()
 
-        self.model_output = self.tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
-        self.response_time = end_time - start_time
+        model_output = self.tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
+        response_time = end_time - start_time
+        return {
+            "model_output": model_output,
+            "response_time": response_time,
+        }
 
 
 @dataclass
-class vLLMModel(Model):
-    """This class is used to run a self-hosted language model via vLLM apis."""
+class VLLMModel(Model):
+    """This class is used to run a self-hosted language model via vLLM apis.
+    This class uses the chat() functionality of vLLM which applies a template included in the HF model files.
+    If the model files do not include a template, no template will be applied.
+    """
 
     model_name: str = None
     trust_remote_code: bool = False
@@ -1108,7 +1197,6 @@ class vLLMModel(Model):
     top_p: float = 0.95
     top_k: int = -1
     max_tokens: int = 2000
-    apply_model_template: bool = False
 
     def __post_init__(self):
         # vLLM automatically picks an available devices when get_model() is called
@@ -1127,7 +1215,7 @@ class vLLMModel(Model):
             gpu_memory_utilization=self.gpu_memory_utilization,
             cpu_offload_gb=self.cpu_offload_gb,
         )
-        
+
     def _generate(self, text_prompt, query_images=None):
         from vllm import SamplingParams
 
@@ -1137,44 +1225,282 @@ class vLLMModel(Model):
             top_k=self.top_k,
             max_tokens=self.max_tokens,
         )
-    
-        start_time = time.time()
-        outputs = self.model.generate(text_prompt, sampling_params)
-        end_time = time.time()
-        
-        self.model_output = outputs[0].outputs[0].text
 
-        self.response_time = end_time - start_time
+        start_time = time.time()
+        outputs = self.model.chat(text_prompt, sampling_params)
+        end_time = time.time()
+
+        model_output = outputs[0].outputs[0].text
+        response_time = end_time - start_time
+        return {
+            "model_output": model_output,
+            "response_time": response_time,
+        }
 
     def generate(self, text_prompt, query_images=None, system_message=None):
         response_dict = {}
-
+        model_output = None
+        response_time = None
+        is_valid = False
         if text_prompt:
-            if self.apply_model_template:
-                text_prompt = self.model_template_fn(text_prompt, system_message)
-
+            messages = self.create_request(text_prompt, system_message)
             try:
-                meta_response = self._generate(text_prompt, query_images=query_images)
-                if meta_response:
-                    response_dict.update(meta_response)
-                self.is_valid = True
+                model_response = self._generate(messages, query_images=query_images)
+
+                if model_response:
+                    response_dict.update(model_response)
+                    model_output = model_response["model_output"]
+                    response_time = model_response["response_time"]
+                is_valid = True
 
             except Exception as e:
                 logging.warning(e)
-                self.is_valid = False
+                is_valid = False
 
         response_dict.update(
             {
-                "model_output": self.model_output,
-                "is_valid": self.is_valid,
-                "response_time": self.response_time,
-                "n_output_tokens": self.count_tokens(),
+                "model_output": model_output,
+                "is_valid": is_valid,
+                "response_time": response_time,
+                "n_output_tokens": self.count_tokens(model_output, is_valid),
             }
         )
         return response_dict
 
-    def model_template_fn(self, text_prompt, system_message=None):
-        raise NotImplementedError
+    def create_request(self, text_prompt, system_message=None):
+        if system_message:
+            return [
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": text_prompt},
+            ]
+        else:
+            return [{"role": "user", "content": text_prompt}]
+    
+
+class _LocalVLLMDeploymentHandler:
+    """This class is used to handle the deployment of vLLM servers."""
+    # Chose against dataclass here so we have the option to accept kwargs
+    # and pass them to the vLLM deployment script.
+
+    # Used to store references to logs of the servers, since those contain PIDs for shutdown.
+    logs = []
+
+    def __init__(
+        self,
+        model_name: str = None,
+        num_servers: int = 1,
+        trust_remote_code: bool = False,
+        tensor_parallel_size: int = 1,
+        pipeline_parallel_size: int = 1,
+        dtype: str = "auto",
+        quantization: str = None,
+        seed: int = 0,
+        gpu_memory_utilization: float = 0.9,
+        cpu_offload_gb: float = 0,
+        ports: list = None,
+    ):
+        if not model_name:
+            raise ValueError("LocalVLLM model_name must be specified.")
+        self.model_name = model_name
+        self.num_servers = num_servers
+        self.trust_remote_code = trust_remote_code
+        self.tensor_parallel_size = tensor_parallel_size
+        self.pipeline_parallel_size = pipeline_parallel_size
+        self.dtype = dtype
+        self.quantization = quantization
+        self.seed = seed
+        self.gpu_memory_utilization = gpu_memory_utilization
+        self.cpu_offload_gb = cpu_offload_gb
+
+        self.ports = ports
+        self.session = requests.Session()
+        self.clients = self._get_clients()
+
+    def _get_clients(self):
+        '''Get clients to access vllm servers, by checking for running servers and deploying if necessary.'''
+        from openai import OpenAI as OpenAIClient
+
+        # If the user passes ports, check if the servers are running and populate clients accordingly.
+        if self.ports:
+            healthy_server_urls = ['http://0.0.0.0:' + port + '/v1' for port in self.get_healthy_ports()]
+            if len(healthy_server_urls) > 0:
+                logging.info(f"Found {len(healthy_server_urls)} healthy servers.")
+                return [OpenAIClient(base_url=url, api_key = 'none') for url in healthy_server_urls]
+
+        # Even if the user doesn't pass ports, we can check if there happen to be deployed servers.
+        # There is no guarantee that the servers are hosting the correct model.
+        self.ports = [str(8000 + i) for i in range(self.num_servers)]
+        healthy_server_urls = ['http://0.0.0.0:' + port + '/v1' for port in self.get_healthy_ports()]
+        if len(healthy_server_urls) == self.num_servers:
+            logging.info(f"Found {len(healthy_server_urls)} healthy servers.")
+            return [OpenAIClient(base_url=url, api_key = 'none') for url in healthy_server_urls]
+        
+        # If that didn't work, let's deploy and wait for servers to come online.
+        self.deploy_servers()
+        server_start_time = time.time()
+        while time.time() - server_start_time < 600:
+            time.sleep(10)
+            healthy_ports = self.get_healthy_ports()
+            if len(healthy_ports) == self.num_servers:
+                logging.info(f"All {self.num_servers} servers are online.")
+                healthy_server_urls = ['http://0.0.0.0:' + port + '/v1' for port in healthy_ports]
+                return [OpenAIClient(base_url=url, api_key = 'none') for url in healthy_server_urls]
+            else:
+                logging.info(f"Waiting for {self.num_servers - len(healthy_ports)} more servers to come online.")
+        
+        if len(self.clients) != self.num_servers:
+            raise RuntimeError(f"Failed to start all servers.")
+
+    def get_healthy_ports(self) -> list[str]:
+        """Check if servers are running."""
+
+        healthy_ports = []
+        for port in self.ports:
+            try:
+                self.session.get('http://0.0.0.0:' + port +'/health')
+                healthy_ports.append(port)
+            except:
+                pass
+        return healthy_ports
+    
+    def deploy_servers(self):
+        """Deploy vLLM servers in background threads using the specified parameters."""
+
+        logging.info(f"No vLLM servers are running. Starting {self.num_servers} new servers at {self.ports}.")
+        import os, datetime
+
+        gpus_per_port = self.pipeline_parallel_size * self.tensor_parallel_size
+        date = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S.%f")
+        log_dir = os.path.join("logs", "local_vllm_deployment_logs", f"{date}")
+        os.makedirs(log_dir)
+
+        for index in range(self.num_servers):
+            port = 8000 + index
+            log_file = os.path.join(log_dir, f"{port}.log")
+            self.logs.append(log_file)
+            background_thread = threading.Thread(
+                target = lambda: self.deploy_server(index, gpus_per_port, log_file)
+            )
+            background_thread.daemon = True
+            background_thread.start()
+
+    def deploy_server(self, index: int, gpus_per_port: int, log_file: str):
+        """Deploy a single vLLM server using gpus_per_port many gpus starting at index*gpus_per_port."""
+        
+        import subprocess
+        port = 8000 + index
+        first_gpu = index * gpus_per_port
+        last_gpu = first_gpu + gpus_per_port - 1
+        devices = ",".join(str(gpu_num) for gpu_num in range(first_gpu, last_gpu + 1))
+
+        command = [
+            "CUDA_VISIBLE_DEVICES=" + devices,
+            "vllm serve",
+            self.model_name,
+            "--port", str(port),
+            "--tensor_parallel_size", str(self.tensor_parallel_size),
+            "--pipeline_parallel_size", str(self.pipeline_parallel_size),
+            "--dtype", self.dtype,
+            "--seed", str(self.seed),
+            "--gpu_memory_utilization", str(self.gpu_memory_utilization),
+            "--cpu_offload_gb", str(self.cpu_offload_gb)
+        ]
+        if self.quantization:
+            command.append("--quantization")
+            command.append(self.quantization)
+        if self.trust_remote_code:
+            command.append("--trust_remote_code")
+        command = " ".join(command)
+        logging.info(f"Running command: {command}")
+        with open(log_file, 'w') as log_writer:
+            subprocess.run(command, shell=True, stdout=log_writer, stderr=log_writer)
+
+    @classmethod
+    def shutdown_servers(cls):
+        """Shutdown all vLLM servers deployed during this run."""
+
+        import re, os, signal
+        for log_file in cls.logs:
+            with open(log_file, "r") as f:
+                for line in f:
+                    if "Started server process" in line:
+                        match = re.search(r"\d+", line)
+                        if match:
+                            pid = int(match.group())
+                            logging.info(f"Shutting down server with PID {pid}.")
+                            os.kill(pid, signal.SIGINT)
+                            break
+
+
+local_vllm_model_lock = threading.Lock()
+local_vllm_deployment_handlers : dict[str, _LocalVLLMDeploymentHandler] = {}
+    
+        
+@dataclass
+class LocalVLLMModel(OpenAICommonRequestResponseMixIn, EndpointModel):
+    """This class is used for vLLM servers running locally.
+    
+    In case the servers are already deployed, specify the
+    model_name and the ports at which the servers are hosted.
+    Otherwise instantiating will initiate a deployment with
+    any deployment parameters specified."""
+
+    model_name: str = None
+
+    # Deployment parameters
+    num_servers: int = 1
+    trust_remote_code: bool = False
+    tensor_parallel_size: int = 1
+    pipeline_parallel_size: int = 1
+    dtype: str = "auto"
+    quantization: str = None
+    seed: int = 0
+    gpu_memory_utilization: float = 0.9
+    cpu_offload_gb: float = 0
+
+    # Deployment handler
+    ports: list = None
+    handler: _LocalVLLMDeploymentHandler = None
+
+    # Inference parameters
+    temperature: float = 0.01
+    top_p: float = .95
+    top_k: int = -1
+    max_tokens: int = 2000
+    frequency_penalty: float = 0
+    presence_penalty: float = 0
+
+    def __post_init__(self):
+        if not self.model_name:
+            raise ValueError("LocalVLLM model_name must be specified.")
+        self.handler = self._get_local_vllm_deployment_handler()
+
+    @property
+    def client(self):
+        return random.choice(self.handler.clients)
+        
+    def _get_local_vllm_deployment_handler(self):
+        if self.model_name not in local_vllm_deployment_handlers:
+            with local_vllm_model_lock:
+                if self.model_name not in local_vllm_deployment_handlers:
+                    local_vllm_deployment_handlers[self.model_name] = _LocalVLLMDeploymentHandler(
+                        model_name=self.model_name,
+                        num_servers=self.num_servers,
+                        trust_remote_code=self.trust_remote_code,
+                        pipeline_parallel_size=self.pipeline_parallel_size,
+                        tensor_parallel_size=self.tensor_parallel_size,
+                        dtype=self.dtype,
+                        quantization=self.quantization,
+                        seed=self.seed,
+                        gpu_memory_utilization=self.gpu_memory_utilization,
+                        cpu_offload_gb=self.cpu_offload_gb,
+                        ports=self.ports,
+                    )
+
+        return local_vllm_deployment_handlers[self.model_name]
+    
+    def handle_request_error(self, e):
+        return False
 
 
 @dataclass
@@ -1229,28 +1555,83 @@ class ClaudeModel(EndpointModel, KeyBasedAuthMixIn):
             max_tokens=self.max_tokens,
         )
         end_time = time.time()
-        self.model_output = completion.content[0].text
-        self.response_time = end_time - start_time
+        model_output = completion.content[0].text
+        response_time = end_time - start_time
+        response_dict = {
+            "model_output": model_output,
+            "response_time": response_time,
+        }
         if hasattr(completion, "usage"):
-            return {"usage": completion.usage.to_dict()}
+            response_dict.update({"usage": completion.usage.to_dict()})
+        return response_dict
 
     def handle_request_error(self, e):
         return False
 
 
 @dataclass
+class ClaudeReasoningModel(ClaudeModel):
+    """This class is used to interact with Claude reasoning models through the python api."""
+
+    model_name: str = None
+    temperature: float = 1.0
+    max_tokens: int = 20000
+    timeout: int = 600
+    thinking_enabled: bool = True
+    thinking_budget: int = 16000
+    top_p: float = None
+
+    def get_response(self, request):
+        model_output = None
+        response_time = None
+        thinking_output = None
+        redacted_thinking_output = None
+        response_dict = {}
+        if self.top_p is not None:
+            logging.warning("top_p is not supported for claude reasoning models as of 03/08/2025. It will be ignored.")
+
+        start_time = time.time()
+        thinking = {"type": "enabled", "budget_tokens": self.thinking_budget} if self.thinking_enabled else None
+        completion = self.client.messages.create(
+            model=self.model_name,
+            **request,
+            temperature=self.temperature,
+            thinking=thinking,
+            max_tokens=self.max_tokens,
+        )
+        end_time = time.time()
+
+        # Loop through completion.content to find the text output
+        for content in completion.content:
+            if content.type == "text":
+                model_output = content.text
+            elif content.type == "thinking":
+                thinking_output = content.thinking
+            elif content.type == "redacted_thinking":
+                redacted_thinking_output = content.data
+
+        response_time = end_time - start_time
+        response_dict = {
+            "model_output": model_output,
+            "response_time": response_time,
+            "thinking_output": thinking_output,
+            "redacted_thinking_output": redacted_thinking_output,
+        }
+        if hasattr(completion, "usage"):
+            response_dict.update({"usage": completion.usage.to_dict()})
+        return response_dict
+
+
+@dataclass
 class TestModel(Model):
     # This class is used for testing purposes only. It only waits for a specified time and returns a response.
-    response_time: float = 0.1
-    model_output: str = "This is a test response."
-
-    def __post_init__(self):
-        self.n_output_tokens = self.count_tokens()
 
     def generate(self, text_prompt, **kwargs):
+        output = "This is a test response."
+        is_valid = True
         return {
-            "model_output": self.model_output,
-            "is_valid": True,
-            "response_time": self.response_time,
-            "n_output_tokens": self.n_output_tokens,
+            "model_output": output,
+            "is_valid": is_valid,
+            "response_time": 0.1,
+            "n_output_tokens": self.count_tokens(output, is_valid),
         }
