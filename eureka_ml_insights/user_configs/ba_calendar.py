@@ -12,20 +12,27 @@ from eureka_ml_insights.data_utils.data import (
     DataReader,
     HFDataReader,
 )
-from eureka_ml_insights.data_utils.transform import (
-    AddColumn,
-    ColumnRename,
-    CopyColumn,
-    MajorityVoteTransform,
-    MultiplyTransform,
-    RunPythonTransform,
-    SequenceTransform,
-)
 from eureka_ml_insights.metrics.ba_calendar_metrics import BACalendarMetric
 from eureka_ml_insights.metrics.reports import (
     AverageAggregator,
+    BiLevelCountAggregator,
     BiLevelAggregator,
+    CountAggregator
 )
+
+from eureka_ml_insights.data_utils.transform import (
+    AddColumn,
+    AddColumnAndData,
+    ColumnRename,
+    CopyColumn,
+    ExtractUsageTransform,
+    MajorityVoteTransform,
+    MultiplyTransform,
+    RunPythonTransform,
+    SamplerTransform,
+    SequenceTransform,
+)
+from eureka_ml_insights.metrics.ba_calendar_metrics import BACalendarMetric
 
 from ..configs.config import (
     AggregatorConfig,
@@ -44,7 +51,7 @@ from ..configs.experiment_config import ExperimentConfig
 class BA_Calendar_PIPELINE(ExperimentConfig):
     """This class specifies the config for running any benchmark on any model"""
 
-    def configure_pipeline(self, model_config=None, resume_from=None, **kwargs) -> PipelineConfig:
+    def configure_pipeline(self, model_config=None, resume_from=None, resume_logdir=None, **kwargs) -> PipelineConfig:
         # data preprocessing
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
@@ -54,15 +61,14 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 HFDataReader,
                 {
-                    "path": "microsoft/ba-calendar",
-                    "split": "test",
-                    "transform": SequenceTransform(
-                        [
-                            ColumnRename(name_mapping={"task_prompt": "prompt"}),
-                            MultiplyTransform(n_repeats=1),
-                        ]
-                    ),
-                },
+                   "path": "microsoft/ba-calendar",
+                   "split": "test",
+                   "transform": SequenceTransform([
+                       ColumnRename(name_mapping={"task_prompt": "prompt"}),
+                       #SamplerTransform(random_seed=5, sample_count=10),
+                       MultiplyTransform(n_repeats=1),
+                   ]),
+                }
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
         )
@@ -80,6 +86,9 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
             max_concurrent=1,
         )
 
+        if resume_logdir:
+            self.log_dir = resume_from.split("/")[0:len(resume_from.split("/")) - 1]
+
         # Configure the evaluation and reporting component for evaluation and dataset level aggregation
         self.evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
@@ -90,6 +99,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
+                            ExtractUsageTransform(model_config),
                             ColumnRename(
                                 name_mapping={
                                     "model_output": "raw_output",
@@ -117,10 +127,63 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                             "BACalendarMetric_specific_times_programmatic_check",
                             "BACalendarMetric_priority_programmatic_check",
                         ],
-                        "filename_base": "BaCal_OverallMetrics_SeparateRuns",
+                        "filename_base": "OverallMetrics_Separate_Runs",
                         "group_by": "data_repeat_id",
                     },
                 ),
+                # the next three reports take the average and std for all repeats
+                # the resulting numbers are the average and std of N pass@1 scores, where N is number of repeats
+                AggregatorConfig(BiLevelAggregator, 
+                    {
+                        "column_names": [
+                            "BACalendarMetric_all_correct",
+                            "BACalendarMetric_fraction_passed",
+                            "BACalendarMetric_availability_programmatic_check",
+                            "BACalendarMetric_meeting_duration_programmatic_check",
+                            "BACalendarMetric_buffer_time_programmatic_check",
+                            "BACalendarMetric_no_weekends_programmatic_check",
+                            "BACalendarMetric_time_restrictions_programmatic_check",
+                            "BACalendarMetric_specific_times_programmatic_check",
+                            "BACalendarMetric_priority_programmatic_check"
+                        ], 
+                        "first_groupby": "data_repeat_id", 
+                        "filename_base": "OverallMetrics_Avg",
+                        "agg_fn": "mean"
+                    }),
+                AggregatorConfig(BiLevelAggregator, 
+                    {
+                        "column_names": [
+                            "BACalendarMetric_all_correct",
+                            "BACalendarMetric_fraction_passed",
+                            "BACalendarMetric_availability_programmatic_check",
+                            "BACalendarMetric_meeting_duration_programmatic_check",
+                            "BACalendarMetric_buffer_time_programmatic_check",
+                            "BACalendarMetric_no_weekends_programmatic_check",
+                            "BACalendarMetric_time_restrictions_programmatic_check",
+                            "BACalendarMetric_specific_times_programmatic_check",
+                            "BACalendarMetric_priority_programmatic_check"
+                        ], 
+                        "first_groupby": ["data_repeat_id", "BACalendarMetric_constrainedness_bucket"], 
+                        "second_groupby": "BACalendarMetric_constrainedness_bucket",
+                        "filename_base": "OverallMetrics_Avg_by_constrainedness",
+                        "agg_fn": "mean"
+                    }),                
+                # reports for average completion usage
+                AggregatorConfig(BiLevelAggregator, 
+                    {
+                        "column_names": ["usage_completion"], 
+                        "first_groupby": "data_point_id", 
+                        "filename_base": "UsageCompletion_AllRuns",
+                        "agg_fn": "mean"
+                    }),
+                AggregatorConfig(BiLevelAggregator, 
+                    {
+                        "column_names": ["usage_completion"], 
+                        "first_groupby": ["data_point_id", "BACalendarMetric_constrainedness_bucket"],
+                        "second_groupby": "BACalendarMetric_constrainedness_bucket",
+                        "filename_base": "UsageCompletion_by_constrainedness_AllRuns",
+                        "agg_fn": "mean"
+                    }),
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
         )
@@ -151,13 +214,102 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                             "BACalendarMetric_priority_programmatic_check",
                         ],
                         "first_groupby": "data_point_id",
-                        "filename_base": "BaCal_BestOfN_Aggregated",
+                        "filename_base": "OverallMetrics_BestofN",
                         "normalize": True,
                         "agg_fn": "max",
                     },
                 ),
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "BACalendarMetric_all_correct",
+                            "BACalendarMetric_fraction_passed",
+                            "BACalendarMetric_availability_programmatic_check",
+                            "BACalendarMetric_meeting_duration_programmatic_check",
+                            "BACalendarMetric_buffer_time_programmatic_check",
+                            "BACalendarMetric_no_weekends_programmatic_check",
+                            "BACalendarMetric_time_restrictions_programmatic_check",
+                            "BACalendarMetric_specific_times_programmatic_check",
+                            "BACalendarMetric_priority_programmatic_check",
+                        ],
+                        "first_groupby": "data_point_id",
+                        "second_groupby": "BACalendarMetric_constrainedness_bucket",
+                        "filename_base": "OverallMetrics_BestOfN_by_constrainedness",
+                        "normalize": True,
+                        "agg_fn": "max",
+                    },
+                ),
+                
+                # aggregates results by data_point_id and takes the sum of usage for completion tokens
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "usage_completion"
+                        ],
+                        "first_groupby": "data_point_id",
+                        "filename_base": "UsageCompletion_BestOfN",
+                         "agg_fn": "sum"
+                    },
+                ),
             ],
             output_dir=os.path.join(self.log_dir, "bestofn_eval_report"),
+        )
+        # Aggregate the results by worst of n
+        self.won_evalreporting_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.evalreporting_comp.output_dir, "metric_results.jsonl"),
+                    "format": ".jsonl",
+                },
+            ),
+            aggregator_configs=[
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "BACalendarMetric_all_correct",
+                            "BACalendarMetric_fraction_passed",
+                            "BACalendarMetric_availability_programmatic_check",
+                            "BACalendarMetric_meeting_duration_programmatic_check",
+                            "BACalendarMetric_buffer_time_programmatic_check",
+                            "BACalendarMetric_no_weekends_programmatic_check",
+                            "BACalendarMetric_time_restrictions_programmatic_check",
+                            "BACalendarMetric_specific_times_programmatic_check",
+                            "BACalendarMetric_priority_programmatic_check",
+                        ],
+                        "first_groupby": "data_point_id",
+                        "filename_base": "OverallMetrics_WorstofN",
+                        "normalize": True,
+                        "agg_fn": "min",
+                    },
+                ),
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "BACalendarMetric_all_correct",
+                            "BACalendarMetric_fraction_passed",
+                            "BACalendarMetric_availability_programmatic_check",
+                            "BACalendarMetric_meeting_duration_programmatic_check",
+                            "BACalendarMetric_buffer_time_programmatic_check",
+                            "BACalendarMetric_no_weekends_programmatic_check",
+                            "BACalendarMetric_time_restrictions_programmatic_check",
+                            "BACalendarMetric_specific_times_programmatic_check",
+                            "BACalendarMetric_priority_programmatic_check",
+                        ],
+                        "first_groupby": "data_point_id",
+                        "second_groupby": "BACalendarMetric_constrainedness_bucket",
+                        "filename_base": "OverallMetrics_WorstOfN_by_constrainedness",
+                        "normalize": True,
+                        "agg_fn": "min",
+                    },
+                ),
+            ],
+            output_dir=os.path.join(self.log_dir, "worstofn_eval_report"),
         )
 
         # Aggregate the results by a majority vote
@@ -194,6 +346,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
+                            AddColumnAndData("count", 1),
                             RunPythonTransform("df = df[df['data_repeat_id'] == 'repeat_0']"),
                         ]
                     ),
@@ -215,10 +368,35 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                             "BACalendarMetric_specific_times_programmatic_check",
                             "BACalendarMetric_priority_programmatic_check",
                         ],
-                        "filename_base": "BaCal_MajVote_OverallMetrics_Aggregated",
-                        "group_by": "data_repeat_id",
+                        "filename_base": "OverallMetrics_MajVote",
                     },
                 ),
+                AggregatorConfig(
+                    AverageAggregator,
+                    {
+                        "column_names": [
+                            "BACalendarMetric_all_correct",
+                            "BACalendarMetric_fraction_passed",
+                            "BACalendarMetric_availability_programmatic_check",
+                            "BACalendarMetric_meeting_duration_programmatic_check",
+                            "BACalendarMetric_buffer_time_programmatic_check",
+                            "BACalendarMetric_no_weekends_programmatic_check",
+                            "BACalendarMetric_time_restrictions_programmatic_check",
+                            "BACalendarMetric_specific_times_programmatic_check",
+                            "BACalendarMetric_priority_programmatic_check",
+                        ],
+                        "filename_base": "OverallMetrics_MajVote_by_constrainedness",
+                        "group_by": "BACalendarMetric_constrainedness_bucket",
+                    },
+                ),
+                AggregatorConfig(CountAggregator, 
+                    {
+                        "column_names": [
+                            "count",
+                        ], 
+                        "group_by": "BACalendarMetric_constrainedness_bucket", 
+                        "filename_base": "NumExamples_by_constrainedness",
+                    }),
             ],
             output_dir=os.path.join(self.log_dir, "majvote_eval_report"),
         )
@@ -230,6 +408,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                 self.inference_comp,
                 self.evalreporting_comp,
                 self.bon_evalreporting_comp,
+                self.won_evalreporting_comp,
                 self.maj_vote_data_post_processing,
                 self.majvote_evalreporting_comp,
             ],
@@ -249,3 +428,27 @@ class BA_Calendar_Parallel_PIPELINE(BA_Calendar_PIPELINE):
             n_repeats=5
         )
         return pipeline
+
+class BA_Calendar_RunEvals_PIPELINE(BA_Calendar_PIPELINE):
+    """This class specifies the config for running BA Calendar benchmark 5 repeated times"""
+
+    def configure_pipeline(
+        self, model_config: ModelConfig, resume_from: str = None, resume_logdir: str = None, **kwargs: dict[str, Any]
+    ) -> PipelineConfig:
+        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from, resume_logdir=resume_logdir)
+        self.evalreporting_comp.data_reader_config.init_args["path"] = resume_from
+        # self.data_processing_comp.data_reader_config.init_args["transform"].transforms.insert(0, SamplerTransform(random_seed=5, sample_count=100))
+        # self.maj_vote_data_post_processing.data_reader_config.init_args["transform"].transforms.insert(0, SamplerTransform(random_seed=5, sample_count=100))
+        # self.evalreporting_comp.data_reader_config.init_args["transform"].transforms.insert(0, SamplerTransform(random_seed=5, sample_count=100))
+        # # self.bon_evalreporting_comp.data_reader_config.init_args["transform"].transforms.insert(0, SamplerTransform(random_seed=5, sample_count=100))
+        # self.majvote_evalreporting_comp.data_reader_config.init_args["transform"].transforms.insert(0, SamplerTransform(random_seed=5, sample_count=100))
+        return PipelineConfig(
+            [
+                self.evalreporting_comp,
+                self.bon_evalreporting_comp,
+                self.won_evalreporting_comp,
+                self.maj_vote_data_post_processing,
+                self.majvote_evalreporting_comp,
+            ],
+            self.log_dir,
+        )

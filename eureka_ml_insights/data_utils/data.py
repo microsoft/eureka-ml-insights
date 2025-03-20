@@ -282,16 +282,17 @@ class AzureMMDataLoader(MMDataLoader):
 
 
 class JsonLinesWriter:
-    def __init__(self, out_path):
+    def __init__(self, out_path, mode="w"):
         self.out_path = out_path
         # if the directory does not exist, create it
         directory = os.path.dirname(out_path)
         if not os.path.exists(directory):
             os.makedirs(directory)
         self.writer = None
+        self.mode = mode
 
     def __enter__(self):
-        self.writer = jsonlines.open(self.out_path, mode="w", dumps=NumpyEncoder().encode)
+        self.writer = jsonlines.open(self.out_path, mode=self.mode, dumps=NumpyEncoder().encode)
         return self.writer
 
     def __exit__(self, exc_type, exc_value, traceback):
