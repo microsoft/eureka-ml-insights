@@ -174,7 +174,7 @@ def extract_answer_from_text_map_and_maze(model_output_raw, options):
     model_output_parsed = ""
 
     if not model_output_raw:
-        return [model_output_parsed, model_output_parsed_letter]
+        return ""
 
     model_output_raw =  re.sub(r"\bno objects\b", "0 objects", model_output_raw, re.IGNORECASE)
     model_output_raw =  re.sub(r"\bnot\b", "no", model_output_raw, re.IGNORECASE)
@@ -414,7 +414,11 @@ class ExtractQuestionOptions(DFTransformBase):
         # get list of options from prompt
         prompt_lines = prompt.splitlines()
         matches = [i for i, x in enumerate(prompt_lines) if "Available options:" in x]
-        options = prompt_lines[matches[0]+1:matches[0]+5]
+
+        if "Yes" in prompt_lines[matches[0]+1]:
+            options = prompt_lines[matches[0]+1:matches[0]+3]
+        else:
+            options = prompt_lines[matches[0]+1:matches[0]+5]
 
         return options
 

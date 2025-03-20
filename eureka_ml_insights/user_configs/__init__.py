@@ -67,6 +67,8 @@ from .toxigen import (
     ToxiGen_Generative_PIPELINE,
 )
 from .vision_language.maze import (
+    MAZE_COT_PIPELINE,
+    MAZE_COT_TEXTONLY_PIPELINE,
     MAZE_PIPELINE,
     MAZE_REPORTING_PIPELINE,
     MAZE_TEXTONLY_PIPELINE,
@@ -77,6 +79,8 @@ from .vision_language.spatial_grid import (
     SPATIAL_GRID_TEXTONLY_PIPELINE,
 )
 from .vision_language.spatial_map import (
+    SPATIAL_MAP_COT_PIPELINE,
+    SPATIAL_MAP_COT_TEXTONLY_PIPELINE,
     SPATIAL_MAP_PIPELINE,
     SPATIAL_MAP_REPORTING_PIPELINE,
     SPATIAL_MAP_TEXTONLY_PIPELINE,
