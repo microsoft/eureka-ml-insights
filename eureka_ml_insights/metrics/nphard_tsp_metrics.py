@@ -79,7 +79,9 @@ class NPHardTSPMetric(Metric):
         weight_matrix_curr = x["weight_matrix"]
         ground_truth_curr = x["ground_truth"]
         tour_string = x["model_output"]
-
+        tour_string = x["student_extracted_answer"]
+        
+        print(tour_string)
         # Convert tour string into a list of integers representing the city sequence
         tour = list(map(int, tour_string.split(",")))
         cities = [i for i in range(len(weight_matrix_curr))]

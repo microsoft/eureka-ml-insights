@@ -43,6 +43,7 @@ def extract_path(final_answer):
 
 def parse_path_from_model_output(model_output_string):
     """Parses the model output to extract a tsp path."""
+    # breakpoint()
     try:
         final_answer = extract_final_answer(model_output_string)
         tour_string = extract_path(final_answer) if final_answer else None
@@ -53,6 +54,7 @@ def parse_path_from_model_output(model_output_string):
         parts = re.findall(r"\d+|->", tour_string)
         tour_string = "".join(parts)
         tour = list(map(int, tour_string.split("->")))
+        print("came to try: ", tour)
     except (AttributeError, ValueError) as e:
         logging.info(f"There is no valid path: {e}")
         return "0,0,0,0"

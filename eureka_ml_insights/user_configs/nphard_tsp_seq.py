@@ -41,6 +41,8 @@ from .aime import AIME_PIPELINE
 
 from .nphard_tsp import NPHARD_TSP_PIPELINE, NPHARD_TSP_PIPELINE_MULTIPLE_RUNS
 
+from eureka_ml_insights.metrics import CountAggregator, NPHardTSPMetric
+
 DEFAULT_N_ITER = 3
 RESULT_COLS = [
     "attempt_id",
@@ -52,7 +54,9 @@ RESULT_COLS = [
     "ID",
     "student_extracted_answer",
     "verification_result",
-    "usage"
+    "usage",
+    "optimal_tour",
+    "weight_matrix"
 ]
 resume_from_dict = {}
 
@@ -106,10 +110,11 @@ class NPHARD_TSP_SEQ_PIPELINE(NPHARD_TSP_PIPELINE_MULTIPLE_RUNS):
                         "path": os.path.join(self.student_inference_comp.output_dir, "inference_result.jsonl"),
                         "format": ".jsonl",
                         "transform": SequenceTransform(
-                            [
+                            [                                
                                 # extract and verify the student answer
                                 NPHARDTSPExtractAnswer(f"model_output", f"student_extracted_answer"),
-                                MetricBasedVerifier(ExactMatch, f"student_extracted_answer"),
+                                # MetricBasedVerifier(NPHardTSPMetric, f"student_extracted_answer"),
+                                MetricBasedVerifier(NPHardTSPMetric, f"student_extracted_answer"),
                                 AddColumnAndData("attempt_id", i),
                                 CopyColumn(
                                     column_name_src="model_output",
@@ -143,7 +148,7 @@ class NPHARD_TSP_SEQ_PIPELINE(NPHARD_TSP_PIPELINE_MULTIPLE_RUNS):
                         },
                     ),
                     output_data_columns=RESULT_COLS,
-                    dedupe_cols=["ID", "attempt_id"],
+                    dedupe_cols=["data_point_id", "attempt_id"],
                     output_dir=os.path.join(self.log_dir, f"last_inference_result_join_{i}"),
                 )
                 last_agg_dir = self.last_inference_result_join_comp.output_dir
