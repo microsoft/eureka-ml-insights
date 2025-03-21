@@ -56,8 +56,8 @@ RESULT_COLS = [
     "verification_result",
     "usage",
     "optimal_tour",
-    "weight_matrix"
-    # "category"
+    "weight_matrix",
+    "category"
 ]
 resume_from_dict = {}
 
