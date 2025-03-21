@@ -7,7 +7,7 @@ from eureka_ml_insights.models import (
     AzureOpenAIModel,
     ClaudeModel,
     DirectOpenAIModel,
-    #DirectOpenAIO1Model,
+    #DirectOpenAIO1Model, 
     DirectOpenAIOModel,
     GeminiModel,
     LlamaServerlessAzureRestEndpointModel,
@@ -30,7 +30,7 @@ from .config import ModelConfig
 # in the secret_key_params dictionary. OR you can provide the key name and key vault URL to fetch the key from Azure Key Vault.
 # You don't need to provide both the key_vault_url and local_keys_path. You can provide one of them based on your setup.
 
-# OpenAI models
+# OpenAI models 
 
 '''
 OPENAI_SECRET_KEY_PARAMS = {
@@ -875,3 +875,4 @@ TRAPI_GPT4O_2024_08_06_CONFIG = ModelConfig(
         "auth_scope": "api://trapi/.default"
     },
 )
+

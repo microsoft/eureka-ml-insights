@@ -15,6 +15,8 @@ from .ba_calendar import (
         BA_Calendar_RunEvals_PIPELINE,
 )
 
+from .nphard_tsp_seq import NPHARD_TSP_SEQ_PIPELINE
+
 from .aime2025_seq import AIME2025_SEQ_PIPELINE
 from .ba_calendar import BA_Calendar_Parallel_PIPELINE, BA_Calendar_PIPELINE
 from .dna import DNA_PIPELINE
@@ -143,4 +145,5 @@ __all__ = [
     AIME_SEQ_PIPELINE,
     NPHARD_TSP_PIPELINE,
     NPHARD_TSP_PIPELINE_MULTIPLE_RUNS,
+    NPHARD_TSP_SEQ_PIPELINE,
 ]
