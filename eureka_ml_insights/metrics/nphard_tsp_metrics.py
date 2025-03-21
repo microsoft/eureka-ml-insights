@@ -78,8 +78,10 @@ class NPHardTSPMetric(Metric):
         optimal_tour_curr = x["optimal_tour"]
         weight_matrix_curr = x["weight_matrix"]
         ground_truth_curr = x["ground_truth"]
-        tour_string = x["model_output"]
-        tour_string = x["student_extracted_answer"]
+        # tour_string = x["model_output"]
+        # tour_string = x["student_extracted_answer"]
+        print(self.model_output_col)
+        tour_string = x[self.model_output_col]
         
         print(tour_string)
         # Convert tour string into a list of integers representing the city sequence
