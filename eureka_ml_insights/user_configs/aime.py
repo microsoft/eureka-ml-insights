@@ -345,7 +345,7 @@ class AIME_PIPELINE(ExperimentConfig):
                         "column_names": [
                             "usage_completion"
                         ],
-                        "first_groupby": "attempt_id",
+                        "first_groupby": "ID",
                         "filename_base": "UsageCompletion_BestOfN",
                          "agg_fn": "mean"
                     },
