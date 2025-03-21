@@ -77,8 +77,10 @@ class NPHARD_TSP_SEQ_PIPELINE(NPHARD_TSP_PIPELINE_MULTIPLE_RUNS):
 
         # this call to super will configure the initial prompt processing and final eval reporting comps that can be reused.
         super().configure_pipeline(model_config, resume_from, **kwargs)
+        
 
         n_iter = kwargs.get("n_iter", DEFAULT_N_ITER)
+        n_iter = int(n_iter)
 
         component_configs = [self.data_processing_comp]
         for i in range(1, n_iter + 1):

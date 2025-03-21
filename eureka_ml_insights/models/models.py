@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 import anthropic
 import tiktoken
-from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+from azure.identity import AzureCliCredential, DefaultAzureCredential, get_bearer_token_provider
 
 from eureka_ml_insights.secret_management import get_secret
 
@@ -259,7 +259,7 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
                 "extra-parameters": "pass-through",
             }
         except ValueError:
-            self.bearer_token_provider = get_bearer_token_provider(DefaultAzureCredential(), self.auth_scope)
+            self.bearer_token_provider = get_bearer_token_provider(AzureCliCredential(), self.auth_scope)
             self.headers = {
                 "Content-Type": "application/json",
                 "Authorization": ("Bearer " + self.bearer_token_provider()),
@@ -485,7 +485,7 @@ class AzureOpenAIClientMixIn:
     def get_client(self):
         from openai import AzureOpenAI
 
-        token_provider = get_bearer_token_provider(DefaultAzureCredential(), self.auth_scope)
+        token_provider = get_bearer_token_provider(AzureCliCredential(), self.auth_scope)
         return AzureOpenAI(
             azure_endpoint=self.url,
             api_version=self.api_version,

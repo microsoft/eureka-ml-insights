@@ -53,11 +53,11 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 HFDataReader,
                 {
-                    "path": "GeoMeterData/nphard_tsp1",
+                    "path": "GeoMeterData/nphard_tsp_lowest_level", #"GeoMeterData/nphard_tsp1",
                     "split": "train",
                     "transform": SequenceTransform(
                         [
-                            SamplerTransform(sample_count=20, random_seed=1234),
+                            # SamplerTransform(sample_count=4, random_seed=1234),
                             ColumnRename(name_mapping={"query_text": "prompt", "target_text": "ground_truth"}),
                         ]
                     ),
