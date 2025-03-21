@@ -60,7 +60,12 @@ class Inference(Component):
         self.period = MINUTE
 
         # parallel inference parameters
-        self.max_concurrent = max_concurrent
+        if self.model.max_concurrent and hasattr(self.model, "handler"):
+            self.max_concurrent = self.model.max_concurrent * len(self.model.handler.clients)
+        elif self.model.max_concurrent:
+            self.max_concurrent = self.model.max_concurrent
+        else:
+            self.max_concurrent = max_concurrent
         self.chat_mode = chat_mode
         self.model.chat_mode = self.chat_mode
         self.output_dir = output_dir
