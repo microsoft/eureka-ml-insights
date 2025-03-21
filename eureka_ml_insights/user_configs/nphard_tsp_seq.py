@@ -57,6 +57,7 @@ RESULT_COLS = [
     "usage",
     "optimal_tour",
     "weight_matrix"
+    # "category"
 ]
 resume_from_dict = {}
 
@@ -238,8 +239,8 @@ class NPHARD_TSP_SEQ_PIPELINE(NPHARD_TSP_PIPELINE_MULTIPLE_RUNS):
        
         component_configs.append(self.data_post_processing)
         component_configs.append(self.evalreporting_comp)
-        # component_configs.append(self.posteval_data_post_processing_comp)
-        # component_configs.append(self.bon_evalreporting_comp)
+        component_configs.append(self.posteval_data_post_processing_comp)
+        component_configs.append(self.bon_evalreporting_comp)
 
         # Configure the pipeline
         return PipelineConfig(

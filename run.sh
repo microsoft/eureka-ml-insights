@@ -19,4 +19,8 @@
 ############################################
 
 
-python main.py --exp_config NPHARD_TSP_SEQ_PIPELINE --model_config CLAUDE_3_5_SONNET_CONFIG --exp_logdir nphard_tsp_level_gpt4o_2024-08-06
+# python main.py --exp_config NPHARD_TSP_SEQ_PIPELINE --model_config CLAUDE_3_5_SONNET_CONFIG --exp_logdir nphard_tsp_level_gpt4o_2024-08-06 --n_iter 3
+
+python main.py --exp_config NPHARD_TSP_SEQ_PIPELINE --model_config GATEWAY_GPT_4O_CONFIG --exp_logdir nphard_tsp_level_gpt4o_2024-08-06
+
+# python main.py --exp_config NPHARD_TSP_SEQ_PIPELINE --model_config TRAPI_GPT4O_2024_08_06_CONFIG --exp_logdir nphard_tsp_level_gpt4o_2024-08-06
