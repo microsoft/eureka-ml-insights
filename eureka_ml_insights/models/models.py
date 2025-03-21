@@ -25,6 +25,7 @@ class Model(ABC):
     """
 
     chat_mode: bool = False
+    max_concurrent: int = None
 
     @abstractmethod
     def generate(self, text_prompt, *args, **kwargs):
