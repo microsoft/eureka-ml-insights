@@ -62,9 +62,16 @@ RESULT_COLS = [
 resume_from_dict = {}
 
 
+# resume_from_dict = {
+#     1: "/home/vivineet/projects/evaluation/NPHardEval/TSP_03_12_2025_seq/eureka-ml-insights/logs/NPHARD_TSP_SEQ_PIPELINE/nphard_tsp_seq_gpt4o_2024-08-06_niter_3/2025-03-21-14-20-28.408743/student_inference_result_1/inference_result.jsonl",
+#     2: "/home/vivineet/projects/evaluation/NPHardEval/TSP_03_12_2025_seq/eureka-ml-insights/logs/NPHARD_TSP_SEQ_PIPELINE/nphard_tsp_seq_gpt4o_2024-08-06_niter_3/2025-03-21-14-20-28.408743/student_inference_result_2/inference_result.jsonl",
+#     3: "/home/vivineet/projects/evaluation/NPHardEval/TSP_03_12_2025_seq/eureka-ml-insights/logs/NPHARD_TSP_SEQ_PIPELINE/nphard_tsp_seq_gpt4o_2024-08-06_niter_3/2025-03-21-14-20-28.408743/student_inference_result_3/inference_result.jsonl",
+# }
+
 resume_from_dict = {
     1: None,
     2: None,
+    3: None,
 }
 
 class NPHARD_TSP_SEQ_PIPELINE(NPHARD_TSP_PIPELINE_MULTIPLE_RUNS):

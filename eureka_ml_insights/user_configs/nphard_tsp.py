@@ -57,7 +57,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                     "split": "train",
                     "transform": SequenceTransform(
                         [
-                            # SamplerTransform(sample_count=4, random_seed=1234),
+                            # SamplerTransform(sample_count=2, random_seed=1234),
                             ColumnRename(name_mapping={"query_text": "prompt", "target_text": "ground_truth"}),
                         ]
                     ),
@@ -301,8 +301,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                         "column_names": [
                             "NPHardTSPMetric_result_numeric"
                         ],
-                        # "first_groupby": "data_point_id",
-                        "first_groupby": "attempt_id",
+                        "first_groupby": "data_point_id",                        
                         "filename_base": "NPHardTSPMetric_BestOfN",
                         "agg_fn": "max"
                     },
@@ -313,7 +312,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                         "column_names": [
                             "NPHardTSPMetric_result_numeric"
                         ],
-                        "first_groupby": "attempt_id", 
+                        "first_groupby": "data_point_id", 
                         "second_groupby": "category",
                         "filename_base": "NPHardTSPMetric_BestOfN_GroupBy_Category",
                         "agg_fn": "max"
@@ -326,7 +325,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                         "column_names": [
                             "usage_completion"
                         ],
-                        "first_groupby": "attempt_id",
+                        "first_groupby": "data_point_id",
                         "filename_base": "UsageCompletion_BestOfN",
                          "agg_fn": "sum"
                     },
