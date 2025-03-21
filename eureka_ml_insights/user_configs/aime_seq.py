@@ -1,5 +1,6 @@
 import os
 from typing import Any
+from eureka_ml_insights.configs import model_configs
 
 from eureka_ml_insights.configs import (
     DataProcessingConfig,
@@ -33,6 +34,7 @@ from eureka_ml_insights.metrics.metrics_base import (
 )
 
 from .aime import AIME_PIPELINE
+from eureka_ml_insights.metrics.aime_metrics import NumericMatch
 
 DEFAULT_N_ITER = 3
 RESULT_COLS = [
@@ -42,6 +44,7 @@ RESULT_COLS = [
     "prompt",
     "ground_truth",
     "Year",
+    "Part",
     "ID",
     "student_extracted_answer",
     "verification_result",
@@ -70,7 +73,7 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
         super().configure_pipeline(model_config, resume_from, **kwargs)
 
         n_iter = kwargs.get("n_iter", DEFAULT_N_ITER)
-
+        n_iter = int(n_iter)
         component_configs = [self.data_processing_comp]
         for i in range(1, n_iter + 1):
             # Student inference component, reads prompts from the last prompt processing component
@@ -89,6 +92,7 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                 output_dir=os.path.join(self.log_dir, f"student_inference_result_{i}"),
                 resume_from=resume_from_dict.get(i, None),
                 chat_mode=True,
+                max_concurrent=5,
             )
 
             component_configs.append(self.student_inference_comp)
@@ -105,7 +109,7 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                             [
                                 # extract and verify the student answer
                                 AIMEExtractAnswer(f"model_output", f"student_extracted_answer"),
-                                MetricBasedVerifier(ExactMatch, f"student_extracted_answer"),
+                                MetricBasedVerifier(NumericMatch, f"student_extracted_answer"),
                                 AddColumnAndData("attempt_id", i),
                                 CopyColumn(
                                     column_name_src="model_output",
@@ -180,9 +184,14 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
             component_configs.append(self.hint_processing_comp)
 
             # Inference component to ask teacher model to provide hints
+            if "teacher_model_config" in kwargs:
+                teacher_model_config = getattr(model_configs, kwargs.get("teacher_model_config")) 
+            else:
+                teacher_model_config = model_config
+
             self.teacher_inference_comp = InferenceConfig(
                 component_type=Inference,
-                model_config=model_config,
+                model_config=teacher_model_config,
                 data_loader_config=DataSetConfig(
                     MMDataLoader,
                     {
@@ -191,7 +200,7 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                     },
                 ),
                 output_dir=os.path.join(self.log_dir, f"teacher_inference_result_{i}"),
-                max_concurrent=10,
+                max_concurrent=5,
                 chat_mode=False,
             )
             component_configs.append(self.teacher_inference_comp)
@@ -214,14 +223,16 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
             )
             component_configs.append(self.prompt_processing_with_hint)
 
+        # get the final pass
+        self.last_agg_dir = last_agg_dir
         # Pass the combined results from all iterations to the eval reporting component
-        self.evalreporting_comp.data_reader_config.init_args["path"] = os.path.join(
-            last_agg_dir, "transformed_data.jsonl"
-        )
-        self.evalreporting_comp.metric_config.init_args["model_output_col"] = "student_extracted_answer"
+        #self.evalreporting_comp.data_reader_config.init_args["path"] = os.path.join(
+        #    last_agg_dir, "transformed_data.jsonl"
+        #)
+        #self.evalreporting_comp.metric_config.init_args["model_output_col"] = "student_extracted_answer"
 
-        component_configs.append(self.evalreporting_comp)
-
+        #component_configs.append(self.evalreporting_comp)
+        self.component_configs = component_configs
         # Configure the pipeline
         return PipelineConfig(
             component_configs,
