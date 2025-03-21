@@ -33,7 +33,7 @@ class DataSetConfig(UtilityClassConfig):
     pass
 
 
-@dataclass
+@dataclass(repr=False)
 class ModelConfig(UtilityClassConfig):
     pass
 
