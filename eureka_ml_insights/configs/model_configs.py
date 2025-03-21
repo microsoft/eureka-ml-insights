@@ -284,8 +284,9 @@ CLAUDE_SECRET_KEY_PARAMS = {
 }
 '''
 
+
 CLAUDE_SECRET_KEY_PARAMS = {
-    "key_name": "claude-aifeval-account-2",
+    "key_name": "claude-besmira-gmail-account", #"claude-aifeval-account-2-logicalrel", #"claude-aifeval-account-2-3sat", #"aif-eval-claude",
     "local_keys_path": "keys/aifeval-vault-azure-net.json",
     "key_vault_url": "https://aifeval.vault.azure.net",
 }

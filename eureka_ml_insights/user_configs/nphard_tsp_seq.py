@@ -222,7 +222,7 @@ class NPHARD_TSP_SEQ_PIPELINE(NPHARD_TSP_PIPELINE_MULTIPLE_RUNS):
         self.evalreporting_comp.data_reader_config.init_args["path"] = os.path.join(
             last_agg_dir, "transformed_data.jsonl"
         )
-        self.evalreporting_comp.metric_config.init_args["model_output"] = "student_extracted_answer"
+        self.evalreporting_comp.metric_config.init_args["model_output_col"] = "student_extracted_answer"
 
         component_configs.append(self.evalreporting_comp)
 

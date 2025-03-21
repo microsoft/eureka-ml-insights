@@ -5,12 +5,14 @@ from .metrics_base import Metric
 
 class NPHardTSPMetric(Metric):
     """
-    A metric class for evaluating solutions to the Traveling Salesman Problem (TSP).
+    A metric class for evaluating solutions to the Traveling Salesman Problem (TSP). 
     A prediction is considered correct if it is a valid TSP tour and matches one of the optimal solutions.
     """
 
-    def __init__(self):
+    def __init__(self, model_output_col: str = "model_output"):
         super().__init__()
+        self.model_output_col = model_output_col
+        
 
     def is_valid_tsp_path(self, path, cities, distance_matrix=None):
         """

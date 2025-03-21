@@ -29,7 +29,7 @@ class CompositeMetric(Metric):
 
     def decompose_metric(self, data):
         composite_metric_col = self.__class__.__name__ + "_result"
-        # TODO this would break if the first row does not have all the metrics, e.g. due invalid inference results
+        # TODO this would break if the first row does not have all the metrics, e.g. due invalid inference results 
         for metric_name in data[composite_metric_col][0]:
             data[self.__class__.__name__ + "_" + metric_name] = data.apply(
                 lambda row: (
