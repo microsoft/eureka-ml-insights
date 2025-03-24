@@ -510,7 +510,7 @@ class ExtractUsageTransform:
             int: The token usage for the row.
         """
         #if row[self.prepend_completion_read_col + "is_valid"]:
-        if row[self.prepend_completion_read_col + "usage"] :
+        if not pd.isna(row[self.prepend_completion_read_col + "usage"]) and usage_completion_read_col in row[self.prepend_completion_read_col + "usage"] :
             return row[self.prepend_completion_read_col + "usage"][usage_completion_read_col]
         return np.nan
 
