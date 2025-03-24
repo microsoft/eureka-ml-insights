@@ -10,7 +10,7 @@ from eureka_ml_insights.data_utils import (
     MMDataLoader,
     SequenceTransform,
 )
-from eureka_ml_insights.data_utils.transform import AddColumn, CopyColumn, RegexTransform, RunPythonTransform, SamplerTransform
+from eureka_ml_insights.data_utils.transform import AddColumn, AddColumnAndData, CopyColumn, RegexTransform, RunPythonTransform, SamplerTransform
 from eureka_ml_insights.metrics import CountAggregator, GeoMCQMetric
 
 from eureka_ml_insights.configs import(
@@ -44,7 +44,7 @@ class BA_Causal_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    "path": os.path.join("/mnt/c/Users/vidhishab/OneDrive - Microsoft/Research/code/local_benchmark_data/Natasha_benchmarks/datasets/datasets/ba-causal/sorted_instances_500.jsonl"),
+                    "path": os.path.join("/mnt/c/Users/vidhishab/OneDrive - Microsoft/Research/code/local_benchmark_data/Natasha_benchmarks/datasets/datasets/ba-causal/ba_causal_final.jsonl"),
                     "transform": SequenceTransform(
                         [
                             AddColumn("ground_truth"),
@@ -74,7 +74,8 @@ class BA_Causal_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
-            max_concurrent=5
+            max_concurrent=1,
+            requests_per_minute=5
         )
 
         # # Configure the evaluation and reporting component.
@@ -92,6 +93,7 @@ class BA_Causal_PIPELINE(ExperimentConfig):
                                 prompt_pattern=r"Answer: (\w)(?=\s|\W|$)",
                                 ignore_case=False,
                             ),
+                        # AddColumnAndData("complexity_bucket", 0)
                         RunPythonTransform("df['complexity_bucket'] = df['metadata'].apply(lambda x: round(math.floor(x['complexity'] / 0.01) * 0.1, 4))", global_imports=["math"]),
                     ])
                 },

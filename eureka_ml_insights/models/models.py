@@ -670,6 +670,9 @@ class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
 
     def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
         import google.generativeai as genai
+        # from google.generativeai.types import Part
+        # import base64
+
 
         if self.model_name == "gemini-1.0-pro":
             if system_message:
@@ -679,7 +682,12 @@ class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
             self.model = genai.GenerativeModel(self.model_name, system_instruction=system_message)
         
         if query_images:
-            return [text_prompt] + query_images
+            # return [text_prompt] + query_images
+            return [text_prompt] + [{
+                "inline_data": {
+                        "mime_type": "image/png",
+                'data': x }} for x in query_images]
+            # return [text_prompt] + [Part.from_data(mime_type="image/png", data=base64.b64decode(x)) for x in query_images]
         else:
             return text_prompt
 
@@ -1223,18 +1231,13 @@ class ClaudeModel(EndpointModel, KeyBasedAuthMixIn):
         if previous_messages:
             messages.extend(previous_messages)
         if query_images:
-            encoded_images = self.base64encode(query_images)
+            # encoded_images = self.base64encode(query_images)
+            encoded_images = query_images
             user_content = [
                 {"type": "text", "text": text_prompt},
-                {
-                    "type": "image",
-                    "source": {
-                        "type": "base64",
-                        "media_type": "image/jpeg",
-                        "data": encoded_images[0],
-                    },
-                },
             ]
+            for x in encoded_images:
+                user_content.append({"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": x}})
         messages.append({"role": "user", "content": user_content})
 
         if system_message:
