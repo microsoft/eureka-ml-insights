@@ -100,28 +100,6 @@ class GSM8K_PIPELINE(ExperimentConfig):
         )
 
         # --------------------------------------
-        # * Extract usage
-        # --------------------------------------
-        # Get token usage information
-
-        self.usage_extraction_comp = DataProcessingConfig(
-            component_type=DataProcessing,
-            data_reader_config=DataSetConfig(
-                DataReader,
-                {
-                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
-                    "format": ".jsonl",
-                    "transform": SequenceTransform(
-                        [
-                            ExtractUsageTransform(model_config),
-                        ]
-                    ),
-                },
-            ),
-            output_dir=os.path.join(self.log_dir, "data_usage_extraction"),
-        )
-
-        # --------------------------------------
         # * Extract answer
         # --------------------------------------
         # Extract answer from raw model output
@@ -131,7 +109,7 @@ class GSM8K_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    "path": os.path.join(self.usage_extraction_comp.output_dir, "transformed_data.jsonl"),
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
@@ -144,6 +122,7 @@ class GSM8K_PIPELINE(ExperimentConfig):
                             AddColumn("ground_truth"),
                             GSM8KExtractAnswer("raw_output", "model_output"),
                             GSM8KExtractAnswer("answer", "ground_truth"),
+                            ExtractUsageTransform(model_config),  # Get token usage information
                         ]
                     ),
                 },
@@ -194,7 +173,6 @@ class GSM8K_PIPELINE(ExperimentConfig):
         pipeline_steps = [
             self.preprocessing_comp,
             self.inference_comp,
-            self.usage_extraction_comp,
             self.postprocessing_comp,
             self.evalreporting_comp,
         ]
@@ -473,6 +451,7 @@ class GSM8K_MUTATED_PIPELINE(GSM8K_PIPELINE):
                 ),
                 AddColumn("model_output"),
                 GSM8KExtractAnswer("raw_output", "model_output"),
+                ExtractUsageTransform(model_config),
             ]
         )
 
@@ -491,5 +470,43 @@ class GSM8K_MUTATED_PIPELINE(GSM8K_PIPELINE):
                     ),
                 ]
             )
+
+        return pipeline
+
+
+# =============================
+# GSM-SYMBOLIC BENCHMARK
+# =============================
+
+class GSMSYMBOLIC_PIPELINE(GSM8K_PIPELINE):
+    """This class specifies the config for running GSM8K benchmark on any model"""
+
+    def configure_pipeline(self, model_config, resume_from=None, n_repeats=1, **kwargs):
+        pipeline = super().configure_pipeline(
+            model_config,
+            resume_from,
+            n_repeats,
+            **kwargs,
+        )
+
+        self.preprocessing_comp.data_reader_config = DataSetConfig(
+            HFDataReader,
+            {
+                "path": "apple/GSM-Symbolic",
+                "split": "test",
+                "tasks": "main",
+                "transform": SequenceTransform(
+                    [
+                        ColumnRename(
+                            name_mapping={
+                                "question": "prompt",
+                            }
+                        ),
+                        # SamplerTransform(sample_count=3, random_seed=99),
+                        MultiplyTransform(n_repeats=int(n_repeats)),
+                    ],
+                ),
+            },
+        )
 
         return pipeline
