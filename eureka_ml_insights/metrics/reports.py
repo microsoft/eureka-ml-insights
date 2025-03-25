@@ -190,7 +190,7 @@ class CountAggregator(Aggregator):
         # for each column, create a dictionary that contains the counts for each group
         gb = data.groupby(self.group_by)
         col_counts = {
-            col: gb[col].value_counts(normalize=self.normalize).unstack(level=0).fillna(0).round(3).to_dict()
+            col: gb[col].value_counts(normalize=self.normalize).unstack(level=0).round(3).to_dict()
             for col in self.column_names
         }
         self.aggregated_result = col_counts
