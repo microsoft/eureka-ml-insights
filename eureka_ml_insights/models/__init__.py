@@ -2,6 +2,7 @@ from .models import (
     AzureOpenAIModel,
     AzureOpenAIOModel,
     ClaudeModel,
+    ClaudeReasoningModel,
     DirectOpenAIModel,
     DirectOpenAIOModel,
     GeminiModel,
@@ -10,12 +11,14 @@ from .models import (
     LlamaServerlessAzureRestEndpointModel,
     LLaVAHuggingFaceModel,
     LLaVAModel,
+    LocalVLLMModel,
     MistralServerlessAzureRestEndpointModel,
+    DeepseekR1ServerlessAzureRestEndpointModel,
     Phi3HFModel,
     Phi4HFModel,
     RestEndpointModel,
     TestModel,
-    vLLMModel,
+    VLLMModel,
     TogetherModel
 )
 
@@ -31,11 +34,14 @@ __all__ = [
     AzureOpenAIModel,
     GeminiModel,
     ClaudeModel,
+    ClaudeReasoningModel,
     MistralServerlessAzureRestEndpointModel,
     LlamaServerlessAzureRestEndpointModel,
+    DeepseekR1ServerlessAzureRestEndpointModel,
     LLaVAModel,
+    LocalVLLMModel,
     RestEndpointModel,
     TestModel,
-    vLLMModel,
+    VLLMModel,
     TogetherModel
 ]

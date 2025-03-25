@@ -528,6 +528,7 @@ class BA_Calendar_PipelineTest(PipelineTest, unittest.TestCase):
         self.eval_configs = [
             self.test_pipeline.evalreporting_comp,
             self.test_pipeline.bon_evalreporting_comp,
+            self.test_pipeline.won_evalreporting_comp,
             self.test_pipeline.majvote_evalreporting_comp,
         ]
 
