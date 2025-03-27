@@ -40,7 +40,7 @@ setup(
         'bitsandbytes>=0.42.0',
         'accelerate>=0.21.0',
         'pycocotools>=2.0.8',
-        'vllm==0.7.2',
+        'vllm==0.8.1',
     ],
     classifiers=[
         # Full list at https://pypi.org/classifiers/
