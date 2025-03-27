@@ -7,6 +7,7 @@ from eureka_ml_insights.data_utils import (
     HFDataReader,    
     MMDataLoader,
     CopyColumn,
+    ExtractUsageTransform,
     ReplaceStringsTransform,
     RunPythonTransform,
     MajorityVoteTransform,
@@ -93,6 +94,7 @@ class MAZE_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
+                            ExtractUsageTransform(model_config),                            
                             ExtractQuestionOptions(
                                     prompt_column_name="prompt",
                                     extracted_options_column_name="target_options_answers",
