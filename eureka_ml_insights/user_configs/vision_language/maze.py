@@ -94,7 +94,7 @@ class MAZE_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            ExtractUsageTransform(model_config),                            
+                            ExtractUsageTransform(model_config),                        
                             ExtractQuestionOptions(
                                     prompt_column_name="prompt",
                                     extracted_options_column_name="target_options_answers",
@@ -400,4 +400,3 @@ class MAZE_REPORTING_PIPELINE(MAZE_PIPELINE):
             ],
             self.log_dir,
         )
-
