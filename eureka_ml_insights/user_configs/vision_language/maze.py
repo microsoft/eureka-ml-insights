@@ -14,6 +14,7 @@ from eureka_ml_insights.data_utils import (
     DataReader,
     ExtractQuestionOptions,
     ExtractAnswerSpatialMapAndMaze,
+    MultiplyTransform,
     SequenceTransform,
 )
 from eureka_ml_insights.metrics import SubstringExistsMatch, BiLevelAggregator, BiLevelCountAggregator, CountAggregator
@@ -55,9 +56,14 @@ class MAZE_PIPELINE(ExperimentConfig):
                 HFDataReader,
                 {
                     "path": "microsoft/VISION_LANGUAGE",
-                    "split": "val",
+                    "split": "val_g10",
                     "tasks": "maze",
+                    "transform": MultiplyTransform(n_repeats=5),
                 },
+            ),
+            prompt_template_path=os.path.join(
+                os.path.dirname(__file__),
+                "../../prompt_templates/vision_language_templates/basic.jinja",
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
         )
@@ -74,6 +80,7 @@ class MAZE_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
+            max_concurrent=10,
         )
 
         # Configure the evaluation and reporting component.
@@ -339,8 +346,30 @@ class MAZE_PIPELINE(ExperimentConfig):
             self.log_dir,
         )
 
+class MAZE_COT_PIPELINE(MAZE_PIPELINE):
+    """This class extends MAZE_PIPELINE to use a COT prompt."""
+
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
+        config = super().configure_pipeline(model_config, resume_from)
+        self.data_processing_comp.prompt_template_path=os.path.join(
+                os.path.dirname(__file__),
+                "../../prompt_templates/vision_language_templates/cot.jinja",
+            )
+        return config
+
+
 class MAZE_TEXTONLY_PIPELINE(MAZE_PIPELINE):
     """This class extends MAZE_PIPELINE to use text only data."""
+
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
+        config = super().configure_pipeline(model_config, resume_from)
+        self.data_processing_comp.data_reader_config.init_args["tasks"] = (
+            "maze_text_only"
+        )
+        return config
+
+class MAZE_COT_TEXTONLY_PIPELINE(MAZE_COT_PIPELINE):
+    """This class extends MAZE_COT_PIPELINE to use text only data."""
 
     def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
         config = super().configure_pipeline(model_config, resume_from)
