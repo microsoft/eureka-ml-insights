@@ -173,14 +173,14 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                 AggregatorConfig(BiLevelAggregator, 
                     {
                         "column_names": ["usage_completion"], 
-                        "first_groupby": "data_repeat_id", 
+                        "first_groupby": "data_point_id", 
                         "filename_base": "UsageCompletion_AllRuns",
                         "agg_fn": "mean"
                     }),
                 AggregatorConfig(BiLevelAggregator, 
                     {
                         "column_names": ["usage_completion"], 
-                        "first_groupby": ["data_repeat_id", "BACalendarMetric_constrainedness_bucket"],
+                        "first_groupby": ["data_point_id", "BACalendarMetric_constrainedness_bucket"],
                         "second_groupby": "BACalendarMetric_constrainedness_bucket",
                         "filename_base": "UsageCompletion_by_constrainedness_AllRuns",
                         "agg_fn": "mean"
