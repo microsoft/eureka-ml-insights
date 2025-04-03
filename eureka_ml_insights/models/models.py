@@ -682,7 +682,6 @@ class AzureOpenAIOModel(OpenAIOModelsRequestResponseMixIn, AzureOpenAIClientMixI
 
     def __post_init__(self):
         self.client = self.get_client()
-        # self.extra_body = None
 
 
 @dataclass
