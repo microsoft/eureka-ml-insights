@@ -456,7 +456,11 @@ class OpenAICommonRequestResponseMixIn:
                 },
             ]
         messages.append({"role": "user", "content": user_content})
-        return {"messages": messages}
+        request_body = {"messages": messages}
+        for kwarg in {"extra_body"}:
+            if hasattr(self, kwarg):
+                request_body[kwarg] = getattr(self, kwarg)
+        return request_body
 
     def get_response(self, request):
         start_time = time.time()
@@ -468,7 +472,6 @@ class OpenAICommonRequestResponseMixIn:
             presence_penalty=self.presence_penalty,
             temperature=self.temperature,
             max_tokens=self.max_tokens,
-            extra_body=self.extra_body,
             **request,
         )
         end_time = time.time()
@@ -544,7 +547,6 @@ class AzureOpenAIModel(OpenAICommonRequestResponseMixIn, AzureOpenAIClientMixIn,
 
     def __post_init__(self):
         self.client = self.get_client()
-        self.extra_body = None
 
 
 @dataclass
@@ -596,7 +598,11 @@ class OpenAIOModelsRequestResponseMixIn:
             ]
 
         messages.append({"role": "user", "content": user_content})
-        return {"messages": messages}
+        request_body = {"messages": messages}
+        for kwarg in {"extra_body"}:
+            if hasattr(self, kwarg):
+                request_body[kwarg] = getattr(self, kwarg)
+        return request_body
 
     def get_response(self, request):
         start_time = time.time()
@@ -610,7 +616,6 @@ class OpenAIOModelsRequestResponseMixIn:
                 top_p=self.top_p,
                 frequency_penalty=self.frequency_penalty,
                 presence_penalty=self.presence_penalty,
-                extra_body=self.extra_body,
                 **request,
             )
         else:
@@ -622,7 +627,6 @@ class OpenAIOModelsRequestResponseMixIn:
                 frequency_penalty=self.frequency_penalty,
                 presence_penalty=self.presence_penalty,
                 reasoning_effort=self.reasoning_effort,
-                extra_body=self.extra_body,
                 **request,
             )
         end_time = time.time()
@@ -678,7 +682,7 @@ class AzureOpenAIOModel(OpenAIOModelsRequestResponseMixIn, AzureOpenAIClientMixI
 
     def __post_init__(self):
         self.client = self.get_client()
-        self.extra_body = None
+        # self.extra_body = None
 
 
 @dataclass
