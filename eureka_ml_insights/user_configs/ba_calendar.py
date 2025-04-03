@@ -83,7 +83,6 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
-            # new_columns=["thinking_output", "redacted_thinking_output"],
             max_concurrent=1,
         )
 
