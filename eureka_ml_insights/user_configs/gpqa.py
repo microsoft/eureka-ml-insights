@@ -265,14 +265,14 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                 AggregatorConfig(BiLevelAggregator, 
                     {
                         "column_names": ["usage_completion"], 
-                        "first_groupby": "data_point_id", 
+                        "first_groupby": "data_repeat_id", 
                         "filename_base": "UsageCompletion_AllRuns",
                         "agg_fn": "mean"
                     }),
                 AggregatorConfig(BiLevelAggregator, 
                     {
                         "column_names": ["usage_completion"], 
-                        "first_groupby": ["data_point_id", "Subdomain"], 
+                        "first_groupby": ["data_repeat_id", "Subdomain"], 
                         "second_groupby": "Subdomain",
                         "filename_base": "UsageCompletion_GroupBy_Subdomain_AllRuns", 
                         "agg_fn": "mean"
@@ -280,7 +280,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                 AggregatorConfig(BiLevelAggregator, 
                     {
                         "column_names": ["usage_completion"], 
-                        "first_groupby": ["data_point_id", "High-level domain"], 
+                        "first_groupby": ["data_repeat_id", "High-level domain"], 
                         "second_groupby": "High-level domain",
                         "filename_base": "UsageCompletion_GroupBy_High-level_domain_AllRuns",
                         "agg_fn": "mean" 
