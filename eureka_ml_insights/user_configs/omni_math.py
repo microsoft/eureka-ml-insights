@@ -39,6 +39,8 @@ class Omni_Math_PIPELINE(ExperimentConfig):
 
     def configure_pipeline(self, model_config=None, resume_from=None, eval_resume_from=None, eval_model_config=None, **kwargs) -> PipelineConfig:
         # data preprocessing
+
+        # self.log_dir = 'logs/Omni_Math_Parallel_PIPELINE/claude_3_7_sonnet_thinking_temp1_mtok32k_eval1/2025-03-28-18-57-31.272848/' 
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
             prompt_template_path=os.path.join(os.path.dirname(__file__), "../prompt_templates/omni_math_templates/omni_math_cot.jinja"),
@@ -49,7 +51,7 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                    "path": "KbsdJames/Omni-MATH",
                    "split": "test",
                    "transform": SequenceTransform([
-                    #SamplerTransform(sample_count=10, random_seed=99),
+                       SamplerTransform(sample_count=20, random_seed=99),
                     MultiplyTransform(n_repeats=1),
                    ]),
                 }
@@ -69,7 +71,7 @@ class Omni_Math_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
-            max_concurrent=1,
+            max_concurrent=20,
             #requests_per_minute=5
         )
 
@@ -102,7 +104,7 @@ class Omni_Math_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "eval_inference_result"),
             resume_from=eval_resume_from,
-            max_concurrent=5,
+            max_concurrent=40,
         )
         
         self.eval_inf_data_processing_comp = DataProcessingConfig(
@@ -115,6 +117,7 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                     "transform": SequenceTransform(
                         [
                             ExtractUsageTransform(model_config, prepend_completion_read_col="gen_solution_"),
+                            RunPythonTransform("df = df[df['data_repeat_id'] != 'repeat_3']"),
                             ColumnRename(
                                 name_mapping={
                                     "model_output": "raw_output",

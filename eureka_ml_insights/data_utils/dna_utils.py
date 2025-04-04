@@ -32,6 +32,8 @@ def parse_output_label(s: str):
     Returns:
     label (int): extracted label index
     """
+    if not s:
+        return -1
     if "<answer>" in s:
         temp = s.split("<answer>")
         temp = [item.strip() for item in temp if item.strip() != ""]
@@ -57,6 +59,8 @@ def parse_output_label_updated(s: str):
     Returns:
     label (int): extracted label index
     """
+    if not s:
+        return -1
     if "<answer>" in s and "</answer>" in s.split("<answer>")[1]:
         action_label = s.split("<answer>")[1].split("</answer>")[0].strip()
         try:
