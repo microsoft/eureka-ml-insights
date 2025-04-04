@@ -17,6 +17,9 @@ from .aime import (
     AIME_PIPELINE512Run_2025,
     AIME_PIPELINE1024Run_2025,
     AIME_PIPELINE5Run_2025_Direct,
+    AIME_PIPELINE_Seql_2Run_2025,
+    AIME_PIPELINE_Seql_5Run_2025,
+    AIME_PIPELINE5Run_2024,
 
 )
 from .ba_calendar import BA_Calendar_Parallel_PIPELINE, BA_Calendar_PIPELINE
