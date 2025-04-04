@@ -21,7 +21,7 @@ from .gpqa import (
     GPQA_Experiment_Pipeline,
     GPQA_PIPELINE_5Run
 )
-from .ifeval import IFEval_PIPELINE
+from .ifeval import IFEval_PIPELINE, IFEval_Parallel_PIPELINE
 from .image_understanding.object_detection import (
     OBJECT_DETECTION_PAIRS_LOCAL_PIPELINE,
     OBJECT_DETECTION_PAIRS_PIPELINE,
@@ -112,6 +112,7 @@ __all__ = [
     MAZE_TEXTONLY_PIPELINE,
     MAZE_REPORTING_PIPELINE,
     IFEval_PIPELINE,
+    IFEval_Parallel_PIPELINE,
     FlenQA_Experiment_Pipeline,
     GPQA_Experiment_Pipeline,
     GPQA_PIPELINE_5Run,
