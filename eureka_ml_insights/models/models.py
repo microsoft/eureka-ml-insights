@@ -12,7 +12,7 @@ from dataclasses import dataclass
 
 import anthropic
 import tiktoken
-from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+from azure.identity import AzureCliCredential, DefaultAzureCredential, get_bearer_token_provider
 
 from eureka_ml_insights.secret_management import get_secret
 
@@ -472,6 +472,7 @@ class OpenAICommonRequestResponseMixIn:
             presence_penalty=self.presence_penalty,
             temperature=self.temperature,
             max_tokens=self.max_tokens,
+            extra_body=self.extra_body,
             **request,
         )
         end_time = time.time()
@@ -520,6 +521,7 @@ class DirectOpenAIClientMixIn(KeyBasedAuthMixIn):
     def get_client(self):
         from openai import OpenAI
 
+
         return OpenAI(
             base_url=self.base_url,
             api_key=self.api_key,
@@ -547,6 +549,7 @@ class AzureOpenAIModel(OpenAICommonRequestResponseMixIn, AzureOpenAIClientMixIn,
 
     def __post_init__(self):
         self.client = self.get_client()
+        self.extra_body = None
 
 
 @dataclass
@@ -616,6 +619,7 @@ class OpenAIOModelsRequestResponseMixIn:
                 top_p=self.top_p,
                 frequency_penalty=self.frequency_penalty,
                 presence_penalty=self.presence_penalty,
+                extra_body=self.extra_body,
                 **request,
             )
         else:
@@ -627,6 +631,7 @@ class OpenAIOModelsRequestResponseMixIn:
                 frequency_penalty=self.frequency_penalty,
                 presence_penalty=self.presence_penalty,
                 reasoning_effort=self.reasoning_effort,
+                extra_body=self.extra_body,
                 **request,
             )
         end_time = time.time()
@@ -682,6 +687,7 @@ class AzureOpenAIOModel(OpenAIOModelsRequestResponseMixIn, AzureOpenAIClientMixI
 
     def __post_init__(self):
         self.client = self.get_client()
+        self.extra_body = None
 
 
 @dataclass
