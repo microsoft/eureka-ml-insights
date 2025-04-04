@@ -456,7 +456,11 @@ class OpenAICommonRequestResponseMixIn:
                 },
             ]
         messages.append({"role": "user", "content": user_content})
-        return {"messages": messages}
+        request_body = {"messages": messages}
+        for kwarg in {"extra_body"}:
+            if hasattr(self, kwarg):
+                request_body[kwarg] = getattr(self, kwarg)
+        return request_body
 
     def get_response(self, request):
         start_time = time.time()
@@ -558,6 +562,7 @@ class DirectOpenAIModel(OpenAICommonRequestResponseMixIn, DirectOpenAIClientMixI
     seed: int = 0
     api_version: str = "2023-06-01-preview"
     base_url: str = "https://api.openai.com/v1"
+    extra_body: dict = None
 
     def __post_init__(self):
         self.api_key = self.get_api_key()
@@ -593,7 +598,11 @@ class OpenAIOModelsRequestResponseMixIn:
             ]
 
         messages.append({"role": "user", "content": user_content})
-        return {"messages": messages}
+        request_body = {"messages": messages}
+        for kwarg in {"extra_body"}:
+            if hasattr(self, kwarg):
+                request_body[kwarg] = getattr(self, kwarg)
+        return request_body
 
     def get_response(self, request):
         start_time = time.time()
@@ -647,6 +656,7 @@ class DirectOpenAIOModel(OpenAIOModelsRequestResponseMixIn, DirectOpenAIClientMi
     presence_penalty: float = 0
     reasoning_effort: str = "medium"
     base_url: str = "https://api.openai.com/v1"
+    extra_body: dict = None
 
     def __post_init__(self):
         self.api_key = self.get_api_key()
