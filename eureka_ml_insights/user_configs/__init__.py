@@ -22,7 +22,11 @@ from .aime import (
     AIME_PIPELINE5Run_2024,
 
 )
-from .ba_calendar import BA_Calendar_Parallel_PIPELINE, BA_Calendar_PIPELINE
+from .ba_calendar import (
+        BA_Calendar_PIPELINE,
+        BA_Calendar_Parallel_PIPELINE,
+        BA_Calendar_RunEvals_PIPELINE,
+)
 from .dna import DNA_PIPELINE
 from .drop import Drop_Experiment_Pipeline
 from .flenqa import FlenQA_Experiment_Pipeline
@@ -77,6 +81,8 @@ from .toxigen import (
     ToxiGen_Generative_PIPELINE,
 )
 from .vision_language.maze import (
+    MAZE_COT_PIPELINE,
+    MAZE_COT_TEXTONLY_PIPELINE,
     MAZE_PIPELINE,
     MAZE_REPORTING_PIPELINE,
     MAZE_TEXTONLY_PIPELINE,
@@ -87,6 +93,8 @@ from .vision_language.spatial_grid import (
     SPATIAL_GRID_TEXTONLY_PIPELINE,
 )
 from .vision_language.spatial_map import (
+    SPATIAL_MAP_COT_PIPELINE,
+    SPATIAL_MAP_COT_TEXTONLY_PIPELINE,
     SPATIAL_MAP_PIPELINE,
     SPATIAL_MAP_REPORTING_PIPELINE,
     SPATIAL_MAP_TEXTONLY_PIPELINE,
@@ -134,6 +142,7 @@ __all__ = [
     DNA_PIPELINE,
     BA_Calendar_PIPELINE,
     BA_Calendar_Parallel_PIPELINE,
+    BA_Calendar_RunEvals_PIPELINE,
     ToxiGen_Discriminative_PIPELINE,
     ToxiGen_Generative_PIPELINE,
     Geo_Nondeterminism,
