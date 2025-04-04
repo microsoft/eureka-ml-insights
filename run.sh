@@ -72,7 +72,7 @@
 
 # python main.py --exp_config NPHARD_TSP_PIPELINE_MULTIPLE_RUNS --model_config GEMINI_V2_PRO_T1_M4096_CONFIG --exp_logdir nphard_gemini-2.0-pro
 
-#### o3 run
+
 python main.py --exp_config NPHARD_TSP_PIPELINE_MULTIPLE_RUNS --model_config GEMINI_V2_FLASH_THINKING_EXP_0121_CONFIG --exp_logdir nphard_tsp_gemini_2_0_flash-thinking-exp-0121_run3
 
 
