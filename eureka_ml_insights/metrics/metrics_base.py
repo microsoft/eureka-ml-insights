@@ -129,8 +129,8 @@ class SubstringExistsMatch(ClassicMetric):
 
     def __evaluate__(self, answer_text, target_text, is_valid):
         if not is_valid:
-            return float("nan")
-        return 1 if str(target_text).lower() in answer_text.lower() else 0
+            return "none"
+        return "correct" if target_text.lower() in answer_text.lower() else "incorrect"
 
 
 class ExactMatch(ClassicMetric):
