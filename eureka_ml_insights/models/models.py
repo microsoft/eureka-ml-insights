@@ -1324,6 +1324,8 @@ class _LocalVLLMDeploymentHandler:
         self.ports = ports
         self.session = requests.Session()
         self.clients = self._get_clients()
+        if len(self.clients) != self.num_servers:
+            raise RuntimeError(f"Failed to start all servers.")
 
     def _get_clients(self):
         '''Get clients to access vllm servers, by checking for running servers and deploying if necessary.'''
@@ -1357,8 +1359,6 @@ class _LocalVLLMDeploymentHandler:
             else:
                 logging.info(f"Waiting for {self.num_servers - len(healthy_ports)} more servers to come online.")
         
-        if len(self.clients) != self.num_servers:
-            raise RuntimeError(f"Failed to start all servers.")
 
     def get_healthy_ports(self) -> list[str]:
         """Check if servers are running."""
