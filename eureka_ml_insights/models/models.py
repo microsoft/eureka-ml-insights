@@ -3,7 +3,6 @@
 import json
 import logging
 import random
-import requests
 import threading
 import time
 import urllib.request
@@ -11,6 +10,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 import anthropic
+import requests
 import tiktoken
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 
@@ -25,6 +25,7 @@ class Model(ABC):
     """
 
     chat_mode: bool = False
+    system_message: str = None
 
     @abstractmethod
     def generate(self, text_prompt, *args, **kwargs):
@@ -128,6 +129,10 @@ class EndpointModel(Model):
                                   and any other relevant information returned by the model.
         """
         response_dict = {}
+        if hasattr(self, "system_message") and self.system_message:
+            if "system_message" in kwargs:
+                logging.warning("System message is passed via the dataloader but will be overridden by the model class system message.")
+            kwargs["system_message"] = self.system_message
         request = self.create_request(query_text, *args, **kwargs)
         attempts = 0
         model_output = None
@@ -1284,10 +1289,11 @@ class VLLMModel(Model):
             ]
         else:
             return [{"role": "user", "content": text_prompt}]
-    
+
 
 class _LocalVLLMDeploymentHandler:
     """This class is used to handle the deployment of vLLM servers."""
+
     # Chose against dataclass here so we have the option to accept kwargs
     # and pass them to the vLLM deployment script.
 
@@ -1328,24 +1334,24 @@ class _LocalVLLMDeploymentHandler:
             raise RuntimeError(f"Failed to start all servers.")
 
     def _get_clients(self):
-        '''Get clients to access vllm servers, by checking for running servers and deploying if necessary.'''
+        """Get clients to access vllm servers, by checking for running servers and deploying if necessary."""
         from openai import OpenAI as OpenAIClient
 
         # If the user passes ports, check if the servers are running and populate clients accordingly.
         if self.ports:
-            healthy_server_urls = ['http://0.0.0.0:' + port + '/v1' for port in self.get_healthy_ports()]
+            healthy_server_urls = ["http://0.0.0.0:" + port + "/v1" for port in self.get_healthy_ports()]
             if len(healthy_server_urls) > 0:
                 logging.info(f"Found {len(healthy_server_urls)} healthy servers.")
-                return [OpenAIClient(base_url=url, api_key = 'none') for url in healthy_server_urls]
+                return [OpenAIClient(base_url=url, api_key="none") for url in healthy_server_urls]
 
         # Even if the user doesn't pass ports, we can check if there happen to be deployed servers.
         # There is no guarantee that the servers are hosting the correct model.
         self.ports = [str(8000 + i) for i in range(self.num_servers)]
-        healthy_server_urls = ['http://0.0.0.0:' + port + '/v1' for port in self.get_healthy_ports()]
+        healthy_server_urls = ["http://0.0.0.0:" + port + "/v1" for port in self.get_healthy_ports()]
         if len(healthy_server_urls) == self.num_servers:
             logging.info(f"Found {len(healthy_server_urls)} healthy servers.")
-            return [OpenAIClient(base_url=url, api_key = 'none') for url in healthy_server_urls]
-        
+            return [OpenAIClient(base_url=url, api_key="none") for url in healthy_server_urls]
+
         # If that didn't work, let's deploy and wait for servers to come online.
         self.deploy_servers()
         server_start_time = time.time()
@@ -1354,11 +1360,12 @@ class _LocalVLLMDeploymentHandler:
             healthy_ports = self.get_healthy_ports()
             if len(healthy_ports) == self.num_servers:
                 logging.info(f"All {self.num_servers} servers are online.")
-                healthy_server_urls = ['http://0.0.0.0:' + port + '/v1' for port in healthy_ports]
-                return [OpenAIClient(base_url=url, api_key = 'none') for url in healthy_server_urls]
+                healthy_server_urls = ["http://0.0.0.0:" + port + "/v1" for port in healthy_ports]
+                return [OpenAIClient(base_url=url, api_key="none") for url in healthy_server_urls]
             else:
                 logging.info(f"Waiting for {self.num_servers - len(healthy_ports)} more servers to come online.")
-        
+        # If we get here, we timed out waiting for servers to come online.
+        raise RuntimeError(f"Failed to start all servers.")
 
     def get_healthy_ports(self) -> list[str]:
         """Check if servers are running."""
@@ -1366,17 +1373,18 @@ class _LocalVLLMDeploymentHandler:
         healthy_ports = []
         for port in self.ports:
             try:
-                self.session.get('http://0.0.0.0:' + port +'/health')
+                self.session.get("http://0.0.0.0:" + port + "/health")
                 healthy_ports.append(port)
             except:
                 pass
         return healthy_ports
-    
+
     def deploy_servers(self):
         """Deploy vLLM servers in background threads using the specified parameters."""
 
         logging.info(f"No vLLM servers are running. Starting {self.num_servers} new servers at {self.ports}.")
-        import os, datetime
+        import datetime
+        import os
 
         gpus_per_port = self.pipeline_parallel_size * self.tensor_parallel_size
         date = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S.%f")
@@ -1387,16 +1395,15 @@ class _LocalVLLMDeploymentHandler:
             port = 8000 + index
             log_file = os.path.join(log_dir, f"{port}.log")
             self.logs.append(log_file)
-            background_thread = threading.Thread(
-                target = lambda: self.deploy_server(index, gpus_per_port, log_file)
-            )
+            background_thread = threading.Thread(target=lambda: self.deploy_server(index, gpus_per_port, log_file))
             background_thread.daemon = True
             background_thread.start()
 
     def deploy_server(self, index: int, gpus_per_port: int, log_file: str):
         """Deploy a single vLLM server using gpus_per_port many gpus starting at index*gpus_per_port."""
-        
+
         import subprocess
+
         port = 8000 + index
         first_gpu = index * gpus_per_port
         last_gpu = first_gpu + gpus_per_port - 1
@@ -1406,13 +1413,20 @@ class _LocalVLLMDeploymentHandler:
             "CUDA_VISIBLE_DEVICES=" + devices,
             "vllm serve",
             self.model_name,
-            "--port", str(port),
-            "--tensor_parallel_size", str(self.tensor_parallel_size),
-            "--pipeline_parallel_size", str(self.pipeline_parallel_size),
-            "--dtype", self.dtype,
-            "--seed", str(self.seed),
-            "--gpu_memory_utilization", str(self.gpu_memory_utilization),
-            "--cpu_offload_gb", str(self.cpu_offload_gb)
+            "--port",
+            str(port),
+            "--tensor_parallel_size",
+            str(self.tensor_parallel_size),
+            "--pipeline_parallel_size",
+            str(self.pipeline_parallel_size),
+            "--dtype",
+            self.dtype,
+            "--seed",
+            str(self.seed),
+            "--gpu_memory_utilization",
+            str(self.gpu_memory_utilization),
+            "--cpu_offload_gb",
+            str(self.cpu_offload_gb),
         ]
         if self.quantization:
             command.append("--quantization")
@@ -1421,14 +1435,17 @@ class _LocalVLLMDeploymentHandler:
             command.append("--trust_remote_code")
         command = " ".join(command)
         logging.info(f"Running command: {command}")
-        with open(log_file, 'w') as log_writer:
+        with open(log_file, "w") as log_writer:
             subprocess.run(command, shell=True, stdout=log_writer, stderr=log_writer)
 
     @classmethod
     def shutdown_servers(cls):
         """Shutdown all vLLM servers deployed during this run."""
 
-        import re, os, signal
+        import os
+        import re
+        import signal
+
         for log_file in cls.logs:
             with open(log_file, "r") as f:
                 for line in f:
@@ -1442,13 +1459,13 @@ class _LocalVLLMDeploymentHandler:
 
 
 local_vllm_model_lock = threading.Lock()
-local_vllm_deployment_handlers : dict[str, _LocalVLLMDeploymentHandler] = {}
-    
-        
+local_vllm_deployment_handlers: dict[str, _LocalVLLMDeploymentHandler] = {}
+
+
 @dataclass
 class LocalVLLMModel(OpenAICommonRequestResponseMixIn, EndpointModel):
     """This class is used for vLLM servers running locally.
-    
+
     In case the servers are already deployed, specify the
     model_name and the ports at which the servers are hosted.
     Otherwise instantiating will initiate a deployment with
@@ -1473,7 +1490,7 @@ class LocalVLLMModel(OpenAICommonRequestResponseMixIn, EndpointModel):
 
     # Inference parameters
     temperature: float = 0.01
-    top_p: float = .95
+    top_p: float = 0.95
     top_k: int = -1
     max_tokens: int = 2000
     frequency_penalty: float = 0
@@ -1487,7 +1504,7 @@ class LocalVLLMModel(OpenAICommonRequestResponseMixIn, EndpointModel):
     @property
     def client(self):
         return random.choice(self.handler.clients)
-        
+
     def _get_local_vllm_deployment_handler(self):
         if self.model_name not in local_vllm_deployment_handlers:
             with local_vllm_model_lock:
@@ -1507,7 +1524,7 @@ class LocalVLLMModel(OpenAICommonRequestResponseMixIn, EndpointModel):
                     )
 
         return local_vllm_deployment_handlers[self.model_name]
-    
+
     def handle_request_error(self, e):
         return False
 
