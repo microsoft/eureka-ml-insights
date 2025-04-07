@@ -13,7 +13,7 @@ from eureka_ml_insights.data_utils.data import (
     DataReader,
     HFDataReader,
 )
-from eureka_ml_insights.data_utils.transform import MultiplyTransform, RunPythonTransform, SequenceTransform
+from eureka_ml_insights.data_utils.transform import MultiplyTransform,SamplerTransform, RunPythonTransform, SequenceTransform
 from eureka_ml_insights.metrics.ifeval_metrics import IFEvalMetric
 from eureka_ml_insights.metrics.reports import (
     AverageAggregator,
@@ -51,6 +51,7 @@ class IFEval_PIPELINE(ExperimentConfig):
                     "path": "google/IFEval",
                     "split": "train",
                     "transform": SequenceTransform([
+                        #SamplerTransform(random_seed=5, sample_count=10),
                         MultiplyTransform(n_repeats=1)
                     ]),
                 },
@@ -68,6 +69,7 @@ class IFEval_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
+            max_concurrent=20
         )
 
         # Configure the evaluation and reporting component for evaluation and dataset level aggregation
@@ -164,8 +166,8 @@ class IFEval_PIPELINE(ExperimentConfig):
                             "IFEvalMetric_strict_follow_instruction_list",
                             "IFEvalMetric_loose_follow_instruction_list",
                         ],
-                        "first_group_by": "instruction_id_list",
-                        "second_group_by": "data_repeat_id",
+                        "first_groupby": "instruction_id_list",
+                        "second_groupby": "data_repeat_id",
                         "agg_fn": "mean",
                         "filename_base": "IFEvalAccuracyMetrics_GroupByInstructionID",
                         
@@ -178,8 +180,8 @@ class IFEval_PIPELINE(ExperimentConfig):
                             "IFEvalMetric_strict_follow_instruction_list",
                             "IFEvalMetric_loose_follow_instruction_list",
                         ],
-                        "first_group_by": "IFEvalMetric_tier0_instructions",
-                        "second_group_by": "data_repeat_id",
+                        "first_groupby": "IFEvalMetric_tier0_instructions",
+                        "second_groupby": "data_repeat_id",
                         "agg_fn": "mean",
                         "filename_base": "IFEvalAccuracyMetrics_GroupByTier0Instructions",
                     },
@@ -209,6 +211,6 @@ class IFEval_Parallel_PIPELINE(IFEval_PIPELINE):
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         # data preprocessing
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms[-1] = MultiplyTransform(
-            n_repeats=5
+            n_repeats=3
         )
         return pipeline

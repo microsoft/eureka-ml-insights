@@ -51,7 +51,7 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                    "path": "KbsdJames/Omni-MATH",
                    "split": "test",
                    "transform": SequenceTransform([
-                       SamplerTransform(sample_count=20, random_seed=99),
+                       #SamplerTransform(sample_count=20, random_seed=99),
                     MultiplyTransform(n_repeats=1),
                    ]),
                 }
@@ -71,7 +71,7 @@ class Omni_Math_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
-            max_concurrent=20,
+            max_concurrent=10,
             #requests_per_minute=5
         )
 
@@ -116,7 +116,8 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            ExtractUsageTransform(model_config, prepend_completion_read_col="gen_solution_"),
+                            #ExtractUsageTransform(model_config, prepend_completion_read_col="gen_solution_"),
+                            ExtractUsageTransform(model_config, usage_column="gen_solution_usage", n_tokens_column="gen_solution_n_output_tokens"),
                             RunPythonTransform("df = df[df['data_repeat_id'] != 'repeat_3']"),
                             ColumnRename(
                                 name_mapping={

@@ -472,7 +472,6 @@ class OpenAICommonRequestResponseMixIn:
             presence_penalty=self.presence_penalty,
             temperature=self.temperature,
             max_tokens=self.max_tokens,
-            extra_body=self.extra_body,
             **request,
         )
         end_time = time.time()
@@ -619,7 +618,6 @@ class OpenAIOModelsRequestResponseMixIn:
                 top_p=self.top_p,
                 frequency_penalty=self.frequency_penalty,
                 presence_penalty=self.presence_penalty,
-                extra_body=self.extra_body,
                 **request,
             )
         else:
@@ -631,7 +629,6 @@ class OpenAIOModelsRequestResponseMixIn:
                 frequency_penalty=self.frequency_penalty,
                 presence_penalty=self.presence_penalty,
                 reasoning_effort=self.reasoning_effort,
-                extra_body=self.extra_body,
                 **request,
             )
         end_time = time.time()
