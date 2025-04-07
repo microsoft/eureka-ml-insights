@@ -130,6 +130,8 @@ class EndpointModel(Model):
         """
         response_dict = {}
         if hasattr(self, "system_message") and self.system_message:
+            if "system_message" in kwargs:
+                logging.warning("System message is passed via the dataloader but will be overridden by the model class system message.")
             kwargs["system_message"] = self.system_message
         request = self.create_request(query_text, *args, **kwargs)
         attempts = 0
@@ -1362,6 +1364,11 @@ class _LocalVLLMDeploymentHandler:
                 return [OpenAIClient(base_url=url, api_key="none") for url in healthy_server_urls]
             else:
                 logging.info(f"Waiting for {self.num_servers - len(healthy_ports)} more servers to come online.")
+<<<<<<< HEAD
+=======
+        # If we get here, we timed out waiting for servers to come online.
+        raise RuntimeError(f"Failed to start all servers.")
+>>>>>>> fd6361f184e24cf543a91bc6418073d6ecedf762
 
     def get_healthy_ports(self) -> list[str]:
         """Check if servers are running."""
