@@ -37,7 +37,7 @@ from eureka_ml_insights.data_utils.nphard_sat_utils import (
 )
 from eureka_ml_insights.metrics import CountAggregator, NPHardSATMetric, BiLevelAggregator, BiLevelCountAggregator
 
-"""This file contains user defined configuration classes for the Traveling Salesman Problem (SAT).
+"""This file contains user defined configuration classes for the Traveling Salesman Problem (SAT).   
 """
 
 

@@ -42,6 +42,20 @@
 
 
 
-# # # # ### phi4 ### not ready
-python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config PHI4HF_CONFIG --exp_logdir nphard_sat_level_phi4 --resume_from /home/vivineet/projects/evaluation/NPHardEval/SAT_02-04-2025/eureka-ml-insights/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_level_phi4/2025-02-07-11-01-30.623174/inference_result/inference_result.jsonl
+# # # # # ### phi4 ### not ready
+# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config PHI4HF_CONFIG --exp_logdir nphard_sat_level_phi4
 
+
+# # # # # ### o3_mini_high trapi
+# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config TRAPI_AIF_O3_MINI_CONFIG --exp_logdir nphard_sat_level_o3_mini_high
+
+# # # # # ### o3_mini_high msr_lit
+# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config TRAPI_AIF_O3_MINI_CONFIG --exp_logdir nphard_sat_level_o3_mini_high --resume_from /home/vivineet/projects/evaluation/NPHardEval/SAT_02-04-2025/eureka-ml-insights/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_level_o3_mini_high/2025-03-10-11-16-43.083154/inference_result/inference_result.jsonl
+
+# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config AIF_NT_LLAMA3_1_405B_INSTRUCT_EASTUS_OSS_CONFIG_2 --exp_logdir nphard_sat_level_llama3_1_405b 
+
+# --resume_from /home/vivineet/projects/evaluation/NPHardEval/SAT_02-04-2025/eureka-ml-insights/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_level_llama3_1_405b/2025-01-31-23-31-01.301467/inference_result/inference_result.jsonl
+
+
+# # # # # ### o3_mini_high trapi
+python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config MSR_LIT_O1_reasoning_1_CONFIG --exp_logdir nphard_sat_level_o3_mini_high
