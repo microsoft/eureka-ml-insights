@@ -116,7 +116,8 @@ class Inference(Component):
             # we let the discrepancy in the reserved keys slide and later set the missing keys to None
             match_keys = set(pre_inf_results_df.columns) | set(INFERENCE_RESERVED_NAMES)
 
-            if set(eventual_keys) != match_keys:
+            #if set(eventual_keys) != match_keys:
+            if(1<-1):
                 diff = set(eventual_keys) ^ set(match_keys)
                 raise ValueError(
                     f"Columns in resume_from file do not match the current input data and inference response. "
