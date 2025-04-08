@@ -131,7 +131,9 @@ class EndpointModel(Model):
         response_dict = {}
         if hasattr(self, "system_message") and self.system_message:
             if "system_message" in kwargs:
-                logging.warning("System message is passed via the dataloader but will be overridden by the model class system message.")
+                logging.warning(
+                    "System message is passed via the dataloader but will be overridden by the model class system message."
+                )
             kwargs["system_message"] = self.system_message
         request = self.create_request(query_text, *args, **kwargs)
         attempts = 0
