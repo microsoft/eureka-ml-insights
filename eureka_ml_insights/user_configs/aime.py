@@ -58,7 +58,7 @@ class AIME_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 HFDataReader,
                 {
-                    "path": "qq8933/AIME_1983_2024",
+                    "path": "lchen001/AIME1983_2024",
                     "split": "train",
                     "transform": SequenceTransform(
                         [
