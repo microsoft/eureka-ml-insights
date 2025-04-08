@@ -1366,11 +1366,8 @@ class _LocalVLLMDeploymentHandler:
                 return [OpenAIClient(base_url=url, api_key="none") for url in healthy_server_urls]
             else:
                 logging.info(f"Waiting for {self.num_servers - len(healthy_ports)} more servers to come online.")
-<<<<<<< HEAD
-=======
         # If we get here, we timed out waiting for servers to come online.
         raise RuntimeError(f"Failed to start all servers.")
->>>>>>> fd6361f184e24cf543a91bc6418073d6ecedf762
 
     def get_healthy_ports(self) -> list[str]:
         """Check if servers are running."""
