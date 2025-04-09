@@ -13,10 +13,11 @@ from eureka_ml_insights.data_utils.data import (
     DataReader,
     HFDataReader,
 )
-from eureka_ml_insights.data_utils.transform import RunPythonTransform
+from eureka_ml_insights.data_utils.transform import MultiplyTransform, RunPythonTransform, SequenceTransform
 from eureka_ml_insights.metrics.ifeval_metrics import IFEvalMetric
 from eureka_ml_insights.metrics.reports import (
     AverageAggregator,
+    BiLevelAggregator,
     TwoColumnSumAverageAggregator,
 )
 
@@ -49,6 +50,10 @@ class IFEval_PIPELINE(ExperimentConfig):
                 {
                     "path": "google/IFEval",
                     "split": "train",
+                    "transform": SequenceTransform([
+                        #SamplerTransform(random_seed=5, sample_count=10),
+                        MultiplyTransform(n_repeats=1)
+                    ]),
                 },
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
@@ -64,6 +69,7 @@ class IFEval_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
+            max_concurrent=20
         )
 
         # Configure the evaluation and reporting component for evaluation and dataset level aggregation
@@ -74,7 +80,12 @@ class IFEval_PIPELINE(ExperimentConfig):
                 {
                     "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
                     "format": ".jsonl",
-                    "transform": ColumnRename(name_mapping={"model_output": "response"}),
+                    "transform": SequenceTransform(
+                        [ColumnRename(name_mapping={"model_output": "response"}),
+                         RunPythonTransform(
+                             "df['response'] = df['response'].apply(lambda x: x.split('<|dummy_87|>')[-1] if '<|dummy_87|>' in x else x)"
+                         )]
+                    ),
                 },
             ),
             metric_config=MetricConfig(IFEvalMetric),
@@ -86,7 +97,20 @@ class IFEval_PIPELINE(ExperimentConfig):
                             "IFEvalMetric_strict_follow_all_instructions",
                             "IFEvalMetric_loose_follow_all_instructions",
                         ],
+                        "filename_base": "IFEvalAccuracyMetrics_SeparateRuns",
+                        "group_by": "data_repeat_id",
+                    },
+                ),
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "IFEvalMetric_strict_follow_all_instructions",
+                            "IFEvalMetric_loose_follow_all_instructions",
+                        ],
                         "filename_base": "IFEvalAccuracyMetrics_Aggregated",
+                        "first_groupby": "data_repeat_id", 
+                        "agg_fn": "mean"
                     },
                 ),
                 AggregatorConfig(
@@ -94,7 +118,8 @@ class IFEval_PIPELINE(ExperimentConfig):
                     {
                         "numerator_column_name": "IFEvalMetric_strict_follow_instruction_list_sum",
                         "denominator_column_name": "IFEvalMetric_strict_instruction_list_len",
-                        "filename_base": "IFEvalStrictInfoFollowRateMetric_Aggregated",
+                        "filename_base": "IFEvalStrictInfoFollowRateMetric_SeparateRuns",
+                        "group_by": "data_repeat_id",
                     },
                 ),
                 AggregatorConfig(
@@ -102,7 +127,8 @@ class IFEval_PIPELINE(ExperimentConfig):
                     {
                         "numerator_column_name": "IFEvalMetric_loose_follow_instruction_list_sum",
                         "denominator_column_name": "IFEvalMetric_loose_instruction_list_len",
-                        "filename_base": "IFEvalLooseInfoFollowRateMetric_Aggregated",
+                        "filename_base": "IFEvalLooseInfoFollowRateMetric_SeparateRuns",
+                        "group_by": "data_repeat_id",
                     },
                 ),
             ],
@@ -139,24 +165,28 @@ class IFEval_PIPELINE(ExperimentConfig):
             ),
             aggregator_configs=[
                 AggregatorConfig(
-                    AverageAggregator,
+                    BiLevelAggregator,
                     {
                         "column_names": [
                             "IFEvalMetric_strict_follow_instruction_list",
                             "IFEvalMetric_loose_follow_instruction_list",
                         ],
-                        "group_by": "instruction_id_list",
+                        "first_groupby": "instruction_id_list",
+                        "second_groupby": "data_repeat_id",
+                        "agg_fn": "mean",
                         "filename_base": "IFEvalAccuracyMetrics_GroupByInstructionID",
                     },
                 ),
                 AggregatorConfig(
-                    AverageAggregator,
+                    BiLevelAggregator,
                     {
                         "column_names": [
                             "IFEvalMetric_strict_follow_instruction_list",
                             "IFEvalMetric_loose_follow_instruction_list",
                         ],
-                        "group_by": "IFEvalMetric_tier0_instructions",
+                        "first_groupby": "IFEvalMetric_tier0_instructions",
+                        "second_groupby": "data_repeat_id",
+                        "agg_fn": "mean",
                         "filename_base": "IFEvalAccuracyMetrics_GroupByTier0Instructions",
                     },
                 ),
@@ -175,3 +205,16 @@ class IFEval_PIPELINE(ExperimentConfig):
             ],
             self.log_dir,
         )
+
+class IFEval_Parallel_PIPELINE(IFEval_PIPELINE):
+    """This class specifies the config for running BA Calendar benchmark 5 repeated times"""
+
+    def configure_pipeline(
+        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
+    ) -> PipelineConfig:
+        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
+        # data preprocessing
+        self.data_processing_comp.data_reader_config.init_args["transform"].transforms[-1] = MultiplyTransform(
+            n_repeats=3
+        )
+        return pipeline
