@@ -1,4 +1,5 @@
 import os
+from typing import Any
 
 from eureka_ml_insights.core import (
     DataProcessing,
@@ -32,6 +33,7 @@ from eureka_ml_insights.configs import(
     EvalReportingConfig,
     InferenceConfig,
     MetricConfig,
+    ModelConfig,
     PipelineConfig,
     PromptProcessingConfig,
 )
@@ -140,8 +142,12 @@ class ToxiGen_Discriminative_PIPELINE(ExperimentConfig):
 
 
 class ToxiGen_Generative_PIPELINE(ExperimentConfig):
-    def configure_pipeline(self, model_config):
+    # def configure_pipeline(self, model_config):
 
+    def configure_pipeline(
+        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
+    ) -> PipelineConfig:
+        
         # Data pre processing component.
         self.data_pre_processing = PromptProcessingConfig(
             component_type=PromptProcessing,
@@ -209,6 +215,8 @@ class ToxiGen_Generative_PIPELINE(ExperimentConfig):
                 {"path": os.path.join(self.data_pre_processing.output_dir, "transformed_data.jsonl")},
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
+            resume_from=resume_from,
+            max_concurrent=5,
         )
 
         # Eval data pre processing component.
