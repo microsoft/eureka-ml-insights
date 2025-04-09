@@ -474,7 +474,7 @@ class OpenAICommonRequestResponseMixIn:
         completion = self.client.chat.completions.create(
             model=self.model_name,
             top_p=self.top_p,
-            # seed=self.seed,
+            seed=self.seed,
             frequency_penalty=self.frequency_penalty,
             presence_penalty=self.presence_penalty,
             temperature=self.temperature,
