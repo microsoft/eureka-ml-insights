@@ -80,7 +80,12 @@ class IFEval_PIPELINE(ExperimentConfig):
                 {
                     "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
                     "format": ".jsonl",
-                    "transform": ColumnRename(name_mapping={"model_output": "response"}),
+                    "transform": SequenceTransform(
+                        [ColumnRename(name_mapping={"model_output": "response"}),
+                         RunPythonTransform(
+                             "df['response'] = df['response'].apply(lambda x: x.split('<|dummy_87|>')[-1] if '<|dummy_87|>' in x else x)"
+                         )]
+                    ),
                 },
             ),
             metric_config=MetricConfig(IFEvalMetric),

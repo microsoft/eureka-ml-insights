@@ -118,7 +118,7 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                         [
                             #ExtractUsageTransform(model_config, prepend_completion_read_col="gen_solution_"),
                             ExtractUsageTransform(model_config, usage_column="gen_solution_usage", n_tokens_column="gen_solution_n_output_tokens"),
-                            RunPythonTransform("df = df[df['data_repeat_id'] != 'repeat_3']"),
+                            # RunPythonTransform("df = df[df['data_repeat_id'] != 'repeat_3']"),
                             ColumnRename(
                                 name_mapping={
                                     "model_output": "raw_output",
