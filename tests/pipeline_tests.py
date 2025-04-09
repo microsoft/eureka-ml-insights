@@ -244,7 +244,7 @@ class TEST_IFEval_PIPELINE(IFEval_PIPELINE):
     # Test config the IFEval benchmark with TestModel and TestDataLoader
     def configure_pipeline(self):
         config = super().configure_pipeline(model_config=ModelConfig(GenericTestModel, {}))
-        self.data_processing_comp.data_reader_config.init_args["transform"] = SequenceTransform(
+        self.data_processing_comp.data_reader_config.init_args["transform"].transforms.extend(
             [
                 RunPythonTransform("df['instruction_id_list_copy'] = df.loc[:, 'instruction_id_list']"),
                 RunPythonTransform("df = df.explode(['instruction_id_list_copy'])"),
