@@ -81,10 +81,7 @@ class IFEval_PIPELINE(ExperimentConfig):
                     "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
                     "format": ".jsonl",
                     "transform": SequenceTransform(
-                        [ColumnRename(name_mapping={"model_output": "response"}),
-                         RunPythonTransform(
-                             "df['response'] = df['response'].apply(lambda x: x.split('<|dummy_87|>')[-1] if '<|dummy_87|>' in x else x)"
-                         )]
+                        [ColumnRename(name_mapping={"model_output": "response"})]
                     ),
                 },
             ),
@@ -217,4 +214,17 @@ class IFEval_Parallel_PIPELINE(IFEval_PIPELINE):
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms[-1] = MultiplyTransform(
             n_repeats=3
         )
+        return pipeline
+    
+class IFEval_Phi_Parallel_PIPELINE(IFEval_Parallel_PIPELINE):
+    """This class specifies the config for running BA Calendar benchmark 5 repeated times"""
+
+    def configure_pipeline(
+        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
+    ) -> PipelineConfig:
+        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
+        # eval data processing
+        self.evalreporting_comp.data_reader_config.init_args["transform"].transforms.append(RunPythonTransform(
+                             "df['response'] = df['response'].apply(lambda x: x.split('<|dummy_87|>')[-1] if '<|dummy_87|>' in x else x)"
+                         ))
         return pipeline
