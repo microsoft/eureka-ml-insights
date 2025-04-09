@@ -77,7 +77,7 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"), 
             resume_from=resume_from,
-            max_concurrent=1,
+            max_concurrent=10,
         )
 
         # post process the response to extract the answer
