@@ -12,7 +12,7 @@ from dataclasses import dataclass
 import anthropic
 import requests
 import tiktoken
-from azure.identity import AzureCliCredential, DefaultAzureCredential, get_bearer_token_provider
+from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 
 from eureka_ml_insights.secret_management import get_secret
 
@@ -555,7 +555,6 @@ class AzureOpenAIModel(OpenAICommonRequestResponseMixIn, AzureOpenAIClientMixIn,
 
     def __post_init__(self):
         self.client = self.get_client()
-        self.extra_body = None
 
 
 @dataclass
@@ -691,7 +690,6 @@ class AzureOpenAIOModel(OpenAIOModelsRequestResponseMixIn, AzureOpenAIClientMixI
 
     def __post_init__(self):
         self.client = self.get_client()
-        self.extra_body = None
 
 
 @dataclass

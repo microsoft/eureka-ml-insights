@@ -16,8 +16,7 @@ class Component(ABC):
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
         else:
-            pass
-            #raise FileExistsError(f"Output directory {self.output_dir} already exists.")
+            raise FileExistsError(f"Output directory {self.output_dir} already exists.")
 
     @abstractmethod
     def run(self) -> None:
