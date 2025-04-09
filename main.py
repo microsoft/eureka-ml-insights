@@ -19,6 +19,9 @@ if __name__ == "__main__":
         "--eval_model_config", type=str, nargs="?", help="The name of the model config to use.", default=None
     )
     parser.add_argument(
+        "--model_name", type=str, help="The name of the deployed vllm model to use.", default=None
+    )
+    parser.add_argument(
         "--exp_logdir", type=str, help="The name of the subdirectory in which to save the logs.", default=None
     )
     parser.add_argument(
@@ -51,8 +54,10 @@ if __name__ == "__main__":
         try:
             model_config = getattr(model_configs, args.model_config)
             if isinstance(model_config, ModelConfig):
-                model_config.init_args["ports"] = args.ports
-                model_config.init_args["num_servers"] = args.num_servers if args.num_servers else 1
+                for arg in ["ports", "num_servers", "model_name"]:
+                    # If command line args are provided, override the corresponding model_config init_args key.
+                    if getattr(args, arg) is not None:
+                        model_config.init_args[arg] = getattr(args, arg)
                 init_args["model_config"] = model_config
             # Logic above is that certain deployment parameters like ports and num_servers
             # can be variable and so we allow them to be overridden by command line args.
@@ -61,9 +66,9 @@ if __name__ == "__main__":
             init_args["model_config"] = ModelConfig(
                 LocalVLLMModel,
                 {
-                    "model_name": args.model_config,
+                    "model_name": args.model_name,
                     "ports": args.ports,
-                    "num_servers": args.num_servers if args.num_servers else 1
+                    "num_servers": args.num_servers
                 }
             )
 
