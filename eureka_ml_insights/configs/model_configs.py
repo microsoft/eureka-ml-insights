@@ -50,6 +50,19 @@ TOGETHER_DEEPSEEK_R1_CONFIG = ModelConfig(
         "max_tokens": 65536
     },
 )
+
+TOGETHER_DEEPSEEK_R1_Distill_Llama_70B_CONFIG = ModelConfig(
+    TogetherModel,
+    {
+        "model_name": "deepseek-ai/DeepSeek-R1-Distill-Llama-70B",
+        "secret_key_params": TOGETHER_SECRET_KEY_PARAMS,
+        "temperature": 0.6,
+        # high max token limit for deep seek
+        # otherwise the answers may be cut in the middle
+        "max_tokens": 65536
+    },
+)
+
 # OpenAI models
 
 OPENAI_SECRET_KEY_PARAMS = {
