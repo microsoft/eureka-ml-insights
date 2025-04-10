@@ -12,7 +12,6 @@ from eureka_ml_insights.models import (
     LlamaServerlessAzureRestEndpointModel,
     LLaVAHuggingFaceModel,
     LLaVAModel,
-    LocalVLLMModel,
     Phi4HFModel,
     MistralServerlessAzureRestEndpointModel,
     DeepseekR1ServerlessAzureRestEndpointModel,
@@ -35,7 +34,7 @@ TEST_MODEL_CONFIG = ModelConfig(TestModel, {})
 # Together models
 TOGETHER_SECRET_KEY_PARAMS = {
     "key_name": "your_togetherai_secret_key_name",
-    "local_keys_path": "keys/keys.json",
+    "local_keys_path": "keys/aifeval-vault-azure-net.json",
     "key_vault_url": None,
 }
 
@@ -44,30 +43,20 @@ TOGETHER_DEEPSEEK_R1_CONFIG = ModelConfig(
     {
         "model_name": "deepseek-ai/DeepSeek-R1",
         "secret_key_params": TOGETHER_SECRET_KEY_PARAMS,
-        "temperature": 1.0,
-        # high max token limit for deep seek
-        # otherwise the answers may be cut in the middle
-        "max_tokens": 65536
-    },
-)
-
-TOGETHER_DEEPSEEK_R1_Distill_Llama_70B_CONFIG = ModelConfig(
-    TogetherModel,
-    {
-        "model_name": "deepseek-ai/DeepSeek-R1-Distill-Llama-70B",
-        "secret_key_params": TOGETHER_SECRET_KEY_PARAMS,
         "temperature": 0.6,
         # high max token limit for deep seek
-        # otherwise the answers may be cut in the middle
-        "max_tokens": 65536
+        # otherwise the answers may be cut in the middle 
+        "max_tokens": 65536,
+        # "max_tokens": 32768,
+        "timeout": 600
     },
 )
 
 # OpenAI models
 
 OPENAI_SECRET_KEY_PARAMS = {
-    "key_name": "your_openai_secret_key_name",
-    "local_keys_path": "keys/keys.json",
+    "key_name": "openai",
+    "local_keys_path": "keys/aifeval-vault-azure-net.json",
     "key_vault_url": None,
 }
 
@@ -145,6 +134,14 @@ OAI_GPT4O_2024_05_13_CONFIG = ModelConfig(
     },
 )
 
+# OAI_GPT4O_2024_08_06_CONFIG = ModelConfig(
+#     DirectOpenAIModel,
+#     {
+#         "model_name": "gpt-4o_2024-08-06",
+#         "secret_key_params": OPENAI_SECRET_KEY_PARAMS,
+#     },
+# )
+
 OAI_GPT4O_2024_11_20_CONFIG = ModelConfig(
     DirectOpenAIModel,
     {
@@ -195,8 +192,8 @@ GEMINI_V15_PRO_CONFIG = ModelConfig(
 
 # Claude models
 CLAUDE_SECRET_KEY_PARAMS = {
-    "key_name": "your_claude_secret_key_name",
-    "local_keys_path": "keys/keys.json",
+    "key_name": "claude-besmira-gmail-account", #"claude-aifeval-account-2-3sat", #"aif-eval-claude",
+    "local_keys_path": "keys/aifeval-vault-azure-net.json",
     "key_vault_url": None,
 }
 
@@ -222,8 +219,8 @@ CLAUDE_3_7_SONNET_THINKING_CONFIG = ModelConfig(
         "secret_key_params": CLAUDE_SECRET_KEY_PARAMS,
         "model_name": "claude-3-7-sonnet-20250219",
         "thinking_enabled": True,
-        "thinking_budget": 30720,
-        "max_tokens": 32768, # This number should always be higher than the thinking budget
+        "thinking_budget": 60000,
+        "max_tokens": 64000, # This number should always be higher than the thinking budget
         "temperature": 1.0, # As of 03/08/2025, thinking only works with temperature 1.0
         "timeout": 600, # We set a timeout of 10 minutes for thinking
     },
@@ -311,35 +308,14 @@ AIF_NT_MISTRAL_LARGE_2_2407_CONFIG = ModelConfig(
     },
 )
 
-# Local VLLM Models
-# Adapt to your local deployments, or give enough info for vllm deployment.
-PHI4_LOCAL_CONFIG = ModelConfig(
-    LocalVLLMModel,
-    {
-        # this name must match the vllm deployment name/path
-        "model_name": "microsoft/phi-4",
-        # specify ports in case the model is already deployed
-        "ports": ["8002", "8003"],
-    },
-)
-QWQ32B_LOCAL_CONFIG = ModelConfig(
-    LocalVLLMModel,
-    {
-        # this name must match the vllm deployment name/path
-        "model_name": "Qwen/QwQ-32B",
-        # certain args will get passed to the vllm serve command
-        "tensor_parallel_size": 2,
-    },
-)
-
 # DeepSeek R1 Endpoints on Azure
 DEEPSEEK_R1_CONFIG = ModelConfig(
     DeepseekR1ServerlessAzureRestEndpointModel,
     {
-        "url": "your/endpoint/url",
+        "url": "https://deepseek-r1-reasoning.westus.models.ai.azure.com/v1/chat/completions",
         "secret_key_params": {
-            "key_name": "your_deepseek_r1_secret_key_name",
-            "local_keys_path": "keys/keys.json",
+            "key_name": "lit-deepseek-r1",
+            "local_keys_path": "keys/aifeval-vault-azure-net.json",
             "key_vault_url": None,
         },
         "max_tokens": 32768,
@@ -347,3 +323,63 @@ DEEPSEEK_R1_CONFIG = ModelConfig(
         "timeout": 600,
     },
 )
+
+DEEPSEEK_R1_CONFIG_2 = ModelConfig(
+    DeepseekR1ServerlessAzureRestEndpointModel,
+    {
+        "url": "https://deepseek-r1-reasoning-2.westus.models.ai.azure.com/v1/chat/completions",
+        "secret_key_params": {
+            "key_name": "lit-deepseek-r1-2",
+            "local_keys_path": "keys/aifeval-vault-azure-net.json",
+            "key_vault_url": None,
+        },
+        "max_tokens": 32768,
+        "timeout": 600
+    },
+)
+
+DEEPSEEK_R1_CONFIG_3 = ModelConfig(
+    DeepseekR1ServerlessAzureRestEndpointModel,
+    {
+        "url": "https://deepseek-r1-reasoning-3.westus.models.ai.azure.com/v1/chat/completions",
+        "secret_key_params": {
+            "key_name": "lit-deepseek-r1-3",
+            "local_keys_path": "keys/aifeval-vault-azure-net.json",
+            "key_vault_url": None,
+        },
+        "max_tokens": 32768,
+        "timeout": 600
+    },
+)
+
+
+AIF_NT_DEEPSEEK_R1_CONFIG = ModelConfig(
+    DeepseekR1ServerlessAzureRestEndpointModel,
+    {
+        "url": "https://DeepSeek-R1-aif-nt.eastus.models.ai.azure.com/v1/chat/completions",
+        "secret_key_params": {
+            "key_name": "aif-nt-deepseek-r1",
+            "local_keys_path": "keys/aifeval-vault-azure-net.json",
+            "key_vault_url": "https://aifeval.vault.azure.net",
+        },
+        "max_tokens": 32768,
+        "timeout": 1200
+    },
+)
+
+
+# # DeepSeek R1 Endpoints on Azure
+# DEEPSEEK_R1_CONFIG = ModelConfig(
+#     DeepseekR1ServerlessAzureRestEndpointModel,
+#     {
+#         "url": "your/endpoint/url",
+#         "secret_key_params": {
+#             "key_name": "your_deepseek_r1_secret_key_name",
+#             "local_keys_path": "keys/keys.json",
+#             "key_vault_url": None,
+#         },
+#         "max_tokens": 32768,
+#         # the timeout parameter is passed to urllib.request.urlopen(request, timeout=self.timeout) in ServerlessAzureRestEndpointModel
+#         "timeout": 600,
+#     },
+# )

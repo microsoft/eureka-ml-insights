@@ -40,7 +40,7 @@ from eureka_ml_insights.configs import(
     PromptProcessingConfig,
 )
 from eureka_ml_insights.configs import ExperimentConfig
-from eureka_ml_insights.configs.model_configs import OAI_GPT4_1106_PREVIEW_CONFIG
+from eureka_ml_insights.configs.model_configs import OAI_GPT4_1106_PREVIEW_CONFIG, OAI_GPT4O_2024_11_20_CONFIG
 
 # from eureka_ml_insights.data_utils.transform import MultiplyTransform, RunPythonTransform, SequenceTransform
 
@@ -223,29 +223,46 @@ class ToxiGen_Generative_PIPELINE(ExperimentConfig):
             max_concurrent=20,
         )
 
-##### here add a transform to remove the <|dummy_87|> token from the response ###############
+# ##### here add a transform to remove the <|dummy_87|> token from the response ###############
 
-        # # Eval data post processing component.
-        self.inference_data_post_processing_remove_dummy = DataProcessingConfig(
-            component_type=DataProcessing,
-            data_reader_config=DataSetConfig(
-                DataReader,
-                {
-                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
-                    "format": ".jsonl",
-                    "transform": RunPythonTransform(
-                        "import re\n"
-                        "_tag = r'<\\|dummy_\\d+\\|>'\n"
-                        "_between_two_tags = re.compile(f'{_tag}.*?{_tag}', re.DOTALL)\n"
-                        "df['model_output'] = df['model_output'].str.replace(_between_two_tags, '', regex=True)"
-                    ),                    
-                },
-            ),
-            output_dir=os.path.join(self.log_dir, "inference_data_post_processing_remove_dummy_output"),            
-        )
+#         # # Eval data post processing component.
+#         self.inference_data_post_processing_remove_dummy = DataProcessingConfig(
+#             component_type=DataProcessing,
+#             data_reader_config=DataSetConfig(
+#                 DataReader,
+#                 {
+#                     "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+#                     "format": ".jsonl",
+#                     "transform": RunPythonTransform(
+#                         "import re\n"
+#                         "_tag = r'<\\|dummy_\\d+\\|>'\n"
+#                         "_between_two_tags = re.compile(f'{_tag}.*?{_tag}', re.DOTALL)\n"
+#                         "df['model_output'] = df['model_output'].str.replace(_between_two_tags, '', regex=True)"
+#                     ),                    
+#                 },
+#             ),
+#             output_dir=os.path.join(self.log_dir, "inference_data_post_processing_remove_dummy_output"),            
+#         )
 
+#         # Eval data pre processing component.
+#         self.eval_data_pre_processing = PromptProcessingConfig(
+#             component_type=PromptProcessing,
+#             data_reader_config=DataSetConfig(
+#                 DataReader,
+#                 {
+#                     # "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+#                     "path": os.path.join(self.inference_data_post_processing_remove_dummy.output_dir, "transformed_data.jsonl"),
+#                     "format": ".jsonl",
+#                     "transform": SequenceTransform([ColumnRename(name_mapping={"model_output": "statement"})]),
+#                 },
+#             ),
+#             prompt_template_path=os.path.join(
+#                 os.path.dirname(__file__), "../prompt_templates/toxigen_templates/discriminative_eval.jinja"
+#             ),
+#             output_dir=os.path.join(self.log_dir, "eval_data_pre_processing_output"),
+#         )
 
-#########################################################################################
+# #########################################################################################
 
 
         # Eval data pre processing component.
@@ -254,8 +271,7 @@ class ToxiGen_Generative_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    # "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
-                    "path": os.path.join(self.inference_data_post_processing_remove_dummy.output_dir, "transformed_data.jsonl"),
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),                    
                     "format": ".jsonl",
                     "transform": SequenceTransform([ColumnRename(name_mapping={"model_output": "statement"})]),
                 },
@@ -269,7 +285,7 @@ class ToxiGen_Generative_PIPELINE(ExperimentConfig):
         # Eval Inference component
         self.eval_inference_comp = InferenceConfig(
             component_type=Inference,
-            model_config=OAI_GPT4_1106_PREVIEW_CONFIG,
+            model_config=OAI_GPT4O_2024_11_20_CONFIG,
             data_loader_config=DataSetConfig(
                 MMDataLoader,
                 {"path": os.path.join(self.eval_data_pre_processing.output_dir, "transformed_data.jsonl")},
@@ -336,7 +352,7 @@ class ToxiGen_Generative_PIPELINE(ExperimentConfig):
             [
                 self.data_pre_processing,
                 self.inference_comp,
-                self.inference_data_post_processing_remove_dummy,
+                # self.inference_data_post_processing_remove_dummy,
                 self.eval_data_pre_processing,                
                 self.eval_inference_comp,
                 self.eval_data_post_processing,
@@ -346,15 +362,3 @@ class ToxiGen_Generative_PIPELINE(ExperimentConfig):
         )
 
 
-# class ToxiGen_Generative_Phi_Parallel_PIPELINE(ToxiGen_Generative_PIPELINE):
-#     """This class specifies the config for running Toxigen Generative benchmark 1 time"""
-
-#     def configure_pipeline(
-#         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
-#     ) -> PipelineConfig:
-#         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
-#         # eval data processing
-#         self.evalreporting_comp.data_reader_config.init_args["transform"].transforms.append(RunPythonTransform(
-#                              "df['response'] = df['response'].apply(lambda x: x.split('<|dummy_87|>')[-1] if '<|dummy_87|>' in x else x)"
-#                          ))
-#         return pipeline
