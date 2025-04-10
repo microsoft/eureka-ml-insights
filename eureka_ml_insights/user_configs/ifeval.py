@@ -13,7 +13,7 @@ from eureka_ml_insights.data_utils.data import (
     DataReader,
     HFDataReader,
 )
-from eureka_ml_insights.data_utils.transform import MultiplyTransform, RunPythonTransform, SequenceTransform
+from eureka_ml_insights.data_utils.transform import CopyColumn, MultiplyTransform, RunPythonTransform, SequenceTransform
 from eureka_ml_insights.metrics.ifeval_metrics import IFEvalMetric
 from eureka_ml_insights.metrics.reports import (
     AverageAggregator,
@@ -81,7 +81,7 @@ class IFEval_PIPELINE(ExperimentConfig):
                     "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
                     "format": ".jsonl",
                     "transform": SequenceTransform(
-                        [ColumnRename(name_mapping={"model_output": "response"})]
+                        [CopyColumn(column_name_src="model_output", column_name_dst="response")]
                     ),
                 },
             ),
