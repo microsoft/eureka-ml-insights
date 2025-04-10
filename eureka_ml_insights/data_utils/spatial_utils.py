@@ -168,14 +168,10 @@ def extract_answer_from_text_map_and_maze(model_output_raw, options):
     - str or None: The extracted answers, or empty strings if no answer could be extracted.
     """
 
-    # replace common subsitutions in model outputs
-
-    model_output_parsed_letter = ""
-    model_output_parsed = ""
-
     if not model_output_raw:
         return ""
 
+    # replace common subsitutions in model outputs
     model_output_raw =  re.sub(r"\bno objects\b", "0 objects", model_output_raw, re.IGNORECASE)
     model_output_raw =  re.sub(r"\bnot\b", "no", model_output_raw, re.IGNORECASE)
     model_output_raw =  re.sub(r"\bshould be\b", "is", model_output_raw, re.IGNORECASE)
@@ -198,33 +194,36 @@ def extract_answer_from_text_map_and_maze(model_output_raw, options):
 
     # get dict of options from options string
     options_dict = {x.split(".")[0].strip().lower():x.split(".")[1].strip().lower() for x in options}
-
-
-    model_output_parsed_letter = ""
-    model_output_parsed = ""
             
     answers = [v for k, v in options_dict.items()]
     answers_pattern = rf"\b({'|'.join(answers)})\b"
 
-    if "Answer:".lower() in model_output_raw.lower():
-        pattern_letter = r"^\**Answer:\**\s+(\w)\. (\w+)"
-        matches = re.search(pattern_letter, model_output_raw, re.IGNORECASE)
-        if matches:
-            match_option = matches.group(1).lower()
-            if match_option in options_dict:
-                model_output_parsed_letter = options_dict[match_option]
-            else:
-                model_output_parsed_letter = match_option
+    parsed_answers = []
 
-        pattern_phrase = r"Answer:\**\s+([^\n]+)"
-        matches = re.search(pattern_phrase, model_output_raw, re.IGNORECASE)
+    if "Answer:".lower() in model_output_raw.lower():
+        # search for a single letter or digit answer
+        pattern_letter = r"^\**Answer:\**\s+(\w)\. (\w+)"
+        matches = re.findall(pattern_letter, model_output_raw, re.IGNORECASE)
         if matches:
-            model_output_answer_line = matches.group(1)
+            match_option = matches[-1] #take the last match
+            if match_option in options_dict: #check is it is a letter, and then return the associated answer value
+                parsed_answer_value = options_dict[match_option]
+            else: #otherwise assume it is an answer value
+                parsed_answer_value = match_option
+
+            parsed_answers.append(parsed_answer_value)
+            
+        #search for a whole phrase answer and search in that phrase for the which option is
+        pattern_phrase = r"Answer:\**\s+([^\n]+)"
+        matches = re.findall(pattern_phrase, model_output_raw, re.IGNORECASE)
+        if matches:
+            model_output_answer_line = matches[-1] #take the last match
         
             answers_match = re.search(answers_pattern, model_output_answer_line, re.IGNORECASE)
     
             if answers_match:
-                model_output_parsed =  answers_match.group(1)
+                parsed_answer_value =  answers_match.group(1)
+                parsed_answers.append(parsed_answer_value)
             else:
                 letters = [k for k, v in options_dict.items()]
                 letters_pattern = rf"\b({'|'.join(letters)})\b"
@@ -232,7 +231,9 @@ def extract_answer_from_text_map_and_maze(model_output_raw, options):
 
                 if letters_pattern_match:
                     match_option =  letters_pattern_match.group(1).lower()
-                    model_output_parsed_letter = options_dict[match_option]
+                    parsed_answer_value = options_dict[match_option]
+
+                    parsed_answers.append(parsed_answer_value)
 
     elif "answer is".lower() in model_output_raw.lower():
         pattern_letter = r'answer is:*\s*\**([\w\d]+)[\s:.]*\**'
@@ -242,137 +243,26 @@ def extract_answer_from_text_map_and_maze(model_output_raw, options):
         if matches:
             match_option = matches.group(1).lower()
             if match_option in options_dict:
-                model_output_parsed_letter = options_dict[match_option]
+                parsed_answer_value = options_dict[match_option]
             else:
-                model_output_parsed_letter = match_option
+                parsed_answer_value = match_option
 
-    # next look if any of the options names are present in the first line
+            parsed_answers.append(parsed_answer_value)
 
-    model_output_answer_line = model_output_raw.splitlines()[0]        
+    # lastly, if we haven't found anything that matched the instruction pattern,
+    # look if any of the options names are present in the first line
+    if not parsed_answers:
+        model_output_answer_line = model_output_raw.splitlines()[0]        
 
-    answers = [v for k, v in options_dict.items()]
-    answers_pattern = rf"\b({'|'.join(answers)})\b"
-    answers_match = re.search(answers_pattern, model_output_answer_line, re.IGNORECASE)
-    
-    if answers_match:
-        model_output_parsed =  answers_match.group(1)
+        answers = [v for k, v in options_dict.items()]    
+        answers_match = re.search(answers_pattern, model_output_answer_line, re.IGNORECASE)
+        
+        if answers_match:
+            parsed_answer_value =  answers_match.group(1)
+            parsed_answers.append(parsed_answer_value)
 
-    return model_output_parsed + " or " + model_output_parsed_letter
-
-
-def extract_answer_from_text_maze(text, question_type):
-    """
-    Extracts the answer from the text based on specific patterns including handling
-    variations with 'no right turn', 'no right turns', answers separated by new lines,
-    path descriptions, textual numbers, and as a fallback, extracts the first number if no patterns match.
-
-    Args:
-    - text (str): The text containing the model's answer.
-    - question_type (str): The text containing the question type.
-
-    Returns:
-    - str or None: The extracted answer, or None if no answer could be extracted.
-    """
-    # Mapping of textual numbers to their numeric equivalents
-    number_mapping = {
-        "zero": 0,
-        "no": 0,
-        "one": 1,
-        "two": 2,
-        "three": 3,
-        "four": 4,
-        "five": 5,
-        "six": 6,
-        "seven": 7,
-        "eight": 8,
-        "nine": 9,
-    }
-
-    question_id = int(re.search("[0-9]", re.search("Q[0-9]", question_type).group()).group())
-
-    if question_id in [3, 4]:  # Assuming Q4 and Q5 require binary answers
-        yes_patterns = [
-            r"\byes\b",
-            r"the answer is yes",
-            r"\"yes\"",
-            r"\'yes\'",
-            r"\'Yes\'",
-            r"is the shortest path",
-            r"A\. Yes",
-        ]
-        no_patterns = [r"\bno\b", r"the answer is no", r"\"no\"", r"\'no\'", r"\'No\'", r"\bnot\b", r"B\. No"]
-
-        if not text:
-            return None
-
-        # Check for "Yes" answers
-        for pattern in yes_patterns:
-            if re.search(pattern, text, re.IGNORECASE):
-                return "Yes"
-
-        # Check for "No" answers
-        for pattern in no_patterns:
-            if re.search(pattern, text, re.IGNORECASE):
-                return "No"
-
-    else:
-        # check question ask for number
-        # First rule: check for the pattern "A. x", "B. x", "C. x", or "D. x" where x is the answer
-        if not text:
-            return None
-        match = re.search(r"\b[A-D]\.\s*(\d+)", text)  # match number only
-        if match:
-            return match.group(1)
-
-        patterns = {
-            0: [  # For right turns
-                # r'\b(\d+)\s+right turn(s)?',
-                r"\bThere are\s*(\d+)\s*right turns\b",  # for proprietary
-                r"\bThere is\s*(\d+)\s*right turn\b",
-                r"answer is\s+(\d+)",
-                r"answer is:\s*\n*\s*(\d+)",
-                r"from S to E is\s+(\d+)",
-                r"Answer:\*\*\s*(\d+)\b",
-            ],
-            1: [  # For left turns
-                r"\b(\d+)\s+left turn(s)?",
-                r"answer is\s+(\d+)",
-                r"answer is:\s*\n*\s*(\d+)",
-                r"from S to E is\s+(\d+)",
-            ],
-            2: [  # For total turns
-                r"\bThere are\s*(\d+)\s*total turns\b",  # for proprietary
-                r"\bThere are\s*(\d+)\s*turns\b",
-                r"There is\s*(\d+)\s*turn\b",
-                r"There is\s*(\d+)\s*total turn\b",
-                r"answer is\s+(\d+)",
-                r"answer is:\s*\n*\s*(\d+)",
-                r"from S to E is\s+(\d+)",
-                r"\btotal of\s+(\d+)\s+turn(s)?",
-                r"Answer:\*\*\s*(\d+)\b",
-                # r'(\d+)\s+total turn(s)?',
-                # r'There are (\d+)',
-                # r'\b(\d+)\s+turn(s)?',  # Matches "8 turns" broadly; consider specificity vs. overlap
-            ],
-        }
-
-        for pattern in patterns[question_id]:
-            match = re.search(pattern, text, re.IGNORECASE)
-            if match:
-                return match.group(1)  # Return the first matching group as integer
-
-        # Check for textual number patterns
-        for text_num, num in number_mapping.items():
-            pattern = rf"\b{text_num}\s*(right|left|total)?\s*turn(s)?\b"
-            if re.search(pattern, text, re.IGNORECASE):
-                return str(num)
-
-        # If no specific pattern matches, try to extract the first number in the text
-        fallback_match = re.search(r"\d+", text)
-        if fallback_match:
-            return fallback_match.group(0)  # Return the matched number
-
-    return None  # Return None if no number or textual number is found at all
+    all_parse_answers = " or ".join(parsed_answers)
+    return all_parse_answers
 
 
 @dataclass
