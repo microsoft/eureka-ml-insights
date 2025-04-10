@@ -171,6 +171,11 @@ def extract_answer_from_text_map_and_maze(model_output_raw, options):
     if not model_output_raw:
         return ""
 
+    def check_and_add_answer(text, options, answer_list):
+        if text.lower() in options:
+            answer_list.append(text.lower())
+        return answer_list
+
     # replace common subsitutions in model outputs
     model_output_raw =  re.sub(r"\bno objects\b", "0 objects", model_output_raw, re.IGNORECASE)
     model_output_raw =  re.sub(r"\bnot\b", "no", model_output_raw, re.IGNORECASE)
@@ -210,9 +215,9 @@ def extract_answer_from_text_map_and_maze(model_output_raw, options):
                 parsed_answer_value = options_dict[match_option]
             else: #otherwise assume it is an answer value
                 parsed_answer_value = match_option
-
-            parsed_answers.append(parsed_answer_value)
             
+            parsed_answers = check_and_add_answer(parsed_answer_value, answers, parsed_answers)
+
         #search for a whole phrase answer and search in that phrase for the which option is
         pattern_phrase = r"Answer:\**\s+([^\n]+)"
         matches = re.findall(pattern_phrase, model_output_raw, re.IGNORECASE)
@@ -223,7 +228,7 @@ def extract_answer_from_text_map_and_maze(model_output_raw, options):
     
             if answers_match:
                 parsed_answer_value =  answers_match.group(1)
-                parsed_answers.append(parsed_answer_value)
+                parsed_answers = check_and_add_answer(parsed_answer_value, answers, parsed_answers)
             else:
                 letters = [k for k, v in options_dict.items()]
                 letters_pattern = rf"\b({'|'.join(letters)})\b"
@@ -233,7 +238,7 @@ def extract_answer_from_text_map_and_maze(model_output_raw, options):
                     match_option =  letters_pattern_match.group(1).lower()
                     parsed_answer_value = options_dict[match_option]
 
-                    parsed_answers.append(parsed_answer_value)
+                    parsed_answers = check_and_add_answer(parsed_answer_value, answers, parsed_answers)
 
     elif "answer is".lower() in model_output_raw.lower():
         pattern_letter = r'answer is:*\s*\**([\w\d]+)[\s:.]*\**'
@@ -247,7 +252,7 @@ def extract_answer_from_text_map_and_maze(model_output_raw, options):
             else:
                 parsed_answer_value = match_option
 
-            parsed_answers.append(parsed_answer_value)
+            parsed_answers = check_and_add_answer(parsed_answer_value, answers, parsed_answers)
 
     # lastly, if we haven't found anything that matched the instruction pattern,
     # look if any of the options names are present in the first line
@@ -259,7 +264,7 @@ def extract_answer_from_text_map_and_maze(model_output_raw, options):
         
         if answers_match:
             parsed_answer_value =  answers_match.group(1)
-            parsed_answers.append(parsed_answer_value)
+            parsed_answers = check_and_add_answer(parsed_answer_value, answers, parsed_answers)
 
     all_parse_answers = " or ".join(parsed_answers)
     return all_parse_answers
