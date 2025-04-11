@@ -50,8 +50,8 @@ TOGETHER_DEEPSEEK_R1_CONFIG = ModelConfig(
 # OpenAI models
 
 OPENAI_SECRET_KEY_PARAMS = {
-    "key_name": "your_openai_secret_key_name",
-    "local_keys_path": "keys/keys.json",
+    "key_name": "openai",
+    "local_keys_path": "keys/aifeval-vault-azure-net.json",
     "key_vault_url": None,
 }
 
@@ -59,7 +59,7 @@ OAI_O3_MINI_HIGH_CONFIG = ModelConfig(
     DirectOpenAIOModel,
     {
         "model_name": "o3-mini-2025-01-31",
-        "reasoning_effort": "high",
+        "reasoning_effort": "high", 
         "secret_key_params": OPENAI_SECRET_KEY_PARAMS,
     },
 )
@@ -145,29 +145,118 @@ OAI_GPT4O_MINI_2024_07_18_CONFIG = ModelConfig(
     },
 )
 
+############### TRAPI models ####################
+
+TRAPI_AIF_O3_MINI_CONFIG = ModelConfig(
+    AzureOpenAIOModel,
+    {
+        "url": "https://trapi.research.microsoft.com/msraif/shared",
+        # o1 models only work with > 2024-12-01-preview api version
+        "api_version": '2025-01-01-preview',
+        "model_name": "o3-mini_2025-01-31",
+        "reasoning_effort": "high",
+        "auth_scope": "api://trapi/.default"
+    },
+)
+
+
+# #################################################
+
+
+# # Gemini models
+# GEMINI_SECRET_KEY_PARAMS = {
+#     "key_name": "your_gemini_secret_key_name",
+#     "local_keys_path": "keys/keys.json",
+#     "key_vault_url": None,
+# }
+
+# GEMINI_V2_FLASH_THINKING_EXP_0121_CONFIG = ModelConfig(
+#     GeminiModel,
+#     {
+#         "model_name": "gemini-2.0-flash-thinking-exp-01-21",
+#         "secret_key_params": GEMINI_SECRET_KEY_PARAMS,
+# 	    "max_tokens": 32768
+#     },
+# )
+
+# GEMINI_V2_PRO_EXP_0205_CONFIG = ModelConfig(
+#     GeminiModel,
+#     {
+#         "model_name": "gemini-2.0-pro-exp-02-05",
+#         "secret_key_params": GEMINI_SECRET_KEY_PARAMS,
+#     },
+# )
+
+# GEMINI_V15_PRO_CONFIG = ModelConfig(
+#     GeminiModel,
+#     {
+#         "model_name": "gemini-1.5-pro",
+#         "secret_key_params": GEMINI_SECRET_KEY_PARAMS,
+#     },
+# )
+
+
+####################
+
 # Gemini models
+
 GEMINI_SECRET_KEY_PARAMS = {
-    "key_name": "your_gemini_secret_key_name",
-    "local_keys_path": "keys/keys.json",
-    "key_vault_url": None,
+    "key_name": "aif-eval-gemini",
+    # currently we have three keys: "aif-eval-gemini-firstproject", "aif-eval-gemini", "aif-eval-gemini-aifevalunderstandproject"
+    # rotate between these if you get '429 Resource has been exhausted (e.g. check quota)' 
+    "local_keys_path": "keys/aifeval-vault-azure-net.json",
+    "key_vault_url": "https://aifeval.vault.azure.net",
 }
+
+GEMINI_V2_PRO_T1_M4096_CONFIG = ModelConfig(
+    GeminiModel,
+    {
+        "model_name": "gemini-2.0-pro-exp-02-05",
+        "secret_key_params": GEMINI_SECRET_KEY_PARAMS,
+        "temperature":1.0,
+        "max_tokens":4096,
+
+    },
+)
+
+
+GEMINI_V2_FLASH_THINKING_EXP_CONFIG = ModelConfig(
+    GeminiModel,
+    {
+        "model_name": "gemini-2.0-flash-thinking-exp-1219",
+        "secret_key_params": GEMINI_SECRET_KEY_PARAMS,
+        "temperature": 1.0,
+        "max_tokens": 32768        
+    },
+)
 
 GEMINI_V2_FLASH_THINKING_EXP_0121_CONFIG = ModelConfig(
     GeminiModel,
     {
         "model_name": "gemini-2.0-flash-thinking-exp-01-21",
         "secret_key_params": GEMINI_SECRET_KEY_PARAMS,
-	    "max_tokens": 32768
+        "temperature": 1.0,
+        "max_tokens": 32768
     },
 )
 
-GEMINI_V2_PRO_EXP_0205_CONFIG = ModelConfig(
+GEMINI_EXP_1206_CONFIG = ModelConfig(
     GeminiModel,
     {
-        "model_name": "gemini-2.0-pro-exp-02-05",
+        "model_name": "gemini-exp-1206",
         "secret_key_params": GEMINI_SECRET_KEY_PARAMS,
+        "temperature": 1.0,
+        "max_tokens": 4096
     },
 )
+
+
+# # Gemini models
+# GEMINI_SECRET_KEY_PARAMS = {
+#     "key_name": "your_gemini_secret_key_name",
+#     "local_keys_path": "keys/keys.json",
+#     "key_vault_url": None,
+# }
 
 GEMINI_V15_PRO_CONFIG = ModelConfig(
     GeminiModel,
@@ -176,6 +265,16 @@ GEMINI_V15_PRO_CONFIG = ModelConfig(
         "secret_key_params": GEMINI_SECRET_KEY_PARAMS,
     },
 )
+
+GEMINI_V1_PRO_CONFIG = ModelConfig(
+    GeminiModel,
+    {
+        "model_name": "gemini-1.0-pro",
+        "secret_key_params": GEMINI_SECRET_KEY_PARAMS,
+    },
+)
+
+
 
 # Claude models
 CLAUDE_SECRET_KEY_PARAMS = {
