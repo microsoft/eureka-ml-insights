@@ -16,6 +16,9 @@ if __name__ == "__main__":
         "--model_config", type=str, nargs="?", help="The name of the model config to use.", default=None
     )
     parser.add_argument(
+        "--eval_model_config", type=str, nargs="?", help="The name of the model config to use.", default=None
+    )
+    parser.add_argument(
         "--model_name", type=str, help="The name of the deployed vllm model to use.", default=None
     )
     parser.add_argument(
@@ -74,6 +77,11 @@ if __name__ == "__main__":
             init_args["model_config"] = getattr(model_configs, args.model_config)
         except AttributeError:
             raise ValueError(f"Model config class {args.model_config} not found.")
+    if args.eval_model_config:
+        try:
+            init_args["eval_model_config"] = getattr(model_configs, args.eval_model_config)
+        except AttributeError:
+            raise ValueError(f"Model config class {args.eval_model_config} not found.")
 
     if args.resume_from:
         init_args["resume_from"] = args.resume_from
