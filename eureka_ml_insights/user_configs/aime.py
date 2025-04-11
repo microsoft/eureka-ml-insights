@@ -1,6 +1,14 @@
 import os
 from typing import Any
 
+from eureka_ml_insights.core import (
+    EvalReporting, 
+    Inference, 
+    PromptProcessing, 
+    DataProcessing,
+    DataJoin
+)
+
 from eureka_ml_insights.configs import (
     AggregatorConfig,
     DataProcessingConfig,
@@ -10,6 +18,7 @@ from eureka_ml_insights.configs import (
     InferenceConfig,
     MetricConfig,
     ModelConfig,
+DataJoinConfig,
     PipelineConfig,
     PromptProcessingConfig,
 )
@@ -25,6 +34,7 @@ from eureka_ml_insights.data_utils import (
     SequenceTransform,
     SamplerTransform,
        CopyColumn,
+       ImputeNA,
        ReplaceStringsTransform,
        ExtractUsageTransform,
        RunPythonTransform
@@ -39,6 +49,8 @@ from eureka_ml_insights.metrics.reports import (
     CountAggregator,
     BiLevelAggregator,
 )
+
+from eureka_ml_insights.configs.model_configs import OAI_GPT4O_2024_11_20_CONFIG
 
 # from eureka_ml_insights.data_utils.transform import MajorityVoteTransform
 
@@ -437,6 +449,216 @@ class AIME_PIPELINE(ExperimentConfig):
             self.log_dir,
         )
 
+
+class AIME_PIPLELINE_HYBRIDEXTRACTION(AIME_PIPELINE):
+    """This class specifies the config for running AIME with a hybrid answer extraction"""
+
+    def configure_pipeline(
+        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
+    ) -> PipelineConfig:
+        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
+
+        self.preeval_data_post_processing_comp = DataProcessingConfig(
+            component_type=DataProcessing,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            ColumnRename(
+                                name_mapping={
+                                    "model_output": "raw_model_output",
+                                }
+                            ),
+                            AddColumn("model_output"),
+                            AIMEExtractAnswer("raw_model_output", "model_output"),
+                            ExtractUsageTransform(model_config),  
+                            ImputeNA(columns="model_output", value="")
+                        ]
+                    ),
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "preeval_data_post_processing_output"),
+        )
+        self.filter_empty_answer = PromptProcessingConfig(
+            component_type=PromptProcessing,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.preeval_data_post_processing_comp.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            RunPythonTransform("df = df[df['model_output'] == '']"),
+                            ColumnRename(name_mapping={"prompt": "initial_prompt"}),
+                            AddColumn(column_name="prompt")
+                        ]
+                    ),
+                },
+            ),
+            prompt_template_path=os.path.join(
+                os.path.dirname(__file__),
+                "../prompt_templates/aime_templates/extract_aime_answer.jinja",
+            ),
+            output_dir=os.path.join(self.log_dir, "filter_empty_answer"),
+        )
+        
+        self.inference_llm_answer_extract = InferenceConfig(
+            component_type=Inference,
+            model_config=OAI_GPT4O_2024_11_20_CONFIG,
+            data_loader_config=DataSetConfig(
+                MMDataLoader,
+                {"path": os.path.join(self.filter_empty_answer.output_dir, "transformed_data.jsonl")},
+            ),
+            output_dir=os.path.join(self.log_dir, "llm_answer_extract_inference_result"),
+            max_concurrent=5
+        )
+        
+        self.data_join = DataJoinConfig(
+            component_type=DataJoin,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.preeval_data_post_processing_comp.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
+                },
+            ),
+            other_data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.inference_llm_answer_extract.output_dir, "inference_result.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            # drop all columns except the uid and model_output
+                            RunPythonTransform("df = df[[col for col in ['data_repeat_id','data_point_id', 'model_output'] if col in df.columns]]"),
+                            
+                            ColumnRename(
+                                name_mapping={
+                                    "model_output": "raw_output",
+                                }
+                            ),
+
+                            AIMEExtractAnswer("raw_output", "model_output"),
+                        ]
+                    ),
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "data_join_output"),
+            pandas_merge_args={"on": ['data_repeat_id', 'data_point_id'], "how": "left"},
+        )
+
+        # post process the response to extract the answer
+        self.data_post_processing = DataProcessingConfig(
+            component_type=DataProcessing,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.data_join.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                           RunPythonTransform("df['model_output'] = df.apply(lambda row: row['model_output'] if 'model_output_x' not in row else row['model_output_y'] if row['model_output_x'] == '' else row['model_output_x'], axis=1)"),                       
+                        ]
+                    ),
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "data_post_processing_output"),
+        )
+
+        return PipelineConfig(
+            [
+                self.data_processing_comp,
+                self.inference_comp,
+                self.preeval_data_post_processing_comp,
+                self.filter_empty_answer,
+                self.inference_llm_answer_extract,
+                self.data_join,
+                self.data_post_processing,
+                self.evalreporting_comp,
+                self.data_post_processing_addmv,
+                self.mv_evalreporting_comp,
+                self.posteval_data_post_processing_comp,
+                self.bon_evalreporting_comp,
+                self.won_evalreporting_comp
+            ],
+            self.log_dir,
+        )
+
+class AIME_PIPLELINE_HYBRIDEXTRACTION5Run_2025(AIME_PIPLELINE_HYBRIDEXTRACTION):
+    """This class specifies the config for running AIME benchmark 5 repeated times"""
+
+    def configure_pipeline(
+        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
+    ) -> PipelineConfig:
+        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
+        # data preprocessing
+        self.data_processing_comp = PromptProcessingConfig(
+            component_type=PromptProcessing,
+            data_reader_config=DataSetConfig(
+                HFDataReader,
+                {
+                    "path": "lchen001/AIME2025",
+                    "split": "train",
+                    "transform": SequenceTransform(
+                        [
+                            ColumnRename(
+                                name_mapping={
+                                    "Question": "prompt",
+                                    "Answer": "ground_truth",
+                                }
+                            ),
+                            #SamplerTransform( random_seed=0,sample_count=2),
+                        ],
+                    ),
+                },
+            ),
+            prompt_template_path=os.path.join(
+                os.path.dirname(__file__), "../prompt_templates/aime_templates/Template_1clean.jinja"
+            ),
+            output_dir=os.path.join(self.log_dir, "data_processing_output"),
+        )
+
+        # data preprocessing
+        self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
+            MultiplyTransform(n_repeats=5)
+        )
+        
+        # Configure the pipeline; this is necessary for resume_from to work
+        return PipelineConfig(
+            [
+                self.data_processing_comp,
+                self.inference_comp,
+                self.preeval_data_post_processing_comp,
+                self.filter_empty_answer,
+                self.inference_llm_answer_extract,
+                self.data_join,
+                self.data_post_processing,
+                self.evalreporting_comp,
+                self.data_post_processing_addmv,
+                self.mv_evalreporting_comp,
+                self.posteval_data_post_processing_comp,
+                self.bon_evalreporting_comp,
+                self.won_evalreporting_comp
+            ],
+            self.log_dir,
+        )
+
+class AIME_PIPLELINE_HYBRIDEXTRACTION5Run(AIME_PIPLELINE_HYBRIDEXTRACTION):
+    """This class specifies the config for running AIME benchmark 5 repeated times"""
+
+    def configure_pipeline(
+        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
+    ) -> PipelineConfig:
+        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
+        # data preprocessing
+        self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
+            MultiplyTransform(n_repeats=5)
+        )
+        return pipeline
+    
 class AIME_PIPELINE5Run(AIME_PIPELINE):
     """This class specifies the config for running AIME benchmark 5 repeated times"""
 
@@ -1177,6 +1399,17 @@ class AIME_PIPELINE5Run_2025_Direct(AIME_PIPELINE):
             self.log_dir,
         )
 
+class AIME_PIPELINE50Run_2025(AIME_PIPELINE5Run_2025):
+    """This class specifies the config for running AIME benchmark 5 repeated times"""
+
+    def configure_pipeline(
+        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
+    ) -> PipelineConfig:
+        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
+        # data preprocessing
+        self.data_processing_comp.data_reader_config.init_args["transform"].transforms[-1] = MultiplyTransform(n_repeats=50)
+        return pipeline
+        
 class AIME_PIPELINE16Run_2025(AIME_PIPELINE5Run_2025):
     """This class specifies the config for running AIME benchmark 5 repeated times"""
 
