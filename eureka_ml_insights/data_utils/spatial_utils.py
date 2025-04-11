@@ -154,7 +154,7 @@ def extract_answer_from_text_grid(text, question_type):
     return None  # Return None if no numbers are found
 
 
-def extract_answer_from_text_map_and_maze(model_output_raw, options):
+def extract_answer_from_text_map_and_maze(model_output_raw, options, match_first=False):
     """
     Extracts the answer from the text based on known model output patterns.
     Searches for both a letter and whole word answer and returns both as they are not
@@ -175,6 +175,11 @@ def extract_answer_from_text_map_and_maze(model_output_raw, options):
         if text.lower() in options:
             answer_list.append(text.lower())
         return answer_list
+
+    if match_first:
+        match_index = 0
+    else:
+        match_index = -1
 
     # replace common subsitutions in model outputs
     model_output_raw =  re.sub(r"\bno objects\b", "0 objects", model_output_raw, re.IGNORECASE)
@@ -205,65 +210,55 @@ def extract_answer_from_text_map_and_maze(model_output_raw, options):
 
     parsed_answers = []
 
-    if "Answer:".lower() in model_output_raw.lower():
+    # Search over two different typical patterns for reporting the answer
+    search_patterns = [r"^\**Answer:\**\s+(\w)\. (\w+)", r'answer is:*\s*\**([\w\d]+)[\s:.]*\**'] 
+
+    for pattern in search_patterns:
+
         # search for a single letter or digit answer
-        pattern_letter = r"^\**Answer:\**\s+(\w)\. (\w+)"
-        matches = re.findall(pattern_letter, model_output_raw, re.IGNORECASE)
+        matches = re.findall(pattern, model_output_raw, re.IGNORECASE)
         if matches:
-            match_option = matches[-1] #take the last match
-            if match_option in options_dict: #check is it is a letter, and then return the associated answer value
+            match_option = matches[match_index]
+            if match_option in options_dict: #check if it is a letter, and then return the associated answer value
                 parsed_answer_value = options_dict[match_option]
             else: #otherwise assume it is an answer value
                 parsed_answer_value = match_option
             
             parsed_answers = check_and_add_answer(parsed_answer_value, answers, parsed_answers)
 
-        #search for a whole phrase answer and search in that phrase for the which option is
+        #first grab the phrase after the "Answer:" tag then search in that phrase for the which of the options are present
         pattern_phrase = r"Answer:\**\s+([^\n]+)"
         matches = re.findall(pattern_phrase, model_output_raw, re.IGNORECASE)
         if matches:
-            model_output_answer_line = matches[-1] #take the last match
+            model_output_answer_line = matches[match_index]
         
-            answers_match = re.search(answers_pattern, model_output_answer_line, re.IGNORECASE)
+            answers_match = re.findall(answers_pattern, model_output_answer_line, re.IGNORECASE)
     
             if answers_match:
-                parsed_answer_value =  answers_match.group(1)
+                parsed_answer_value =  answers_match[match_index]
                 parsed_answers = check_and_add_answer(parsed_answer_value, answers, parsed_answers)
             else:
                 letters = [k for k, v in options_dict.items()]
                 letters_pattern = rf"\b({'|'.join(letters)})\b"
-                letters_pattern_match = re.search(letters_pattern, model_output_answer_line, re.IGNORECASE)
+                letters_pattern_match = re.findall(letters_pattern, model_output_answer_line, re.IGNORECASE)
 
                 if letters_pattern_match:
-                    match_option =  letters_pattern_match.group(1).lower()
+                    match_option =  letters_pattern_match[match_index].lower()
                     parsed_answer_value = options_dict[match_option]
 
                     parsed_answers = check_and_add_answer(parsed_answer_value, answers, parsed_answers)
 
-    elif "answer is".lower() in model_output_raw.lower():
-        pattern_letter = r'answer is:*\s*\**([\w\d]+)[\s:.]*\**'
-    
-        # first look for a single letter answer
-        matches = re.search(pattern_letter, model_output_raw, re.IGNORECASE)
-        if matches:
-            match_option = matches.group(1).lower()
-            if match_option in options_dict:
-                parsed_answer_value = options_dict[match_option]
-            else:
-                parsed_answer_value = match_option
-
-            parsed_answers = check_and_add_answer(parsed_answer_value, answers, parsed_answers)
-
     # lastly, if we haven't found anything that matched the instruction pattern,
-    # look if any of the options names are present in the first line
+    # look if any of the options names are present in the first line of the output
+    # as some models just report answer upfront regardless of the instruction
     if not parsed_answers:
         model_output_answer_line = model_output_raw.splitlines()[0]        
 
         answers = [v for k, v in options_dict.items()]    
-        answers_match = re.search(answers_pattern, model_output_answer_line, re.IGNORECASE)
+        answers_match = re.findall(answers_pattern, model_output_answer_line, re.IGNORECASE)
         
         if answers_match:
-            parsed_answer_value =  answers_match.group(1)
+            parsed_answer_value =  answers_match[match_index]
             parsed_answers = check_and_add_answer(parsed_answer_value, answers, parsed_answers)
 
     all_parse_answers = " or ".join(parsed_answers)
@@ -342,9 +337,10 @@ class ExtractAnswerSpatialMapAndMaze(DFTransformBase):
     answer_column_name: str
     extracted_answer_column_name: str
     extracted_options_column_name: str
-
+    match_first: bool = False
+    
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         df[self.extracted_answer_column_name] = df.apply(
-            lambda x: extract_answer_from_text_map_and_maze(x[self.answer_column_name], x[self.extracted_options_column_name]), axis=1
+            lambda x: extract_answer_from_text_map_and_maze(x[self.answer_column_name], x[self.extracted_options_column_name], self.match_first), axis=1
         )
         return df
