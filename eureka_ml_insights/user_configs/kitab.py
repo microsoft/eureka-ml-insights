@@ -8,15 +8,18 @@ from eureka_ml_insights.core import (
 )
 from eureka_ml_insights.data_utils import (
     AddColumn,
+    CopyColumn,
     ColumnRename,
     DataReader,
     HFDataReader,
     MMDataLoader,
-    SequenceTransform
+    SequenceTransform,
+    RunPythonTransform,
+    SamplerTransform
 )
 from eureka_ml_insights.data_utils.kitab_utils import (
     KitabExtractBooks,
-    GPT35KitabExtractBooks,
+    KitabExtractBooksAddMarker,
     PrepareContext,
 )
 from eureka_ml_insights.metrics import AverageAggregator
@@ -37,6 +40,7 @@ from eureka_ml_insights.configs import ExperimentConfig
 
 # Example template for an Azure Language Service config
 # required for running entity recognition for evaluating human and city name
+# working config for Azure Language Service needed for Kitab evaluation, non tenant
 AZURE_LANG_SERVICE_CONFIG = {
     "url": "your/azure_lang_service_endpoint/url",
     "secret_key_params": {
@@ -62,6 +66,7 @@ class KITAB_ONE_BOOK_CONSTRAINT_PIPELINE(ExperimentConfig):
                     "split": "test",
                     "transform": SequenceTransform(
                         [
+                            # SamplerTransform(random_seed=99, sample_count=5),
                             ColumnRename(
                                 name_mapping={
                                     "Author": "author",
@@ -156,7 +161,8 @@ class KITAB_ONE_BOOK_CONSTRAINT_PIPELINE(ExperimentConfig):
         )
 
         return PipelineConfig(
-            [self.data_pre_processing, self.inference_comp, self.data_post_processing, self.evalreporting_comp],
+            # [self.data_pre_processing, self.inference_comp, self.data_post_processing, self.evalreporting_comp],
+            [self.data_pre_processing, self.inference_comp, self.data_post_processing],
             self.log_dir,
         )
 
@@ -165,19 +171,25 @@ class GPT35_KITAB_ONE_BOOK_CONSTRAINT_PIPELINE(KITAB_ONE_BOOK_CONSTRAINT_PIPELIN
     def configure_pipeline(self, model_config=None, resume_from=None, **kwargs):
         config = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         # Change the extraction of books for the pipeline
-        self.data_post_processing = DataProcessingConfig(
-            component_type=DataProcessing,
-            data_reader_config=DataSetConfig(
-                DataReader,
-                {
-                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
-                    "format": ".jsonl",
-                    "transform": SequenceTransform(
-                        [AddColumn("model_books"), GPT35KitabExtractBooks("model_output", "model_books")]
-                    ),
-                },
-            ),
-            output_dir=os.path.join(self.log_dir, "data_post_processing_output"),
+        self.data_post_processing.data_reader_config.init_args["transform"] = SequenceTransform(
+            [
+                AddColumn("model_books"), 
+                KitabExtractBooksAddMarker("model_output", "model_books")
+            ]
+        )
+        return config
+
+class Phi_KITAB_ONE_BOOK_CONSTRAINT_PIPELINE(KITAB_ONE_BOOK_CONSTRAINT_PIPELINE):
+    def configure_pipeline(self, model_config=None, resume_from=None, **kwargs):
+        config = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
+        # Change the extraction of books for the pipeline
+        self.data_post_processing.data_reader_config.init_args["transform"] = SequenceTransform(
+            [
+                AddColumn("model_books"), 
+                CopyColumn("model_output", "post_cot_model_output"),
+                RunPythonTransform("df['post_cot_model_output'] = df['post_cot_model_output'].apply(lambda x: x.split('<|dummy_87|>')[-1] if '<|dummy_87|>' in x else x)"),
+                KitabExtractBooksAddMarker("post_cot_model_output", "model_books")
+            ]
         )
         return config
 
@@ -207,6 +219,20 @@ class KITAB_ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT(KITAB_ONE_BOOK_CONSTRAINT_
         )
         self.data_pre_processing.prompt_template_path = os.path.join(
             os.path.dirname(__file__), "../prompt_templates/kitab_templates/Template_2b.jinja"
+        )
+        return config
+
+class Phi_KITAB_ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT(KITAB_ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT):
+    def configure_pipeline(self, model_config=None, resume_from=None, **kwargs):
+        config = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
+        # Change the extraction of books for the pipeline
+        self.data_post_processing.data_reader_config.init_args["transform"] = SequenceTransform(
+            [
+                AddColumn("model_books"), 
+                CopyColumn("model_output", "post_cot_model_output"),
+                RunPythonTransform("df['post_cot_model_output'] = df['post_cot_model_output'].apply(lambda x: x.split('<|dummy_87|>')[-1] if '<|dummy_87|>' in x else x)"),
+                KitabExtractBooksAddMarker("post_cot_model_output", "model_books")
+            ]
         )
         return config
 
@@ -241,6 +267,20 @@ class KITAB_TWO_BOOK_CONSTRAINT_PIPELINE(KITAB_ONE_BOOK_CONSTRAINT_PIPELINE):
         )
         return config
 
+class Phi_KITAB_TWO_BOOK_CONSTRAINT_PIPELINE(KITAB_TWO_BOOK_CONSTRAINT_PIPELINE):
+    def configure_pipeline(self, model_config=None, resume_from=None, **kwargs):
+        config = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
+        # Change the extraction of books for the pipeline
+        self.data_post_processing.data_reader_config.init_args["transform"] = SequenceTransform(
+            [
+                AddColumn("model_books"), 
+                CopyColumn("model_output", "post_cot_model_output"),
+                RunPythonTransform("df['post_cot_model_output'] = df['post_cot_model_output'].apply(lambda x: x.split('<|dummy_87|>')[-1] if '<|dummy_87|>' in x else x)"),
+                KitabExtractBooksAddMarker("post_cot_model_output", "model_books")
+            ]
+        )
+        return config
+
 
 class KITAB_TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT(KITAB_ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT):
     def configure_pipeline(self, model_config=None, resume_from=None, **kwargs):
@@ -261,6 +301,20 @@ class KITAB_TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT(KITAB_ONE_BOOK_CONSTRAINT_
                 ),
                 AddColumn("all_books_context"),
                 PrepareContext("all_books", "all_books_context"),
+            ]
+        )
+        return config
+
+class Phi_KITAB_TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT(KITAB_TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT):
+    def configure_pipeline(self, model_config=None, resume_from=None, **kwargs):
+        config = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
+        # Change the extraction of books for the pipeline
+        self.data_post_processing.data_reader_config.init_args["transform"] = SequenceTransform(
+            [
+                AddColumn("model_books"), 
+                CopyColumn("model_output", "post_cot_model_output"),
+                RunPythonTransform("df['post_cot_model_output'] = df['post_cot_model_output'].apply(lambda x: x.split('<|dummy_87|>')[-1] if '<|dummy_87|>' in x else x)"),
+                KitabExtractBooksAddMarker("post_cot_model_output", "model_books")
             ]
         )
         return config
