@@ -18,27 +18,30 @@ class AIMEExtractAnswer(DFTransformBase):
     @staticmethod
     def parse_output_answer(response):
         """
-        Parse the input string to extract answer of a given AIME question.
+        Parse the input string to extract the final answer of a given AIME question.
         Parameters:
-            response (str): Input string containing answer X in the form of "Final Answer: X".
+            response (str): Input string containing answer(s) in the form of "Final Answer: X".
         Returns: 
-            numerical_value (float): A numeric value representing the model's answer.
+            numerical_value (float or None): A numeric value representing the model's answer.
         """
         numerical_value = None
 
-        # Try to find an answer in the "Final Answer: X" format
-        #match = re.search(r"Final Answer:\s*([\$]?-?[\d,]+(?:\.\d+)?%?)", response)
-        match = re.search(r"Final Answer:\s*\[?([\$]?-?[\d,]+(?:\.\d+)?%?)\]?", response)
-        if match:
-            answer_str = match.group(1)
-            # Remove $ and commas, handle percentages for numerical comparison
+        # Find all matches in the format "Final Answer: X"
+        matches = re.findall(r"Final Answer:\s*\[?([\$]?-?[\d,]+(?:\.\d+)?%?)\]?", response)
+        
+        if matches:
+            # Take the last match as the final answer
+            answer_str = matches[-1]
             answer_str = answer_str.replace("$", "").replace(",", "")
             if answer_str.endswith("%"):
-                numerical_value = float(answer_str[:-1]) / 100  # Convert percentage to decimal
+                try:
+                    numerical_value = float(answer_str[:-1]) / 100
+                except ValueError:
+                    numerical_value = None
             else:
                 try:
                     numerical_value = float(answer_str)
-                except ValueError as e:
+                except ValueError:
                     numerical_value = None
 
         return numerical_value
