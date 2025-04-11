@@ -93,6 +93,7 @@ class KITAB_ONE_BOOK_CONSTRAINT_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
+            max_concurrent=10
         )
         # Configure the data post processing component.
         # For kitab this entails extracting all books and CoT reasons and removing the rest of the text
@@ -161,8 +162,7 @@ class KITAB_ONE_BOOK_CONSTRAINT_PIPELINE(ExperimentConfig):
         )
 
         return PipelineConfig(
-            # [self.data_pre_processing, self.inference_comp, self.data_post_processing, self.evalreporting_comp],
-            [self.data_pre_processing, self.inference_comp, self.data_post_processing],
+            [self.data_pre_processing, self.inference_comp, self.data_post_processing, self.evalreporting_comp],
             self.log_dir,
         )
 
@@ -266,7 +266,7 @@ class KITAB_TWO_BOOK_CONSTRAINT_PIPELINE(KITAB_ONE_BOOK_CONSTRAINT_PIPELINE):
             ]
         )
         return config
-
+       
 class Phi_KITAB_TWO_BOOK_CONSTRAINT_PIPELINE(KITAB_TWO_BOOK_CONSTRAINT_PIPELINE):
     def configure_pipeline(self, model_config=None, resume_from=None, **kwargs):
         config = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
