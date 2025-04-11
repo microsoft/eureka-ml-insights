@@ -43,7 +43,7 @@ class DataLoader:
         self.total_lines = total_lines
 
     def __enter__(self):
-        self.reader = jsonlines.open(self.path, "r")
+        self.reader = jsonlines.open(self.path, "r", loads=json.loads)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -52,7 +52,7 @@ class DataLoader:
     def __len__(self):
         if self.total_lines is None:
             log.info("Total data lines not provided, iterating through the data to get the total lines.")
-            with jsonlines.open(self.path, "r") as reader:
+            with jsonlines.open(self.path, "r", loads=json.loads) as reader:
                 self.total_lines = sum(1 for _ in reader)
         return self.total_lines
 
@@ -282,16 +282,17 @@ class AzureMMDataLoader(MMDataLoader):
 
 
 class JsonLinesWriter:
-    def __init__(self, out_path):
+    def __init__(self, out_path, mode="w"):
         self.out_path = out_path
         # if the directory does not exist, create it
         directory = os.path.dirname(out_path)
         if not os.path.exists(directory):
             os.makedirs(directory)
         self.writer = None
+        self.mode = mode
 
     def __enter__(self):
-        self.writer = jsonlines.open(self.out_path, mode="w", dumps=NumpyEncoder().encode)
+        self.writer = jsonlines.open(self.out_path, mode=self.mode, dumps=NumpyEncoder().encode)
         return self.writer
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -313,7 +314,7 @@ class JsonReader(DataReaderBase):
             with open(self.path, mode="r") as reader:
                 data = json.load(reader)
         elif self.format == ".jsonl":
-            with jsonlines.open(self.path, mode="r") as reader:
+            with jsonlines.open(self.path, mode="r", loads=json.loads) as reader:
                 data = list(reader)
         else:
             raise ValueError("JsonReader currently only supports json and jsonl format.")
@@ -364,7 +365,7 @@ class AzureJsonReader(JsonReader, AzureBlobReader):
         if self.format == ".json":
             data = json.loads(file)
         elif self.format == ".jsonl":
-            data = jsonlines.Reader(file.splitlines())
+            data = jsonlines.Reader(file.splitlines(), loads=json.loads)
         else:
             raise ValueError("AzureJsonReader currently only supports json and jsonl format.")
         return data
@@ -496,7 +497,7 @@ class AzureDataReader(DataReader, AzureBlobReader):
     def _load_dataset(self) -> pd.DataFrame:
         file = super().read_azure_blob(self.blob_url)
         if self.format == ".jsonl":
-            jlr = jsonlines.Reader(file.splitlines())
+            jlr = jsonlines.Reader(file.splitlines(), loads=json.loads)
             df = pd.DataFrame(jlr.iter(skip_empty=True, skip_invalid=True))
         else:
             raise ValueError("AzureDataReader currently only supports jsonl format.")
