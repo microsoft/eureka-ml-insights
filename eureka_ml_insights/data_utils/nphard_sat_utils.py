@@ -84,11 +84,11 @@ def extract_solution(final_answer):
 def convert_to_binary_string(solution):
     # If the solution is the special Ellipsis object (...)
     if solution is Ellipsis:        
-        return ""
+        return "-1"
     
     # If the solution is not a string, there's nothing to process
     if not isinstance(solution, str):        
-        return ""
+        return "-1"
 
     # If the solution is "Unsatisfiable"
     if solution == "Unsatisfiable":
@@ -106,29 +106,6 @@ def convert_to_binary_string(solution):
 
     # Join the converted parts with commas
     return ",".join(converted_parts)
-
-
-# def convert_to_binary_string(solution_str):
-    
-#     if solution_str == "Unsatisfiable":
-#         return ""  # Return empty string if the solution is "Unsatisfactory"
-
-#     # 1. Split the string on commas.
-#     parts = solution_str.split(",")
-
-#     # 2. Convert each element to '1' if it's 'True', else '0'.
-#     converted_parts = []
-#     for p in parts:
-#         p = p.strip()  # remove extra whitespace
-#         if p == "True":
-#             converted_parts.append("1")
-#         else:
-#             converted_parts.append("0")
-
-#     # 3. Join them back together as a comma-separated string.
-#     converted_str = ",".join(converted_parts)
-
-#     return converted_str
 
 
 def parse_path_from_model_output(model_output_string):
@@ -149,6 +126,8 @@ def parse_path_from_model_output(model_output_string):
         sat_solution = None
 
     
+    if sat_solution is None:
+        return "-1"
 
     binary_soln_string = ""
 
