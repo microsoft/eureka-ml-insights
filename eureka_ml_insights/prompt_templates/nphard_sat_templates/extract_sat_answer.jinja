@@ -1,0 +1,27 @@
+We asked a large language model the following question:
+
+BEGIN INITIAL QUESTION
+
+Question: {{initial_prompt}}
+
+END INITIAL QUESTION
+
+The question asks the model to give a final answer in the following format:
+
+If a satisfying assignment exists, provide the assignments wrapped by final_answer tag: like <final_answer>{'Solution': 'v_1, v_2, ...'}</final_answer>. Here each v_i is True or False depending on the assignment.
+If no satisfying assignment exists, pprovide the assignments wrapped by final_answer tag: like <final_answer>{'Solution': 'Unsatisfiable'}</final_answer>. 
+
+For example, <final_answer>{'Solution': 'True, False, ...'}</final_answer> is a valid answer.
+
+Any answer of this format <final_answer>{'Solution': 'x1=True, x2=False, x3=True'}</final_answer> must be converted to the format: <final_answer>{'Solution': 'True, False, True'}</final_answer>
+
+The model however failed to follow the specified format and gave the following answer:
+
+BEGIN RAW MODEL ANSWER
+
+Raw Model Answer: {{raw_model_output}}
+
+END RAW MODEL ANSWER
+
+Please extract the final answer from the raw model answer according to the specified format. Do not mention any other details, only extract what the format indicates. If you are not able to find a final answer, output Final Answer: None
+
