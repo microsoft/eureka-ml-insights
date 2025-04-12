@@ -1,0 +1,167 @@
+# az ml job create --file evaluation.yaml --resource-group aifrontiers --workspace-name aifrontiers_ws
+$schema: https://azuremlschemas.azureedge.net/latest/sweepJob.schema.json
+type: sweep
+compute: /subscriptions/22da88f6-1210-4de2-a5a3-da4c7c2a1213/resourcegroups/gcr-singularity/providers/microsoft.machinelearningservices/virtualclusters/baltic08
+resources:
+  instance_count: 1
+  # instance_type: Singularity.ND12_H100_v5 # 1 GPU 
+  # instance_type: Singularity.ND24_H100_v5 # 2 GPUs
+  # instance_type: Singularity.ND48_H100_v5 # 4 GPUs
+  instance_type: Singularity.ND96r_H100_v5 # 8 GPUs
+  properties:
+    ComputeSpecification:
+      Automatic: false
+    AISuperComputer:
+      imageVersion: ''
+      interactive: false
+      sshPublicKey: ""
+      enableAzmlInt: true
+      # priority: Low
+      # priority: Medium
+      priority: High
+      # slaTier: Standard
+      slaTier: Premium
+experiment_name: eureka_phi_evaluation
+display_name: p0_eureka_phi_evaluation_8vllm_sat_2
+tags:
+  Project_Name: AI Frontiers Foundation Models and Evaluation
+  ProjectID: PRJ-0423-A26
+  Experiment: Eureka_Phi_Evaluation
+trial:
+  code: ./
+  command: |
+    export MODEL_NAME=$(echo ${{search_space.model_config}} | cut -d',' -f1)
+    export MODEL_PATH=$(echo ${{search_space.model_config}} | cut -d',' -f2)
+    export MAX_SEQ_LEN=$(echo ${{search_space.model_config}} | cut -d',' -f3)
+    export MAX_EVAL_SEQ_LEN=$(echo ${{search_space.model_config}} | cut -d',' -f4)
+    export MODEL_TYPE=$(echo ${{search_space.model_config}} | cut -d',' -f5)
+    export EXPERIMENT_NAME=eval_5x
+    export EXPERIMENT_OUTPUT_DIR=$(echo ${{outputs.output_dir}}/$MODEL_NAME/$EXPERIMENT_NAME/temperature_${{search_space.temperature}})
+    if [[ $MODEL_TYPE == "reasoning" ]]; then
+        export VLLM_MODEL_NAME=$(echo vllm-local-reasoning-phi-$MODEL_NAME)
+    else
+        export VLLM_MODEL_NAME=$(echo vllm-local-$MODEL_NAME)
+    fi
+
+    echo "MODEL_NAME: $MODEL_NAME"
+    echo "MODEL_PATH: $MODEL_PATH"
+    echo "MAX_SEQ_LEN: $MAX_SEQ_LEN"
+    echo "MAX_EVAL_SEQ_LEN: $MAX_EVAL_SEQ_LEN"
+    echo "MODEL_TYPE: $MODEL_TYPE"
+    echo "EXPERIMENT_NAME: $EXPERIMENT_NAME"
+    echo "EXPERIMENT_OUTPUT_DIR: $EXPERIMENT_OUTPUT_DIR"
+    echo "VLLM_MODEL_NAME: $VLLM_MODEL_NAME"
+
+    # create the experiment output directory
+    mkdir -p $EXPERIMENT_OUTPUT_DIR && rm -rf $EXPERIMENT_OUTPUT_DIR/*
+
+    # save the current working directory in a variable
+    export CURRENT_DIR=$(pwd)
+    echo "Current working directory: $CURRENT_DIR"
+
+
+    # cd into vllm inference scripts directory
+    cd /workspace/phyagi-sdk/scripts/tools/vllm_inference/
+
+    # get phyagi api key from azure key vault
+    export PHYAGI_API_KEY=$(python keyvault_secrets.py --secret-name phigen-api-key-eval --get --output_only_secret)
+    
+    # model checkpoint conversion
+    if [ -d ${{outputs.output_ckpt}}/$MODEL_PATH/hf ]; then
+      echo "Skip conversion, hf model already exists..."
+    else
+      echo "Converting model from Zero3 to FP32 and then to HF format..."
+      python convert_zero3_to_fp32.py --input ${{inputs.input_ckpt}}/$MODEL_PATH -t ${{inputs.tokenizer}} --output ${{outputs.output_ckpt}}/$MODEL_PATH/fp32
+      python convert_fp32_to_hf.py ${{outputs.output_ckpt}}/$MODEL_PATH/fp32 --pretrained_tokenizer_name_or_path ${{inputs.tokenizer}} --output_model_path ${{outputs.output_ckpt}}/$MODEL_PATH/hf
+    fi
+    export MODEL_PATH=$MODEL_PATH/hf
+
+    # start vllm servers
+    source start_vllm_servers.sh --world-size=$VLLM_LOCAL_NUM_INSTANCES --pretrained-model=${{outputs.output_ckpt}}/$MODEL_PATH --tokenizer-model=${{outputs.output_ckpt}}/$MODEL_PATH --base-port=$VLLM_LOCAL_BASE_PORT --api-key="none" --max-model-len=$MAX_SEQ_LEN --served-model-name=$VLLM_MODEL_NAME --dtype=bfloat16 --generation-config=auto --override-generation-config='{\"temperature\": ${{search_space.temperature}}, \"top_p\": 0.95, \"do_sample\": true, \"eos_token_id\":100265, \"pad_token_id\":100349, \"max_new_tokens\": $MAX_EVAL_SEQ_LEN}'
+    
+    # wait for the servers to start
+    while true; do
+
+      servers_online=0
+      for (( i = 0; i < $((VLLM_LOCAL_NUM_INSTANCES)); i++ )) do
+          port=$(( $VLLM_LOCAL_BASE_PORT + i))
+          url="http://0.0.0.0:${port}/health"
+          response=$(curl -s -o /dev/null -w "%{http_code}" "$url")
+
+          if [ "$response" -eq 200 ]; then
+              servers_online=$((servers_online + 1))
+          fi
+      done
+
+      if [ $servers_online -eq $((VLLM_LOCAL_NUM_INSTANCES)) ]; then
+          echo "All servers are online."
+          break
+      else
+          echo "Waiting for $(( $VLLM_LOCAL_NUM_INSTANCES - servers_online)) more servers to come online..."
+      fi
+
+      sleep 10
+    done
+    # run Eureka evaluation
+    cd /workspace
+    # git clone -b phi-sys --single-branch https://github.com/microsoft/eureka-ml-insights.git
+    # cd eureka-ml-insights
+    # pip install -e .
+
+    # run the evaluation
+    cd ${CURRENT_DIR}
+    pip install -e .
+    python main.py --local_vllm --num_servers $VLLM_LOCAL_NUM_INSTANCES --ports 8000 8001 8002 8003 8004 8005 8006 8007 --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config VLLM_PHI_4_SFT_APRIL_2025_CONFIG --model_name $VLLM_MODEL_NAME --exp_logdir ${{outputs.output_dir}}/phi_reasoning/$BENCHMARK_NAME --resume_from ${{inputs.resume_from}}/inference_result.jsonl
+
+  environment: azureml:reasoning-lm:300325_v6
+  environment_variables:
+    BENCHMARK_NAME: SAT_2
+    JOB_EXECUTION_MODE: Basic
+    AZUREML_COMPUTE_USE_COMMON_RUNTIME: 'true'
+    _AZUREML_SINGULARITY_JOB_UAI: /subscriptions/d4fe558f-6660-4fe7-99ec-ae4716b5e03f/resourcegroups/aifrontiers/providers/Microsoft.ManagedIdentity/userAssignedIdentities/aifrontiers
+    VLLM_LOCAL_NUM_INSTANCES: '8'
+    VLLM_LOCAL_BASE_PORT: '8000'
+    PHIGEN_AUTO_IBALL: 'False'
+    PHIGEN_HOME: '/workspace/phigen_home'
+inputs:
+  resume_from:
+    type: uri_folder
+    path: azureml://subscriptions/d4fe558f-6660-4fe7-99ec-ae4716b5e03f/resourcegroups/aifrontiers/workspaces/aifrontiers_ws/datastores/aifshared/paths/evals/eureka/logs/phi_reasoning/SAT_2/2025-04-09-07-16-29.731193_resume_from_2/inference_result/
+    mode: ro_mount
+  input_ckpt:
+    type: uri_folder
+    path: azureml://datastores/aifshared/paths/phi_ckpts/
+    mode: ro_mount
+  tokenizer:
+    type: uri_folder
+    path: azureml://datastores/aifshared/paths/phi_ckpts/tokenizer_files/
+    mode: ro_mount
+  simpleevalprompts:
+    type: uri_folder
+    path: azureml://datastores/aifshared/paths/eval_prompts/
+    mode: ro_mount
+outputs:
+  output_ckpt:
+    type: uri_folder
+    path: azureml://datastores/aifshared/paths/phi_ckpts/
+    mode: rw_mount
+  output_dir:
+    type: uri_folder
+    path: azureml://datastores/aifshared/paths/evals/eureka/logs
+    mode: rw_mount
+sampling_algorithm: grid
+search_space:
+  model_config:
+    type: choice
+    values:
+      - sft_14b_allmathv2_code_2e_coco_5e_high32k_10xlr,sft_14b_allmathv2_code_2e_coco_5e_high32k_10xlr/13660,32768,29000,reasoning
+  temperature:
+    type: choice
+    values:
+      - 0.8
+objective:
+  primary_metric: dummy_metric
+  goal: maximize
+limits:
+  max_total_trials: 1000
+  max_concurrent_trials: 4
