@@ -99,7 +99,7 @@ def convert_to_binary_string(solution):
 
     # If parts are not strictly "True" or "False", return empty string
     if not all(p in ["True", "False"] for p in parts):
-        return ""
+        return "-1"
 
     # Convert "True" -> "1" and "False" -> "0"
     converted_parts = ["1" if p == "True" else "0" for p in parts]
