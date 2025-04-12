@@ -30,14 +30,15 @@ from eureka_ml_insights.data_utils import (
     SequenceTransform,
     ExtractUsageTransform,
     CopyColumn,
-    ReplaceStringsTransform    
+    ReplaceStringsTransform,
+    RunPythonTransform
 )
 from eureka_ml_insights.data_utils.nphard_sat_utils import (
     NPHARDSATExtractAnswer,
 )
 from eureka_ml_insights.metrics import CountAggregator, NPHardSATMetric, BiLevelAggregator, BiLevelCountAggregator
 
-"""This file contains user defined configuration classes for the Traveling Salesman Problem (SAT).   
+"""This file contains user defined configuration classes for the Traveling Salesman Problem (SAT).    
 """
 
 
@@ -77,8 +78,31 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"), 
             resume_from=resume_from,
-            max_concurrent=50,
+            max_concurrent=20,
         )
+
+# # ##### here add a transform to remove the <|dummy_87|> token from the response ###############
+
+#         # # Eval data post processing component.
+#         self.inference_data_post_processing_remove_dummy = DataProcessingConfig(
+#             component_type=DataProcessing,
+#             data_reader_config=DataSetConfig(
+#                 DataReader,
+#                 {
+#                     "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+#                     "format": ".jsonl",
+#                     "transform": RunPythonTransform(
+#                         "import re\n"
+#                         "_tag = r'<\\|dummy_\\d+\\|>'\n"
+#                         "_between_two_tags = re.compile(f'{_tag}.*?{_tag}', re.DOTALL)\n"
+#                         "df['model_output'] = df['model_output'].str.replace(_between_two_tags, '', regex=True)"
+#                     ),                    
+#                 },
+#             ),
+#             output_dir=os.path.join(self.log_dir, "inference_data_post_processing_remove_dummy_output"),            
+#         )
+
+# ###############################################################
 
         # post process the response to extract the answer
         self.data_post_processing = DataProcessingConfig(
@@ -87,6 +111,7 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
                 DataReader,
                 {
                     "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+                    # "path": "/home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_CLAUDE_3_7_SONNET_THINKING/2025-03-21-16-33-50.561466/inference_result/inference_result.jsonl",
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
@@ -202,6 +227,7 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
                 DataReader,
                 {
                     "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+                    # "path": "/home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_CLAUDE_3_7_SONNET_THINKING/2025-03-21-16-33-50.561466/inference_result/inference_result.jsonl",
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
@@ -380,6 +406,7 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
             [
                 self.data_processing_comp,
                 self.inference_comp,
+                # self.inference_data_post_processing_remove_dummy,
                 self.data_post_processing,
                 self.evalreporting_comp,
                 self.data_post_processing_addmv,
