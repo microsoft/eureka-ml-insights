@@ -8,6 +8,9 @@ from .aime import (
     AIME_PIPELINE512Run,
     AIME_PIPELINE1024Run,
 )
+from .arc_agi import (
+    ARC_AGI_v1_PIPELINE,
+)
 from .ba_calendar import (
         BA_Calendar_PIPELINE,
         BA_Calendar_Parallel_PIPELINE,
