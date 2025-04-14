@@ -482,6 +482,7 @@ class AIME_PIPLELINE_HYBRIDEXTRACTION(AIME_PIPELINE):
             ),
             output_dir=os.path.join(self.log_dir, "preeval_data_post_processing_output"),
         )
+
         self.filter_empty_answer = PromptProcessingConfig(
             component_type=PromptProcessing,
             data_reader_config=DataSetConfig(
@@ -491,7 +492,7 @@ class AIME_PIPLELINE_HYBRIDEXTRACTION(AIME_PIPELINE):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            RunPythonTransform("df = df[df['model_output'] == '']"),
+                            #RunPythonTransform("df = df[df['model_output'] == '']"),
                             ColumnRename(name_mapping={"prompt": "initial_prompt"}),
                             AddColumn(column_name="prompt")
                         ]
@@ -503,7 +504,7 @@ class AIME_PIPLELINE_HYBRIDEXTRACTION(AIME_PIPELINE):
                 "../prompt_templates/aime_templates/extract_aime_answer.jinja",
             ),
             output_dir=os.path.join(self.log_dir, "filter_empty_answer"),
-        )
+        )       
         
         self.inference_llm_answer_extract = InferenceConfig(
             component_type=Inference,
@@ -514,7 +515,7 @@ class AIME_PIPLELINE_HYBRIDEXTRACTION(AIME_PIPELINE):
             ),
             output_dir=os.path.join(self.log_dir, "llm_answer_extract_inference_result"),
             max_concurrent=5
-        )
+            )
         
         self.data_join = DataJoinConfig(
             component_type=DataJoin,
@@ -548,7 +549,7 @@ class AIME_PIPLELINE_HYBRIDEXTRACTION(AIME_PIPELINE):
             ),
             output_dir=os.path.join(self.log_dir, "data_join_output"),
             pandas_merge_args={"on": ['data_repeat_id', 'data_point_id'], "how": "left"},
-        )
+            )
 
         # post process the response to extract the answer
         self.data_post_processing = DataProcessingConfig(
