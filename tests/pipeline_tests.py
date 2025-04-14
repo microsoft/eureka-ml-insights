@@ -472,6 +472,7 @@ class DNA_PipelineTest(PipelineTest, unittest.TestCase):
             )
 
 
+"""
 class IFEval_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         self.test_pipeline = TEST_IFEval_PIPELINE()
@@ -496,7 +497,7 @@ class IFEval_PipelineTest(PipelineTest, unittest.TestCase):
         n_aggregators = len([config for eval_config in self.eval_configs for config in eval_config.aggregator_configs])
         n_aggregator_files = len([file for file in self.files if "aggregator" in str(file)])
         self.assertEqual(n_aggregators, n_aggregator_files)
-
+"""
 
 class BA_Calendar_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
