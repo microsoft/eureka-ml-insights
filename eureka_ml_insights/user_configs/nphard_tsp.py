@@ -30,7 +30,8 @@ from eureka_ml_insights.data_utils import (
     SequenceTransform,
     ExtractUsageTransform,
     CopyColumn,
-    ReplaceStringsTransform
+    ReplaceStringsTransform,
+    RunPythonTransform
 )
 from eureka_ml_insights.data_utils.nphard_tsp_utils import (
     NPHARDTSPExtractAnswer,
@@ -81,14 +82,43 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             max_concurrent=1,
         )
 
+
+# ##### here add a transform to remove the <|dummy_87|> token from the response ###############
+
+        # # Eval data post processing component.
+        self.inference_data_post_processing_remove_dummy = DataProcessingConfig(
+            component_type=DataProcessing,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+                    "format": ".jsonl",
+                    "transform": RunPythonTransform(
+                        "import re\n"
+                        "_tag = r'<\\|dummy_\\d+\\|>'\n"
+                        "_between_two_tags = re.compile(f'{_tag}.*?{_tag}', re.DOTALL)\n"
+                        "df['model_output'] = df['model_output'].str.replace(_between_two_tags, '', regex=True)"
+                    ),                    
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "inference_data_post_processing_remove_dummy_output"),            
+        )
+
+###############################################################
+
+
         # post process the response to extract the answer
         self.data_post_processing = DataProcessingConfig(
             component_type=DataProcessing,
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
+<<<<<<< HEAD
                     # "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
                     "path": "/home/vivineet/projects/evaluation/NPHardEval/tsp_sat_04-09-2025/TSP/TSP_03_05_2025/eureka-ml-insights/logs/NPHARD_TSP_PIPELINE_MULTIPLE_RUNS/Phi-4_temp08/2025-04-04-13-23-29.684830/inference_result/inference_result.jsonl",
+=======
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),                    
+>>>>>>> ce97cb3aa0d119cb547cb1987c40f7e121ce146f
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
@@ -182,8 +212,12 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
+<<<<<<< HEAD
                     # "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
                     "path": "/home/vivineet/projects/evaluation/NPHardEval/tsp_sat_04-09-2025/TSP/TSP_03_05_2025/eureka-ml-insights/logs/NPHARD_TSP_PIPELINE_MULTIPLE_RUNS/Phi-4_temp08/2025-04-04-13-23-29.684830/inference_result/inference_result.jsonl",
+=======
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),                    
+>>>>>>> ce97cb3aa0d119cb547cb1987c40f7e121ce146f
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
@@ -364,6 +398,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
         return PipelineConfig(
             [
                 self.data_processing_comp,
+<<<<<<< HEAD
                 # self.inference_comp,
                 self.data_post_processing,
                 self.evalreporting_comp,
@@ -372,6 +407,16 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                 self.posteval_data_post_processing_comp,
                 self.bon_evalreporting_comp,
                 self.won_evalreporting_comp                
+=======
+                self.inference_comp,
+                # self.data_post_processing,
+                # self.evalreporting_comp,
+                # self.data_post_processing_addmv,
+                # self.mv_evalreporting_comp,
+                # self.posteval_data_post_processing_comp,
+                # self.bon_evalreporting_comp,
+                # self.won_evalreporting_comp                
+>>>>>>> ce97cb3aa0d119cb547cb1987c40f7e121ce146f
             ],
             self.log_dir,
         )

@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import sys
@@ -461,7 +462,7 @@ class DNA_PipelineTest(PipelineTest, unittest.TestCase):
     def test_labels(self):
         logging.info("Running test_labels test in DNA_PipelineTest")
         eval_inference_output_file = os.path.join(self.conf.component_configs[-2].output_dir, "transformed_data.jsonl")
-        with jsonlines.open(eval_inference_output_file, "r") as reader:
+        with jsonlines.open(eval_inference_output_file, "r", loads=json.loads) as reader:
             eval_inference_data = [item for item in reader.iter(skip_empty=True, skip_invalid=True)]
             self.assertTrue(
                 all(
@@ -508,6 +509,7 @@ class BA_Calendar_PipelineTest(PipelineTest, unittest.TestCase):
         self.eval_configs = [
             self.test_pipeline.evalreporting_comp,
             self.test_pipeline.bon_evalreporting_comp,
+            self.test_pipeline.won_evalreporting_comp,
             self.test_pipeline.majvote_evalreporting_comp,
         ]
 
