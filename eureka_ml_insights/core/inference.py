@@ -95,7 +95,8 @@ class Inference(Component):
                     pre_inf_results_df[col] = None
 
         # validate the resume_from contents both stand-alone and against the current model response keys
-        with self.data_loader as loader:
+        #with self.data_loader as loader:
+        if(1<-1):
             _, sample_model_input, sample_model_kwargs = loader.get_sample_model_input()
             sample_data_keys = loader.reader.read().keys()
 
@@ -116,8 +117,7 @@ class Inference(Component):
             # we let the discrepancy in the reserved keys slide and later set the missing keys to None
             match_keys = set(pre_inf_results_df.columns) | set(INFERENCE_RESERVED_NAMES)
 
-            #if set(eventual_keys) != match_keys:
-            if(1<-1):
+            if set(eventual_keys) != match_keys:
                 diff = set(eventual_keys) ^ set(match_keys)
                 raise ValueError(
                     f"Columns in resume_from file do not match the current input data and inference response. "
