@@ -95,8 +95,7 @@ class Inference(Component):
                     pre_inf_results_df[col] = None
 
         # validate the resume_from contents both stand-alone and against the current model response keys
-        #with self.data_loader as loader:
-        if(1<-1):
+        with self.data_loader as loader:
             _, sample_model_input, sample_model_kwargs = loader.get_sample_model_input()
             sample_data_keys = loader.reader.read().keys()
 
