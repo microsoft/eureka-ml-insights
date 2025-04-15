@@ -2,7 +2,6 @@
 
 
 
-<<<<<<< HEAD
 # python main.py --exp_config NPHARD_TSP_PIPELINE_Runs --model_config OAI_O1_PREVIEW_CONFIG --exp_logdir nphard_tsp_level_test
 
 # python main.py --exp_config NPHARD_TSP_PIPELINE_Runs --model_config OAI_GPT4O_2024_05_13_CONFIG --exp_logdir nphard_tsp_level_test
@@ -77,11 +76,10 @@
 # python main.py --exp_config NPHARD_TSP_PIPELINE_MULTIPLE_RUNS --model_config GEMINI_V2_FLASH_THINKING_EXP_0121_CONFIG --exp_logdir nphard_tsp_gemini_2_0_flash-thinking-exp-0121_run3
 
 
-python main.py --exp_config NPHARD_TSP_PIPELINE_MULTIPLE_RUNS --model_config OAI_GPT4_1106_PREVIEW_CONFIG --exp_logdir Phi-4_temp08
-=======
+# python main.py --exp_config NPHARD_TSP_PIPELINE_MULTIPLE_RUNS --model_config OAI_GPT4_1106_PREVIEW_CONFIG --exp_logdir Phi-4_temp08
+
 # # # # # ### GATEWAY_PHI_4_CONFIG
 
-python main.py --exp_config NPHARD_TSP_PIPELINE_MULTIPLE_RUNS --model_config GATEWAY_PHI_4_CONFIG --exp_logdir Phi-4_reasoning --resume_from /home/vivineet/projects/evaluation/NPHardEval/tsp_sat_04-09-2025/TSP/TSP_03_05_2025/eureka-ml-insights_remove_dummy/logs/NPHARD_TSP_PIPELINE_MULTIPLE_RUNS/Phi-4_reasoning/2025-04-09-05-39-23.376434/inference_result/inference_result.jsonl
->>>>>>> ce97cb3aa0d119cb547cb1987c40f7e121ce146f
+python main.py --exp_config NPHARD_TSP_PIPELINE_MULTIPLE_RUNS --model_config OAI_GPT4_1106_PREVIEW_CONFIG --exp_logdir Phi-4_reasoning_R1 --resume_from /home/vivineet/projects/evaluation/NPHardEval/tsp_sat_04-09-2025/TSP/TSP_03_05_2025/eureka-ml-insights/logs/NPHARD_TSP_PIPELINE_MULTIPLE_RUNS/Phi-4_reasoning_R1/2025-04-15-10-10-16.193921/inference_result/inference_result.jsonl
 
 

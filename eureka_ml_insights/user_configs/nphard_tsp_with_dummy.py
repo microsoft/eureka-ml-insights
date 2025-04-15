@@ -95,34 +95,14 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": RunPythonTransform(
                         "import re\n"
-                        "# Match a <think> … </think> block (non‑greedy) across new‑lines\n"
-                        "_between_think = re.compile(r'<think>.*?</think>', re.DOTALL | re.IGNORECASE)\n"
-                        "df['model_output'] = df['model_output'].str.replace(_between_think, '', regex=True)"
-                    ),                
+                        "_tag = r'<\\|dummy_\\d+\\|>'\n"
+                        "_between_two_tags = re.compile(f'{_tag}.*?{_tag}', re.DOTALL)\n"
+                        "df['model_output'] = df['model_output'].str.replace(_between_two_tags, '', regex=True)"
+                    ),                    
                 },
             ),
             output_dir=os.path.join(self.log_dir, "inference_data_post_processing_remove_dummy_output"),            
         )
-
-        # # # Eval data post processing component.
-        # self.inference_data_post_processing_remove_dummy = DataProcessingConfig(
-        #     component_type=DataProcessing,
-        #     data_reader_config=DataSetConfig(
-        #         DataReader,
-        #         {
-        #             "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
-        #             "format": ".jsonl",
-        #             "transform": RunPythonTransform(
-        #                 "import re\n"
-        #                 "_tag = r'<\\|dummy_\\d+\\|>'\n"
-        #                 "_between_two_tags = re.compile(f'{_tag}.*?{_tag}', re.DOTALL)\n"
-        #                 "df['model_output'] = df['model_output'].str.replace(_between_two_tags, '', regex=True)"
-        #             ),                    
-        #         },
-        #     ),
-        #     output_dir=os.path.join(self.log_dir, "inference_data_post_processing_remove_dummy_output"),            
-        # )
-
 
 ###############################################################
 
@@ -133,8 +113,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    # "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),                    
-                    "path": os.path.join(self.inference_data_post_processing_remove_dummy.output_dir, "transformed_data.jsonl"),  
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),                    
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
@@ -228,8 +207,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    # "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),          
-                    "path": os.path.join(self.inference_data_post_processing_remove_dummy.output_dir, "transformed_data.jsonl"),            
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),                    
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
@@ -411,7 +389,6 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             [
                 self.data_processing_comp,
                 self.inference_comp,
-                self.inference_data_post_processing_remove_dummy,
                 self.data_post_processing,
                 self.evalreporting_comp,
                 self.data_post_processing_addmv,
