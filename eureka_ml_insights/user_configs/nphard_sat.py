@@ -88,6 +88,30 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
             max_concurrent=50,
         )
 
+# # ##### here add a transform to remove the <|dummy_87|> token from the response ###############
+
+#         # # Eval data post processing component.
+#         self.inference_data_post_processing_remove_dummy = DataProcessingConfig(
+#             component_type=DataProcessing,
+#             data_reader_config=DataSetConfig(
+#                 DataReader,
+#                 {
+#                     "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+#                     "format": ".jsonl",
+#                     "transform": RunPythonTransform(
+#                         "import re\n"
+#                         "_tag = r'<\\|dummy_\\d+\\|>'\n"
+#                         "_between_two_tags = re.compile(f'{_tag}.*?{_tag}', re.DOTALL)\n"
+#                         "df['model_output'] = df['model_output'].str.replace(_between_two_tags, '', regex=True)"
+#                     ),                    
+#                 },
+#             ),
+#             output_dir=os.path.join(self.log_dir, "inference_data_post_processing_remove_dummy_output"),            
+#         )
+
+# ###############################################################
+
+
 ################################################################ LLM based extractor ###########################
 
         self.preeval_data_post_processing_comp = DataProcessingConfig(
@@ -181,28 +205,7 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
 
 
 
-# # ##### here add a transform to remove the <|dummy_87|> token from the response ###############
 
-#         # # Eval data post processing component.
-#         self.inference_data_post_processing_remove_dummy = DataProcessingConfig(
-#             component_type=DataProcessing,
-#             data_reader_config=DataSetConfig(
-#                 DataReader,
-#                 {
-#                     "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
-#                     "format": ".jsonl",
-#                     "transform": RunPythonTransform(
-#                         "import re\n"
-#                         "_tag = r'<\\|dummy_\\d+\\|>'\n"
-#                         "_between_two_tags = re.compile(f'{_tag}.*?{_tag}', re.DOTALL)\n"
-#                         "df['model_output'] = df['model_output'].str.replace(_between_two_tags, '', regex=True)"
-#                     ),                    
-#                 },
-#             ),
-#             output_dir=os.path.join(self.log_dir, "inference_data_post_processing_remove_dummy_output"),            
-#         )
-
-# ###############################################################
 
 
 
