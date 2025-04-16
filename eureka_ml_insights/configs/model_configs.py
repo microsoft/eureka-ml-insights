@@ -26,7 +26,7 @@ from .config import ModelConfig
 
 # For models that require secret keys, you can store the keys in a json file and provide the path to the file
 # in the secret_key_params dictionary. OR you can provide the key name and key vault URL to fetch the key from Azure Key Vault.
-# You don't need to provide both the key_vault_url and local_keys_path. You can provide one of them based on your setup.
+# You don't need to provide both the key_vault_url and local_keys_path. You can provide one of them based on your setup. 
 
 
 # Test model
@@ -35,7 +35,7 @@ TEST_MODEL_CONFIG = ModelConfig(TestModel, {})
 # Together models
 TOGETHER_SECRET_KEY_PARAMS = {
     "key_name": "your_togetherai_secret_key_name",
-    "local_keys_path": "keys/keys.json",
+    "local_keys_path": "keys/aifeval-vault-azure-net.json",
     "key_vault_url": None,
 }
 
@@ -50,11 +50,25 @@ TOGETHER_DEEPSEEK_R1_CONFIG = ModelConfig(
         "max_tokens": 65536
     },
 )
+
+TOGETHER_DEEPSEEK_R1_Distill_Llama_70B_CONFIG = ModelConfig(
+    TogetherModel,
+    {
+        "model_name": "deepseek-ai/DeepSeek-R1-Distill-Llama-70B",
+        "secret_key_params": TOGETHER_SECRET_KEY_PARAMS,
+        "temperature": 0.6,
+        # high max token limit for deep seek
+        # otherwise the answers may be cut in the middle
+        "max_tokens": 65536
+    },
+)
+
+
 # OpenAI models
 
 OPENAI_SECRET_KEY_PARAMS = {
-    "key_name": "your_openai_secret_key_name",
-    "local_keys_path": "keys/keys.json",
+    "key_name": "openai",
+    "local_keys_path": "keys/aifeval-vault-azure-net.json",
     "key_vault_url": None,
 }
 
@@ -335,6 +349,30 @@ DEEPSEEK_R1_CONFIG = ModelConfig(
     },
 )
 
+###################
+
+### Gateway models
+GATEWAY_SECRET_KEY_PARAMS = {
+    "key_name": "your_gateway_key",
+    "local_keys_path": "keys/aifeval-vault-azure-net.json",
+    "key_vault_url": None,
+}
+
+
+GATEWAY_PHI_4_CONFIG = ModelConfig(
+    DirectOpenAIModel,
+    {
+        "base_url": "https://gateway.phyagi.net/api/",
+        "model_name": "phi-4",
+        "secret_key_params": GATEWAY_SECRET_KEY_PARAMS,
+        "extra_body":{"tier": "impact", "cache_ttl": 0},
+        "temperature": 0.8,
+        "max_tokens": 4096
+    },
+)
+
+
+
 ######################
 
 # VLLM_PHI_4_SFT_APRIL_2025_CONFIG = ModelConfig(
@@ -343,11 +381,10 @@ DEEPSEEK_R1_CONFIG = ModelConfig(
 #     LocalVLLMModel,
 #     {
 #         "temperature": 0.8,
-#         "max_tokens": 24000,
+#         "max_tokens": 30000,
 #         "system_message": "Your role as an assistant involves thoroughly exploring questions through a systematic thinking process before providing the final precise and accurate solutions. This requires engaging in a comprehensive cycle of analysis, summarizing, exploration, reassessment, reflection, backtracing, and iteration to develop well-considered thinking process. Please structure your response into two main sections: Thought and Solution using the specified format: <|dummy_86|> {Thought section} <|dummy_87|> {Solution section}. In the Thought section, detail your reasoning process in steps. Each step should include detailed considerations such as analysing questions, summarizing relevant findings, brainstorming new ideas, verifying the accuracy of the current steps, refining any errors, and revisiting previous steps. In the Solution section, based on various attempts, explorations, and reflections from the Thought section, systematically present the final solution that you deem correct. The Solution section should be logical, accurate, and concise and detail necessary steps needed to reach the conclusion. Now, try to solve the following question through the above guidelines:",
 #     }
 # )
-
 
 VLLM_PHI_4_SFT_APRIL_2025_CONFIG = ModelConfig(
     # Use this config if you have already deployed the model
@@ -357,16 +394,5 @@ VLLM_PHI_4_SFT_APRIL_2025_CONFIG = ModelConfig(
         "temperature": 0.8,
         "max_tokens": 30000,
         "system_message": "Your role as an assistant involves thoroughly exploring questions through a systematic thinking process before providing the final precise and accurate solutions. This requires engaging in a comprehensive cycle of analysis, summarizing, exploration, reassessment, reflection, backtracing, and iteration to develop well-considered thinking process. Please structure your response into two main sections: Thought and Solution using the specified format: <|dummy_86|> {Thought section} <|dummy_87|> {Solution section}. In the Thought section, detail your reasoning process in steps. Each step should include detailed considerations such as analysing questions, summarizing relevant findings, brainstorming new ideas, verifying the accuracy of the current steps, refining any errors, and revisiting previous steps. In the Solution section, based on various attempts, explorations, and reflections from the Thought section, systematically present the final solution that you deem correct. The Solution section should be logical, accurate, and concise and detail necessary steps needed to reach the conclusion. Now, try to solve the following question through the above guidelines:",
-    }
-)
-
-VLLM_PHI_4_RL_APRIL_2025_CONFIG_60K = ModelConfig(
-    # Use this config if you have already deployed the model
-    # and pass the service ports, num_servers, and model_name as commandline args
-    LocalVLLMModel,
-    {
-        "temperature": 0.8,
-        "max_tokens": 60000,
-        "system_message": "You are Phi, a language model trained by Microsoft to help users. Your role as an assistant involves thoroughly exploring questions through a systematic thinking process before providing the final precise and accurate solutions. This requires engaging in a comprehensive cycle of analysis, summarizing, exploration, reassessment, reflection, backtracing, and iteration to develop well-considered thinking process. Please structure your response into two main sections: Thought and Solution using the specified format: <think> {Thought section} </think> {Solution section}. In the Thought section, detail your reasoning process in steps. Each step should include detailed considerations such as analysing questions, summarizing relevant findings, brainstorming new ideas, verifying the accuracy of the current steps, refining any errors, and revisiting previous steps. In the Solution section, based on various attempts, explorations, and reflections from the Thought section, systematically present the final solution that you deem correct. The Solution section should be logical, accurate, and concise and detail necessary steps needed to reach the conclusion. Now, try to solve the following question through the above guidelines:",
     }
 )

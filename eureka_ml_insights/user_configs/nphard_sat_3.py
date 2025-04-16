@@ -85,7 +85,7 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"), 
             resume_from=resume_from,
-            max_concurrent=50,
+            max_concurrent=20,
         )
 
 ################################################################ LLM based extractor ###########################
@@ -95,7 +95,7 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),                    
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
@@ -107,6 +107,12 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
                                 column_name_dst="raw_model_output",
                             ),
                             NPHARDSATExtractAnswer("raw_model_output", "model_output"),
+                            # ExtractUsageTransform(model_config),                            
+                            # RegexTransform(
+                            #     columns="model_output",
+                            #     prompt_pattern=r"Final Answer: (\w)(?=\s|\W|$)",
+                            #     ignore_case=False,
+                            # ),
                             ImputeNA(columns="model_output", value="-1")
                         ]
                     ),
@@ -169,6 +175,12 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
                             # drop all columns except the uid and model_output
                             RunPythonTransform("df = df[[col for col in ['data_repeat_id','data_point_id', 'model_output'] if col in df.columns]]"),
                             NPHARDSATExtractAnswer("model_output", "model_output"),
+
+                            # RegexTransform(
+                            #     columns="model_output",
+                            #     prompt_pattern=r"Final Answer: (\w)(?=\s|\W|$)",
+                            #     ignore_case=True,
+                            # ),
                         ]
                     ),
                 },
@@ -204,18 +216,50 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
 
 # ###############################################################
 
-
+        # # post process the response to extract the answer
+        # self.data_post_processing = DataProcessingConfig(
+        #     component_type=DataProcessing,
+        #     data_reader_config=DataSetConfig(
+        #         DataReader,
+        #         {
+        #             "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+        #             # "path": "/home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_CLAUDE_3_7_SONNET_THINKING/2025-03-21-16-33-50.561466/inference_result/inference_result.jsonl",
+        #             "format": ".jsonl",
+        #             "transform": SequenceTransform(
+        #                 [
+        #                     ColumnRename(
+        #                         name_mapping={
+        #                             "model_output": "raw_output",
+        #                         }
+        #                     ),
+        #                     AddColumn("model_output"),
+        #                     NPHARDSATExtractAnswer("raw_output", "model_output"),
+        #                     ExtractUsageTransform(model_config),
+        #                 ]
+        #             ),
+        #         },
+        #     ),
+        #     output_dir=os.path.join(self.log_dir, "data_post_processing_output"),
+        # )
 
 ###################################################
 
         # Configure the evaluation and reporting component for evaluation and dataset level aggregation
         self.evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
+            # data_reader_config=DataSetConfig(
+            #     DataReader,
+            #     {
+            #         "path": os.path.join(self.data_post_processing.output_dir, "transformed_data.jsonl"),
+            #         "format": ".jsonl",
+            #     },
+            # ),
 
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    "path": os.path.join(self.data_join.output_dir, "transformed_data.jsonl"),                    
+                    "path": os.path.join(self.data_join.output_dir, "transformed_data.jsonl"),
+                    # "path": "/home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/Phi-4_reasoning/2025-04-11-23-42-36.163912/data_join_output/transformed_data.jsonl",
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
@@ -303,6 +347,70 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
         )
 
 # #############################################
+
+#         # Aggregate the results by a majority vote
+#         # First, let us perform majority_vote
+#         self.data_post_processing_addmv = DataProcessingConfig(
+#             component_type=DataProcessing,
+#             data_reader_config=DataSetConfig(
+#                 DataReader,
+#                 {
+#                     "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+#                     # "path": "/home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_CLAUDE_3_7_SONNET_THINKING/2025-03-21-16-33-50.561466/inference_result/inference_result.jsonl",
+#                     "format": ".jsonl",
+#                     "transform": SequenceTransform(
+#                         [
+#                             ColumnRename(
+#                                 name_mapping={
+#                                     "model_output": "raw_output",
+#                                 }
+#                             ),
+#                             AddColumn("model_output"),
+#                             NPHARDSATExtractAnswer("raw_output", "model_output"),
+#                             MajorityVoteTransform(id_col="data_point_id"),
+#                             ColumnRename(
+#                                 name_mapping={
+#                                     "model_output": "model_output_onerun",
+#                                     "majority_vote": "model_output",
+#                                 }
+#                             ),
+#                         ]
+#                     ),
+#                 },
+#             ),
+#             output_dir=os.path.join(self.log_dir, "data_addmv_output"),
+#         )
+
+#         # Second, compute numeric match
+#         self.mv_evalreporting_comp = EvalReportingConfig(
+#             component_type=EvalReporting,
+#             data_reader_config=DataSetConfig(
+#                 DataReader,
+#                 {
+#                     "path": os.path.join(self.data_post_processing_addmv.output_dir, "transformed_data.jsonl"),
+#                     "format": ".jsonl",
+#                 },
+#             ),
+#             metric_config=MetricConfig(NPHardSATMetric),
+#             aggregator_configs=[
+#                 AggregatorConfig(
+#                     BiLevelCountAggregator,
+#                     {
+#                         "column_names": [
+#                             "NPHardSATMetric_result",
+#                         ],
+#                         "first_groupby": "data_point_id",
+#                         "filename_base": "MajorityVote",
+#                         "normalize": True,
+#                     },
+#                 ),         
+#             ],
+#             output_dir=os.path.join(self.log_dir, "majorityvote_eval_report"),
+#         )
+
+
+# #############################################
+
 
         self.posteval_data_post_processing_comp = DataProcessingConfig(
             component_type=DataProcessing,
@@ -433,14 +541,24 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
                     "path": os.path.join(self.evalreporting_comp.output_dir, "metric_results.jsonl"),                    
                     "format": ".jsonl",
                     "transform": SequenceTransform(
-                        [                                                    
-                            MajorityVoteTransform(id_col="data_point_id"),                        
+                        [
+                            # ColumnRename(
+                            #     name_mapping={
+                            #         "model_output": "raw_output",
+                            #     }
+                            # ),
+                            # AddColumn("model_output"),
+                            # NPHARDSATExtractAnswer("raw_output", "model_output"),
+                            
+                            MajorityVoteTransform(id_col="data_point_id"),
+                            # MajorityVoteTransform(model_output_col="model_output"),
                             ColumnRename(
                                 name_mapping={
                                     "model_output": "model_output_onerun",
                                     "majority_vote": "model_output",
                                 }
-                            ),                        
+                            ),
+                            # RunPythonTransform("df = df[df['data_repeat_id'] == 'repeat_0']")
                         ]
                     ),
                 },
@@ -494,6 +612,8 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
 
                 # # self.inference_data_post_processing_remove_dummy,
 
+                # self.data_post_processing, ### not used
+
                 self.evalreporting_comp,
                 self.posteval_data_post_processing_comp,
                 self.bon_evalreporting_comp,
@@ -519,62 +639,50 @@ class NPHARD_SAT_PIPELINE_MULTIPLE_RUNS(NPHARD_SAT_PIPELINE):
         return pipeline
 
 
-###################################################
+##################
 
 
-
-
-
-        # # post process the response to extract the answer
-        # self.data_post_processing = DataProcessingConfig(
-        #     component_type=DataProcessing,
+        # # Configure the evaluation and reporting component.
+        # self.evalreporting_comp = EvalReportingConfig(
+        #     component_type=EvalReporting,
         #     data_reader_config=DataSetConfig(
         #         DataReader,
         #         {
-        #             "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
-        #             # "path": "/home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_CLAUDE_3_7_SONNET_THINKING/2025-03-21-16-33-50.561466/inference_result/inference_result.jsonl",
+        #             "path": os.path.join(self.data_post_processing.output_dir, "transformed_data.jsonl"),                    
+        #             "format": ".jsonl",
+        #         },
+        #     ),
+        #     metric_config=MetricConfig(NPHardSATMetric),
+        #     aggregator_configs=[
+        #         AggregatorConfig(CountAggregator, {"column_names": ["NPHardSATMetric_result"], "normalize": True}),
+        #     ],
+        #     output_dir=os.path.join(self.log_dir, "eval_report"),
+        # )
+
+        # # Aggregate the results by a majority vote.
+        # self.postevalprocess_comp = EvalReportingConfig(
+        #     component_type=EvalReporting,
+        #     data_reader_config=DataSetConfig(
+        #         DataReader,
+        #         {
+        #             "path": os.path.join(self.data_post_processing.output_dir, "transformed_data.jsonl"),
         #             "format": ".jsonl",
         #             "transform": SequenceTransform(
         #                 [
+        #                     MajorityVoteTransform(id_col="data_point_id"),
         #                     ColumnRename(
         #                         name_mapping={
-        #                             "model_output": "raw_output",
+        #                             "model_output": "model_output_onerun",
+        #                             "majority_vote": "model_output",
         #                         }
         #                     ),
-        #                     AddColumn("model_output"),
-        #                     NPHARDSATExtractAnswer("raw_output", "model_output"),
-        #                     ExtractUsageTransform(model_config),
         #                 ]
         #             ),
         #         },
         #     ),
-        #     output_dir=os.path.join(self.log_dir, "data_post_processing_output"),
+        #     metric_config=MetricConfig(NPHardSATMetric),
+        #     aggregator_configs=[
+        #         AggregatorConfig(CountAggregator, {"column_names": ["NPHardSATMetric_result"], "normalize": True}),
+        #     ],
+        #     output_dir=os.path.join(self.log_dir, "eval_report_majorityVote"),
         # )
-
-
-        
-#         # Configure the pipeline
-#         return PipelineConfig(
-#             [
-#                 self.data_processing_comp,
-#                 self.inference_comp,
-# # #############
-#                 self.preeval_data_post_processing_comp,
-#                 self.filter_empty_answer,
-#                 self.inference_llm_answer_extract,
-#                 self.data_join,
-# ##############
-
-#                 # # self.inference_data_post_processing_remove_dummy,
-
-#                 # self.data_post_processing, ### not used
-
-#                 self.evalreporting_comp,
-#                 self.posteval_data_post_processing_comp,
-#                 self.bon_evalreporting_comp,
-#                 self.won_evalreporting_comp,
-#                 self.data_post_processing_mv,
-#                 self.mv_evalreporting_comp,
-#             ],
-#             self.log_dir,
-#         )

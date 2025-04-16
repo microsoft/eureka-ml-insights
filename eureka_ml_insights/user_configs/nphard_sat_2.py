@@ -12,21 +12,18 @@ from eureka_ml_insights.configs import (
     ModelConfig,
     PipelineConfig,
     PromptProcessingConfig,
-    DataJoinConfig,
 )
 from eureka_ml_insights.core import (
     DataProcessing,
     EvalReporting,
     Inference,
     PromptProcessing,
-    DataJoin
 )
 from eureka_ml_insights.data_utils import (
     AddColumn,
     ColumnRename,
     DataReader,
     HFDataReader,
-    ImputeNA,
     MajorityVoteTransform,
     MMDataLoader,
     MultiplyTransform,
@@ -34,15 +31,12 @@ from eureka_ml_insights.data_utils import (
     ExtractUsageTransform,
     CopyColumn,
     ReplaceStringsTransform,
-    RunPythonTransform,
-    SamplerTransform,
+    RunPythonTransform
 )
 from eureka_ml_insights.data_utils.nphard_sat_utils import (
     NPHARDSATExtractAnswer,
 )
 from eureka_ml_insights.metrics import CountAggregator, NPHardSATMetric, BiLevelAggregator, BiLevelCountAggregator
-
-from eureka_ml_insights.configs.model_configs import OAI_GPT4_1106_PREVIEW_CONFIG, OAI_GPT4O_2024_11_20_CONFIG
 
 """This file contains user defined configuration classes for the Traveling Salesman Problem (SAT).    
 """
@@ -62,7 +56,6 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
                     "split": "train",
                     "transform": SequenceTransform(
                         [
-                            # SamplerTransform(sample_count=100, random_seed=1234),
                             ColumnRename(name_mapping={"query_text": "prompt", "target_text": "ground_truth"}),
                         ]
                     ),
@@ -85,101 +78,8 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"), 
             resume_from=resume_from,
-            max_concurrent=50,
+            max_concurrent=20,
         )
-
-################################################################ LLM based extractor ###########################
-
-        self.preeval_data_post_processing_comp = DataProcessingConfig(
-            component_type=DataProcessing,
-            data_reader_config=DataSetConfig(
-                DataReader,
-                {
-                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),                    
-                    "format": ".jsonl",
-                    "transform": SequenceTransform(
-                        [
-                            # run a transformation to get the total token count used by the model for completion only (except prompt input tokens)
-                            # this is needed because different models use different fields to indicate this
-                            ExtractUsageTransform(model_config),
-                            CopyColumn(
-                                column_name_src="model_output",
-                                column_name_dst="raw_model_output",
-                            ),
-                            NPHARDSATExtractAnswer("raw_model_output", "model_output"),
-                            ImputeNA(columns="model_output", value="-1")
-                        ]
-                    ),
-                },
-            ),
-            output_dir=os.path.join(self.log_dir, "preeval_data_post_processing_output"),
-        )
-
-        self.filter_empty_answer = PromptProcessingConfig(
-            component_type=PromptProcessing,
-            data_reader_config=DataSetConfig(
-                DataReader,
-                {
-                    "path": os.path.join(self.preeval_data_post_processing_comp.output_dir, "transformed_data.jsonl"),
-                    "format": ".jsonl",
-                    "transform": SequenceTransform(
-                        [
-                            RunPythonTransform("df = df[df['model_output'] == '-1']"),
-                            ColumnRename(name_mapping={"prompt": "initial_prompt"}),
-                            AddColumn(column_name="prompt")
-                        ]
-                    ),
-                },
-            ),
-            prompt_template_path=os.path.join(
-                os.path.dirname(__file__),
-                "../prompt_templates/nphard_sat_templates/extract_sat_answer.jinja",
-            ),
-            output_dir=os.path.join(self.log_dir, "filter_empty_answer"),
-        )
-
-
-        self.inference_llm_answer_extract = InferenceConfig(
-            component_type=Inference,
-            model_config=OAI_GPT4O_2024_11_20_CONFIG,
-            data_loader_config=DataSetConfig(
-                MMDataLoader,
-                {"path": os.path.join(self.filter_empty_answer.output_dir, "transformed_data.jsonl")},
-            ),
-            output_dir=os.path.join(self.log_dir, "llm_answer_extract_inference_result"),
-            max_concurrent=50
-        )
-        
-        self.data_join = DataJoinConfig(
-            component_type=DataJoin,
-            data_reader_config=DataSetConfig(
-                DataReader,
-                {
-                    "path": os.path.join(self.preeval_data_post_processing_comp.output_dir, "transformed_data.jsonl"),
-                    "format": ".jsonl",
-                },
-            ),
-            other_data_reader_config=DataSetConfig(
-                DataReader,
-                {
-                    "path": os.path.join(self.inference_llm_answer_extract.output_dir, "inference_result.jsonl"),
-                    "format": ".jsonl",
-                    "transform": SequenceTransform(
-                        [
-                            # drop all columns except the uid and model_output
-                            RunPythonTransform("df = df[[col for col in ['data_repeat_id','data_point_id', 'model_output'] if col in df.columns]]"),
-                            NPHARDSATExtractAnswer("model_output", "model_output"),
-                        ]
-                    ),
-                },
-            ),
-            output_dir=os.path.join(self.log_dir, "data_join_output"),
-            pandas_merge_args={"on": ['data_repeat_id', 'data_point_id'], "how": "left"},
-        )        
-
-##################################################################
-
-
 
 # # ##### here add a transform to remove the <|dummy_87|> token from the response ###############
 
@@ -204,29 +104,44 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
 
 # ###############################################################
 
-
+        # post process the response to extract the answer
+        self.data_post_processing = DataProcessingConfig(
+            component_type=DataProcessing,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+                    # "path": "/home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_CLAUDE_3_7_SONNET_THINKING/2025-03-21-16-33-50.561466/inference_result/inference_result.jsonl",
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            ColumnRename(
+                                name_mapping={
+                                    "model_output": "raw_output",
+                                }
+                            ),
+                            AddColumn("model_output"),
+                            NPHARDSATExtractAnswer("raw_output", "model_output"),
+                            ExtractUsageTransform(model_config),
+                        ]
+                    ),
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "data_post_processing_output"),
+        )
 
 ###################################################
 
         # Configure the evaluation and reporting component for evaluation and dataset level aggregation
         self.evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
-
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    "path": os.path.join(self.data_join.output_dir, "transformed_data.jsonl"),                    
+                    "path": os.path.join(self.data_post_processing.output_dir, "transformed_data.jsonl"),
                     "format": ".jsonl",
-                    "transform": SequenceTransform(
-                        [
-                            # consolidate model_output_y to replace the original model_output whenever empty
-                            # the initial if statement checks whether there has been a join beforehand
-                            RunPythonTransform("df['model_output'] = df.apply(lambda row: row['model_output'] if 'model_output_x' not in row else row['model_output_y'] if row['model_output_x'] == '-1' else row['model_output_x'], axis=1)"),
-                        ]
-                    ),
                 },
             ),
-
             metric_config=MetricConfig(NPHardSATMetric),
             aggregator_configs=[
                 # the first two reports aggregate the metrics per experiment repeat
@@ -302,7 +217,71 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
             output_dir=os.path.join(self.log_dir, "eval_report"),
         )
 
-# #############################################
+#############################################
+
+        # Aggregate the results by a majority vote
+        # First, let us perform majority_vote
+        self.data_post_processing_addmv = DataProcessingConfig(
+            component_type=DataProcessing,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+                    # "path": "/home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_CLAUDE_3_7_SONNET_THINKING/2025-03-21-16-33-50.561466/inference_result/inference_result.jsonl",
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            ColumnRename(
+                                name_mapping={
+                                    "model_output": "raw_output",
+                                }
+                            ),
+                            AddColumn("model_output"),
+                            NPHARDSATExtractAnswer("raw_output", "model_output"),
+                            MajorityVoteTransform(id_col="data_point_id"),
+                            ColumnRename(
+                                name_mapping={
+                                    "model_output": "model_output_onerun",
+                                    "majority_vote": "model_output",
+                                }
+                            ),
+                        ]
+                    ),
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "data_addmv_output"),
+        )
+
+        # Second, compute numeric match
+        self.mv_evalreporting_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.data_post_processing_addmv.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
+                },
+            ),
+            metric_config=MetricConfig(NPHardSATMetric),
+            aggregator_configs=[
+                AggregatorConfig(
+                    BiLevelCountAggregator,
+                    {
+                        "column_names": [
+                            "NPHardSATMetric_result",
+                        ],
+                        "first_groupby": "data_point_id",
+                        "filename_base": "MajorityVote",
+                        "normalize": True,
+                    },
+                ),         
+            ],
+            output_dir=os.path.join(self.log_dir, "majorityvote_eval_report"),
+        )
+
+
+#############################################
+
 
         self.posteval_data_post_processing_comp = DataProcessingConfig(
             component_type=DataProcessing,
@@ -421,85 +400,20 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
         )
 
 ###############################################
-# #############################################
-
-        # Aggregate the results by a majority vote
-        # # First, let us perform majority_vote
-        self.data_post_processing_mv = DataProcessingConfig(
-            component_type=DataProcessing,
-            data_reader_config=DataSetConfig(
-                DataReader,
-                {
-                    "path": os.path.join(self.evalreporting_comp.output_dir, "metric_results.jsonl"),                    
-                    "format": ".jsonl",
-                    "transform": SequenceTransform(
-                        [                                                    
-                            MajorityVoteTransform(id_col="data_point_id"),                        
-                            ColumnRename(
-                                name_mapping={
-                                    "model_output": "model_output_onerun",
-                                    "majority_vote": "model_output",
-                                }
-                            ),                        
-                        ]
-                    ),
-                },
-            ),
-            output_dir=os.path.join(self.log_dir, "data_post_processing_mv"),
-        )
-
-        # Second, compute numeric match
-        self.mv_evalreporting_comp = EvalReportingConfig(
-            component_type=EvalReporting,
-            data_reader_config=DataSetConfig(
-                DataReader,
-                {
-                    "path": os.path.join(self.data_post_processing_mv.output_dir, "transformed_data.jsonl"),
-                    "format": ".jsonl",
-                },
-            ),
-            metric_config=MetricConfig(NPHardSATMetric),
-            aggregator_configs=[
-                AggregatorConfig(
-                    BiLevelCountAggregator,
-                    {
-                        "column_names": [
-                            "NPHardSATMetric_result",
-                        ],
-                        "first_groupby": "data_point_id",
-                        "filename_base": "MajorityVote",
-                        "normalize": True,
-                    },
-                ),         
-            ],
-            output_dir=os.path.join(self.log_dir, "majorityvote_eval_report"),
-        )
-
-
-# #############################################
-
-
 
         # Configure the pipeline
         return PipelineConfig(
             [
                 self.data_processing_comp,
                 self.inference_comp,
-# #############
-                self.preeval_data_post_processing_comp,
-                self.filter_empty_answer,
-                self.inference_llm_answer_extract,
-                self.data_join,
-##############
-
-                # # self.inference_data_post_processing_remove_dummy,
-
+                # self.inference_data_post_processing_remove_dummy,
+                self.data_post_processing,
                 self.evalreporting_comp,
+                self.data_post_processing_addmv,
+                self.mv_evalreporting_comp,
                 self.posteval_data_post_processing_comp,
                 self.bon_evalreporting_comp,
-                self.won_evalreporting_comp,
-                self.data_post_processing_mv,
-                self.mv_evalreporting_comp,
+                self.won_evalreporting_comp   
             ],
             self.log_dir,
         )
@@ -519,62 +433,50 @@ class NPHARD_SAT_PIPELINE_MULTIPLE_RUNS(NPHARD_SAT_PIPELINE):
         return pipeline
 
 
-###################################################
+##################
 
 
-
-
-
-        # # post process the response to extract the answer
-        # self.data_post_processing = DataProcessingConfig(
-        #     component_type=DataProcessing,
+        # # Configure the evaluation and reporting component.
+        # self.evalreporting_comp = EvalReportingConfig(
+        #     component_type=EvalReporting,
         #     data_reader_config=DataSetConfig(
         #         DataReader,
         #         {
-        #             "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
-        #             # "path": "/home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_CLAUDE_3_7_SONNET_THINKING/2025-03-21-16-33-50.561466/inference_result/inference_result.jsonl",
+        #             "path": os.path.join(self.data_post_processing.output_dir, "transformed_data.jsonl"),                    
+        #             "format": ".jsonl",
+        #         },
+        #     ),
+        #     metric_config=MetricConfig(NPHardSATMetric),
+        #     aggregator_configs=[
+        #         AggregatorConfig(CountAggregator, {"column_names": ["NPHardSATMetric_result"], "normalize": True}),
+        #     ],
+        #     output_dir=os.path.join(self.log_dir, "eval_report"),
+        # )
+
+        # # Aggregate the results by a majority vote.
+        # self.postevalprocess_comp = EvalReportingConfig(
+        #     component_type=EvalReporting,
+        #     data_reader_config=DataSetConfig(
+        #         DataReader,
+        #         {
+        #             "path": os.path.join(self.data_post_processing.output_dir, "transformed_data.jsonl"),
         #             "format": ".jsonl",
         #             "transform": SequenceTransform(
         #                 [
+        #                     MajorityVoteTransform(id_col="data_point_id"),
         #                     ColumnRename(
         #                         name_mapping={
-        #                             "model_output": "raw_output",
+        #                             "model_output": "model_output_onerun",
+        #                             "majority_vote": "model_output",
         #                         }
         #                     ),
-        #                     AddColumn("model_output"),
-        #                     NPHARDSATExtractAnswer("raw_output", "model_output"),
-        #                     ExtractUsageTransform(model_config),
         #                 ]
         #             ),
         #         },
         #     ),
-        #     output_dir=os.path.join(self.log_dir, "data_post_processing_output"),
+        #     metric_config=MetricConfig(NPHardSATMetric),
+        #     aggregator_configs=[
+        #         AggregatorConfig(CountAggregator, {"column_names": ["NPHardSATMetric_result"], "normalize": True}),
+        #     ],
+        #     output_dir=os.path.join(self.log_dir, "eval_report_majorityVote"),
         # )
-
-
-        
-#         # Configure the pipeline
-#         return PipelineConfig(
-#             [
-#                 self.data_processing_comp,
-#                 self.inference_comp,
-# # #############
-#                 self.preeval_data_post_processing_comp,
-#                 self.filter_empty_answer,
-#                 self.inference_llm_answer_extract,
-#                 self.data_join,
-# ##############
-
-#                 # # self.inference_data_post_processing_remove_dummy,
-
-#                 # self.data_post_processing, ### not used
-
-#                 self.evalreporting_comp,
-#                 self.posteval_data_post_processing_comp,
-#                 self.bon_evalreporting_comp,
-#                 self.won_evalreporting_comp,
-#                 self.data_post_processing_mv,
-#                 self.mv_evalreporting_comp,
-#             ],
-#             self.log_dir,
-#         )

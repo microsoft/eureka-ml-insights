@@ -84,11 +84,11 @@ def extract_solution(final_answer):
 def convert_to_binary_string(solution):
     # If the solution is the special Ellipsis object (...)
     if solution is Ellipsis:        
-        return "-1"
+        return ""
     
     # If the solution is not a string, there's nothing to process
     if not isinstance(solution, str):        
-        return "-1"
+        return ""
 
     # If the solution is "Unsatisfiable"
     if solution == "Unsatisfiable":
@@ -99,7 +99,7 @@ def convert_to_binary_string(solution):
 
     # If parts are not strictly "True" or "False", return empty string
     if not all(p in ["True", "False"] for p in parts):
-        return "-1"
+        return ""
 
     # Convert "True" -> "1" and "False" -> "0"
     converted_parts = ["1" if p == "True" else "0" for p in parts]
@@ -126,8 +126,7 @@ def parse_path_from_model_output(model_output_string):
         sat_solution = None
 
     
-    if sat_solution is None:
-        return "-1"
+    
 
     binary_soln_string = ""
 

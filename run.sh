@@ -2,60 +2,135 @@
 
 
 
-# python main.py --exp_config NPHARD_TSP_PIPELINE_Runs --model_config OAI_O1_PREVIEW_CONFIG --exp_logdir nphard_tsp_level_test
+# # # # # ### GATEWAY_PHI_4_CONFIG
 
-# python main.py --exp_config NPHARD_TSP_PIPELINE_Runs --model_config OAI_GPT4O_2024_05_13_CONFIG --exp_logdir nphard_tsp_level_test
+## phi4-reasoning -- small drop (~7%)
 
-## TRAPI model
-
-# python main.py --exp_config NPHARD_TSP_PIPELINE_multipleRuns --model_config TRAPI_GPT4O_2024_05_13_CONFIG --exp_logdir nphard_tsp_level_test
-
-# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config PHI4HF_CONFIG --exp_logdir nphard_sat_level_phi4
+# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GATEWAY_PHI_4_CONFIG --exp_logdir Phi-4_reasoning --resume_from /home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/Phi-4_reasoning/2025-04-11-16-24-34.324761/inference_result/inference_result.jsonl
 
 
+## o3 - no drop
+
+# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GATEWAY_PHI_4_CONFIG --exp_logdir nphard_sat1_o3_mini_reasoning_10_high_1_all_runs 
+
+#--resume_from /home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat1_o3_mini_reasoning_10_high_1_all_runs/2025-03-14-15-00-24.312011/inference_result/inference_result.jsonl
+
+## o1 -- no drop
+
+# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GATEWAY_PHI_4_CONFIG --exp_logdir nphard_sat_level_o1_2024-12-17 --resume_from /home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_level_o1_2024-12-17/2025-02-17-19-45-54.233604/inference_result/inference_result.jsonl
+
+## gpt4o -- no drop
+
+# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GATEWAY_PHI_4_CONFIG --exp_logdir nphard_sat_gpt4o_2024_08_06 --resume_from /home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_gpt4o_2024_08_06/2025-03-13-16-57-07.160657/inference_result/inference_result.jsonl
+
+## deepseek r1 -- drop of 0.5%
+
+# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GATEWAY_PHI_4_CONFIG --exp_logdir nphard_sat1_deepseek_together --resume_from /home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat1_deepseek_together/2025-03-13-16-16-47.179595/inference_result/inference_result.jsonl
 
 
+# ## claude 3.7 thinking -- drop of 0.5
 
-# ### claude
-# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GEMINI_EXP_1206_CONFIG --exp_logdir nphard_sat_level_claude-3-5-sonnet-20241022 --resume_from /home/vivineet/projects/evaluation/NPHardEval/SAT_02-04-2025/eureka-ml-insights/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_level_claude-3-5-sonnet-20241022/2025-01-31-01-31-46.679463/inference_result/inference_result.jsonl
-
-
-
-# # ### gemini
-# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GEMINI_V2_FLASH_THINKING_EXP_0121_CONFIG --exp_logdir nphard_sat_level_gemini-2.0-flash-thinking-exp-01-21 --resume_from /home/vivineet/projects/evaluation/NPHardEval/SAT_02-04-2025/eureka-ml-insights/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_level_gemini-2.0-flash-thinking-exp-01-21/2025-02-13-09-36-32.777977/inference_result/inference_result.jsonl
+# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GATEWAY_PHI_4_CONFIG --exp_logdir nphard_sat_CLAUDE_3_7_SONNET_THINKING --resume_from /home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_CLAUDE_3_7_SONNET_THINKING/2025-03-21-16-33-50.561466/inference_result/inference_result.jsonl
 
 
-# # ### gemini
-# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GEMINI_EXP_1206_CONFIG --exp_logdir nphard_sat_level_gemini-exp-1206 --resume_from /home/vivineet/projects/evaluation/NPHardEval/SAT_02-04-2025/eureka-ml-insights/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_level_gemini-exp-1206/2025-02-09-20-12-47.286010/inference_result/inference_result.jsonl
+# ## claude 3.5 -- no drop
+
+# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GATEWAY_PHI_4_CONFIG --exp_logdir nphard_sat_level_claude-3-5-sonnet-20241022 --resume_from /home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_level_claude-3-5-sonnet-20241022/2025-02-17-19-26-05.135180/inference_result/inference_result.jsonl
 
 
-# ### gpt4o
-# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config OAI_GPT4O_2024_11_20_CONFIG --exp_logdir nphard_sat_level_gpt-4o_2024-11-20 --resume_from /home/vivineet/projects/evaluation/NPHardEval/SAT_02-04-2025/eureka-ml-insights/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_level_gpt-4o_2024-11-20/2025-01-31-01-38-28.899516/inference_result/inference_result.jsonl
+# # ## gemini 2.0 pro -- no drop (0.2%)
+
+# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GATEWAY_PHI_4_CONFIG --exp_logdir nphard_sat_gemini-2.0-pro --resume_from /home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_gemini-2.0-pro/2025-03-05-22-50-27.830655/inference_result/inference_result.jsonl
+
+# # ## nphard_sat_level_gemini-2.0-flash-thinking-exp-01-21_2_no_code -- no drop (0.2%)
+
+# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GATEWAY_PHI_4_CONFIG --exp_logdir nphard_sat_level_gemini-2.0-flash-thinking-exp-01-21_2_no_code --resume_from /home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_level_gemini-2.0-flash-thinking-exp-01-21_2_no_code/2025-03-18-12-31-47.382927/inference_result/inference_result.jsonl
 
 
-# ### o1
-# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config OAI_O1_20241217_CONFIG --exp_logdir nphard_sat_level_o1_2024-12-17 --resume_from /home/vivineet/projects/evaluation/NPHardEval/SAT_02-04-2025/eureka-ml-insights/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_level_o1_2024-12-17/2025-02-10-10-12-05.370511/inference_result/inference_result.jsonl
+# # ## llama 405b -- large drop (14%)
+
+# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GATEWAY_PHI_4_CONFIG --exp_logdir nphard_sat_level_llama3_1_405b_2 --resume_from /home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_level_llama3_1_405b_2/2025-03-17-18-33-31.635028/inference_result/inference_result.jsonl
+
+###############################################
 
 
-# # # ### llama_3_1
-# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config AIF_NT_LLAMA3_1_405B_INSTRUCT_EASTUS_OSS_CONFIG_2 --exp_logdir nphard_sat_level_llama3_1_405b --resume_from /home/vivineet/projects/evaluation/NPHardEval/SAT_02-04-2025/eureka-ml-insights/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_level_llama3_1_405b/2025-01-31-16-35-24.497990/inference_result/inference_result.jsonl
+# # # # # ### GATEWAY_PHI_4_CONFIG
+
+## phi4-reasoning -- small drop (~7%)
+
+# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GATEWAY_PHI_4_CONFIG --exp_logdir Phi-4_reasoning --resume_from /home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/Phi-4_reasoning/2025-04-11-16-24-34.324761/inference_result/inference_result.jsonl
 
 
-
-# # # # # ### phi4 ### not ready
-# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config PHI4HF_CONFIG --exp_logdir nphard_sat_level_phi4
+##########################################################
 
 
-# # # # # ### o3_mini_high trapi
-# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config TRAPI_AIF_O3_MINI_CONFIG --exp_logdir nphard_sat_level_o3_mini_high
+# # # # # ### GATEWAY_PHI_4_CONFIG
 
-# # # # # ### o3_mini_high msr_lit
-# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config TRAPI_AIF_O3_MINI_CONFIG --exp_logdir nphard_sat_level_o3_mini_high --resume_from /home/vivineet/projects/evaluation/NPHardEval/SAT_02-04-2025/eureka-ml-insights/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_level_o3_mini_high/2025-03-10-11-16-43.083154/inference_result/inference_result.jsonl
+## phi4-reasoning -- small drop (~7%)
 
-# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config AIF_NT_LLAMA3_1_405B_INSTRUCT_EASTUS_OSS_CONFIG_2 --exp_logdir nphard_sat_level_llama3_1_405b 
-
-# --resume_from /home/vivineet/projects/evaluation/NPHardEval/SAT_02-04-2025/eureka-ml-insights/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_level_llama3_1_405b/2025-01-31-23-31-01.301467/inference_result/inference_result.jsonl
+# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GATEWAY_PHI_4_CONFIG --exp_logdir Phi-4_reasoning --resume_from /home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/Phi-4_reasoning/2025-04-11-16-24-34.324761/inference_result/inference_result.jsonl
 
 
-# # # # # ### o3_mini_high trapi
-python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config MSR_LIT_O1_reasoning_1_CONFIG --exp_logdir nphard_sat_level_o3_mini_high
+## o3 - no drop
+
+# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GATEWAY_PHI_4_CONFIG --exp_logdir nphard_sat1_o3_mini_reasoning_10_high_1_all_runs 
+
+#--resume_from /home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat1_o3_mini_reasoning_10_high_1_all_runs/2025-03-14-15-00-24.312011/inference_result/inference_result.jsonl
+
+## o1 -- no drop
+
+# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GATEWAY_PHI_4_CONFIG --exp_logdir nphard_sat_level_o1_2024-12-17 --resume_from /home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_level_o1_2024-12-17/2025-02-17-19-45-54.233604/inference_result/inference_result.jsonl
+
+## gpt4o -- no drop
+
+# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GATEWAY_PHI_4_CONFIG --exp_logdir nphard_sat_gpt4o_2024_08_06 --resume_from /home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_gpt4o_2024_08_06/2025-03-13-16-57-07.160657/inference_result/inference_result.jsonl
+
+## deepseek r1 -- drop of 0.5%
+
+# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GATEWAY_PHI_4_CONFIG --exp_logdir nphard_sat1_deepseek_together --resume_from /home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat1_deepseek_together/2025-03-13-16-16-47.179595/inference_result/inference_result.jsonl
+
+
+## deepseek distilled llama -- 
+
+# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GATEWAY_PHI_4_CONFIG --exp_logdir nphard_sat_level_deepseek_distill_llama --resume_from /home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_level_deepseek_distill_llama/2025-04-11-01-43-52.244610/inference_result/inference_result.jsonl
+
+
+# ## claude 3.7 thinking -- drop of 0.5
+
+# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GATEWAY_PHI_4_CONFIG --exp_logdir nphard_sat_CLAUDE_3_7_SONNET_THINKING 
+
+#--resume_from /home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_CLAUDE_3_7_SONNET_THINKING/2025-03-21-16-33-50.561466/inference_result/inference_result.jsonl
+
+
+# ## claude 3.5 -- no drop
+
+# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GATEWAY_PHI_4_CONFIG --exp_logdir nphard_sat_level_claude-3-5-sonnet-20241022 --resume_from /home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_level_claude-3-5-sonnet-20241022/2025-02-17-19-26-05.135180/inference_result/inference_result.jsonl
+
+
+# # ## gemini 2.0 pro -- no drop (0.2%)
+
+# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GATEWAY_PHI_4_CONFIG --exp_logdir nphard_sat_gemini-2.0-pro --resume_from /home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_gemini-2.0-pro/2025-03-05-22-50-27.830655/inference_result/inference_result.jsonl
+
+# # ## nphard_sat_level_gemini-2.0-flash-thinking-exp-01-21_2_no_code -- no drop (0.2%)
+
+# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GATEWAY_PHI_4_CONFIG --exp_logdir nphard_sat_level_gemini-2.0-flash-thinking-exp-01-21_2_no_code --resume_from /home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_level_gemini-2.0-flash-thinking-exp-01-21_2_no_code/2025-03-18-12-31-47.382927/inference_result/inference_result.jsonl
+
+
+# # ## llama 405b -- large drop (14%)
+
+# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GATEWAY_PHI_4_CONFIG --exp_logdir nphard_sat_level_llama3_1_405b_2 --resume_from /home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_level_llama3_1_405b_2/2025-03-17-18-33-31.635028/inference_result/inference_result.jsonl
+
+
+# # ## phi4 -- large drop (14%)
+
+python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GATEWAY_PHI_4_CONFIG --exp_logdir nphard_sat_level_phi4_0-8 --resume_from /home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_level_phi4_0-8/2025-04-10-17-41-47.352197/inference_result/inference_result.jsonl
+
+
+###############################################
+
+
+# # # # # ### GATEWAY_PHI_4_CONFIG
+
+## phi4-reasoning -- small drop (~7%)
+
+# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GATEWAY_PHI_4_CONFIG --exp_logdir Phi-4_reasoning --resume_from /home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/Phi-4_reasoning/2025-04-11-16-24-34.324761/inference_result/inference_result.jsonl
