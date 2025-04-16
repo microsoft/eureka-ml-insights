@@ -63,7 +63,6 @@ TOGETHER_DEEPSEEK_R1_Distill_Llama_70B_CONFIG = ModelConfig(
     },
 )
 
-
 # OpenAI models
 
 OPENAI_SECRET_KEY_PARAMS = {
