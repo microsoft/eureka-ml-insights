@@ -478,7 +478,7 @@ class SPATIAL_MAP_REPORTING_PIPELINE(SPATIAL_MAP_PIPELINE):
 
     def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
         super().configure_pipeline(model_config, resume_from)
-        self.evalreporting_comp.data_reader_config.init_args["path"] = resume_from
+        self.preeval_data_post_processing_comp.data_reader_config.init_args["path"] = resume_from
         # Configure the pipeline
         return PipelineConfig(
             [
