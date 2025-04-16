@@ -45,7 +45,13 @@ class Inference(Component):
         super().__init__(output_dir)
         self.model: Model = model_config.class_name(**model_config.init_args)
         self.data_loader = data_config.class_name(**data_config.init_args)
-        self.appender = JsonLinesWriter(os.path.join(output_dir, "inference_result.jsonl"), mode="a")
+
+        json_path = os.path.join(output_dir, "inference_result.jsonl")
+        self.appender = JsonLinesWriter(json_path, mode="a")
+        # Create file if does not exist
+        if not os.path.exists(json_path):
+            with open(json_path, 'a'):
+                pass
 
         self.resume_from = resume_from
         if resume_from and not os.path.exists(resume_from):

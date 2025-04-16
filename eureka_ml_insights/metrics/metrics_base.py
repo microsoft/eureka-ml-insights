@@ -130,6 +130,13 @@ class SubstringExistsMatch(ClassicMetric):
     def __evaluate__(self, answer_text, target_text, is_valid):
         if not is_valid:
             return "none"
+        
+        if not isinstance(answer_text, str):
+            answer_text = str(answer_text)
+
+        if not isinstance(target_text, str):
+            target_text = str(target_text)
+
         return "correct" if target_text.lower() in answer_text.lower() else "incorrect"
 
 
