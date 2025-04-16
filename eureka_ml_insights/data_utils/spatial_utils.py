@@ -263,7 +263,7 @@ def extract_answer_from_text_map_and_maze(model_output_raw, options, match_first
     if answers_match:
         model_output_parsed =  answers_match[match_index]
 
-    return model_output_parsed + " or " + model_output_parsed_letter
+    return " or ".join(filter(None, [model_output_parsed, model_output_parsed_letter]))
 
 
 @dataclass
