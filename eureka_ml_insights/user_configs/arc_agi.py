@@ -29,6 +29,7 @@ from eureka_ml_insights.data_utils.transform import (
     ExtractUsageTransform,
     MajorityVoteTransform,
     MultiplyTransform,
+    ReplaceStringsTransform,
     RunPythonTransform,
     SamplerTransform,
     SequenceTransform,
@@ -64,6 +65,11 @@ class ARC_AGI_v1_PIPELINE(ExperimentConfig):
                 {
                    "path": "pxferna/ARC-AGI-v1",
                    "split": "test",
+                    "transform": SequenceTransform(
+                        [
+                            MultiplyTransform(n_repeats=1),
+                        ]
+                    ),
                 }
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
@@ -135,12 +141,88 @@ class ARC_AGI_v1_PIPELINE(ExperimentConfig):
             output_dir=os.path.join(self.log_dir, "eval_report"),
         )
 
+        self.posteval_data_post_processing_comp = DataProcessingConfig(
+            component_type=DataProcessing,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.evalreporting_comp.output_dir, "metric_results.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                        CopyColumn(
+                                column_name_src="ExactMatch_result",
+                                column_name_dst="ExactMatch_result_numeric",
+                            ),
+                        ReplaceStringsTransform(
+                                columns=["ExactMatch_result_numeric"],
+                                mapping={'incorrect': '0', 'correct': '1', 'none': 'NaN'},
+                                case=False)
+                        ]
+                    ),
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "posteval_data_post_processing_output"),
+        )
+
+        self.best_of_n_evalreporting_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.posteval_data_post_processing_comp.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl"
+                },
+            ),
+            aggregator_configs=[
+                AggregatorConfig(
+                    BiLevelAggregator, 
+                    {
+                        "column_names": [
+                            "ExactMatch_result_numeric",
+                        ],
+                        "first_groupby": "uid",
+                        "filename_base": "ExactMatch_Total_BestOfN",
+                    }),
+                # the first three reports aggregate results by data_point_id and take the best out of N
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "ExactMatch_result_numeric"
+                        ],
+                        "first_groupby": "uid",
+                        "second_groupby": "split",
+                        "filename_base": "ExactMatch_Grouped_BestOfN",
+                        "agg_fn": "max"
+                    },
+                ),
+            ],
+            output_dir=os.path.join(self.log_dir, "bestofn_eval_report"),
+        )
+
         # Configure the pipeline
         return PipelineConfig(
             [
                 self.data_processing_comp,
                 self.inference_comp,
                 self.evalreporting_comp,
+                self.posteval_data_post_processing_comp,
+                self.best_of_n_evalreporting_comp,
             ],
             self.log_dir,
         )
+
+
+class ARC_AGI_v1_PIPELINE_5Run(ARC_AGI_v1_PIPELINE):
+    """This class specifies the config for running the GPQA benchmark 5 repeated times"""
+
+    def configure_pipeline(
+        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
+    ) -> PipelineConfig:
+        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
+        # data preprocessing
+        self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
+            MultiplyTransform(n_repeats=5)
+        )
+        return pipeline
