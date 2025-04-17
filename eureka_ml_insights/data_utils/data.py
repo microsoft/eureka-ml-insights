@@ -527,6 +527,7 @@ class HFDataReader(DataReader):
                 (This is passed into load_dataset parameter 'name' — dataset configuration name.)
             transform: optional list of Transforms, to apply after loading.
             cache_dir: optional str, local cache path.
+            load_data_from_disk: optional bool, if True, load the Huggingface dataset from specified local path.
         """
         super().__init__(path=path, transform=transform, **kwargs)
         self.split = split
