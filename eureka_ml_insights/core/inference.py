@@ -48,7 +48,10 @@ class Inference(Component):
 
         json_path = os.path.join(output_dir, "inference_result.jsonl")
         self.appender = JsonLinesWriter(json_path, mode="a")
-        # Create file if does not exist
+
+        # If there are no records for inference component, previously no file was written.
+        # This can create an issue for subsequent pipelines that expect a file to be present and will handle a 0-length file appropriately.
+        # To avoid this, we create an empty file to start if it does not exist.
         if not os.path.exists(json_path):
             with open(json_path, 'a'):
                 pass
