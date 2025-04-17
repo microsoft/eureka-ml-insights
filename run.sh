@@ -123,7 +123,7 @@
 
 # # ## phi4 -- large drop (14%)
 
-python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GATEWAY_PHI_4_CONFIG --exp_logdir nphard_sat_level_phi4_0-8 --resume_from /home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_level_phi4_0-8/2025-04-10-17-41-47.352197/inference_result/inference_result.jsonl
+# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GATEWAY_PHI_4_CONFIG --exp_logdir nphard_sat_level_phi4_0-8 --resume_from /home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/nphard_sat_level_phi4_0-8/2025-04-10-17-41-47.352197/inference_result/inference_result.jsonl
 
 
 ###############################################
@@ -134,3 +134,15 @@ python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GAT
 ## phi4-reasoning -- small drop (~7%)
 
 # python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GATEWAY_PHI_4_CONFIG --exp_logdir Phi-4_reasoning --resume_from /home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/Phi-4_reasoning/2025-04-11-16-24-34.324761/inference_result/inference_result.jsonl
+
+
+########################
+
+# ## phi4-reasoning medium -- small drop (~7%)
+
+# python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GATEWAY_PHI_4_CONFIG --exp_logdir PHI_4_REASONING_phi-16b --resume_from /home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/PHI_4_REASONING_phi-16b/2025-04-17-01-31-27.066175/inference_result/inference_result.jsonl
+
+
+## phi4-reasoning high -- small drop (~7%)
+
+python main.py --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config GATEWAY_PHI_4_CONFIG --exp_logdir PHI_4_REASONING_phi-15b-rl --resume_from /home/vivineet/projects/evaluation/NPHardEval/launch_aml/launch_aml_04-07-2025_sat/eureka-ml-insights_sat_remove_dummy/logs/NPHARD_SAT_PIPELINE_MULTIPLE_RUNS/PHI_4_REASONING_phi-15b-rl/2025-04-17-02-00-17.184237/inference_result/inference_result.jsonl
