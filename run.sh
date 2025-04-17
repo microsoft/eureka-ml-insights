@@ -80,6 +80,7 @@
 
 # # # # # ### GATEWAY_PHI_4_CONFIG
 
-python main.py --exp_config NPHARD_TSP_PIPELINE_MULTIPLE_RUNS --model_config OAI_GPT4_1106_PREVIEW_CONFIG --exp_logdir Phi-4_reasoning_R1 --resume_from /home/vivineet/projects/evaluation/NPHardEval/tsp_sat_04-09-2025/TSP/TSP_03_05_2025/eureka-ml-insights/logs/NPHARD_TSP_PIPELINE_MULTIPLE_RUNS/Phi-4_reasoning_R1/2025-04-15-10-10-16.193921/inference_result/inference_result.jsonl
+# python main.py --exp_config NPHARD_TSP_PIPELINE_MULTIPLE_RUNS --model_config OAI_GPT4_1106_PREVIEW_CONFIG --exp_logdir Phi-4_reasoning_R1 --resume_from /home/vivineet/projects/evaluation/NPHardEval/tsp_sat_04-09-2025/TSP/TSP_03_05_2025/eureka-ml-insights/logs/NPHARD_TSP_PIPELINE_MULTIPLE_RUNS/Phi-4_reasoning_R1/2025-04-15-10-10-16.193921/inference_result/inference_result.jsonl
 
+python main.py --exp_config NPHARD_TSP_PIPELINE_MULTIPLE_RUNS --model_config OAI_GPT4_1106_PREVIEW_CONFIG --exp_logdir PHI_4_REASONING_phi-16b --resume_from /home/vivineet/projects/evaluation/NPHardEval/tsp_sat_04-09-2025/TSP/TSP_03_05_2025/eureka-ml-insights/logs/NPHARD_TSP_PIPELINE_MULTIPLE_RUNS/PHI_4_REASONING_phi-16b/2025-04-16-20-36-55.936323/inference_result/inference_result.jsonl
 
