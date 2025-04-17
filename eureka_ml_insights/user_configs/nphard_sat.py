@@ -88,6 +88,53 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
             max_concurrent=20,
         )
 
+# # ##### here add a transform to remove the <|dummy_87|> token from the response ###############
+
+#         # # Eval data post processing component.
+#         self.inference_data_post_processing_remove_dummy = DataProcessingConfig(
+#             component_type=DataProcessing,
+#             data_reader_config=DataSetConfig(
+#                 DataReader,
+#                 {
+#                     "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+#                     "format": ".jsonl",
+#                     "transform": RunPythonTransform(
+#                         "import re\n"
+#                         "_tag = r'<\\|dummy_\\d+\\|>'\n"
+#                         "_between_two_tags = re.compile(f'{_tag}.*?{_tag}', re.DOTALL)\n"
+#                         "df['model_output'] = df['model_output'].str.replace(_between_two_tags, '', regex=True)"
+#                     ),                    
+#                 },
+#             ),
+#             output_dir=os.path.join(self.log_dir, "inference_data_post_processing_remove_dummy_output"),            
+#         )
+
+# ###############################################################
+
+
+# ##### here add a transform to remove the <|dummy_87|> token from the response ###############
+
+        # # Eval data post processing component.
+        self.inference_data_post_processing_remove_dummy = DataProcessingConfig(
+            component_type=DataProcessing,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+                    "format": ".jsonl",
+                    "transform": RunPythonTransform(
+                        "import re\n"
+                        "# Match a <think> … </think> block (non‑greedy) across new‑lines\n"
+                        "_between_think = re.compile(r'<think>.*?</think>', re.DOTALL | re.IGNORECASE)\n"
+                        "df['model_output'] = df['model_output'].str.replace(_between_think, '', regex=True)"
+                    ),                   
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "inference_data_post_processing_remove_dummy_output"),            
+        )
+
+###############################################################
+
 ################################################################ LLM based extractor ###########################
 
         self.preeval_data_post_processing_comp = DataProcessingConfig(
@@ -181,28 +228,7 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
 
 
 
-# # ##### here add a transform to remove the <|dummy_87|> token from the response ###############
 
-#         # # Eval data post processing component.
-#         self.inference_data_post_processing_remove_dummy = DataProcessingConfig(
-#             component_type=DataProcessing,
-#             data_reader_config=DataSetConfig(
-#                 DataReader,
-#                 {
-#                     "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
-#                     "format": ".jsonl",
-#                     "transform": RunPythonTransform(
-#                         "import re\n"
-#                         "_tag = r'<\\|dummy_\\d+\\|>'\n"
-#                         "_between_two_tags = re.compile(f'{_tag}.*?{_tag}', re.DOTALL)\n"
-#                         "df['model_output'] = df['model_output'].str.replace(_between_two_tags, '', regex=True)"
-#                     ),                    
-#                 },
-#             ),
-#             output_dir=os.path.join(self.log_dir, "inference_data_post_processing_remove_dummy_output"),            
-#         )
-
-# ###############################################################
 
 
 
@@ -485,6 +511,8 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
             [
                 self.data_processing_comp,
                 self.inference_comp,
+                # self.inference_data_post_processing_remove_dummy,
+
 # #############
                 self.preeval_data_post_processing_comp,
                 self.filter_empty_answer,
@@ -492,7 +520,6 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
                 self.data_join,
 ##############
 
-                # # self.inference_data_post_processing_remove_dummy,
 
                 self.evalreporting_comp,
                 self.posteval_data_post_processing_comp,
@@ -514,7 +541,7 @@ class NPHARD_SAT_PIPELINE_MULTIPLE_RUNS(NPHARD_SAT_PIPELINE):
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         # data preprocessing
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
-            MultiplyTransform(n_repeats=5)
+            MultiplyTransform(n_repeats=2)
         )
         return pipeline
 
