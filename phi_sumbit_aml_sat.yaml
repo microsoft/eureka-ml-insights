@@ -4,10 +4,11 @@ type: sweep
 compute: /subscriptions/22da88f6-1210-4de2-a5a3-da4c7c2a1213/resourcegroups/gcr-singularity/providers/microsoft.machinelearningservices/virtualclusters/baltic08
 resources:
   instance_count: 1
-  # instance_type: Singularity.ND12_H100_v5 # 1 GPU 
-  # instance_type: Singularity.ND24_H100_v5 # 2 GPUs
-  # instance_type: Singularity.ND48_H100_v5 # 4 GPUs
-  instance_type: Singularity.ND96r_H100_v5 # 8 GPUs
+  # instance_type: Singularity.ND12_H100_v5 # 1 GPU (for baltic08)
+  # instance_type: Singularity.ND24_H100_v5 # 2 GPUs (for baltic08)
+  # instance_type: Singularity.ND48_H100_v5 # 4 GPUs (for baltic08)
+  # instance_type: Singularity.ND96r_H100_v5 # 8 GPUs (for baltic08) 
+  instance_type: Singularity.ND96r_H100_v5 # 8 GPUs (for baltic08)
   properties:
     ComputeSpecification:
       Automatic: false
@@ -22,7 +23,8 @@ resources:
       # slaTier: Standard
       slaTier: Premium
 experiment_name: eureka_phi_evaluation
-display_name: p0_eureka_phi_evaluation_8vllm_sat_2
+  #display_name: p0_eureka_phi_evaluation_omni_math_sft15b
+display_name: p0_eureka_phi_15b_RL_64K_evaluation_baltic_sat
 tags:
   Project_Name: AI Frontiers Foundation Models and Evaluation
   ProjectID: PRJ-0423-A26
@@ -74,10 +76,11 @@ trial:
       python convert_zero3_to_fp32.py --input ${{inputs.input_ckpt}}/$MODEL_PATH -t ${{inputs.tokenizer}} --output ${{outputs.output_ckpt}}/$MODEL_PATH/fp32
       python convert_fp32_to_hf.py ${{outputs.output_ckpt}}/$MODEL_PATH/fp32 --pretrained_tokenizer_name_or_path ${{inputs.tokenizer}} --output_model_path ${{outputs.output_ckpt}}/$MODEL_PATH/hf
     fi
-    export MODEL_PATH=$MODEL_PATH/hf
+    # export MODEL_PATH=$MODEL_PATH/hf
+    export MODEL_PATH=$MODEL_PATH
 
     # start vllm servers
-    source start_vllm_servers.sh --world-size=$VLLM_LOCAL_NUM_INSTANCES --pretrained-model=${{outputs.output_ckpt}}/$MODEL_PATH --tokenizer-model=${{outputs.output_ckpt}}/$MODEL_PATH --base-port=$VLLM_LOCAL_BASE_PORT --api-key="none" --max-model-len=$MAX_SEQ_LEN --served-model-name=$VLLM_MODEL_NAME --dtype=bfloat16 --generation-config=auto --override-generation-config='{\"temperature\": ${{search_space.temperature}}, \"top_p\": 0.95, \"do_sample\": true, \"eos_token_id\":100265, \"pad_token_id\":100349, \"max_new_tokens\": $MAX_EVAL_SEQ_LEN}'
+    source start_vllm_servers.sh --world-size=$VLLM_LOCAL_NUM_INSTANCES --pretrained-model=${{outputs.output_ckpt}}/$MODEL_PATH --tokenizer-model=${{outputs.output_ckpt}}/$MODEL_PATH --base-port=$VLLM_LOCAL_BASE_PORT --api-key="none" --max-model-len=$MAX_SEQ_LEN --served-model-name=$VLLM_MODEL_NAME --dtype=bfloat16 --max-num-batched-tokens=65536 --seed=${{search_space.seed}} --generation-config=auto --override-generation-config='{\"temperature\": ${{search_space.temperature}}, \"top_p\": 0.95, \"do_sample\": true, \"eos_token_id\":100265, \"pad_token_id\":100349, \"max_length\": $MAX_SEQ_LEN}'
     
     # wait for the servers to start
     while true; do
@@ -102,20 +105,30 @@ trial:
 
       sleep 10
     done
-    # run Eureka evaluation
-    cd /workspace
-    # git clone -b phi-sys --single-branch https://github.com/microsoft/eureka-ml-insights.git
-    # cd eureka-ml-insights
-    # pip install -e .
 
-    # run the evaluation
+    # run Eureka evaluation
     cd ${CURRENT_DIR}
     pip install -e .
-    python main.py --local_vllm --num_servers $VLLM_LOCAL_NUM_INSTANCES --ports 8000 8001 8002 8003 8004 8005 8006 8007 --exp_config NPHARD_SAT_PIPELINE_MULTIPLE_RUNS --model_config VLLM_PHI_4_SFT_APRIL_2025_CONFIG --model_name $VLLM_MODEL_NAME --exp_logdir ${{outputs.output_dir}}/phi_reasoning/$BENCHMARK_NAME --resume_from ${{inputs.resume_from}}/inference_result.jsonl
+    pip show vllm
+    python main.py --local_vllm --num_servers "$VLLM_LOCAL_NUM_INSTANCES" --ports 8000 8001 8002 8003 8004 8005 8006 8007 --exp_config "$EUREKA_EXPERIMENT_CONFIG" --model_config "$EUREKA_MODEL_CONFIG" --eval_model_config GATEWAY_GPT4O_CONFIG --model_name "$VLLM_MODEL_NAME" --exp_logdir "$EUREKA_EXPLOGDIR"
+    
 
-  environment: azureml:reasoning-lm:300325_v6
+    most_recent_dir=$(ls -td logs/$EUREKA_EXPERIMENT_CONFIG/$EUREKA_EXPLOGDIR/*/ | head -n 1)
+    if [[ -n "$most_recent_dir" ]]; then
+      echo "Backing up logs from: $most_recent_dir"
+      # copy the most recent directory to ${{outputs.output_dir}}/phi_reasoning/
+      mkdir -p ${{outputs.output_dir}}/$EUREKA_EXPERIMENT_CONFIG/$EUREKA_EXPLOGDIR/
+      cp -r $most_recent_dir ${{outputs.output_dir}}/$EUREKA_EXPERIMENT_CONFIG/$EUREKA_EXPLOGDIR/
+    else
+      echo "No log directory found yet."
+    fi
+        
+  environment: azureml:reasoning-lm:110425_v1 # for baltic08
+  #environment: azureml:reasoning-lm:120425_v1 # for baltic08
   environment_variables:
-    BENCHMARK_NAME: SAT_2
+    EUREKA_EXPERIMENT_CONFIG: NPHARD_SAT_PIPELINE_MULTIPLE_RUNS
+    EUREKA_EXPLOGDIR: PHI_4_REASONING_phi-15b-rl-max-64k
+    EUREKA_MODEL_CONFIG: VLLM_PHI_4_RL_APRIL_2025_CONFIG_60K
     JOB_EXECUTION_MODE: Basic
     AZUREML_COMPUTE_USE_COMMON_RUNTIME: 'true'
     _AZUREML_SINGULARITY_JOB_UAI: /subscriptions/d4fe558f-6660-4fe7-99ec-ae4716b5e03f/resourcegroups/aifrontiers/providers/Microsoft.ManagedIdentity/userAssignedIdentities/aifrontiers
@@ -126,7 +139,7 @@ trial:
 inputs:
   resume_from:
     type: uri_folder
-    path: azureml://subscriptions/d4fe558f-6660-4fe7-99ec-ae4716b5e03f/resourcegroups/aifrontiers/workspaces/aifrontiers_ws/datastores/aifshared/paths/evals/eureka/logs/phi_reasoning/SAT_2/2025-04-09-07-16-29.731193_resume_from_2/inference_result/
+    path: azureml://subscriptions/d4fe558f-6660-4fe7-99ec-ae4716b5e03f/resourcegroups/aifrontiers/workspaces/aifrontiers_ws/datastores/aifshared/paths/evals/eureka/logs/phi_reasoning/aime/2025-04-05-01-21-31.496206/inference_result/
     mode: ro_mount
   input_ckpt:
     type: uri_folder
@@ -154,11 +167,15 @@ search_space:
   model_config:
     type: choice
     values:
-      - sft_14b_allmathv2_code_2e_coco_5e_high32k_10xlr,sft_14b_allmathv2_code_2e_coco_5e_high32k_10xlr/13660,32768,29000,reasoning
+      - rl_checkpoints/phi-15b-rl-max-64k,rl_checkpoints/phi-15b-rl-max-64k,32768,29000,reasoning
   temperature:
     type: choice
     values:
       - 0.8
+  seed:
+    type: choice
+    values:
+      - 42
 objective:
   primary_metric: dummy_metric
   goal: maximize

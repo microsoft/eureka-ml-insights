@@ -85,7 +85,7 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"), 
             resume_from=resume_from,
-            max_concurrent=20,
+            max_concurrent=50,
         )
 
 # # ##### here add a transform to remove the <|dummy_87|> token from the response ###############

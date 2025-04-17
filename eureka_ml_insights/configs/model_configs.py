@@ -63,7 +63,6 @@ TOGETHER_DEEPSEEK_R1_Distill_Llama_70B_CONFIG = ModelConfig(
     },
 )
 
-
 # OpenAI models
 
 OPENAI_SECRET_KEY_PARAMS = {
@@ -344,7 +343,7 @@ DEEPSEEK_R1_CONFIG = ModelConfig(
             "key_vault_url": None,
         },
         "max_tokens": 32768,
-        # the timeout parameter is passed to urllib.request.urlopen(request, timeout=self.timeout) in ServerlessAzureRestEndpointModel
+        # the timeout parameter is passed to urllib.request.urlopen(request, timeout=self.timeout) in ServerlessAzureRestEndpointModel 
         "timeout": 600,
     },
 )
@@ -394,5 +393,16 @@ VLLM_PHI_4_SFT_APRIL_2025_CONFIG = ModelConfig(
         "temperature": 0.8,
         "max_tokens": 30000,
         "system_message": "Your role as an assistant involves thoroughly exploring questions through a systematic thinking process before providing the final precise and accurate solutions. This requires engaging in a comprehensive cycle of analysis, summarizing, exploration, reassessment, reflection, backtracing, and iteration to develop well-considered thinking process. Please structure your response into two main sections: Thought and Solution using the specified format: <|dummy_86|> {Thought section} <|dummy_87|> {Solution section}. In the Thought section, detail your reasoning process in steps. Each step should include detailed considerations such as analysing questions, summarizing relevant findings, brainstorming new ideas, verifying the accuracy of the current steps, refining any errors, and revisiting previous steps. In the Solution section, based on various attempts, explorations, and reflections from the Thought section, systematically present the final solution that you deem correct. The Solution section should be logical, accurate, and concise and detail necessary steps needed to reach the conclusion. Now, try to solve the following question through the above guidelines:",
+    }
+)
+
+VLLM_PHI_4_RL_APRIL_2025_CONFIG_60K = ModelConfig(
+    # Use this config if you have already deployed the model
+    # and pass the service ports, num_servers, and model_name as commandline args
+    LocalVLLMModel,
+    {
+        "temperature": 0.8,
+        "max_tokens": 60000,
+        "system_message": "You are Phi, a language model trained by Microsoft to help users. Your role as an assistant involves thoroughly exploring questions through a systematic thinking process before providing the final precise and accurate solutions. This requires engaging in a comprehensive cycle of analysis, summarizing, exploration, reassessment, reflection, backtracing, and iteration to develop well-considered thinking process. Please structure your response into two main sections: Thought and Solution using the specified format: <think> {Thought section} </think> {Solution section}. In the Thought section, detail your reasoning process in steps. Each step should include detailed considerations such as analysing questions, summarizing relevant findings, brainstorming new ideas, verifying the accuracy of the current steps, refining any errors, and revisiting previous steps. In the Solution section, based on various attempts, explorations, and reflections from the Thought section, systematically present the final solution that you deem correct. The Solution section should be logical, accurate, and concise and detail necessary steps needed to reach the conclusion. Now, try to solve the following question through the above guidelines:",
     }
 )
