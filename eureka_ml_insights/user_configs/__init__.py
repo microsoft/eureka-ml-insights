@@ -10,6 +10,7 @@ from .aime import (
 )
 from .arc_agi import (
     ARC_AGI_v1_PIPELINE,
+    ARC_AGI_v1_PIPELINE_5Run,
 )
 from .ba_calendar import (
         BA_Calendar_PIPELINE,
