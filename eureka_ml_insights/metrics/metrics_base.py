@@ -128,7 +128,7 @@ class SubstringExistsMatch(ClassicMetric):
     """This class checks for a case-insensitive substring match."""
 
     def __evaluate__(self, answer_text, target_text, is_valid):
-        if not is_valid:
+        if not is_valid or not answer_text or answer_text=="invalid":
             return "none"
         
         # Some files store numerical values as numerical and others as strings.
