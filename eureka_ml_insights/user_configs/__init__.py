@@ -8,6 +8,8 @@ from .aime_seq import AIME_SEQ_PIPELINE
 from .arc_agi import (
     ARC_AGI_v1_PIPELINE,
     ARC_AGI_v1_PIPELINE_5Run,
+    Phi_ARC_AGI_v1_PIPELINE,
+    Phi_ARC_AGI_v1_PIPELINE_5Run,
 )
 from .ba_calendar import (
     BA_Calendar_Parallel_PIPELINE,
