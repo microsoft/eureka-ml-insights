@@ -6,6 +6,7 @@ from eureka_ml_insights.core.data_processing import DataProcessing
 from eureka_ml_insights.core.eval_reporting import EvalReporting
 from eureka_ml_insights.data_utils.arc_agi_utils import (
     ARCAGI_ExtractAnswer,
+    ARCAGI_CleanCOTAnswer,
 )
 from eureka_ml_insights.data_utils.data import (
     DataLoader,
@@ -91,13 +92,29 @@ class ARC_AGI_v1_PIPELINE(ExperimentConfig):
         if resume_logdir:
             self.log_dir = resume_from.split("/")[0:len(resume_from.split("/")) - 1]
 
+        # Configure the data post processing component.
+        self.data_post_processing = DataProcessingConfig(
+            component_type=DataProcessing,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        []
+                    ),
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "data_post_processing_output"),
+        )
+
         # Configure the evaluation and reporting component for evaluation and dataset level aggregation
         self.evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+                    "path": os.path.join(self.data_post_processing.output_dir, "transformed_data.jsonl"),
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
@@ -126,8 +143,6 @@ class ARC_AGI_v1_PIPELINE(ExperimentConfig):
                         "group_by": "split",
                     },
                 ),
-                # the next three reports take the average and std for all repeats
-                # the resulting numbers are the average and std of N pass@1 scores, where N is number of repeats
                 AggregatorConfig(
                     CountAggregator, 
                     {
@@ -206,6 +221,7 @@ class ARC_AGI_v1_PIPELINE(ExperimentConfig):
             [
                 self.data_processing_comp,
                 self.inference_comp,
+                self.data_post_processing,
                 self.evalreporting_comp,
                 self.posteval_data_post_processing_comp,
                 self.best_of_n_evalreporting_comp,
@@ -214,7 +230,40 @@ class ARC_AGI_v1_PIPELINE(ExperimentConfig):
         )
 
 
+class Phi_ARC_AGI_v1_PIPELINE(ARC_AGI_v1_PIPELINE):
+    def configure_pipeline(self, model_config=None, resume_from=None, **kwargs):
+        config = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
+        self.data_post_processing.data_reader_config.init_args["transform"] = SequenceTransform(
+            [
+                ColumnRename(
+                    name_mapping={
+                        "model_output": "cot_model_output",
+                    }
+                ),
+                AddColumn("post_cot_model_output"),
+                # RunPythonTransform("df['post_cot_model_output'] = df['post_cot_model_output'].apply(lambda x: x.split('</think>')[-1] if '</think>' in x else x)"),
+                ARCAGI_CleanCOTAnswer("cot_model_output", "post_cot_model_output"),
+                CopyColumn("post_cot_model_output", "model_output"),
+            ]
+        )
+        return config
+
+
 class ARC_AGI_v1_PIPELINE_5Run(ARC_AGI_v1_PIPELINE):
+    """This class specifies the config for running the GPQA benchmark 5 repeated times"""
+
+    def configure_pipeline(
+        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
+    ) -> PipelineConfig:
+        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
+        # data preprocessing
+        self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
+            MultiplyTransform(n_repeats=5)
+        )
+        return pipeline
+
+
+class Phi_ARC_AGI_v1_PIPELINE_5Run(ARC_AGI_v1_PIPELINE):
     """This class specifies the config for running the GPQA benchmark 5 repeated times"""
 
     def configure_pipeline(
