@@ -56,7 +56,7 @@ class MATHVISION_PIPELINE(ExperimentConfig):
                                 columns='options_string',
                                 mapping=lambda x: "" if len(x)==0 else ("\n[Options]:\n" + '\n'.join([chr(ord('A') + i) + ". " + opt for i, opt in enumerate(x)]))
                             ),
-                            SamplerTransform(sample_count=2, random_seed=1234),
+                            #SamplerTransform(sample_count=2, random_seed=1234),
                         ]
                     ),
                 },
