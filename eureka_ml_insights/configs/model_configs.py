@@ -172,6 +172,15 @@ OAI_GPT4O_MINI_2024_07_18_CONFIG = ModelConfig(
     },
 )
 
+OAI_GPT4O_2024_11_20_AUZRE_CONFIG = ModelConfig(
+    AzureOpenAIModel,
+    {
+        "model_name": "gpt-4o",
+        "url": "https://eurekaevals.openai.azure.com/",
+        "api_version": "2025-01-01-preview",
+    },
+)
+
 # Gemini models
 GEMINI_SECRET_KEY_PARAMS = {
     "key_name": "your_gemini_secret_key_name",
@@ -340,6 +349,16 @@ QWQ32B_LOCAL_CONFIG = ModelConfig(
         "model_name": "Qwen/QwQ-32B",
         # certain args will get passed to the vllm serve command
         "tensor_parallel_size": 2,
+    },
+)
+
+DEEPSEEK_R1_LOCAL_CONFIG = ModelConfig(
+    LocalVLLMModel,
+    {
+        # this name must match the vllm deployment name/path
+        "model_name": "Deepseek-R1",
+        # specify ports in case the model is already deployed
+        "ports": ["5001"],
     },
 )
 
