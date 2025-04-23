@@ -59,7 +59,7 @@ class ARC_AGI_v1_PIPELINE(ExperimentConfig):
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
             prompt_template_path=os.path.join(
-                os.path.dirname(__file__), "../prompt_templates/arc_agi_templates/arc_agi_v1_basic.jinja"
+                os.path.dirname(__file__), "../prompt_templates/arc_agi_templates/arc_agi_v1_grid_explanation.jinja"
             ),
             data_reader_config=DataSetConfig(
                 HFDataReader,
