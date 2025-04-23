@@ -230,7 +230,7 @@ class ARC_AGI_v1_PIPELINE(ExperimentConfig):
         )
 
 
-class Phi_ARC_AGI_v1_PIPELINE(ARC_AGI_v1_PIPELINE):
+class COT_ARC_AGI_v1_PIPELINE(ARC_AGI_v1_PIPELINE):
     def configure_pipeline(self, model_config=None, resume_from=None, **kwargs):
         config = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         self.data_post_processing.data_reader_config.init_args["transform"] = SequenceTransform(
@@ -263,7 +263,7 @@ class ARC_AGI_v1_PIPELINE_5Run(ARC_AGI_v1_PIPELINE):
         return pipeline
 
 
-class Phi_ARC_AGI_v1_PIPELINE_5Run(ARC_AGI_v1_PIPELINE):
+class COT_ARC_AGI_v1_PIPELINE_5Run(ARC_AGI_v1_PIPELINE):
     """This class specifies the config for running the GPQA benchmark 5 repeated times"""
 
     def configure_pipeline(
