@@ -345,3 +345,27 @@ class ExtractAnswerSpatialMapAndMaze(DFTransformBase):
             lambda x: extract_answer_from_text_map_and_maze(x[self.answer_column_name], x[self.extracted_options_column_name], self.match_first), axis=1
         )
         return df
+    
+@dataclass
+class ExtractConversations(DFTransformBase):
+    """This class is a base class for an answer extractor that is conditioned on the question type."""
+
+    def _parse_conversation(self, id, conversations):
+        prompts = []
+        ground_truths = []
+        for conversation in conversations:
+            if conversation["from"] == "human":
+                prompts.append(conversation["value"])
+            elif conversation["from"] == "gpt":
+                ground_truths.append(conversation["value"])                
+        
+        return zip([id]*len(prompts), prompts, ground_truths)
+    
+    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        result = df.apply(lambda x: self._parse_conversation(x["id"], x["conversations"]), axis=1)
+        flat_list = [item for sublist in result for item in sublist]
+        new_df = pd.DataFrame(flat_list)
+        
+        new_df.columns = ['id', 'prompt', 'ground_truth']
+
+        return new_df    

@@ -84,6 +84,8 @@ from .vision_language.spatial_map import (
     SPATIAL_MAP_TEXTONLY_PIPELINE,
 )
 
+from .vision_training_data import VISION_TRAINING_DATA
+
 __all__ = [
     OBJECT_DETECTION_PAIRS_PIPELINE,
     OBJECT_DETECTION_SINGLE_PIPELINE,
@@ -146,4 +148,5 @@ __all__ = [
     GSM8K_PIPELINE,
     GSM8K_MUTATED_PIPELINE,
     GSMSYMBOLIC_PIPELINE,
+    VISION_TRAINING_DATA,
 ]

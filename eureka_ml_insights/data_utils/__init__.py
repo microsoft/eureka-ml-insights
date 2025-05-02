@@ -18,6 +18,7 @@ from .spatial_utils import (
     ExtractAnswerGrid,
     ExtractAnswerSpatialMapAndMaze,
     ExtractQuestionOptions,
+    ExtractConversations,
 )
 from .transform import (
     AddColumn,
@@ -80,4 +81,5 @@ __all__ = [
     MajorityVoteTransform,
     NumpyEncoder,
     ExtractUsageTransform,
+    ExtractConversations,
 ]
