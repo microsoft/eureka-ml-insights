@@ -54,7 +54,7 @@ class TestExtractAnswer(unittest.TestCase):
 
         results = []
         for i, test in enumerate(testcases):
-            extracted_answer = extract_answer_from_text_map_and_maze(test, target_options[i])
+            extracted_answer = extract_answer_from_text_map_and_maze(test, target_options[i], is_valid=True)
             results.append(correct_answers[i].lower() in extracted_answer.lower())
 
         self.assertTrue(all(results))
