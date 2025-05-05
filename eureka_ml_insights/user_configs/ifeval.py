@@ -51,7 +51,6 @@ class IFEval_PIPELINE(ExperimentConfig):
                     "path": "google/IFEval",
                     "split": "train",
                     "transform": SequenceTransform([
-                        #SamplerTransform(random_seed=5, sample_count=10),
                         MultiplyTransform(n_repeats=1)
                     ]),
                 },
