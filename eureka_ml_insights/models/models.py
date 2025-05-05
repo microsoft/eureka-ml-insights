@@ -527,7 +527,6 @@ class DirectOpenAIClientMixIn(KeyBasedAuthMixIn):
     def get_client(self):
         from openai import OpenAI
 
-
         return OpenAI(
             base_url=self.base_url,
             api_key=self.api_key,

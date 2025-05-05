@@ -40,18 +40,15 @@ class Omni_Math_PIPELINE(ExperimentConfig):
     def configure_pipeline(self, model_config=None, resume_from=None, eval_resume_from=None, eval_model_config=None, **kwargs) -> PipelineConfig:
         # data preprocessing
 
-        # self.log_dir = 'logs/Omni_Math_Parallel_PIPELINE/claude_3_7_sonnet_thinking_temp1_mtok32k_eval1/2025-03-28-18-57-31.272848/' 
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
             prompt_template_path=os.path.join(os.path.dirname(__file__), "../prompt_templates/omni_math_templates/omni_math_cot.jinja"),
-            #prompt_template_path=os.path.join(os.path.dirname(__file__), "../prompt_templates/omni_math_templates/omni_math_brief.jinja"),
             data_reader_config=DataSetConfig(
                 HFDataReader,
                 {
                    "path": "KbsdJames/Omni-MATH",
                    "split": "test",
                    "transform": SequenceTransform([
-                       #SamplerTransform(sample_count=20, random_seed=99),
                     MultiplyTransform(n_repeats=1),
                    ]),
                 }
@@ -72,7 +69,6 @@ class Omni_Math_PIPELINE(ExperimentConfig):
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
             max_concurrent=10,
-            #requests_per_minute=5
         )
 
         # eval data preprocessing
@@ -87,7 +83,6 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                     ColumnRename(name_mapping={"n_output_tokens":"gen_solution_n_output_tokens",
                                                "usage": "gen_solution_usage",
                                                "is_valid": "gen_solution_is_valid"}),
-                    # SamplerTransform(sample_count=5, random_seed=99),
                  ])},
             ),
             output_dir=os.path.join(self.log_dir, "eval_data_processing_output"),
@@ -116,9 +111,7 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            #ExtractUsageTransform(model_config, prepend_completion_read_col="gen_solution_"),
                             ExtractUsageTransform(model_config, usage_column="gen_solution_usage", n_tokens_column="gen_solution_n_output_tokens"),
-                            # RunPythonTransform("df = df[df['data_repeat_id'] != 'repeat_3']"),
                             ColumnRename(
                                 name_mapping={
                                     "model_output": "raw_output",
@@ -792,212 +785,3 @@ class Omni_Math_Parallel_PIPELINE(Omni_Math_PIPELINE):
         # data preprocessing
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms[-1] = MultiplyTransform(n_repeats=5)
         return pipeline
-
-
-class Omni_Math_ExtractUsage_PIPELINE(Omni_Math_PIPELINE):
-    """This class specifies the config for running Omni Math benchmark 5 repeated times"""
-
-    def configure_pipeline(
-            self, model_config: ModelConfig, resume_from: str = None, eval_resume_from: str = None, eval_model_config: ModelConfig = None, **kwargs: dict[str, Any]
-    ) -> PipelineConfig:
-        # data preprocessing
-        self.usage_data_processing_comp = DataProcessingConfig(
-            component_type=DataProcessing,
-            data_reader_config=DataSetConfig(
-                DataReader,
-                {
-                    "path": eval_resume_from,
-                    "format": ".jsonl",
-                    "transform": SequenceTransform(
-                        [
-                            ExtractUsageTransform(model_config, prepend_completion_read_col="gen_solution_"),
-                        ]
-                    ),
-                },
-            ),
-            output_dir=os.path.join(self.log_dir, "usage_data_processing_output"),
-        )
-
-        # Configure the evaluation and reporting component for evaluation and dataset level aggregation
-        self.usage_evalreporting_comp = EvalReportingConfig(
-            component_type=EvalReporting,
-            data_reader_config=DataSetConfig(
-                DataReader,
-                {
-                    "path": os.path.join(self.usage_data_processing_comp.output_dir, "transformed_data.jsonl"),
-                    "format": ".jsonl",
-                },
-            ),
-            aggregator_configs=[
-                # reports for average completion usage
-                AggregatorConfig(BiLevelAggregator, 
-                    {
-                        "column_names": ["usage_completion"], 
-                        "first_groupby": "data_point_id", 
-                        "filename_base": "UsageCompletion",
-                        "agg_fn": "mean"
-                    }),
-                AggregatorConfig(BiLevelAggregator, 
-                    {
-                        "column_names": ["usage_completion"], 
-                        "first_groupby": ["data_point_id", "difficulty"],
-                        "second_groupby": "difficulty",
-                        "filename_base": "UsageCompletion_by_difficulty",
-                        "agg_fn": "mean"
-                    }),
-                AggregatorConfig(BiLevelAggregator, 
-                    {
-                        "column_names": ["usage_completion"], 
-                        "first_groupby": ["data_point_id", "source"],
-                        "second_groupby": "source",
-                        "filename_base": "UsageCompletion_by_difficulty_source",
-                        "agg_fn": "mean"
-                    }),
-            ],
-            output_dir=os.path.join(self.log_dir, "eval_report"),
-        )
-
-        # Aggregate the results by best of n
-        self.usage_bon_evalreporting_comp = EvalReportingConfig(
-            component_type=EvalReporting,
-            data_reader_config=DataSetConfig(
-                DataReader,
-                {
-                    "path": os.path.join(self.usage_data_processing_comp.output_dir, "transformed_data.jsonl"),
-                    "format": ".jsonl",
-                },
-            ),
-            aggregator_configs=[
-                # aggregates results by data_point_id and takes the sum of usage for completion tokens
-                AggregatorConfig(
-                    BiLevelAggregator,
-                    {
-                        "column_names": [
-                            "usage_completion"
-                        ],
-                        "first_groupby": "data_point_id",
-                        "filename_base": "UsageCompletion_BestOfN",
-                         "agg_fn": "sum"
-                    },
-                ),
-            ],
-            output_dir=os.path.join(self.log_dir, "bestofn_eval_report"),
-        )
-
-        self.usage_domain_eval_data_processing_comp = DataProcessingConfig(
-            component_type=DataProcessing,
-            data_reader_config=DataSetConfig(
-                DataReader,
-                {
-                    "path": os.path.join(self.usage_data_processing_comp.output_dir, "transformed_data.jsonl"),
-                    "format": ".jsonl",
-                    "transform": SequenceTransform(
-                        [
-                            RunPythonTransform("df['highlevel_domain'] = df['domain'].apply(lambda x: list(set([y.split('->')[0] for y in x])))"),
-                            RunPythonTransform("df['sub_domain'] = df['domain'].apply(lambda x: list(set([y.split('->')[1] for y in x])))"),
-                            #RunPythonTransform("df['sec_sub_domain'] = df['domain'].apply(lambda x: list(set([y.split('->')[2] for y in x])))"),
-                            # RunPythonTransform("df = df.explode(['highlevel_domain', 'sub_domain', 'sec_sub_domain'])"),
-                        ]
-                    ),
-                },
-            ),
-            output_dir=os.path.join(self.log_dir, "domain_eval_data_processing_output"),
-        )
-
-        
-        # Configure the evaluation and reporting component for domain level aggregation
-        self.usage_domain_evalreporting_comp = EvalReportingConfig(
-            component_type=EvalReporting,
-            data_reader_config=DataSetConfig(
-                DataReader,
-                {
-                    "path": os.path.join(self.usage_data_processing_comp.output_dir, "transformed_data.jsonl"),
-                    "format": ".jsonl",
-                    "transform": SequenceTransform(
-                        [
-                            RunPythonTransform("df = df.explode(['highlevel_domain'])"), #, 'sub_domain', 'sec_sub_domain'])"),
-                            # RunPythonTransform("df = df[df['data_repeat_id'] == 'repeat_0']"),
-                        ]
-                    ),
-                },
-            ),
-            aggregator_configs=[
-                AggregatorConfig(BiLevelAggregator, 
-                    {
-                        "column_names": ["usage_completion"], 
-                        "first_groupby": ["data_point_id", "highlevel_domain"],
-                        "second_groupby": "highlevel_domain",
-                        "filename_base": "UsageCompletion_by_highlevel_domain",
-                        "agg_fn": "mean"
-                    }),
-            ],
-            output_dir=os.path.join(self.log_dir, "eval_report_by_domain"),
-        )
-        # Configure the evaluation and reporting component for domain level aggregation
-        self.usage_sub_domain_evalreporting_comp = EvalReportingConfig(
-            component_type=EvalReporting,
-            data_reader_config=DataSetConfig(
-                DataReader,
-                {
-                    "path": os.path.join(self.usage_data_processing_comp.output_dir, "transformed_data.jsonl"),
-                    "format": ".jsonl",
-                    "transform": SequenceTransform(
-                        [
-                            RunPythonTransform("df = df.explode(['sub_domain'])"),
-                        ]
-                    ),
-                },
-            ),
-            aggregator_configs=[
-                AggregatorConfig(BiLevelAggregator, 
-                    {
-                        "column_names": ["usage_completion"], 
-                        "first_groupby": ["data_point_id", "sub_domain"],
-                        "second_groupby": "sub_domain",
-                        "filename_base": "UsageCompletion_by_sub_domain",
-                        "agg_fn": "mean"
-                    }),                
-            ],
-            output_dir=os.path.join(self.log_dir, "eval_report_by_sub_domain"),
-        )
-        # Configure the evaluation and reporting component for domain level aggregation
-        self.usage_sec_sub_domain_evalreporting_comp = EvalReportingConfig(
-            component_type=EvalReporting,
-            data_reader_config=DataSetConfig(
-                DataReader,
-                {
-                    "path": os.path.join(self.usage_data_processing_comp.output_dir, "transformed_data.jsonl"),
-                    "format": ".jsonl",
-                    "transform": SequenceTransform(
-                        [
-                            RunPythonTransform("df = df.explode(['sec_sub_domain'])"),
-                        ]
-                    ),
-                },
-            ),
-            aggregator_configs=[
-                AggregatorConfig(BiLevelAggregator,
-                    {
-                        "column_names": ["usage_completion"],
-                        "first_groupby": ["data_point_id", "sec_sub_domain"],
-                        "second_groupby": "sec_sub_domain",
-                        "filename_base": "UsageCompletion_by_sec_sub_domain",
-                        "agg_fn": "mean"
-                    }),                
-            ],
-            output_dir=os.path.join(self.log_dir, "eval_report_by_sec_sub_domain"),
-        )
-
-        # Configure the pipeline
-        return PipelineConfig(
-            [
-                self.usage_data_processing_comp,
-                self.usage_evalreporting_comp,
-                self.usage_bon_evalreporting_comp,
-                self.usage_domain_eval_data_processing_comp,
-                self.usage_domain_evalreporting_comp,
-                self.usage_sub_domain_evalreporting_comp,
-                self.usage_sec_sub_domain_evalreporting_comp,
-            ],
-            self.log_dir,
-        )

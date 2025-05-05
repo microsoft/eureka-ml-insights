@@ -89,7 +89,6 @@ class DNA_PIPELINE(ExperimentConfig):
         # eval Inference component
         self.eval_inference_comp = InferenceConfig(
             component_type=Inference,
-            #model_config=OAI_GPT4_1106_PREVIEW_CONFIG,
             model_config=eval_model_config,
             data_loader_config=DataSetConfig(
                 MMDataLoader,
