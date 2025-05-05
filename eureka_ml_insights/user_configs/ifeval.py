@@ -204,7 +204,7 @@ class IFEval_PIPELINE(ExperimentConfig):
         )
 
 class IFEval_Parallel_PIPELINE(IFEval_PIPELINE):
-    """This class specifies the config for running BA Calendar benchmark 5 repeated times"""
+    """This class specifies the config for running IFEval benchmark 5 repeated times"""
 
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
@@ -217,14 +217,14 @@ class IFEval_Parallel_PIPELINE(IFEval_PIPELINE):
         return pipeline
     
 class IFEval_Phi_Parallel_PIPELINE(IFEval_Parallel_PIPELINE):
-    """This class specifies the config for running BA Calendar benchmark 5 repeated times"""
+    """This class specifies the config for running IFEval benchmark for Phi-reasoning models"""
 
     def configure_pipeline(
-        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
+        self, model_config: ModelConfig, resume_from: str = None, thinking_token: str = "</think>", **kwargs: dict[str, Any]
     ) -> PipelineConfig:
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         # eval data processing
         self.evalreporting_comp.data_reader_config.init_args["transform"].transforms.append(RunPythonTransform(
-                             "df['response'] = df['response'].apply(lambda x: x.split('<|dummy_87|>')[-1] if '<|dummy_87|>' in x else x)"
+                            "df['response'] = df['response'].apply(lambda x: x.split('{token}')[-1] if '{token}' in x else x)".format(token=thinking_token)
                          ))
         return pipeline
