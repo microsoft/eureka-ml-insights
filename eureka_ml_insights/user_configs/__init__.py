@@ -17,10 +17,8 @@ from .dna import DNA_PIPELINE
 from .drop import Drop_Experiment_Pipeline
 from .flenqa import FlenQA_Experiment_Pipeline
 from .geometer import GEOMETER_PIPELINE
-from .gpqa import ( 
-    GPQA_Experiment_Pipeline,
-    GPQA_PIPELINE_5Run
-)
+from .gpqa import GPQA_Experiment_Pipeline, GPQA_PIPELINE_5Run
+from .gsm8k import GSM8K_MUTATED_PIPELINE, GSM8K_PIPELINE, GSMSYMBOLIC_PIPELINE
 from .ifeval import IFEval_PIPELINE
 from .image_understanding.object_detection import (
     OBJECT_DETECTION_PAIRS_LOCAL_PIPELINE,
@@ -70,6 +68,8 @@ from .toxigen import (
     ToxiGen_Generative_PIPELINE,
 )
 from .vision_language.maze import (
+    MAZE_COT_PIPELINE,
+    MAZE_COT_TEXTONLY_PIPELINE,
     MAZE_PIPELINE,
     MAZE_REPORTING_PIPELINE,
     MAZE_TEXTONLY_PIPELINE,
@@ -80,6 +80,8 @@ from .vision_language.spatial_grid import (
     SPATIAL_GRID_TEXTONLY_PIPELINE,
 )
 from .vision_language.spatial_map import (
+    SPATIAL_MAP_COT_PIPELINE,
+    SPATIAL_MAP_COT_TEXTONLY_PIPELINE,
     SPATIAL_MAP_PIPELINE,
     SPATIAL_MAP_REPORTING_PIPELINE,
     SPATIAL_MAP_TEXTONLY_PIPELINE,
@@ -145,4 +147,7 @@ __all__ = [
     AIME_PIPELINE1024Run,
     NPHARD_TSP_PIPELINE,
     NPHARD_TSP_PIPELINE_MULTIPLE_RUNS,
+    GSM8K_PIPELINE,
+    GSM8K_MUTATED_PIPELINE,
+    GSMSYMBOLIC_PIPELINE,
 ]

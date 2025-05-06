@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import sys
@@ -23,6 +24,8 @@ from eureka_ml_insights.user_configs import (
     AIME_PIPELINE,
     DNA_PIPELINE,
     GEOMETER_PIPELINE,
+    GSM8K_PIPELINE,
+    GSMSYMBOLIC_PIPELINE,
     KITAB_ONE_BOOK_CONSTRAINT_PIPELINE,
     MAZE_PIPELINE,
     MAZE_TEXTONLY_PIPELINE,
@@ -341,6 +344,24 @@ class TEST_AIME_PIPELINE(AIME_PIPELINE):
         return config
 
 
+class TEST_GSM8K_PIPELINE(GSM8K_PIPELINE):
+    # Test config the GSM8K benchmark with TestModel and TestDataLoader
+    def configure_pipeline(self):
+        config = super().configure_pipeline(model_config=ModelConfig(GenericTestModel, {}))
+        self.inference_comp.data_loader_config.class_name = TestDataLoader
+        self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
+        return config
+
+
+class TEST_GSMSYMBOLIC_PIPELINE(GSMSYMBOLIC_PIPELINE):
+    # Test config the GSM8K benchmark with TestModel and TestDataLoader
+    def configure_pipeline(self):
+        config = super().configure_pipeline(model_config=ModelConfig(GenericTestModel, {}))
+        self.inference_comp.data_loader_config.class_name = TestDataLoader
+        self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
+        return config
+
+
 class TEST_NPHARD_TSP_PIPELINE(NPHARD_TSP_PIPELINE_MULTIPLE_RUNS):
     # Test config the spatial reasoning benchmark with the TestDataLoader
     # with small sample data and a test model
@@ -461,7 +482,7 @@ class DNA_PipelineTest(PipelineTest, unittest.TestCase):
     def test_labels(self):
         logging.info("Running test_labels test in DNA_PipelineTest")
         eval_inference_output_file = os.path.join(self.conf.component_configs[-2].output_dir, "transformed_data.jsonl")
-        with jsonlines.open(eval_inference_output_file, "r") as reader:
+        with jsonlines.open(eval_inference_output_file, "r", loads=json.loads) as reader:
             eval_inference_data = [item for item in reader.iter(skip_empty=True, skip_invalid=True)]
             self.assertTrue(
                 all(
@@ -563,6 +584,16 @@ class AIME_PipelineTest(PipelineTest, unittest.TestCase):
 class NPHARD_TSP_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_NPHARD_TSP_PIPELINE().pipeline_config
+
+
+class GSM8K_PipelineTest(PipelineTest, unittest.TestCase):
+    def get_config(self):
+        return TEST_GSM8K_PIPELINE().pipeline_config
+
+
+class GSMSYMBOLIC_PipelineTest(PipelineTest, unittest.TestCase):
+    def get_config(self):
+        return TEST_GSMSYMBOLIC_PIPELINE().pipeline_config
 
 
 if __name__ == "__main__":
