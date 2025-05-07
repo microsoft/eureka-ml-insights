@@ -21,7 +21,16 @@ from .gpqa import (
     GPQA_Experiment_Pipeline,
     GPQA_PIPELINE_5Run
 )
-from .ifeval import IFEval_PIPELINE, IFEval_Parallel_PIPELINE, IFEval_Phi_Parallel_PIPELINE
+from .ifeval import (
+    IFEval_PIPELINE, 
+    IFEval_Parallel_PIPELINE, 
+    IFEval_Phi_Parallel_PIPELINE
+)
+from .gsm8k import (
+    GSM8K_MUTATED_PIPELINE, 
+    GSM8K_PIPELINE, 
+    GSMSYMBOLIC_PIPELINE
+)
 from .image_understanding.object_detection import (
     OBJECT_DETECTION_PAIRS_LOCAL_PIPELINE,
     OBJECT_DETECTION_PAIRS_PIPELINE,
@@ -147,4 +156,7 @@ __all__ = [
     AIME_PIPELINE1024Run,
     NPHARD_TSP_PIPELINE,
     NPHARD_TSP_PIPELINE_MULTIPLE_RUNS,
+    GSM8K_PIPELINE,
+    GSM8K_MUTATED_PIPELINE,
+    GSMSYMBOLIC_PIPELINE,
 ]
