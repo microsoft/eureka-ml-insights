@@ -22,20 +22,25 @@ from eureka_ml_insights.core import (
 from eureka_ml_insights.data_utils import (
     AddColumn,
     ColumnRename,
+    CopyColumn,
     DataReader,
+    ExtractUsageTransform,
     HFDataReader,
     MajorityVoteTransform,
     MMDataLoader,
     MultiplyTransform,
+    ReplaceStringsTransform,
     SequenceTransform,
-    ExtractUsageTransform,
-    CopyColumn,
-    ReplaceStringsTransform       
 )
 from eureka_ml_insights.data_utils.nphard_tsp_utils import (
     NPHARDTSPExtractAnswer,
 )
-from eureka_ml_insights.metrics import CountAggregator, NPHardTSPMetric, BiLevelAggregator, BiLevelCountAggregator
+from eureka_ml_insights.metrics import (
+    BiLevelAggregator,
+    BiLevelCountAggregator,
+    CountAggregator,
+    NPHardTSPMetric,
+)
 
 """This file contains user defined configuration classes for the Traveling Salesman Problem (TSP).
 """
@@ -85,7 +90,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),                    
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
@@ -117,54 +122,66 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             metric_config=MetricConfig(NPHardTSPMetric),
             aggregator_configs=[
                 # the first two reports aggregate the metrics per experiment repeat
-                # each repeat can be considered as an individual pass@1 score                
-                AggregatorConfig(CountAggregator, 
-                {
-                    "column_names": ["NPHardTSPMetric_result"],
-                    "group_by": "data_repeat_id",
-                    "filename_base": "NPHardTSPMetric_result_SeparateRuns",
-                    "normalize": True,
-                }),
-                AggregatorConfig(CountAggregator, 
-                {
-                    "column_names": ["NPHardTSPMetric_result"],
-                    "group_by": ["data_repeat_id", "category"],
-                    "filename_base": "NPHardTSPMetric_GroupBy_Category_SeparateRuns",
-                    "normalize": True,
-                }),    
+                # each repeat can be considered as an individual pass@1 score
+                AggregatorConfig(
+                    CountAggregator,
+                    {
+                        "column_names": ["NPHardTSPMetric_result"],
+                        "group_by": "data_repeat_id",
+                        "filename_base": "NPHardTSPMetric_result_SeparateRuns",
+                        "normalize": True,
+                    },
+                ),
+                AggregatorConfig(
+                    CountAggregator,
+                    {
+                        "column_names": ["NPHardTSPMetric_result"],
+                        "group_by": ["data_repeat_id", "category"],
+                        "filename_base": "NPHardTSPMetric_GroupBy_Category_SeparateRuns",
+                        "normalize": True,
+                    },
+                ),
                 # the next two reports take the average and std for all repeats
                 # the resulting numbers are the average and std of N pass@1 scores, where N is number of repeats
-                AggregatorConfig(BiLevelCountAggregator, 
-                {
-                    "column_names": ["NPHardTSPMetric_result"], 
-                    "first_groupby": "data_repeat_id", 
-                    "filename_base": "NPHardTSPMetric_AllRuns",
-                    "normalize": True
-                }),
-                AggregatorConfig(BiLevelCountAggregator, 
-                {
-                    "column_names": ["NPHardTSPMetric_result"], 
-                    "first_groupby": ["data_repeat_id", "category"], 
-                    "second_groupby": "category",
-                    "filename_base": "NPHardTSPMetric_GroupBy_Category_AllRuns", 
-                    "normalize": True
-                }),       
+                AggregatorConfig(
+                    BiLevelCountAggregator,
+                    {
+                        "column_names": ["NPHardTSPMetric_result"],
+                        "first_groupby": "data_repeat_id",
+                        "filename_base": "NPHardTSPMetric_AllRuns",
+                        "normalize": True,
+                    },
+                ),
+                AggregatorConfig(
+                    BiLevelCountAggregator,
+                    {
+                        "column_names": ["NPHardTSPMetric_result"],
+                        "first_groupby": ["data_repeat_id", "category"],
+                        "second_groupby": "category",
+                        "filename_base": "NPHardTSPMetric_GroupBy_Category_AllRuns",
+                        "normalize": True,
+                    },
+                ),
                 # # two similar reports for average completion usage
-                AggregatorConfig(BiLevelAggregator, 
-                {
-                    "column_names": ["usage_completion"], 
-                    "first_groupby": "data_point_id", 
-                    "filename_base": "UsageCompletion_AllRuns",
-                    "agg_fn": "mean"
-                }),
-                AggregatorConfig(BiLevelAggregator, 
-                {
-                    "column_names": ["usage_completion"],
-                    "first_groupby": ["data_point_id", "category"], 
-                    "second_groupby": "category",
-                    "filename_base": "UsageCompletion_GroupBy_Category_AllRuns", 
-                    "agg_fn": "mean"
-                }),                                                     
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": ["usage_completion"],
+                        "first_groupby": "data_point_id",
+                        "filename_base": "UsageCompletion_AllRuns",
+                        "agg_fn": "mean",
+                    },
+                ),
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": ["usage_completion"],
+                        "first_groupby": ["data_point_id", "category"],
+                        "second_groupby": "category",
+                        "filename_base": "UsageCompletion_GroupBy_Category_AllRuns",
+                        "agg_fn": "mean",
+                    },
+                ),
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
         )
@@ -178,14 +195,15 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                        CopyColumn(
+                            CopyColumn(
                                 column_name_src="NPHardTSPMetric_result",
                                 column_name_dst="NPHardTSPMetric_result_numeric",
                             ),
-                        ReplaceStringsTransform(
+                            ReplaceStringsTransform(
                                 columns=["NPHardTSPMetric_result_numeric"],
-                                mapping={'incorrect': '0', 'correct': '1', 'none': 'NaN'},
-                                case=False)
+                                mapping={"incorrect": "0", "correct": "1", "none": "NaN"},
+                                case=False,
+                            ),
                         ]
                     ),
                 },
@@ -201,7 +219,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                 DataReader,
                 {
                     "path": os.path.join(self.posteval_data_post_processing_comp.output_dir, "transformed_data.jsonl"),
-                    "format": ".jsonl"
+                    "format": ".jsonl",
                 },
             ),
             aggregator_configs=[
@@ -209,36 +227,30 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                 AggregatorConfig(
                     BiLevelAggregator,
                     {
-                        "column_names": [
-                            "NPHardTSPMetric_result_numeric"
-                        ],
+                        "column_names": ["NPHardTSPMetric_result_numeric"],
                         "first_groupby": "data_point_id",
                         "filename_base": "NPHardTSPMetric_BestOfN",
-                        "agg_fn": "max"
+                        "agg_fn": "max",
                     },
                 ),
                 AggregatorConfig(
                     BiLevelAggregator,
                     {
-                        "column_names": [
-                            "NPHardTSPMetric_result_numeric"
-                        ],
-                        "first_groupby": "data_point_id", 
+                        "column_names": ["NPHardTSPMetric_result_numeric"],
+                        "first_groupby": "data_point_id",
                         "second_groupby": "category",
                         "filename_base": "NPHardTSPMetric_BestOfN_GroupBy_Category",
-                        "agg_fn": "max"
+                        "agg_fn": "max",
                     },
                 ),
                 # # # aggregates results by data_point_id and takes the sum of usage for completion tokens
                 AggregatorConfig(
                     BiLevelAggregator,
                     {
-                        "column_names": [
-                            "usage_completion"
-                        ],
+                        "column_names": ["usage_completion"],
                         "first_groupby": "data_point_id",
                         "filename_base": "UsageCompletion_BestOfN",
-                         "agg_fn": "sum"
+                        "agg_fn": "sum",
                     },
                 ),
             ],
@@ -253,7 +265,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                 DataReader,
                 {
                     "path": os.path.join(self.posteval_data_post_processing_comp.output_dir, "transformed_data.jsonl"),
-                    "format": ".jsonl"
+                    "format": ".jsonl",
                 },
             ),
             aggregator_configs=[
@@ -261,24 +273,20 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                 AggregatorConfig(
                     BiLevelAggregator,
                     {
-                        "column_names": [
-                            "NPHardTSPMetric_result_numeric"
-                        ],
+                        "column_names": ["NPHardTSPMetric_result_numeric"],
                         "first_groupby": "data_point_id",
                         "filename_base": "NPHardTSPMetric_WorstOfN",
-                        "agg_fn": "min"
+                        "agg_fn": "min",
                     },
                 ),
                 AggregatorConfig(
                     BiLevelAggregator,
                     {
-                        "column_names": [
-                            "NPHardTSPMetric_result_numeric"
-                        ],
-                        "first_groupby": "data_point_id", 
+                        "column_names": ["NPHardTSPMetric_result_numeric"],
+                        "first_groupby": "data_point_id",
                         "second_groupby": "category",
                         "filename_base": "NPHardTSPMetric_WorstOfN_GroupBy_Category",
-                        "agg_fn": "min"
+                        "agg_fn": "min",
                     },
                 ),
             ],
@@ -292,7 +300,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    "path": os.path.join(self.data_post_processing.output_dir, "transformed_data.jsonl"),                  
+                    "path": os.path.join(self.data_post_processing.output_dir, "transformed_data.jsonl"),
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
@@ -309,7 +317,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "data_addmv_output"),
         )
-        
+
         self.mv_evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
             data_reader_config=DataSetConfig(
@@ -331,7 +339,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                         "filename_base": "MajorityVote",
                         "normalize": True,
                     },
-                ),         
+                ),
             ],
             output_dir=os.path.join(self.log_dir, "majorityvote_eval_report"),
         )
@@ -347,7 +355,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                 self.bon_evalreporting_comp,
                 self.won_evalreporting_comp,
                 self.data_post_processing_addmv,
-                self.mv_evalreporting_comp                
+                self.mv_evalreporting_comp,
             ],
             self.log_dir,
         )
