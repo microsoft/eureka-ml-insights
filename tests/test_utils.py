@@ -182,6 +182,7 @@ class TSPTestModel:
         return {
             "model_output": "<final_answer>{'Path': '0->1->3->2->0', 'TotalDistance': '85'}</final_answer>",
             "is_valid": random.choice([True]),
+            "n_output_tokens": 13,
         }
 
 
