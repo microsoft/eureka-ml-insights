@@ -169,66 +169,6 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             output_dir=os.path.join(self.log_dir, "eval_report"),
         )
 
-
-        # Aggregate the results by a majority vote
-        # First, let us perform majority_vote
-        self.data_post_processing_addmv = DataProcessingConfig(
-            component_type=DataProcessing,
-            data_reader_config=DataSetConfig(
-                DataReader,
-                {
-                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),                    
-                    "format": ".jsonl",
-                    "transform": SequenceTransform(
-                        [
-                            ColumnRename(
-                                name_mapping={
-                                    "model_output": "raw_output",
-                                }
-                            ),
-                            AddColumn("model_output"),
-                            NPHARDTSPExtractAnswer("raw_output", "model_output"),
-                            MajorityVoteTransform(id_col="data_point_id"),
-                            ColumnRename(
-                                name_mapping={
-                                    "model_output": "model_output_onerun",
-                                    "majority_vote": "model_output",
-                                }
-                            ),
-                        ]
-                    ),
-                },
-            ),
-            output_dir=os.path.join(self.log_dir, "data_addmv_output"),
-        )
-
-        # Second, compute numeric match
-        self.mv_evalreporting_comp = EvalReportingConfig(
-            component_type=EvalReporting,
-            data_reader_config=DataSetConfig(
-                DataReader,
-                {
-                    "path": os.path.join(self.data_post_processing_addmv.output_dir, "transformed_data.jsonl"),
-                    "format": ".jsonl",
-                },
-            ),
-            metric_config=MetricConfig(NPHardTSPMetric),
-            aggregator_configs=[
-                AggregatorConfig(
-                    BiLevelCountAggregator,
-                    {
-                        "column_names": [
-                            "NPHardTSPMetric_result",
-                        ],
-                        "first_groupby": "data_point_id",
-                        "filename_base": "MajorityVote",
-                        "normalize": True,
-                    },
-                ),         
-            ],
-            output_dir=os.path.join(self.log_dir, "majorityvote_eval_report"),
-        )
-
         self.posteval_data_post_processing_comp = DataProcessingConfig(
             component_type=DataProcessing,
             data_reader_config=DataSetConfig(
@@ -345,6 +285,66 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             output_dir=os.path.join(self.log_dir, "worstofn_eval_report"),
         )
 
+        # Aggregate the results by a majority vote
+        # First, let us perform majority_vote
+        self.data_post_processing_addmv = DataProcessingConfig(
+            component_type=DataProcessing,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),                    
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            ColumnRename(
+                                name_mapping={
+                                    "model_output": "raw_output",
+                                }
+                            ),
+                            AddColumn("model_output"),
+                            NPHARDTSPExtractAnswer("raw_output", "model_output"),
+                            MajorityVoteTransform(id_col="data_point_id"),
+                            ColumnRename(
+                                name_mapping={
+                                    "model_output": "model_output_onerun",
+                                    "majority_vote": "model_output",
+                                }
+                            ),
+                        ]
+                    ),
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "data_addmv_output"),
+        )
+
+        # Second, compute numeric match
+        self.mv_evalreporting_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.data_post_processing_addmv.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
+                },
+            ),
+            metric_config=MetricConfig(NPHardTSPMetric),
+            aggregator_configs=[
+                AggregatorConfig(
+                    BiLevelCountAggregator,
+                    {
+                        "column_names": [
+                            "NPHardTSPMetric_result",
+                        ],
+                        "first_groupby": "data_point_id",
+                        "filename_base": "MajorityVote",
+                        "normalize": True,
+                    },
+                ),         
+            ],
+            output_dir=os.path.join(self.log_dir, "majorityvote_eval_report"),
+        )
+
+
         # Configure the pipeline
         return PipelineConfig(
             [
@@ -352,11 +352,11 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                 self.inference_comp,
                 self.data_post_processing,
                 self.evalreporting_comp,
-                self.data_post_processing_addmv,
-                self.mv_evalreporting_comp,
                 self.posteval_data_post_processing_comp,
                 self.bon_evalreporting_comp,
-                self.won_evalreporting_comp
+                self.won_evalreporting_comp,
+                self.data_post_processing_addmv,
+                self.mv_evalreporting_comp                
             ],
             self.log_dir,
         )
