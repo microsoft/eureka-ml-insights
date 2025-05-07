@@ -244,8 +244,8 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             ],
             output_dir=os.path.join(self.log_dir, "bestofn_eval_report"),
         )
-###############################################
-############## worst of n ######################
+
+        # Aggregate the results by worst of n
 
         self.won_evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
@@ -257,7 +257,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
                 },
             ),
             aggregator_configs=[
-                # the first three reports aggregate results by data_point_id and take the best out of N
+                # the first three reports aggregate results by data_point_id and take the worst out of N
                 AggregatorConfig(
                     BiLevelAggregator,
                     {
@@ -292,17 +292,10 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),                    
+                    "path": os.path.join(self.data_post_processing.output_dir, "transformed_data.jsonl"),                  
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            ColumnRename(
-                                name_mapping={
-                                    "model_output": "raw_output",
-                                }
-                            ),
-                            AddColumn("model_output"),
-                            NPHARDTSPExtractAnswer("raw_output", "model_output"),
                             MajorityVoteTransform(id_col="data_point_id"),
                             ColumnRename(
                                 name_mapping={
@@ -316,8 +309,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "data_addmv_output"),
         )
-
-        # Second, compute numeric match
+        
         self.mv_evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
             data_reader_config=DataSetConfig(
@@ -343,7 +335,6 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             ],
             output_dir=os.path.join(self.log_dir, "majorityvote_eval_report"),
         )
-
 
         # Configure the pipeline
         return PipelineConfig(
