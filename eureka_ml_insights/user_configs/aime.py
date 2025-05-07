@@ -26,7 +26,7 @@ from eureka_ml_insights.data_utils import (
 )
 from eureka_ml_insights.data_utils.aime_utils import AIMEExtractAnswer
 from eureka_ml_insights.data_utils.data import DataLoader
-from eureka_ml_insights.metrics.metrics_base import ExactMatch
+from eureka_ml_insights.metrics.aime_metrics import NumericMatch
 from eureka_ml_insights.metrics.reports import (
     BiLevelCountAggregator,
     CountAggregator,
@@ -114,16 +114,16 @@ class AIME_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                 },
             ),
-            metric_config=MetricConfig(ExactMatch),
+            metric_config=MetricConfig(NumericMatch),
             aggregator_configs=[
                 AggregatorConfig(
                     CountAggregator,
                     {
                         "column_names": [
-                            "ExactMatch_result",
+                            "NumericMatch_result",
                         ],
                         "group_by": "Year",
-                        "filename_base": "ExactMatch_GroupBy",
+                        "filename_base": "NumericMatch_GroupBy",
                     },
                 ),
             ],
@@ -171,13 +171,13 @@ class AIME_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                 },
             ),
-            metric_config=MetricConfig(ExactMatch),
+            metric_config=MetricConfig(NumericMatch),
             aggregator_configs=[
                 AggregatorConfig(
                     BiLevelCountAggregator,
                     {
                         "column_names": [
-                            "ExactMatch_result",
+                            "NumericMatch_result",
                         ],
                         "first_groupby": "ID",
                         "filename_base": "MajorityVote",
