@@ -18,7 +18,6 @@ from eureka_ml_insights.core import Pipeline
 from eureka_ml_insights.data_utils.transform import (
     RunPythonTransform,
     SamplerTransform,
-    SequenceTransform,
 )
 from eureka_ml_insights.user_configs import (
     AIME_PIPELINE,
