@@ -41,6 +41,7 @@ setup(
         'accelerate>=0.21.0',
         'pycocotools>=2.0.8',
         'vllm>=0.8.0',
+        'latex2sympy2>=1.9.1',
     ],
     classifiers=[
         # Full list at https://pypi.org/classifiers/
