@@ -63,6 +63,7 @@ from .nondeterminism import (
     MMMU_Nondeterminism,
 )
 from .nphard_tsp import NPHARD_TSP_PIPELINE, NPHARD_TSP_PIPELINE_MULTIPLE_RUNS
+from .nphard_sat import NPHARD_SAT_PIPELINE, NPHARD_SAT_PIPELINE_MULTIPLE_RUNS
 from .toxigen import (
     ToxiGen_Discriminative_PIPELINE,
     ToxiGen_Generative_PIPELINE,
@@ -152,4 +153,6 @@ __all__ = [
     GSM8K_PIPELINE,
     GSM8K_MUTATED_PIPELINE,
     GSMSYMBOLIC_PIPELINE,
+    NPHARD_SAT_PIPELINE,
+    NPHARD_SAT_PIPELINE_MULTIPLE_RUNS,
 ]
