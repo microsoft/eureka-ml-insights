@@ -22,9 +22,8 @@ from eureka_ml_insights.data_utils import (
 )
 
 
-"""This file contains user defined configuration classes for the 3-SAT problem.
+"""This file contains user defined configuration classes for the SAT benchmark.
 """
-
 
 class NPHARD_SAT_PIPELINE(ExperimentConfig):
     def configure_pipeline(
