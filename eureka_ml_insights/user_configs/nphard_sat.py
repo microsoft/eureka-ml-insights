@@ -9,21 +9,18 @@ from eureka_ml_insights.configs import (
     PipelineConfig,
     PromptProcessingConfig,
 )
-from eureka_ml_insights.core import (
-    Inference,
-    PromptProcessing,
-)
-from eureka_ml_insights.data_utils import (    
-    ColumnRename,    
-    HFDataReader,    
+from eureka_ml_insights.core import Inference, PromptProcessing
+from eureka_ml_insights.data_utils import (
+    ColumnRename,
+    HFDataReader,
     MMDataLoader,
     MultiplyTransform,
     SequenceTransform,
 )
 
-
 """This file contains user defined configuration classes for the SAT benchmark.
 """
+
 
 class NPHARD_SAT_PIPELINE(ExperimentConfig):
     def configure_pipeline(
@@ -45,7 +42,7 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
                 },
             ),
             prompt_template_path=os.path.join(
-                os.path.dirname(__file__), "../prompt_templates/nphard_sat_templates/Template_sat_cot.jinja"                
+                os.path.dirname(__file__), "../prompt_templates/nphard_sat_templates/Template_sat_cot.jinja"
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
         )
@@ -58,20 +55,18 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
                 MMDataLoader,
                 {"path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl")},
             ),
-            output_dir=os.path.join(self.log_dir, "inference_result"), 
+            output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
             max_concurrent=5,
         )
 
         # Configure the pipeline
         return PipelineConfig(
-            [
-                self.data_processing_comp,
-                self.inference_comp  
-            ],
+            [self.data_processing_comp, self.inference_comp],
             self.log_dir,
         )
-    
+
+
 class NPHARD_SAT_PIPELINE_MULTIPLE_RUNS(NPHARD_SAT_PIPELINE):
     """This class specifies the config for running SAT benchmark n repeated times"""
 

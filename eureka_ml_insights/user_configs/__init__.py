@@ -57,8 +57,8 @@ from .kitab import (
     KITAB_TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT,
 )
 from .mathverse import MATHVERSE_PIPELINE
-from .mathvista import MATHVISTA_PIPELINE
 from .mathvision import MATHVISION_PIPELINE
+from .mathvista import MATHVISTA_PIPELINE
 from .mmmu import MMMU_BASELINE_PIPELINE
 from .nondeterminism import (
     Geo_Nondeterminism,
@@ -66,8 +66,8 @@ from .nondeterminism import (
     Kitab_Nondeterminism,
     MMMU_Nondeterminism,
 )
-from .nphard_tsp import NPHARD_TSP_PIPELINE, NPHARD_TSP_PIPELINE_MULTIPLE_RUNS
 from .nphard_sat import NPHARD_SAT_PIPELINE, NPHARD_SAT_PIPELINE_MULTIPLE_RUNS
+from .nphard_tsp import NPHARD_TSP_PIPELINE, NPHARD_TSP_PIPELINE_MULTIPLE_RUNS
 from .toxigen import (
     ToxiGen_Discriminative_PIPELINE,
     ToxiGen_Generative_PIPELINE,
