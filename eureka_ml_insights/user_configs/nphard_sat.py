@@ -46,8 +46,7 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
                 },
             ),
             prompt_template_path=os.path.join(
-                os.path.dirname(__file__), "../prompt_templates/nphard_sat_templates/Template_sat_cot.jinja"
-                # os.path.dirname(__file__), "../prompt_templates/nphard_sat_templates/Template_sat_o1.jinja"
+                os.path.dirname(__file__), "../prompt_templates/nphard_sat_templates/Template_sat_cot.jinja"                
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
         )
@@ -62,10 +61,8 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"), 
             resume_from=resume_from,
-            max_concurrent=20,
+            max_concurrent=5,
         )
-
-###############################################
 
         # Configure the pipeline
         return PipelineConfig(
@@ -75,8 +72,7 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
             ],
             self.log_dir,
         )
-####################################
-
+    
 class NPHARD_SAT_PIPELINE_MULTIPLE_RUNS(NPHARD_SAT_PIPELINE):
     """This class specifies the config for running SAT benchmark n repeated times"""
 
@@ -89,52 +85,3 @@ class NPHARD_SAT_PIPELINE_MULTIPLE_RUNS(NPHARD_SAT_PIPELINE):
             MultiplyTransform(n_repeats=1)
         )
         return pipeline
-
-
-##################
-
-
-        # # Configure the evaluation and reporting component.
-        # self.evalreporting_comp = EvalReportingConfig(
-        #     component_type=EvalReporting,
-        #     data_reader_config=DataSetConfig(
-        #         DataReader,
-        #         {
-        #             "path": os.path.join(self.data_post_processing.output_dir, "transformed_data.jsonl"),                    
-        #             "format": ".jsonl",
-        #         },
-        #     ),
-        #     metric_config=MetricConfig(NPHardSATMetric),
-        #     aggregator_configs=[
-        #         AggregatorConfig(CountAggregator, {"column_names": ["NPHardSATMetric_result"], "normalize": True}),
-        #     ],
-        #     output_dir=os.path.join(self.log_dir, "eval_report"),
-        # )
-
-        # # Aggregate the results by a majority vote.
-        # self.postevalprocess_comp = EvalReportingConfig(
-        #     component_type=EvalReporting,
-        #     data_reader_config=DataSetConfig(
-        #         DataReader,
-        #         {
-        #             "path": os.path.join(self.data_post_processing.output_dir, "transformed_data.jsonl"),
-        #             "format": ".jsonl",
-        #             "transform": SequenceTransform(
-        #                 [
-        #                     MajorityVoteTransform(id_col="data_point_id"),
-        #                     ColumnRename(
-        #                         name_mapping={
-        #                             "model_output": "model_output_onerun",
-        #                             "majority_vote": "model_output",
-        #                         }
-        #                     ),
-        #                 ]
-        #             ),
-        #         },
-        #     ),
-        #     metric_config=MetricConfig(NPHardSATMetric),
-        #     aggregator_configs=[
-        #         AggregatorConfig(CountAggregator, {"column_names": ["NPHardSATMetric_result"], "normalize": True}),
-        #     ],
-        #     output_dir=os.path.join(self.log_dir, "eval_report_majorityVote"),
-        # )
