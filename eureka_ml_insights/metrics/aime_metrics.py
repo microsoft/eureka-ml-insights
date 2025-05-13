@@ -14,7 +14,7 @@ class NumericMatch(ClassicMetric):
             diff = np.abs(float(target_text) - float(answer_text))
         except (ValueError, TypeError) as e:
             logging.error(f"failed to extract the numeric values")
-            logging.error(f"target_text:'{target_text}', answer_text:'{answer_text}', difference error: {str(e)}")
+            logging.error(f"target_text:'{target_text}', answer_text:'{answer_text}', error: {str(e)}")
             return "none"
         if diff < self.eps:
             return "correct"
