@@ -105,6 +105,7 @@ class DataUnionConfig(DataProcessingConfig):
     Args:
         other_data_reader_config (UtilityClassConfig): The data reader config for the dataset to be joined with the main dataset
         output_data_columns (list): List of columns (subset of input columns) to keep in the transformed data output file
+        dedupe_cols (list): List of columns to deduplicate the concatenated data frame
     """
 
     other_data_reader_config: UtilityClassConfigType = None
