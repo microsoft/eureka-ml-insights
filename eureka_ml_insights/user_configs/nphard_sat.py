@@ -24,7 +24,7 @@ from eureka_ml_insights.data_utils import (
 
 class NPHARD_SAT_PIPELINE(ExperimentConfig):
     def configure_pipeline(
-        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
+        self, model_config: ModelConfig, resume_from: str = None, n_repeats: int = 1, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
         # Configure the data processing component.
         self.data_processing_comp = PromptProcessingConfig(
@@ -71,11 +71,11 @@ class NPHARD_SAT_PIPELINE_MULTIPLE_RUNS(NPHARD_SAT_PIPELINE):
     """This class specifies the config for running SAT benchmark n repeated times"""
 
     def configure_pipeline(
-        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
+        self, model_config: ModelConfig, resume_from: str = None, n_repeats: int = 1, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         # data preprocessing
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
-            MultiplyTransform(n_repeats=1)
+            MultiplyTransform(n_repeats=int(n_repeats))
         )
         return pipeline
