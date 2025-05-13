@@ -7,7 +7,6 @@ import pandas as pd
 
 from eureka_ml_insights.data_utils import DFTransformBase
 
-logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -107,14 +106,14 @@ def parse_path_from_model_output(model_output: str) -> str:
     final_answer: Optional[str] = extract_final_answer(model_output)
 
     if not final_answer:
-        logger.info("No final answer section detected in model output.")
+        logging.info(f"No final answer section detected in model output.")          
         return "-1"
 
     # Try to parse the SAT solution from the answer block.
     try:
         sat_solution = extract_solution(final_answer)
-    except (AttributeError, ValueError) as exc:
-        logger.info("Failed to parse SAT solution: %s", exc)
+    except (AttributeError, ValueError) as e:
+        logging.info(f"There is no valid path: {e}")        
         return "-1"
 
     if not sat_solution:
