@@ -268,7 +268,8 @@ class ImputeNA(MultiColumnTransform):
     value: str
 
     def _transform(self, value):
-        if pd.isna(value):
+        isna = pd.isna(value)
+        if isinstance(isna, bool) and isna:
             return self.value
         return value
 

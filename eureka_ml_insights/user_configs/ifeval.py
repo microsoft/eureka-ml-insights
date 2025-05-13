@@ -1,19 +1,31 @@
 import os
-from typing import Any, Optional
+from typing import Any
 
-from eureka_ml_insights.core import (
-    DataProcessing,
-    Inference,
-    PromptProcessing,
+from eureka_ml_insights.configs import (
+    AggregatorConfig,
+    DataProcessingConfig,
+    DataSetConfig,
+    EvalReportingConfig,
+    ExperimentConfig,
+    InferenceConfig,
+    MetricConfig,
+    ModelConfig,
+    PipelineConfig,
+    PromptProcessingConfig,
 )
+from eureka_ml_insights.core import DataProcessing, Inference, PromptProcessing
 from eureka_ml_insights.core.eval_reporting import EvalReporting
-from eureka_ml_insights.data_utils import ColumnRename
 from eureka_ml_insights.data_utils.data import (
     DataLoader,
     DataReader,
     HFDataReader,
 )
-from eureka_ml_insights.data_utils.transform import MultiplyTransform,SamplerTransform, RunPythonTransform, SequenceTransform
+from eureka_ml_insights.data_utils.transform import (
+    CopyColumn,
+    MultiplyTransform,
+    RunPythonTransform,
+    SequenceTransform,
+)
 from eureka_ml_insights.metrics.ifeval_metrics import IFEvalMetric
 from eureka_ml_insights.metrics.reports import (
     AverageAggregator,
@@ -21,26 +33,13 @@ from eureka_ml_insights.metrics.reports import (
     TwoColumnSumAverageAggregator,
 )
 
-from eureka_ml_insights.configs import(
-    AggregatorConfig,
-    DataProcessingConfig,
-    DataSetConfig,
-    EvalReportingConfig,
-    InferenceConfig,
-    MetricConfig,
-    ModelConfig,
-    PipelineConfig,
-    PromptProcessingConfig,
-)
-from eureka_ml_insights.configs import ExperimentConfig
-
 
 class IFEval_PIPELINE(ExperimentConfig):
     """This class specifies the config for running IFEval benchmark on any model"""
 
     def configure_pipeline(
-        self, model_config: ModelConfig, resume_from: str = None, 
-        **kwargs: dict[str, Any]) -> PipelineConfig:
+        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
+    ) -> PipelineConfig:
 
         # data preprocessing
         self.data_processing_comp = PromptProcessingConfig(
@@ -50,10 +49,7 @@ class IFEval_PIPELINE(ExperimentConfig):
                 {
                     "path": "google/IFEval",
                     "split": "train",
-                    "transform": SequenceTransform([
-                        #SamplerTransform(random_seed=5, sample_count=10),
-                        MultiplyTransform(n_repeats=1)
-                    ]),
+                    "transform": SequenceTransform([MultiplyTransform(n_repeats=1)]),
                 },
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
@@ -69,7 +65,7 @@ class IFEval_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
-            max_concurrent=20
+            max_concurrent=20,
         )
 
         # Configure the evaluation and reporting component for evaluation and dataset level aggregation
@@ -81,10 +77,7 @@ class IFEval_PIPELINE(ExperimentConfig):
                     "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
                     "format": ".jsonl",
                     "transform": SequenceTransform(
-                        [ColumnRename(name_mapping={"model_output": "response"}),
-                         RunPythonTransform(
-                             "df['response'] = df['response'].apply(lambda x: x.split('<|dummy_87|>')[-1] if '<|dummy_87|>' in x else x)"
-                         )]
+                        [CopyColumn(column_name_src="model_output", column_name_dst="response")]
                     ),
                 },
             ),
@@ -109,8 +102,8 @@ class IFEval_PIPELINE(ExperimentConfig):
                             "IFEvalMetric_loose_follow_all_instructions",
                         ],
                         "filename_base": "IFEvalAccuracyMetrics_Aggregated",
-                        "first_groupby": "data_repeat_id", 
-                        "agg_fn": "mean"
+                        "first_groupby": "data_repeat_id",
+                        "agg_fn": "mean",
                     },
                 ),
                 AggregatorConfig(
@@ -171,8 +164,8 @@ class IFEval_PIPELINE(ExperimentConfig):
                             "IFEvalMetric_strict_follow_instruction_list",
                             "IFEvalMetric_loose_follow_instruction_list",
                         ],
-                        "first_groupby": "instruction_id_list",
-                        "second_groupby": "data_repeat_id",
+                        "first_groupby": ["data_repeat_id", "instruction_id_list"],
+                        "second_groupby": "instruction_id_list",
                         "agg_fn": "mean",
                         "filename_base": "IFEvalAccuracyMetrics_GroupByInstructionID",
                         
@@ -185,8 +178,8 @@ class IFEval_PIPELINE(ExperimentConfig):
                             "IFEvalMetric_strict_follow_instruction_list",
                             "IFEvalMetric_loose_follow_instruction_list",
                         ],
-                        "first_groupby": "IFEvalMetric_tier0_instructions",
-                        "second_groupby": "data_repeat_id",
+                        "first_groupby": ["data_repeat_id", "IFEvalMetric_tier0_instructions"],
+                        "second_groupby": "IFEvalMetric_tier0_instructions",
                         "agg_fn": "mean",
                         "filename_base": "IFEvalAccuracyMetrics_GroupByTier0Instructions",
                     },
@@ -207,8 +200,9 @@ class IFEval_PIPELINE(ExperimentConfig):
             self.log_dir,
         )
 
+
 class IFEval_Parallel_PIPELINE(IFEval_PIPELINE):
-    """This class specifies the config for running BA Calendar benchmark 5 repeated times"""
+    """This class specifies the config for running IFEval benchmark 5 repeated times"""
 
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
@@ -217,5 +211,27 @@ class IFEval_Parallel_PIPELINE(IFEval_PIPELINE):
         # data preprocessing
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms[-1] = MultiplyTransform(
             n_repeats=3
+        )
+        return pipeline
+
+
+class IFEval_Phi_Parallel_PIPELINE(IFEval_Parallel_PIPELINE):
+    """This class specifies the config for running IFEval benchmark for Phi-reasoning models"""
+
+    def configure_pipeline(
+        self,
+        model_config: ModelConfig,
+        resume_from: str = None,
+        thinking_token: str = "</think>",
+        **kwargs: dict[str, Any]
+    ) -> PipelineConfig:
+        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
+        # eval data processing
+        self.evalreporting_comp.data_reader_config.init_args["transform"].transforms.append(
+            RunPythonTransform(
+                "df['response'] = df['response'].apply(lambda x: x.split('{token}')[-1] if '{token}' in x else x)".format(
+                    token=thinking_token
+                )
+            )
         )
         return pipeline
