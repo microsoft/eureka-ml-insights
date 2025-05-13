@@ -168,7 +168,6 @@ class IFEval_PIPELINE(ExperimentConfig):
                         "second_groupby": "instruction_id_list",
                         "agg_fn": "mean",
                         "filename_base": "IFEvalAccuracyMetrics_GroupByInstructionID",
-                        
                     },
                 ),
                 AggregatorConfig(
