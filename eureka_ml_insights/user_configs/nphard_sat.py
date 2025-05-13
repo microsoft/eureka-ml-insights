@@ -10,20 +10,16 @@ from eureka_ml_insights.configs import (
     PipelineConfig,
     PromptProcessingConfig,
 )
-from eureka_ml_insights.core import (
-    DataProcessing,    
-    Inference,
-    PromptProcessing,
-)
+from eureka_ml_insights.core import DataProcessing, Inference, PromptProcessing
 from eureka_ml_insights.data_utils import (
     AddColumn,
     ColumnRename,
     DataReader,
+    ExtractUsageTransform,
     HFDataReader,
     MMDataLoader,
     MultiplyTransform,
     SequenceTransform,
-    ExtractUsageTransform,
 )
 from eureka_ml_insights.data_utils.nphard_sat_utils import (
     NPHARDSATExtractAnswer,
@@ -77,7 +73,7 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),                    
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
@@ -98,11 +94,7 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
 
         # Configure the pipeline
         return PipelineConfig(
-            [
-                self.data_processing_comp, 
-                self.inference_comp,
-                self.data_post_processing
-            ],
+            [self.data_processing_comp, self.inference_comp, self.data_post_processing],
             self.log_dir,
         )
 

@@ -1,3 +1,4 @@
+import ast
 import logging
 from dataclasses import dataclass
 from typing import Optional
@@ -5,7 +6,6 @@ from typing import Optional
 import pandas as pd
 
 from eureka_ml_insights.data_utils import DFTransformBase
-import ast
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +22,7 @@ class NPHARDSATExtractAnswer(DFTransformBase):
         df[self.model_answer_column] = df[self.model_output_column].apply(parse_path_from_model_output)
         return df
 
+
 def extract_final_answer(model_output):
     """
     Searches from the end of the string for the last valid <final_answer>...</final_answer> pair.
@@ -30,8 +31,8 @@ def extract_final_answer(model_output):
     3. If found, extracts and returns the text inside. Otherwise, keeps going backward.
     4. Returns None if no valid pairs are found.
     """
-    start_tag = '<final_answer>'
-    end_tag = '</final_answer>'
+    start_tag = "<final_answer>"
+    end_tag = "</final_answer>"
 
     search_upto = len(model_output)
     while True:
@@ -56,19 +57,21 @@ def extract_final_answer(model_output):
 
         return content.strip()
 
+
 def extract_solution(final_answer):
-    solution_dict = ast.literal_eval(final_answer)    
-    solution = solution_dict.get('Solution')
+    solution_dict = ast.literal_eval(final_answer)
+    solution = solution_dict.get("Solution")
 
     return solution
 
+
 def convert_to_binary_string(solution):
     # If the solution is the special Ellipsis object (...)
-    if solution is Ellipsis:        
+    if solution is Ellipsis:
         return "-1"
-    
+
     # If the solution is not a string, there's nothing to process
-    if not isinstance(solution, str):        
+    if not isinstance(solution, str):
         return "-1"
 
     # If the solution is "Unsatisfiable"
@@ -87,6 +90,7 @@ def convert_to_binary_string(solution):
 
     # Join the converted parts with commas
     return ",".join(converted_parts)
+
 
 def parse_path_from_model_output(model_output: str) -> str:
     """
@@ -112,7 +116,7 @@ def parse_path_from_model_output(model_output: str) -> str:
     except (AttributeError, ValueError) as exc:
         logger.info("Failed to parse SAT solution: %s", exc)
         return "-1"
-    
+
     if not sat_solution:
         return "-1"
 
