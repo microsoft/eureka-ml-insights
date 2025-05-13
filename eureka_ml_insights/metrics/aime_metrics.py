@@ -1,11 +1,10 @@
 import numpy as np
-
+import logging
 from eureka_ml_insights.metrics.metrics_base import ClassicMetric
 
 
 class NumericMatch(ClassicMetric):
-    """This class checks for a numeric match."""
-
+    """This metric class checks numerical match between answer_text and target_text within a margin eps"""
     eps = 1e-6
 
     def __evaluate__(self, answer_text, target_text, is_valid):
@@ -13,7 +12,9 @@ class NumericMatch(ClassicMetric):
             return "none"
         try:
             diff = np.abs(float(target_text) - float(answer_text))
-        except:
+        except (ValueError, TypeError) as e:
+            logging.error(f"failed to extract the numeric values")
+            logging.error(f"target_text:'{target_text}', answer_text:'{answer_text}', difference error: {str(e)}")
             return "none"
         if diff < self.eps:
             return "correct"
