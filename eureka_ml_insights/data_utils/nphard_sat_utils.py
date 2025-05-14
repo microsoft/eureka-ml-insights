@@ -17,7 +17,7 @@ class NPHARDSATExtractAnswer(DFTransformBase):
     model_answer_column: str
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Extracts the SAT path from the model output and stores it in the model_answer_column."""
+        """Extracts the SAT assignment from the model output and stores it in the model_answer_column."""
         df[self.model_answer_column] = df[self.model_output_column].apply(parse_path_from_model_output)
         return df
 
