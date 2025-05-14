@@ -36,10 +36,9 @@ def extract_solution(final_answer):
     try:
         solution_dict = ast.literal_eval(final_answer)
         solution = solution_dict.get("Solution")
-    except (SyntaxError, ValueError) as exc:
+    except (SyntaxError, ValueError):
         logging.info("extract_solution: literal_eval failed does not return a valid dict")
         return None
-    
 
     return solution
 
@@ -98,7 +97,7 @@ def parse_path_from_model_output(model_output: str) -> str:
         solution is found.
     """
     # Pull out the “final answer” block the model produced.
-    
+
     final_answer: Optional[str] = extract_final_answer(model_output)
     print(final_answer)
 
