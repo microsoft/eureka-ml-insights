@@ -1,68 +1,44 @@
 import os
+
 """This file contains user defined configuration classes for the GPQA dataset."""
 
-from typing import Any
 
+from eureka_ml_insights.configs import (
+    DataJoinConfig,
+    DataProcessingConfig,
+    DataSetConfig,
+    InferenceConfig,
+    ModelConfig,
+    PromptProcessingConfig,
+)
 from eureka_ml_insights.core import (
     Component,
-    EvalReporting, 
-    Inference, 
-    PromptProcessing, 
+    DataJoin,
     DataProcessing,
-    DataJoin
+    Inference,
+    PromptProcessing,
 )
 from eureka_ml_insights.data_utils import (
-    ColumnMatchMapTransform,
-    CopyColumn,
-    DataReader,
-    HFDataReader,
-    ImputeNA,
-    MMDataLoader,
-    RegexTransform,
-    SequenceTransform,
-    ShuffleColumnsTransform,
-    MultiplyTransform,
-    MajorityVoteTransform,
     ColumnRename,
-    AddColumn,
-    ReplaceStringsTransform,
+    DataReader,
+    MMDataLoader,
     RunPythonTransform,
-    ExtractUsageTransform,
-)
-from eureka_ml_insights.metrics import (
-    CountAggregator, 
-    ExactMatch, 
-    BiLevelAggregator, 
-    BiLevelCountAggregator
+    SequenceTransform,
 )
 
-from eureka_ml_insights.configs import(
-    AggregatorConfig,
-    DataSetConfig,
-    EvalReportingConfig,
-    InferenceConfig,
-    MetricConfig,
-    ModelConfig,
-    PipelineConfig,
-    PromptProcessingConfig,
-    DataProcessingConfig,
-    DataJoinConfig
-)
-from eureka_ml_insights.configs import ExperimentConfig
-from eureka_ml_insights.configs.model_configs import OAI_GPT4O_2024_11_20_CONFIG
-import numpy as np
 
 class LLM_EXTRACTION_SUBPIPELINE_MIXIN:
     """This class specifies the config for running the LLM extraction subpipeline"""
+
     def configure_subpipeline(
         self,
-        extraction_attempt_component: Component, 
+        extraction_attempt_component: Component,
         extracted_answer_col: str,
         llm_extraction_promp_template: str,
         llm_extractor_model_config: ModelConfig,
         llm_extractor_max_concurrent: int = 1,
-        llm_extractor_answer_transforms: list = None)
-
+        llm_extractor_answer_transforms: list = None,
+    ):
 
         self.filter_empty_answer = PromptProcessingConfig(
             component_type=PromptProcessing,
@@ -82,7 +58,7 @@ class LLM_EXTRACTION_SUBPIPELINE_MIXIN:
             prompt_template_path=llm_extraction_promp_template,
             output_dir=os.path.join(self.log_dir, "filter_empty_answer"),
         )
-        
+
         self.inference_llm_answer_extract = InferenceConfig(
             component_type=Inference,
             model_config=llm_extractor_model_config,
@@ -91,9 +67,9 @@ class LLM_EXTRACTION_SUBPIPELINE_MIXIN:
                 {"path": os.path.join(self.filter_empty_answer.output_dir, "transformed_data.jsonl")},
             ),
             output_dir=os.path.join(self.log_dir, "llm_answer_extract_inference_result"),
-            max_concurrent=llm_extractor_max_concurrent
+            max_concurrent=llm_extractor_max_concurrent,
         )
-        
+
         self.data_join = DataJoinConfig(
             component_type=DataJoin,
             data_reader_config=DataSetConfig(
@@ -111,13 +87,16 @@ class LLM_EXTRACTION_SUBPIPELINE_MIXIN:
                     "transform": SequenceTransform(
                         [
                             # drop all columns except the uid and model_output
-                            RunPythonTransform("df = df[[col for col in ['data_repeat_id','data_point_id', 'model_output'] if col in df.columns]]"),
-                        ] + llm_extractor_answer_transforms
+                            RunPythonTransform(
+                                "df = df[[col for col in ['data_repeat_id','data_point_id', 'model_output'] if col in df.columns]]"
+                            ),
+                        ]
+                        + llm_extractor_answer_transforms
                     ),
                 },
             ),
             output_dir=os.path.join(self.log_dir, "data_join_output"),
-            pandas_merge_args={"on": ['data_repeat_id', 'data_point_id'], "how": "left"},
+            pandas_merge_args={"on": ["data_repeat_id", "data_point_id"], "how": "left"},
         )
 
         self.post_join_consolidation_component = DataProcessingConfig(
@@ -131,7 +110,9 @@ class LLM_EXTRACTION_SUBPIPELINE_MIXIN:
                         [
                             # consolidate model_output_y to replace the original model_output whenever empty
                             # the initial if statement checks whether there has been a join beforehand
-                            RunPythonTransform("df['model_output'] = df.apply(lambda row: row['model_output'] if 'model_output_x' not in row else row['model_output_y'] if row['model_output_x'] == '' else row['model_output_x'], axis=1)"),
+                            RunPythonTransform(
+                                "df['model_output'] = df.apply(lambda row: row['model_output'] if 'model_output_x' not in row else row['model_output_y'] if row['model_output_x'] == '' else row['model_output_x'], axis=1)"
+                            ),
                         ]
                     ),
                 },
