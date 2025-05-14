@@ -89,10 +89,6 @@ def convert_to_binary_string(solution):
     if not isinstance(solution, str):
         return "-1"
 
-    # If the solution is "Unsatisfiable"
-    if solution == "Unsatisfiable":
-        return ""
-
     # Split on commas and strip whitespace
     parts = [p.strip() for p in solution.split(",")]
 
@@ -132,5 +128,9 @@ def parse_path_from_model_output(model_output: str) -> str:
     if not sat_solution:
         return "-1"
 
+    # If the solution is "Unsatisfiable"
+    if sat_solution == "Unsatisfiable":
+        return ""
+    
     # Convert parsed solution to a binary string representation.
     return convert_to_binary_string(sat_solution)
