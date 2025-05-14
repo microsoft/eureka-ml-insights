@@ -37,7 +37,7 @@ class LLM_EXTRACTION_SUBPIPELINE_MIXIN:
         llm_extraction_promp_template: str,
         llm_extractor_model_config: ModelConfig,
         llm_extractor_max_concurrent: int = 1,
-        llm_extractor_answer_transforms: list = None,
+        llm_extractor_answer_transforms: list = [],
     ):
 
         self.filter_empty_answer = PromptProcessingConfig(
