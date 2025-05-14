@@ -42,6 +42,7 @@ def extract_final_answer(model_output):
 
 #     return solution
 
+
 def extract_solution(final_answer: str) -> Optional[str]:
     """
     Parse ``final_answer`` (which should look like ``{'Solution': 'True, False, ...'}``)
@@ -63,11 +64,9 @@ def extract_solution(final_answer: str) -> Optional[str]:
     try:
         return parsed.get("Solution")
     except AttributeError:
-        logging.info(
-            "extract_solution: expected a dict-like object but got "
-            f"{type(parsed).__name__}"
-        )
+        logging.info("extract_solution: expected a dict-like object but got " f"{type(parsed).__name__}")
         return None
+
 
 def convert_to_binary_string(solution):
     """
@@ -124,13 +123,13 @@ def parse_path_from_model_output(model_output: str) -> str:
 
     # Try to parse the SAT solution from the answer block.
     sat_solution = extract_solution(final_answer)
-    
+
     if not sat_solution:
         return "-1"
 
     # If the solution is "Unsatisfiable"
     if sat_solution == "Unsatisfiable":
         return ""
-    
+
     # Convert parsed solution to a binary string representation.
     return convert_to_binary_string(sat_solution)
