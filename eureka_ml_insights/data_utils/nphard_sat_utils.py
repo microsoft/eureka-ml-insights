@@ -30,18 +30,44 @@ def extract_final_answer(model_output):
     return matches[-1] if matches else None
 
 
-def extract_solution(final_answer):
-    """Extracts the assignment string from the final answer"""
+# def extract_solution(final_answer):
+#     """Extracts the assignment string from the final answer"""
 
+#     try:
+#         solution_dict = ast.literal_eval(final_answer)
+#         solution = solution_dict.get("Solution")
+#     except (SyntaxError, ValueError):
+#         logging.info("extract_solution: literal_eval failed does not return a valid dict")
+#         return None
+
+#     return solution
+
+def extract_solution(final_answer: str) -> Optional[str]:
+    """
+    Parse ``final_answer`` (which should look like ``{'Solution': 'True, False, ...'}``)
+    and return the value of the ``"Solution"`` key.
+
+    Returns
+    -------
+    Optional[str]
+        The assignment string if present and well-formed, otherwise ``None``.
+    """
+    # Try to turn the raw string into a Python object.
     try:
-        solution_dict = ast.literal_eval(final_answer)
-        solution = solution_dict.get("Solution")
-    except (SyntaxError, ValueError):
-        logging.info("extract_solution: literal_eval failed does not return a valid dict")
+        parsed = ast.literal_eval(final_answer)
+    except (SyntaxError, ValueError) as err:
+        logging.info(f"extract_solution: literal_eval failed: {err}")
         return None
 
-    return solution
-
+    # 2  Ensure we really got something dict-like.
+    try:
+        return parsed.get("Solution")
+    except AttributeError:
+        logging.info(
+            "extract_solution: expected a dict-like object but got "
+            f"{type(parsed).__name__}"
+        )
+        return None
 
 def convert_to_binary_string(solution):
     """
@@ -101,12 +127,8 @@ def parse_path_from_model_output(model_output: str) -> str:
         return "-1"
 
     # Try to parse the SAT solution from the answer block.
-    try:
-        sat_solution = extract_solution(final_answer)
-    except (AttributeError, ValueError) as e:
-        logging.info(f"There is no valid assignment: {e}")
-        return "-1"
-
+    sat_solution = extract_solution(final_answer)
+    
     if not sat_solution:
         return "-1"
 
