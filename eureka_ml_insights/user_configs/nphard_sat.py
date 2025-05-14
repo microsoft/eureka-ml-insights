@@ -12,7 +12,6 @@ from eureka_ml_insights.configs import (
 )
 from eureka_ml_insights.core import DataProcessing, Inference, PromptProcessing
 from eureka_ml_insights.data_utils import (
-    AddColumn,
     ColumnRename,
     DataReader,
     ExtractUsageTransform,
