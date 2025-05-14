@@ -70,7 +70,7 @@ def convert_to_binary_string(solution):
     # Split on commas and strip whitespace
     parts = [p.strip() for p in solution.split(",")]
 
-    # If parts are not strictly "True" or "False", return empty string
+    # If parts are not strictly "True" or "False", return -1.
     if not all(p in ["True", "False"] for p in parts):
         return "-1"
 
