@@ -30,6 +30,7 @@ jobs:
         pip install --upgrade pip
         pip install -r requirements.txt
         pip install .
+        python3 -m nltk.downloader punkt_tab
 
     - name: Run linters
       continue-on-error: true
