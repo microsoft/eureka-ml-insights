@@ -30,19 +30,6 @@ def extract_final_answer(model_output):
     return matches[-1] if matches else None
 
 
-# def extract_solution(final_answer):
-#     """Extracts the assignment string from the final answer"""
-
-#     try:
-#         solution_dict = ast.literal_eval(final_answer)
-#         solution = solution_dict.get("Solution")
-#     except (SyntaxError, ValueError):
-#         logging.info("extract_solution: literal_eval failed does not return a valid dict")
-#         return None
-
-#     return solution
-
-
 def extract_solution(final_answer: str) -> Optional[str]:
     """
     Parse ``final_answer`` (which should look like ``{'Solution': 'True, False, ...'}``)
