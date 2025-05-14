@@ -56,6 +56,7 @@ class AIME_PIPELINE(ExperimentConfig):
                     "split": "train",
                     "transform": SequenceTransform(
                         [
+                            MultiplyTransform(n_repeats=1),
                             ColumnRename(
                                 name_mapping={
                                     "Question": "prompt",
