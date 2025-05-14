@@ -65,18 +65,6 @@ class ClassicMetric(Metric):
         return data
 
 
-class MetricBasedVerifier:
-    def __init__(self, metric_class, model_output_col: str = "model_output"):
-        self.model_output_col = model_output_col
-        self.metric_class = metric_class
-
-    def transform(self, data):
-        data = self.metric_class(model_output_col=self.model_output_col).evaluate(data)
-        # rename the result column to "verification_reuslt"
-        data.rename(columns={self.metric_class.__name__ + "_result": "verification_result"}, inplace=True)
-        return data
-
-
 class DetectionMetric(Metric):
     """
     This class is for the detection metric, where access is needed to the image
