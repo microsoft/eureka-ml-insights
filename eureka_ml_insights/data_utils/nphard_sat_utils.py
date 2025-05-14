@@ -52,7 +52,7 @@ def convert_to_binary_string(solution):
     -------
     >>> convert_to_binary_string("True, False, True, True")
     '1,0,1,1'
-    """    
+    """
     # If the solution is the special Ellipsis object (...)
     if solution is Ellipsis:
         return "-1"
