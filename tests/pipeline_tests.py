@@ -229,13 +229,13 @@ class TEST_DNA_PIPELINE(DNA_PIPELINE):
     # Test config the Do Not Answer benchmark with TestModel and TestDataLoader
     def configure_pipeline(self):
         model_config_eval = ModelConfig(DNAEvaluationInferenceTestModel, {})
-        config = super().configure_pipeline(model_config=ModelConfig(GenericTestModel, {}))
+        config = super().configure_pipeline(model_config=ModelConfig(GenericTestModel, {}),
+                                            eval_model_config=model_config_eval)
         self.inference_comp.data_loader_config.class_name = TestDataLoader
         self.inference_comp.data_loader_config.init_args = {
             "path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl"),
             "n_iter": N_ITER,
         }
-        self.eval_inference_comp.model_config = model_config_eval
         self.eval_inference_comp.data_loader_config.class_name = TestDataLoader
         self.eval_inference_comp.data_loader_config.init_args = {
             "path": os.path.join(self.eval_data_pre_processing_comp.output_dir, "transformed_data.jsonl"),
