@@ -38,6 +38,21 @@ def extract_solution(final_answer):
 
 
 def convert_to_binary_string(solution):
+    """
+    Convert a comma-separated list of “True”/“False” flags into a
+    comma-separated list of “1”/“0” bytes.
+
+    Special cases
+    -------------
+    * `solution is Ellipsis` or any non-string value  →  "-1"
+    * `solution == "Unsatisfiable"`                  →  ""
+    * Any token other than exactly "True" or "False" →  "-1"
+
+    Example
+    -------
+    >>> convert_to_binary_string("True, False, True, True")
+    '1,0,1,1'
+    """    
     # If the solution is the special Ellipsis object (...)
     if solution is Ellipsis:
         return "-1"
