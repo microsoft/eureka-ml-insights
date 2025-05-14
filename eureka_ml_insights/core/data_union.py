@@ -6,7 +6,7 @@ from .data_processing import DataProcessing
 
 
 class DataUnion(DataProcessing):
-    """This component is used to join two datasets using pandas merge functionality."""
+    """This component is used to concatenate two datasets using pandas concat functionality."""
 
     def __init__(
         self,
@@ -23,6 +23,7 @@ class DataUnion(DataProcessing):
             other_data_reader_config: DataReaderConfig
             output_data_columns: Optional[List[str]] list of columns (subset of input columns)
                                       to keep in the transformed data output file.
+            dedupe_cols: Optional[List[str]] list of columns to deduplicate the concatenated data frame.
         """
         super().__init__(data_reader_config, output_dir, output_data_columns)
         self.other_data_reader = other_data_reader_config.class_name(**other_data_reader_config.init_args)
