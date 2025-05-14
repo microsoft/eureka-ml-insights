@@ -40,7 +40,7 @@ def extract_solution(final_answer):
 def convert_to_binary_string(solution):
     """
     Convert a comma-separated list of “True”/“False” flags into a
-    comma-separated list of “1”/“0” bytes.
+    comma-separated list of “1”/“0”.
 
     Special cases
     -------------
