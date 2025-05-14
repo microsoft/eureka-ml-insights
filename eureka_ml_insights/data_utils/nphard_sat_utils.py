@@ -58,7 +58,7 @@ def convert_to_binary_string(solution):
     -------
     >>> convert_to_binary_string("True, False, True, True")
     '1,0,1,1'
-    """    
+    """
     # If the solution is not a string, there's nothing to process
     if not isinstance(solution, str):
         return "-1"
@@ -94,7 +94,7 @@ def parse_path_from_model_output(model_output: str) -> str:
     """
     # Pull out the “final answer” block the model produced.
 
-    final_answer: Optional[str] = extract_final_answer(model_output)    
+    final_answer: Optional[str] = extract_final_answer(model_output)
 
     if not final_answer:
         logging.info(f"No final answer section detected in model output.")
