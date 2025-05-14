@@ -77,13 +77,7 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            ColumnRename(
-                                name_mapping={
-                                    "model_output": "raw_output",
-                                }
-                            ),
-                            AddColumn("model_output"),
-                            NPHARDSATExtractAnswer("raw_output", "model_output"),
+                            NPHARDSATExtractAnswer("model_output", "extracted_answer"),
                             ExtractUsageTransform(model_config),
                         ]
                     ),
