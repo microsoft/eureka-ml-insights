@@ -29,6 +29,7 @@ def extract_final_answer(model_output):
     # Return the last occurrence if any are found, otherwise return None
     return matches[-1] if matches else None
 
+
 def extract_solution(final_answer):
     solution_dict = ast.literal_eval(final_answer)
     solution = solution_dict.get("Solution")
