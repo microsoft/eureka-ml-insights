@@ -31,8 +31,15 @@ def extract_final_answer(model_output):
 
 
 def extract_solution(final_answer):
-    solution_dict = ast.literal_eval(final_answer)
-    solution = solution_dict.get("Solution")
+    """Extracts the assignment string from the final answer"""
+
+    try:
+        solution_dict = ast.literal_eval(final_answer)
+        solution = solution_dict.get("Solution")
+    except (SyntaxError, ValueError) as exc:
+        logging.info("extract_solution: literal_eval failed does not return a valid dict")
+        return None
+    
 
     return solution
 
@@ -91,7 +98,9 @@ def parse_path_from_model_output(model_output: str) -> str:
         solution is found.
     """
     # Pull out the “final answer” block the model produced.
+    
     final_answer: Optional[str] = extract_final_answer(model_output)
+    print(final_answer)
 
     if not final_answer:
         logging.info(f"No final answer section detected in model output.")
@@ -101,7 +110,7 @@ def parse_path_from_model_output(model_output: str) -> str:
     try:
         sat_solution = extract_solution(final_answer)
     except (AttributeError, ValueError) as e:
-        logging.info(f"There is no valid path: {e}")
+        logging.info(f"There is no valid assignment: {e}")
         return "-1"
 
     if not sat_solution:
