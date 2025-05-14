@@ -97,7 +97,6 @@ class Inference(Component):
         # validate the resume_from contents both stand-alone and against the current model response keys
         with self.data_loader as loader:
             _, sample_model_input, sample_model_kwargs = loader.get_sample_model_input()
-        with self.data_loader as loader:
             sample_data_keys = loader.reader.read().keys()
 
             # verify that "model_output" and "is_valid" columns are present
