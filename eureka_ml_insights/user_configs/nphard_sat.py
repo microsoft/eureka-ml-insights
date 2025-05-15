@@ -2,6 +2,7 @@ import os
 from typing import Any
 
 from eureka_ml_insights.configs import (
+    DataProcessingConfig,
     DataSetConfig,
     ExperimentConfig,
     InferenceConfig,
@@ -9,13 +10,18 @@ from eureka_ml_insights.configs import (
     PipelineConfig,
     PromptProcessingConfig,
 )
-from eureka_ml_insights.core import Inference, PromptProcessing
+from eureka_ml_insights.core import DataProcessing, Inference, PromptProcessing
 from eureka_ml_insights.data_utils import (
     ColumnRename,
+    DataReader,
+    ExtractUsageTransform,
     HFDataReader,
     MMDataLoader,
     MultiplyTransform,
     SequenceTransform,
+)
+from eureka_ml_insights.data_utils.nphard_sat_utils import (
+    NPHARDSATExtractAnswer,
 )
 
 """This file contains user defined configuration classes for the SAT benchmark.
@@ -60,9 +66,28 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
             max_concurrent=5,
         )
 
+        # post process the response to extract the answer
+        self.data_post_processing = DataProcessingConfig(
+            component_type=DataProcessing,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            NPHARDSATExtractAnswer("model_output", "extracted_answer"),
+                            ExtractUsageTransform(model_config),
+                        ]
+                    ),
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "data_post_processing_output"),
+        )
+
         # Configure the pipeline
         return PipelineConfig(
-            [self.data_processing_comp, self.inference_comp],
+            [self.data_processing_comp, self.inference_comp, self.data_post_processing],
             self.log_dir,
         )
 
