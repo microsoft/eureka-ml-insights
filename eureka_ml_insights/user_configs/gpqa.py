@@ -51,6 +51,7 @@ from eureka_ml_insights.metrics import (
     ExactMatch,
 )
 
+from .llm_extraction import LLM_EXTRACTION_SUBPIPELINE_MIXIN
 
 class GPQA_Experiment_Pipeline(ExperimentConfig):
     def configure_pipeline(
@@ -138,6 +139,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                 "../prompt_templates/gpqa_templates/extract_gpqa_answer.jinja",
             ),
             llm_extractor_model_config=OAI_GPT4O_2024_11_20_CONFIG,
+            log_dir=self.log_dir,
             llm_extractor_max_concurrent=1,
             llm_extractor_answer_transforms=[
                 RegexTransform(
@@ -154,7 +156,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    "path": os.path.join(self.data_join.output_dir, "transformed_data.jsonl"),
+                    "path": os.path.join(llm_extraction_subpipeline[-1].output_dir, "transformed_data.jsonl"),
                     "format": ".jsonl",
                 },
             ),

@@ -36,8 +36,10 @@ class LLM_EXTRACTION_SUBPIPELINE_MIXIN:
         extracted_answer_col: str,
         llm_extraction_promp_template: str,
         llm_extractor_model_config: ModelConfig,
+        log_dir: str,
         llm_extractor_max_concurrent: int = 1,
         llm_extractor_answer_transforms: list = [],
+
     ):
 
         self.filter_empty_answer = PromptProcessingConfig(
@@ -56,7 +58,7 @@ class LLM_EXTRACTION_SUBPIPELINE_MIXIN:
                 },
             ),
             prompt_template_path=llm_extraction_promp_template,
-            output_dir=os.path.join(self.log_dir, "filter_empty_answer"),
+            output_dir=os.path.join(log_dir, "filter_empty_answer"),
         )
 
         self.inference_llm_answer_extract = InferenceConfig(
@@ -66,7 +68,7 @@ class LLM_EXTRACTION_SUBPIPELINE_MIXIN:
                 MMDataLoader,
                 {"path": os.path.join(self.filter_empty_answer.output_dir, "transformed_data.jsonl")},
             ),
-            output_dir=os.path.join(self.log_dir, "llm_answer_extract_inference_result"),
+            output_dir=os.path.join(log_dir, "llm_answer_extract_inference_result"),
             max_concurrent=llm_extractor_max_concurrent,
         )
 
@@ -95,7 +97,7 @@ class LLM_EXTRACTION_SUBPIPELINE_MIXIN:
                     ),
                 },
             ),
-            output_dir=os.path.join(self.log_dir, "data_join_output"),
+            output_dir=os.path.join(log_dir, "data_join_output"),
             pandas_merge_args={"on": ["data_repeat_id", "data_point_id"], "how": "left"},
         )
 
@@ -117,7 +119,7 @@ class LLM_EXTRACTION_SUBPIPELINE_MIXIN:
                     ),
                 },
             ),
-            output_dir=os.path.join(self.log_dir, "post_join_consolidation_output"),
+            output_dir=os.path.join(log_dir, "post_join_consolidation_output"),
         )
         return [
             self.filter_empty_answer,
