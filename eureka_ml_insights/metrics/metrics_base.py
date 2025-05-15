@@ -131,13 +131,9 @@ class SubstringExistsMatch(ClassicMetric):
         if not is_valid or not answer_text or answer_text=="invalid":
             return "none"
         
-        # Some files store numerical values as numerical and others as strings.
-        # For consistency, convert everything to strings.
-        if not isinstance(answer_text, str):
-            answer_text = str(answer_text)
-
-        if not isinstance(target_text, str):
-            target_text = str(target_text)
+        # Make sure everything is a strings.
+        answer_text = str(answer_text)
+        target_text = str(target_text)
 
         return "correct" if target_text.lower() in answer_text.lower() else "incorrect"
 

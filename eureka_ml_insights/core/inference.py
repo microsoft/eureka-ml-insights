@@ -45,16 +45,7 @@ class Inference(Component):
         super().__init__(output_dir)
         self.model: Model = model_config.class_name(**model_config.init_args)
         self.data_loader = data_config.class_name(**data_config.init_args)
-
-        json_path = os.path.join(output_dir, "inference_result.jsonl")
-        self.appender = JsonLinesWriter(json_path, mode="a")
-
-        # If there are no records for inference component, previously no file was written.
-        # This can create an issue for subsequent pipelines that expect a file to be present and will handle a 0-length file appropriately.
-        # To avoid this, we create an empty file to start if it does not exist.
-        if not os.path.exists(json_path):
-            with open(json_path, 'a'):
-                pass
+        self.appender = JsonLinesWriter(os.path.join(output_dir, "inference_result.jsonl"), mode="a")
 
         self.resume_from = resume_from
         if resume_from and not os.path.exists(resume_from):
