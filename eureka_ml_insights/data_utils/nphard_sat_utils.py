@@ -23,15 +23,15 @@ class NPHARDSATExtractAnswer(DFTransformBase):
 
 
 def extract_final_answer(model_output):
-
+    """Return the text inside the *last* <final_answer> … </final_answer> block."""
     open_tag = "<final_answer>"
     # Locate the last occurrence of the opening tag.
     last_open = model_output.rfind(open_tag)
     if last_open == -1:
         return None
-    sliced = model_output[last_open:]    
-    # Grab everything between <final_answer> and </final_answer>    
-    matches = re.findall(r'<final_answer>(.*?)</final_answer>', sliced, re.DOTALL)    
+    sliced = model_output[last_open:]
+    # Grab everything between <final_answer> and </final_answer>
+    matches = re.findall(r"<final_answer>(.*?)</final_answer>", sliced, re.DOTALL)
 
     # Return the final captured block (if any); otherwise None.
     return matches[-1] if matches else None
@@ -58,10 +58,10 @@ def extract_solution(final_answer: str) -> Optional[str]:
     try:
         return parsed.get("Solution")
     except AttributeError:
-        logging.info("extract_solution: expected a dict-like object but got " f"{type(parsed).__name__}")        
+        logging.info("extract_solution: expected a dict-like object but got " f"{type(parsed).__name__}")
     except KeyError:
-        logging.info("extract_solution: 'Solution' key not found in parsed result")    
-    
+        logging.info("extract_solution: 'Solution' key not found in parsed result")
+
     return None
 
 
@@ -71,7 +71,7 @@ def convert_to_binary_string(solution):
     comma-separated list of “1”/“0”.
 
     Special cases
-    -------------    
+    -------------
     * Any token other than exactly "True" or "False" →  "-1"
 
     Example
