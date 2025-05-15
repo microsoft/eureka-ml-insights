@@ -18,15 +18,22 @@ class NPHARDSATExtractAnswer(DFTransformBase):
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """Extracts the SAT assignment from the model output and stores it in the model_answer_column."""
-        df[self.model_answer_column] = df[self.model_output_column].apply(parse_path_from_model_output)
+        df[self.model_answer_column] = df[self.model_output_column].apply(parse_assignment_from_model_output)
         return df
 
 
 def extract_final_answer(model_output):
-    # Find all non-overlapping occurrences between <final_answer> and </final_answer>
-    matches = re.findall(r"<final_answer>(.*?)</final_answer>", model_output, flags=re.DOTALL)
 
-    # Return the last occurrence if any are found, otherwise return None
+    open_tag = "<final_answer>"
+    # Locate the last occurrence of the opening tag.
+    last_open = model_output.rfind(open_tag)
+    if last_open == -1:
+        return None
+    sliced = model_output[last_open:]    
+    # Grab everything between <final_answer> and </final_answer>    
+    matches = re.findall(r'<final_answer>(.*?)</final_answer>', sliced, re.DOTALL)    
+
+    # Return the final captured block (if any); otherwise None.
     return matches[-1] if matches else None
 
 
@@ -43,16 +50,19 @@ def extract_solution(final_answer: str) -> Optional[str]:
     # Try to turn the raw string into a Python object.
     try:
         parsed = ast.literal_eval(final_answer)
-    except (SyntaxError, ValueError) as err:
+    except ValueError as err:
         logging.info(f"extract_solution: literal_eval failed: {err}")
         return None
 
-    # 2  Ensure we really got something dict-like.
+    # Ensure we really got something dict-like.
     try:
         return parsed.get("Solution")
     except AttributeError:
-        logging.info("extract_solution: expected a dict-like object but got " f"{type(parsed).__name__}")
-        return None
+        logging.info("extract_solution: expected a dict-like object but got " f"{type(parsed).__name__}")        
+    except KeyError:
+        logging.info("extract_solution: 'Solution' key not found in parsed result")    
+    
+    return None
 
 
 def convert_to_binary_string(solution):
@@ -61,9 +71,7 @@ def convert_to_binary_string(solution):
     comma-separated list of “1”/“0”.
 
     Special cases
-    -------------
-    * `solution is Ellipsis` or any non-string value  →  "-1"
-    * `solution == "Unsatisfiable"`                  →  ""
+    -------------    
     * Any token other than exactly "True" or "False" →  "-1"
 
     Example
@@ -89,7 +97,7 @@ def convert_to_binary_string(solution):
     return ",".join(converted_parts)
 
 
-def parse_path_from_model_output(model_output: str) -> str:
+def parse_assignment_from_model_output(model_output: str) -> str:
     """
     Extract a SAT assignment from a model's raw output and convert it to a
     binary string.
