@@ -176,6 +176,8 @@ class Inference(Component):
             return data
 
     def run(self):
+        with self.appender as appender:
+            pass  # create the output file. This will guarantee that an empty inference_result.jsonl file is created even if no inference is run.
         if self.resume_from:
             self.pre_inf_results_df, self.last_uid = self.fetch_previous_inference_results()
         with self.data_loader as loader, ThreadPoolExecutor(max_workers=self.max_concurrent) as executor:
