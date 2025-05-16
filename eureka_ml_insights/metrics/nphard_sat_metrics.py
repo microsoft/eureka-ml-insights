@@ -1,6 +1,5 @@
-import logging
-
 from .metrics_base import Metric
+
 
 class NPHardSATMetric(Metric):
     """
@@ -13,15 +12,14 @@ class NPHardSATMetric(Metric):
 
     def is_sat_soln_present(self, optimal_tour_curr, tour_string):
         # If both the model output and the ground truth say the solution is unsatisfiable,
-        # (tour_string: "", ground truth: empty list), accept immediately.      
+        # (tour_string: "", ground truth: empty list), accept immediately.
         if tour_string == "" and not optimal_tour_curr:
             return True
-        
+
         optimal_tour_strings = [",".join(item.replace(" ", "").strip("()").split(",")) for item in optimal_tour_curr]
 
         # Check if tour_string is in the list of optimal tour strings
         return tour_string in optimal_tour_strings
-    
 
     def __evaluate__(self, x):
         """
