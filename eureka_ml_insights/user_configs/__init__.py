@@ -1,12 +1,6 @@
 from .aime import (
     AIME_PIPELINE,
-    AIME_PIPELINE5Run,
-    AIME_PIPELINE16Run,
-    AIME_PIPELINE32Run,
-    AIME_PIPELINE64Run,
-    AIME_PIPELINE256Run,
-    AIME_PIPELINE512Run,
-    AIME_PIPELINE1024Run,
+    AIME2025_PIPELINE,
 )
 from .ba_calendar import (
     BA_Calendar_Parallel_PIPELINE,
@@ -152,13 +146,7 @@ __all__ = [
     IFEval_Nondeterminism,
     Kitab_Nondeterminism,
     AIME_PIPELINE,
-    AIME_PIPELINE5Run,
-    AIME_PIPELINE16Run,
-    AIME_PIPELINE32Run,
-    AIME_PIPELINE64Run,
-    AIME_PIPELINE256Run,
-    AIME_PIPELINE512Run,
-    AIME_PIPELINE1024Run,
+    AIME2025_PIPELINE,
     Omni_Math_PIPELINE,
     Omni_Math_Parallel_PIPELINE,
     NPHARD_TSP_PIPELINE,
