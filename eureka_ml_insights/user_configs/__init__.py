@@ -70,6 +70,8 @@ from .nondeterminism import (
     Kitab_Nondeterminism,
     MMMU_Nondeterminism,
 )
+from .omni_math import (Omni_Math_PIPELINE,
+                        Omni_Math_Parallel_PIPELINE)
 from .nphard_sat import NPHARD_SAT_PIPELINE, NPHARD_SAT_PIPELINE_MULTIPLE_RUNS
 from .nphard_tsp import NPHARD_TSP_PIPELINE, NPHARD_TSP_PIPELINE_MULTIPLE_RUNS
 from .toxigen import (
@@ -155,6 +157,8 @@ __all__ = [
     AIME_PIPELINE256Run,
     AIME_PIPELINE512Run,
     AIME_PIPELINE1024Run,
+    Omni_Math_PIPELINE,
+    Omni_Math_Parallel_PIPELINE,
     NPHARD_TSP_PIPELINE,
     NPHARD_TSP_PIPELINE_MULTIPLE_RUNS,
     MATHVERSE_PIPELINE,

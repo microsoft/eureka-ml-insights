@@ -356,3 +356,4 @@ class BACalendarMetric(CompositeMetric):
 
         # Add test result
         return {'constrainedness': constrainedness_ratio, 'constrainedness_bucket': constrainedness_bucket}
+        
