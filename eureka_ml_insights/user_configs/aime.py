@@ -16,7 +16,6 @@ from eureka_ml_insights.configs import (
 from eureka_ml_insights.core import DataProcessing, Inference, PromptProcessing
 from eureka_ml_insights.core.eval_reporting import EvalReporting
 from eureka_ml_insights.data_utils import (
-    AddColumn,
     ColumnRename,
     CopyColumn,
     DataReader,
@@ -47,7 +46,6 @@ class AIME_PIPELINE(ExperimentConfig):
     ) -> PipelineConfig:
         self.n_repeats = int(kwargs.get('n_repeat', 1))  # Default value is 1
         self.max_concurrent = int(kwargs.get('max_concurrent', 1))  # Default value is 1
-        print(f"n_repeat is: {self.n_repeats} and max_concurrent is {self.max_concurrent}")
         # data preprocessing
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
