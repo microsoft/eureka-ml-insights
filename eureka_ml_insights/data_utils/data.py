@@ -446,7 +446,7 @@ class DataReader:
         df = self._load_dataset()
         df = df.reset_index(drop=True)
         log.info(f"Loaded dataset with shape: {df.shape}")
-        if self.transform is not None:
+        if not df.empty and self.transform is not None:
             df = self.transform.transform(df)
         df = df.reset_index(drop=True)
         log.info(f"Transformed dataset has shape: {df.shape}")
