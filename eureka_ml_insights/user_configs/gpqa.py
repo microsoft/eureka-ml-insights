@@ -129,12 +129,15 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "preeval_data_post_processing_output"),
         )
-
+        # Inserts an llm-based extraction subpipeline that filters all rows where the regex answer extraction did not work, 
+        # and attempts answer extraction using an LLM. This is helpful for cases where:
+        # the model under test may not completely follow the instructions in the prompt on how to mark the final answer,
+        # or for reasoning models that may run out of the max token length and may not be able to add the final answer marker.
         llm_extraction_subpipeline_conf = LLM_EXTRACTION_SUBPIPELINE_MIXIN()
         llm_extraction_subpipeline = llm_extraction_subpipeline_conf.configure_subpipeline(
             extraction_attempt_component=self.preeval_data_post_processing_comp,
             extracted_answer_col="model_output",
-            llm_extraction_promp_template=os.path.join(
+            llm_extraction_prompt_template=os.path.join(
                 os.path.dirname(__file__),
                 "../prompt_templates/gpqa_templates/extract_gpqa_answer.jinja",
             ),
