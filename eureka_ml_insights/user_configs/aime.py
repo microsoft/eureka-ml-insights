@@ -97,13 +97,7 @@ class AIME_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            ColumnRename(
-                                name_mapping={
-                                    "model_output": "raw_output",
-                                }
-                            ),
-                            AddColumn("model_output"),
-                            AIMEExtractAnswer("raw_output", "model_output"),
+                            AIMEExtractAnswer("model_output","extracted_answer"),
                             ExtractUsageTransform(model_config),
                         ]
                     ),
@@ -113,6 +107,7 @@ class AIME_PIPELINE(ExperimentConfig):
         )
 
         # Configure the evaluation and reporting component for evaluation and dataset level aggregation
+        metric_config=MetricConfig(NumericMatch, {"model_output_col": "extracted_answer"})
         self.evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
             data_reader_config=DataSetConfig(
@@ -122,7 +117,7 @@ class AIME_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                 },
             ),
-            metric_config=MetricConfig(NumericMatch),
+            metric_config=metric_config,
             aggregator_configs=[
                 AggregatorConfig(
                     CountAggregator,
@@ -172,7 +167,7 @@ class AIME_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                 },
             ),
-            metric_config=MetricConfig(NumericMatch),
+            metric_config=metric_config,
             aggregator_configs=[
                 AggregatorConfig(
                     BiLevelCountAggregator,
