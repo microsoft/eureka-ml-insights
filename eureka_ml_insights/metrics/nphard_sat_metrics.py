@@ -16,7 +16,9 @@ class NPHardSATMetric(Metric):
         if assignment_string == "" and not optimal_assignment_curr:
             return True
 
-        optimal_assignment_strings = [",".join(item.replace(" ", "").strip("()").split(",")) for item in optimal_assignment_curr]
+        optimal_assignment_strings = [
+            ",".join(item.replace(" ", "").strip("()").split(",")) for item in optimal_assignment_curr
+        ]
 
         # Check if assignment_string is in the list of optimal assignment strings
         return assignment_string in optimal_assignment_strings
