@@ -3,8 +3,7 @@ import os
 import threading
 import time
 from collections import deque
-from concurrent.futures import ThreadPoolExecutor
-from concurrent.futures import as_completed
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from tqdm import tqdm
 
@@ -218,4 +217,3 @@ class Inference(Component):
         self.validate_response_dict(response_dict)
         data.update(response_dict)
         return data
-      
