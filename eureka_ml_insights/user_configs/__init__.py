@@ -60,6 +60,7 @@ from .kitab import (
     Phi_KITAB_TWO_BOOK_CONSTRAINT_PIPELINE,
     Phi_KITAB_TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT,
 )
+from .llm_extraction import LLM_EXTRACTION_SUBPIPELINE_MIXIN
 from .mathverse import MATHVERSE_PIPELINE
 from .mathvision import MATHVISION_PIPELINE
 from .mathvista import MATHVISTA_PIPELINE
@@ -95,6 +96,7 @@ from .vision_language.spatial_map import (
 )
 
 __all__ = [
+    LLM_EXTRACTION_SUBPIPELINE_MIXIN,
     OBJECT_DETECTION_PAIRS_PIPELINE,
     OBJECT_DETECTION_SINGLE_PIPELINE,
     OBJECT_DETECTION_PAIRS_LOCAL_PIPELINE,
