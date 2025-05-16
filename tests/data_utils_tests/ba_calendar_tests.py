@@ -14,9 +14,9 @@ log = logging.getLogger("BACalendar_ExtractAnswer_tests")
 class TestBACalExtractAnswer(unittest.TestCase):
     def setUp(self):
         testcases = [
-            "thinking steps ## Final Answer:\n 25",
-            "thinking steps ## Final Answer: a, Final Answer: b, Final Answer: x",
-            "thinking steps ## Final Answer: a, Final Answer: ball, Final Answer: xin",
+            "thinking steps ## Final Answer:\n Wednesday 15:15-15:30",
+            "thinking steps ## Final Answer: a, Final Answer: b, Final Answer: Wednesday 15:15-15:30",
+            "thinking steps ## Final Answer: a, Final Answer: Wednesday 05:15-10:00, Final Answer: Wednesday 15:15-15:30",
         ]
         self.df = pd.DataFrame(
             {
@@ -30,9 +30,9 @@ class TestBACalExtractAnswer(unittest.TestCase):
         transform.transform(self.df)
         # Check values, accounting for NaN
         expected_values = [
-            "25",
-            "x",
-            "xin",
+            "Wednesday 15:15-15:30",
+            "Wednesday 15:15-15:30",
+            "Wednesday 15:15-15:30",
         ]
         np.testing.assert_array_equal(self.df["model_output"].values, expected_values)
 
