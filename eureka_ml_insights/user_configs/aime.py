@@ -45,7 +45,9 @@ class AIME_PIPELINE(ExperimentConfig):
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
-
+        self.n_repeats = int(kwargs.get('n_repeat', 1))  # Default value is 1
+        self.max_concurrent = int(kwargs.get('max_concurrent', 1))  # Default value is 1
+        print(f"n_repeat is: {self.n_repeats} and max_concurrent is {self.max_concurrent}")
         # data preprocessing
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
@@ -56,7 +58,7 @@ class AIME_PIPELINE(ExperimentConfig):
                     "split": "train",
                     "transform": SequenceTransform(
                         [
-                            MultiplyTransform(n_repeats=1),
+                            MultiplyTransform(n_repeats=self.n_repeats),
                             ColumnRename(
                                 name_mapping={
                                     "Question": "prompt",
@@ -83,7 +85,7 @@ class AIME_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
-            max_concurrent=50,
+            max_concurrent=self.max_concurrent,
         )
         # post process the response to extract the answer
         self.data_post_processing = DataProcessingConfig(
@@ -485,168 +487,12 @@ class AIME_PIPELINE1024Run(AIME_PIPELINE):
         )
         return pipeline
 
-class AIME2025_PIPELINE5Run(AIME_PIPELINE):
-    """This class specifies the config for running AIME benchmark 5 repeated times"""
+class AIME2025_PIPELINE(AIME_PIPELINE):
+    """This class specifies the config for running AIME 2025 benchmark"""
 
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
-        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
-        # data preprocessing
-        self.data_processing_comp = PromptProcessingConfig(
-            component_type=PromptProcessing,
-            data_reader_config=DataSetConfig(
-                HFDataReader,
-                {
-                    "path": "lchen001/AIME2025",
-                    "split": "train",
-                    "transform": SequenceTransform(
-                        [
-                            ColumnRename(
-                                name_mapping={
-                                    "Question": "prompt",
-                                    "Answer": "ground_truth",
-                                }
-                            ),
-                            # SamplerTransform( random_seed=0,sample_count=2),
-                        ],
-                    ),
-                },
-            ),
-            prompt_template_path=os.path.join(
-                os.path.dirname(__file__), "../prompt_templates/aime_templates/Template_1clean.jinja"
-            ),
-            output_dir=os.path.join(self.log_dir, "data_processing_output"),
-        )
-
-        # data preprocessing
-        self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
-            MultiplyTransform(n_repeats=5)
-        )
-
-        # Configure the pipeline; this is necessary for resume_from to work
-        return PipelineConfig(
-            [
-                self.data_processing_comp,
-                self.inference_comp,
-                self.data_post_processing,
-                self.evalreporting_comp,
-                self.data_post_processing_addmv,
-                self.mv_evalreporting_comp,
-                self.posteval_data_post_processing_comp,
-                self.bon_evalreporting_comp,
-                self.won_evalreporting_comp,
-            ],
-            self.log_dir,
-        )
-    
-class AIME2025_PIPELINE50Run(AIME2025_PIPELINE5Run):
-    """This class specifies the config for running AIME benchmark 5 repeated times"""
-
-    def configure_pipeline(
-        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
-    ) -> PipelineConfig:
-        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
-        # data preprocessing
-        self.data_processing_comp.data_reader_config.init_args["transform"].transforms[-1] = MultiplyTransform(
-            n_repeats=50
-        )
-        return pipeline
-
-
-class AIME2025_PIPELINE16Run(AIME2025_PIPELINE5Run):
-    """This class specifies the config for running AIME benchmark 5 repeated times"""
-
-    def configure_pipeline(
-        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
-    ) -> PipelineConfig:
-        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
-        # data preprocessing
-        self.data_processing_comp.data_reader_config.init_args["transform"].transforms[-1] = MultiplyTransform(
-            n_repeats=16
-        )
-        return pipeline
-
-
-class AIME2025_PIPELINE32Run(AIME2025_PIPELINE5Run):
-    """This class specifies the config for running AIME benchmark 5 repeated times"""
-
-    def configure_pipeline(
-        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
-    ) -> PipelineConfig:
-        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
-        # data preprocessing
-        self.data_processing_comp.data_reader_config.init_args["transform"].transforms[-1] = MultiplyTransform(
-            n_repeats=32
-        )
-        return pipeline
-
-
-class AIME2025_PIPELINE64Run(AIME2025_PIPELINE5Run):
-    """This class specifies the config for running AIME benchmark 5 repeated times"""
-
-    def configure_pipeline(
-        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
-    ) -> PipelineConfig:
-        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
-        # data preprocessing
-        self.data_processing_comp.data_reader_config.init_args["transform"].transforms[-1] = MultiplyTransform(
-            n_repeats=64
-        )
-        return pipeline
-
-
-class AIME2025_PIPELINE128Run(AIME2025_PIPELINE5Run):
-    """This class specifies the config for running AIME benchmark 5 repeated times"""
-
-    def configure_pipeline(
-        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
-    ) -> PipelineConfig:
-        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
-        # data preprocessing
-        self.data_processing_comp.data_reader_config.init_args["transform"].transforms[-1] = MultiplyTransform(
-            n_repeats=128
-        )
-        return pipeline
-
-
-class AIME2025_PIPELINE256Run(AIME2025_PIPELINE5Run):
-    """This class specifies the config for running AIME benchmark 5 repeated times"""
-
-    def configure_pipeline(
-        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
-    ) -> PipelineConfig:
-        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
-        # data preprocessing
-        self.data_processing_comp.data_reader_config.init_args["transform"].transforms[-1] = MultiplyTransform(
-            n_repeats=256
-        )
-        return pipeline
-
-
-class AIME2025_PIPELINE512Run(AIME2025_PIPELINE5Run):
-    """This class specifies the config for running AIME benchmark 5 repeated times"""
-
-    def configure_pipeline(
-        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
-    ) -> PipelineConfig:
-        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
-        # data preprocessing
-        self.data_processing_comp.data_reader_config.init_args["transform"].transforms[-1] = MultiplyTransform(
-            n_repeats=512
-        )
-        return pipeline
-
-
-class AIME2025_PIPELINE1024Run(AIME2025_PIPELINE5Run):
-    """This class specifies the config for running AIME benchmark 5 repeated times"""
-
-    def configure_pipeline(
-        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
-    ) -> PipelineConfig:
-        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
-        # data preprocessing
-        self.data_processing_comp.data_reader_config.init_args["transform"].transforms[-1] = MultiplyTransform(
-            n_repeats=1024
-        )
+        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from,**kwargs)
+        self.data_processing_comp.data_reader_config.init_args["path"] = "lchen001/AIME2025"
         return pipeline
