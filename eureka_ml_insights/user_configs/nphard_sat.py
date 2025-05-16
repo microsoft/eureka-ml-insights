@@ -174,7 +174,7 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
                         "normalize": True,
                     },
                 ),
-                # # two similar reports for average completion usage
+                # # Similar reports for average completion usage
                 AggregatorConfig(
                     BiLevelAggregator,
                     {
