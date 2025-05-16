@@ -11,6 +11,7 @@ from .metrics_base import (
 )
 from .mmmu_metrics import MMMUMetric
 from .nphard_tsp_metrics import NPHardTSPMetric
+from .nphard_sat_metrics import NPHardSATMetric
 from .reports import (
     Aggregator,
     AverageAggregator,
@@ -58,4 +59,5 @@ __all__ = [
     MaxTokenF1ScoreMetric,
     ValueFilteredAggregator,
     NPHardTSPMetric,
+    NPHardSATMetric,
 ]
