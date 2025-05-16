@@ -4,14 +4,16 @@ import os
 To be used after the extraction attempt component in the main pipeline which should be a DataProcessing component passed to the configure_subpipeline method.
 The transformed_data.jsonl file from the extraction attempt component is used as input to the LLM extraction subpipeline, and must contain the following columns:
 - prompt
-- data_point_id
+- uid
+- data_point_id (optional) is added in this subpipeline if not present
 - data_repeat_id (optional) is added in this subpipeline if not present
 - {extracted_answer_col}
 The output of the LLM extraction subpipeline is a transformed_data.jsonl file with the following new/updated columns:
 - prompt (the prompt used for the LLM extraction)
 - original_prompt (the original prompt present in the input data to this subpipeline)
 - data_repeat_id (if not already present in the input data)
-- {extracted_answer_col} column containing the extracted answer where the original extracted_answer_col was empty
+- data_point_id (if not already present in the input data)
+- {extracted_answer_col} column containing the llm-extracted answer where the original extracted_answer_col was empty
 """
 
 
