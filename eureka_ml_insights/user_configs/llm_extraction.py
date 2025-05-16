@@ -1,6 +1,18 @@
 import os
 
-"""This file contains user defined configuration classes for the GPQA dataset."""
+"""This file contains the LLM_EXTRACTION_SUBPIPELINE_MIXIN class, which is used to configure the LLM extraction subpipeline.
+To be used after the extraction attempt component in the main pipeline which should be a DataProcessing component passed to the configure_subpipeline method.
+The transformed_data.jsonl file from the extraction attempt component is used as input to the LLM extraction subpipeline, and must contain the following columns:
+- prompt
+- data_point_id
+- data_repeat_id (optional) is added in this subpipeline if not present
+- {extracted_answer_col}
+The output of the LLM extraction subpipeline is a transformed_data.jsonl file with the following new/updated columns:
+- prompt (the prompt used for the LLM extraction)
+- original_prompt (the original prompt present in the input data to this subpipeline)
+- data_repeat_id (if not already present in the input data)
+- {extracted_answer_col} column containing the extracted answer where the original extracted_answer_col was empty
+"""
 
 
 from eureka_ml_insights.configs import (
@@ -12,7 +24,6 @@ from eureka_ml_insights.configs import (
     PromptProcessingConfig,
 )
 from eureka_ml_insights.core import (
-    Component,
     DataJoin,
     DataProcessing,
     Inference,
@@ -32,15 +43,26 @@ class LLM_EXTRACTION_SUBPIPELINE_MIXIN:
 
     def configure_subpipeline(
         self,
-        extraction_attempt_component: Component,
+        extraction_attempt_component: DataProcessing,
         extracted_answer_col: str,
-        llm_extraction_promp_template: str,
+        llm_extraction_prompt_template: str,
         llm_extractor_model_config: ModelConfig,
         log_dir: str,
         llm_extractor_max_concurrent: int = 1,
         llm_extractor_answer_transforms: list = [],
-
     ):
+        """
+        Args:
+            extraction_attempt_component: DataProcessing component that was used to extract the answer.
+            extracted_answer_col: str name of the column that contains the extracted answer in the output of the extraction_attempt_component.
+            llm_extraction_prompt_template: str path to the prompt template file for the LLM extraction.
+            llm_extractor_model_config: ModelConfig config for the LLM model to be used for extraction.
+            log_dir: str directory corresponding to the output directory of the calling pipeline.
+            llm_extractor_max_concurrent: int max_concurrent parameter for the inference component used for LLM extraction.
+            llm_extractor_answer_transforms: list of transforms to be applied to the model output after the LLM extraction.
+        Returns:
+            list of components that constitute the LLM extraction subpipeline.
+        """
 
         self.filter_empty_answer = PromptProcessingConfig(
             component_type=PromptProcessing,
@@ -51,13 +73,17 @@ class LLM_EXTRACTION_SUBPIPELINE_MIXIN:
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
+                            # if data_repeat_id/data_point_id is not present, create it just so the subpipeline can run both with and without MultiplyTransform applied to the original data
+                            RunPythonTransform(
+                                "df['data_repeat_id'] = df.get('data_repeat_id', pd.Series('repeat_0', index=df.index)); df['data_point_id'] = df.get('data_point_id', df.get('uid'))"
+                            ),
                             RunPythonTransform(f"df = df[df['{extracted_answer_col}'] == '']"),
                             ColumnRename(name_mapping={"prompt": "original_prompt"}),
                         ]
                     ),
                 },
             ),
-            prompt_template_path=llm_extraction_promp_template,
+            prompt_template_path=llm_extraction_prompt_template,
             output_dir=os.path.join(log_dir, "filter_empty_answer"),
         )
 
@@ -79,6 +105,10 @@ class LLM_EXTRACTION_SUBPIPELINE_MIXIN:
                 {
                     "path": os.path.join(extraction_attempt_component.output_dir, "transformed_data.jsonl"),
                     "format": ".jsonl",
+                    # if data_repeat_id/data_point_id is not present, create it just so the subpipeline can run both with and without MultiplyTransform applied to the original data
+                    "transform": RunPythonTransform(
+                        "df['data_repeat_id'] = df.get('data_repeat_id', pd.Series('repeat_0', index=df.index)); df['data_point_id'] = df.get('data_point_id', df.get('uid'))"
+                    ),
                 },
             ),
             other_data_reader_config=DataSetConfig(
@@ -88,10 +118,12 @@ class LLM_EXTRACTION_SUBPIPELINE_MIXIN:
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            # drop all columns except the uid and model_output
+                            # drop all columns except the uid and extracted_answer_col
                             RunPythonTransform(
-                                "df = df[[col for col in ['data_repeat_id','data_point_id', 'model_output'] if col in df.columns]]"
+                                f"df = df[[col for col in ['data_repeat_id','data_point_id', 'model_output'] if col in df.columns]]"
                             ),
+                            # rename model_output to extracted_answer_col
+                            ColumnRename(name_mapping={"model_output": extracted_answer_col}),
                         ]
                         + llm_extractor_answer_transforms
                     ),
@@ -108,14 +140,10 @@ class LLM_EXTRACTION_SUBPIPELINE_MIXIN:
                 {
                     "path": os.path.join(self.data_join.output_dir, "transformed_data.jsonl"),
                     "format": ".jsonl",
-                    "transform": SequenceTransform(
-                        [
-                            # consolidate model_output_y to replace the original model_output whenever empty
-                            # the initial if statement checks whether there has been a join beforehand
-                            RunPythonTransform(
-                                "df['model_output'] = df.apply(lambda row: row['model_output'] if 'model_output_x' not in row else row['model_output_y'] if row['model_output_x'] == '' else row['model_output_x'], axis=1)"
-                            ),
-                        ]
+                    # consolidate new {extracted_answer_col} to replace the original {extracted_answer_col} whenever the latter is empty
+                    # the initial if statement checks whether there has been a join beforehand
+                    "transform": RunPythonTransform(
+                        f"df['{extracted_answer_col}'] = df.apply(lambda row: row['{extracted_answer_col}'] if '{extracted_answer_col}_x' not in row else row['{extracted_answer_col}_y'] if row['{extracted_answer_col}_x'] == '' else row['{extracted_answer_col}_x'], axis=1)"
                     ),
                 },
             ),
