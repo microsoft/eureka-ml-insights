@@ -13,6 +13,9 @@ from eureka_ml_insights.configs import (
     PipelineConfig,
     PromptProcessingConfig,
 )
+from eureka_ml_insights.configs.model_configs import (
+    OAI_GPT4O_2024_11_20_CONFIG,
+)
 from eureka_ml_insights.core import DataProcessing, Inference, PromptProcessing
 from eureka_ml_insights.core.eval_reporting import EvalReporting
 from eureka_ml_insights.data_utils import (
@@ -21,9 +24,12 @@ from eureka_ml_insights.data_utils import (
     DataReader,
     ExtractUsageTransform,
     HFDataReader,
+    ImputeNA,
     MajorityVoteTransform,
     MultiplyTransform,
+    RegexTransform,
     ReplaceStringsTransform,
+    RunPythonTransform,
     SequenceTransform,
 )
 from eureka_ml_insights.data_utils.aime_utils import AIMEExtractAnswer
@@ -34,6 +40,8 @@ from eureka_ml_insights.metrics.reports import (
     BiLevelCountAggregator,
     CountAggregator,
 )
+
+from .llm_extraction import LLM_EXTRACTION_SUBPIPELINE_MIXIN
 
 # from eureka_ml_insights.data_utils.transform import MajorityVoteTransform
 
@@ -95,7 +103,7 @@ class AIME_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            AIMEExtractAnswer("model_output","extracted_answer"),
+                            AIMEExtractAnswer("model_output",'extracted_answer'),
                             ExtractUsageTransform(model_config),
                         ]
                     ),
@@ -105,6 +113,7 @@ class AIME_PIPELINE(ExperimentConfig):
         )
 
         # Configure the evaluation and reporting component for evaluation and dataset level aggregation
+        #metric_config=MetricConfig(NumericMatch, {"model_output_col": "extracted_answer"})
         metric_config=MetricConfig(NumericMatch, {"model_output_col": "extracted_answer"})
         self.evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
@@ -369,6 +378,99 @@ class AIME_PIPELINE(ExperimentConfig):
         )
 
 class AIME2025_PIPELINE(AIME_PIPELINE):
+    """This class specifies the config for running AIME 2025 benchmark"""
+
+    def configure_pipeline(
+        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
+    ) -> PipelineConfig:
+        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from,**kwargs)
+        self.data_processing_comp.data_reader_config.init_args["path"] = "lchen001/AIME2025"
+        return pipeline
+    
+class AIME_HYBRIDEXTRACT_PIPELINE(AIME_PIPELINE):
+    """This class specifies the config for running AIME with a hybrid answer extraction"""
+
+    def configure_pipeline(
+        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
+    ) -> PipelineConfig:
+        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from,**kwargs)
+        raw_answer_col = "model_output"
+        answer_col = "extracted_answer" # model_output?
+        self.preeval_data_post_processing_comp = DataProcessingConfig(
+            component_type=DataProcessing,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            AIMEExtractAnswer(raw_answer_col, answer_col),
+                            ExtractUsageTransform(model_config),  
+                            ImputeNA(columns=answer_col, value="")
+                        ]
+                    ),
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "preeval_data_post_processing_output"),
+        )
+
+        llm_extraction_subpipeline_conf = LLM_EXTRACTION_SUBPIPELINE_MIXIN()
+        self.llm_extraction_subpipeline = llm_extraction_subpipeline_conf.configure_subpipeline(
+            extraction_attempt_component=self.preeval_data_post_processing_comp,
+            extracted_answer_col=answer_col,
+            llm_extraction_prompt_template=os.path.join(
+                os.path.dirname(__file__),
+                "../prompt_templates/aime_templates/extract_aime_answer.jinja",
+            ),
+            llm_extractor_model_config=OAI_GPT4O_2024_11_20_CONFIG,
+            log_dir=self.log_dir,
+            llm_extractor_max_concurrent=1,
+            llm_extractor_answer_transforms=[
+                RegexTransform(
+                    columns=answer_col,
+                    prompt_pattern=r"Final Answer: (\w)(?=\s|\W|$)",
+                    ignore_case=True,
+                ),
+            ],
+        )
+
+        # post process the response to extract the answer
+        self.data_post_processing = DataProcessingConfig(
+            component_type=DataProcessing,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.llm_extraction_subpipeline[-1].output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                           RunPythonTransform("df['model_output'] = df.apply(lambda row: row['model_output'] if 'model_output_x' not in row else row['model_output_y'] if row['model_output_x'] == '' else row['model_output_x'], axis=1)"),                       
+                        ]
+                    ),
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "data_post_processing_output"),
+        )
+
+        return PipelineConfig(
+            [
+                self.data_processing_comp,
+                self.inference_comp,
+                self.preeval_data_post_processing_comp]+
+            self.llm_extraction_subpipeline+
+            [    self.data_post_processing,
+                self.evalreporting_comp,
+                self.data_post_processing_addmv,
+                self.mv_evalreporting_comp,
+                self.posteval_data_post_processing_comp,
+                self.bon_evalreporting_comp,
+                self.won_evalreporting_comp
+            ],
+            self.log_dir,
+        )
+    
+class AIME2025_HYBRIDEXTRACT_PIPELINE(AIME_HYBRIDEXTRACT_PIPELINE):
     """This class specifies the config for running AIME 2025 benchmark"""
 
     def configure_pipeline(
