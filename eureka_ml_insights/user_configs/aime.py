@@ -60,7 +60,7 @@ class AIME_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 HFDataReader,
                 {
-                    "path": "qq8933/AIME_1983_2024",
+                    "path": "lchen001/AIME1983_2024",
                     "split": "train",
                     "transform": SequenceTransform(
                         [
@@ -113,8 +113,8 @@ class AIME_PIPELINE(ExperimentConfig):
         )
 
         # Configure the evaluation and reporting component for evaluation and dataset level aggregation
-        #metric_config=MetricConfig(NumericMatch, {"model_output_col": "extracted_answer"})
-        metric_config=MetricConfig(NumericMatch, {"model_output_col": "extracted_answer"})
+        answer_col = "extracted_answer"
+        metric_config=MetricConfig(NumericMatch, {"model_output_col": answer_col})
         self.evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
             data_reader_config=DataSetConfig(
@@ -127,6 +127,17 @@ class AIME_PIPELINE(ExperimentConfig):
             metric_config=metric_config,
             aggregator_configs=[
                 AggregatorConfig(
+                    BiLevelCountAggregator,
+                    {
+                        "column_names": [
+                            "NumericMatch_result",
+                        ],
+                        "first_groupby": "data_repeat_id",
+                        "filename_base": "NumericMatch",
+                        "normalize": True,
+                    },
+                ),
+                AggregatorConfig(
                     CountAggregator,
                     {
                         "column_names": [
@@ -134,6 +145,27 @@ class AIME_PIPELINE(ExperimentConfig):
                         ],
                         "group_by": "Year",
                         "filename_base": "NumericMatch_GroupBy",
+                    },
+                ),
+                AggregatorConfig(
+                    BiLevelCountAggregator,
+                    {
+                        "column_names": [
+                            "NumericMatch_result",
+                        ],
+                        "first_groupby": "ID",
+                        "second_groupby": "Part",
+                        "filename_base": "NumericMatch_GroupBy_Part",
+                        "normalize": True,
+                    },
+                ),
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": ["usage_completion"],
+                        "first_groupby": "ID",
+                        "filename_base": "UsageCompletion",
+                        "agg_fn": "mean",
                     },
                 ),
             ],
@@ -151,7 +183,7 @@ class AIME_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            MajorityVoteTransform(id_col="ID"),
+                            MajorityVoteTransform(id_col="ID",model_output_col=answer_col),
                             ColumnRename(
                                 name_mapping={
                                     "model_output": "model_output_onerun",
@@ -164,7 +196,7 @@ class AIME_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "data_addmv_output"),
         )
-        # Second, compute eaxct match
+        # Second, compute numeric match
         self.mv_evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
             data_reader_config=DataSetConfig(
@@ -174,7 +206,7 @@ class AIME_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                 },
             ),
-            metric_config=metric_config,
+            metric_config=MetricConfig(NumericMatch),
             aggregator_configs=[
                 AggregatorConfig(
                     BiLevelCountAggregator,
@@ -395,7 +427,7 @@ class AIME_HYBRIDEXTRACT_PIPELINE(AIME_PIPELINE):
     ) -> PipelineConfig:
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from,**kwargs)
         raw_answer_col = "model_output"
-        answer_col = "extracted_answer" # model_output?
+        answer_col = "extracted_answer"
         self.preeval_data_post_processing_comp = DataProcessingConfig(
             component_type=DataProcessing,
             data_reader_config=DataSetConfig(
@@ -425,17 +457,17 @@ class AIME_HYBRIDEXTRACT_PIPELINE(AIME_PIPELINE):
             ),
             llm_extractor_model_config=OAI_GPT4O_2024_11_20_CONFIG,
             log_dir=self.log_dir,
-            llm_extractor_max_concurrent=1,
+            llm_extractor_max_concurrent=10,
             llm_extractor_answer_transforms=[
                 RegexTransform(
-                    columns=answer_col,
-                    prompt_pattern=r"Final Answer: (\w)(?=\s|\W|$)",
+                    columns=answer_col, 
+                    prompt_pattern = r"-?\d+\.\d+|-?\d+", # match any numeric numbers
                     ignore_case=True,
                 ),
             ],
         )
 
-        # post process the response to extract the answer
+        # post process the response to extract the answer. This component is needed to be consistent with the regex-only eval.
         self.data_post_processing = DataProcessingConfig(
             component_type=DataProcessing,
             data_reader_config=DataSetConfig(
@@ -443,11 +475,6 @@ class AIME_HYBRIDEXTRACT_PIPELINE(AIME_PIPELINE):
                 {
                     "path": os.path.join(self.llm_extraction_subpipeline[-1].output_dir, "transformed_data.jsonl"),
                     "format": ".jsonl",
-                    "transform": SequenceTransform(
-                        [
-                           RunPythonTransform("df['model_output'] = df.apply(lambda row: row['model_output'] if 'model_output_x' not in row else row['model_output_y'] if row['model_output_x'] == '' else row['model_output_x'], axis=1)"),                       
-                        ]
-                    ),
                 },
             ),
             output_dir=os.path.join(self.log_dir, "data_post_processing_output"),
