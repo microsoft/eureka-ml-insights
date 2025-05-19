@@ -1,12 +1,6 @@
 from .aime import (
     AIME_PIPELINE,
-    AIME_PIPELINE5Run,
-    AIME_PIPELINE16Run,
-    AIME_PIPELINE32Run,
-    AIME_PIPELINE64Run,
-    AIME_PIPELINE256Run,
-    AIME_PIPELINE512Run,
-    AIME_PIPELINE1024Run,
+    AIME2025_PIPELINE,
 )
 from .ba_calendar import (
     BA_Calendar_Parallel_PIPELINE,
@@ -60,6 +54,7 @@ from .kitab import (
     Phi_KITAB_TWO_BOOK_CONSTRAINT_PIPELINE,
     Phi_KITAB_TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT,
 )
+from .llm_extraction import LLM_EXTRACTION_SUBPIPELINE_MIXIN
 from .mathverse import MATHVERSE_PIPELINE
 from .mathvision import MATHVISION_PIPELINE
 from .mathvista import MATHVISTA_PIPELINE
@@ -70,6 +65,8 @@ from .nondeterminism import (
     Kitab_Nondeterminism,
     MMMU_Nondeterminism,
 )
+from .omni_math import (Omni_Math_PIPELINE,
+                        Omni_Math_Parallel_PIPELINE)
 from .nphard_sat import NPHARD_SAT_PIPELINE, NPHARD_SAT_PIPELINE_MULTIPLE_RUNS
 from .nphard_tsp import NPHARD_TSP_PIPELINE, NPHARD_TSP_PIPELINE_MULTIPLE_RUNS
 from .toxigen import (
@@ -93,6 +90,7 @@ from .vision_language.spatial_map import (
 )
 
 __all__ = [
+    LLM_EXTRACTION_SUBPIPELINE_MIXIN,
     OBJECT_DETECTION_PAIRS_PIPELINE,
     OBJECT_DETECTION_SINGLE_PIPELINE,
     OBJECT_DETECTION_PAIRS_LOCAL_PIPELINE,
@@ -148,13 +146,9 @@ __all__ = [
     IFEval_Nondeterminism,
     Kitab_Nondeterminism,
     AIME_PIPELINE,
-    AIME_PIPELINE5Run,
-    AIME_PIPELINE16Run,
-    AIME_PIPELINE32Run,
-    AIME_PIPELINE64Run,
-    AIME_PIPELINE256Run,
-    AIME_PIPELINE512Run,
-    AIME_PIPELINE1024Run,
+    AIME2025_PIPELINE,
+    Omni_Math_PIPELINE,
+    Omni_Math_Parallel_PIPELINE,
     NPHARD_TSP_PIPELINE,
     NPHARD_TSP_PIPELINE_MULTIPLE_RUNS,
     MATHVERSE_PIPELINE,

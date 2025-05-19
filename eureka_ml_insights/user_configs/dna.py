@@ -35,8 +35,8 @@ from eureka_ml_insights.configs.model_configs import OAI_GPT4_1106_PREVIEW_CONFI
 class DNA_PIPELINE(ExperimentConfig):
     """This class specifies the config for running Do-Not-Answer benchmark on any model"""
 
-    def configure_pipeline(self, model_config: ModelConfig,
-                           resume_from: str = None, 
+    def configure_pipeline(self, model_config: ModelConfig, eval_model_config: ModelConfig,
+            resume_from: str = None, eval_resume_from: str = None,
                            **kwargs: dict[str, Any]) -> PipelineConfig:
    
         # data preprocessing
@@ -89,12 +89,13 @@ class DNA_PIPELINE(ExperimentConfig):
         # eval Inference component
         self.eval_inference_comp = InferenceConfig(
             component_type=Inference,
-            model_config=OAI_GPT4_1106_PREVIEW_CONFIG,
+            model_config=eval_model_config,
             data_loader_config=DataSetConfig(
                 MMDataLoader,
                 {"path": os.path.join(self.eval_data_pre_processing_comp.output_dir, "transformed_data.jsonl")},
             ),
             output_dir=os.path.join(self.log_dir, "eval_inference_result"),
+            resume_from=eval_resume_from,
         )
 
         # Configure the data post processing component to extract label
