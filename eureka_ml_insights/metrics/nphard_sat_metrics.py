@@ -16,30 +16,30 @@ class NPHardSATMetric(Metric):
         SAT solution.
 
         1. **Input formats**
-        • `optimal_assignment_list` – `List[str]`  
+        • `optimal_assignment_list` – `List[str]`
             A list of canonical optimal assignments, each as a comma-separated
-            string of 0/1 literals in the agreed variable orde, e.g.  
-            `"1,0,1,1"`.  
-            – An **empty list (`[]`) represents “unsatisfiable.”**  
-        • `assignment_string` – `str`  
-            The model’s prediction in the *same* 0/1 comma-separated format.  
+            string of 0/1 literals in the agreed variable orde, e.g.
+            `"1,0,1,1"`.
+            – An **empty list (`[]`) represents “unsatisfiable.”**
+        • `assignment_string` – `str`
+            The model’s prediction in the *same* 0/1 comma-separated format.
             – An empty string (`""`) means the model declares “unsatisfiable.”
 
         2. **Normalisation performed**
         The function removes spaces and surrounding parentheses from every entry
         in `optimal_assignment_list`, then rejoins tokens with single commas,
-        e.g. `"(1, 0 ,1)" → "1,0,1"`.  
+        e.g. `"(1, 0 ,1)" → "1,0,1"`.
 
         3. **Acceptance criteria**
-        • Return **`True`** if  
-            a. *Both* sides claim unsatisfiable  
-                (`assignment_string == ""` **and** `optimal_assignment_list == []`), **or**  
+        • Return **`True`** if
+            a. *Both* sides claim unsatisfiable
+                (`assignment_string == ""` **and** `optimal_assignment_list == []`), **or**
             b. The canonical `assignment_string` exactly matches (string equality)
-                **one** element of the normalised `optimal_assignment_list`.  
+                **one** element of the normalised `optimal_assignment_list`.
         • Otherwise return **`False`**.
 
         4. **Order sensitivity**
-        Because matching is string-exact, **variable order must match** between 
+        Because matching is string-exact, **variable order must match** between
         prediction and ground truth.
 
         Returns
