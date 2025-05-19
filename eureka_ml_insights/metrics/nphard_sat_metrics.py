@@ -72,9 +72,9 @@ class NPHardSATMetric(Metric):
         assignment_string = x["extracted_answer"]
 
         # Check if the predicted assignment is one of the optimal solutions
-        is_SAT_assignment_present = self.is_sat_soln_present(optimal_assignment_list, assignment_string)
+        is_assignment_optimal = self.is_sat_soln_present(optimal_assignment_list, assignment_string)
 
-        if not is_SAT_assignment_present:
+        if not is_assignment_optimal:
             return "incorrect"
 
         return "correct"
