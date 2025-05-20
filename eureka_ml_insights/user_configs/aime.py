@@ -103,7 +103,8 @@ class AIME_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            AIMEExtractAnswer("model_output",'extracted_answer'),
+                            AIMEExtractAnswer("model_output","extracted_answer"),
+                            ImputeNA(columns="extracted_answer", value=""),
                         ]
                     ),
                 },
@@ -439,29 +440,10 @@ class AIME_HYBRIDEXTRACT_PIPELINE(AIME_PIPELINE):
     ) -> PipelineConfig:
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from,**kwargs)
         self.llm_extractor_max_concurrent = int(kwargs.get('llm_extractor_max_concurrent', 10))  # Default value is 1
-        raw_answer_col = "model_output"
         answer_col = "extracted_answer"
-        self.preeval_data_post_processing_comp = DataProcessingConfig(
-            component_type=DataProcessing,
-            data_reader_config=DataSetConfig(
-                DataReader,
-                {
-                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
-                    "format": ".jsonl",
-                    "transform": SequenceTransform(
-                        [
-                            AIMEExtractAnswer(raw_answer_col, answer_col),
-                            ImputeNA(columns=answer_col, value="")
-                        ]
-                    ),
-                },
-            ),
-            output_dir=os.path.join(self.log_dir, "preeval_data_post_processing_output"),
-        )
-
         llm_extraction_subpipeline_conf = LLM_EXTRACTION_SUBPIPELINE_MIXIN()
         self.llm_extraction_subpipeline = llm_extraction_subpipeline_conf.configure_subpipeline(
-            extraction_attempt_component=self.preeval_data_post_processing_comp,
+            extraction_attempt_component=self.answer_extraction_processing,
             extracted_answer_col=answer_col,
             llm_extraction_prompt_template=os.path.join(
                 os.path.dirname(__file__),
@@ -479,14 +461,13 @@ class AIME_HYBRIDEXTRACT_PIPELINE(AIME_PIPELINE):
             ],
         )
 
-        # post process the response to extract the answer. This component is needed to be consistent with the regex-only eval.
         self.final_preeval_data_processing.data_reader_config.init_args["path"] = os.path.join(
             self.llm_extraction_subpipeline[-1].output_dir, "transformed_data.jsonl")
         return PipelineConfig(
             [
                 self.data_processing_comp,
                 self.inference_comp,
-                self.preeval_data_post_processing_comp]+
+                self.answer_extraction_processing]+
             self.llm_extraction_subpipeline+
             [    self.final_preeval_data_processing,
                 self.evalreporting_comp,
