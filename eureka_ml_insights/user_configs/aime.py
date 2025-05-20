@@ -94,7 +94,7 @@ class AIME_PIPELINE(ExperimentConfig):
             max_concurrent=self.max_concurrent,
         )
         # post process the response to extract the answer
-        self.data_post_processing = DataProcessingConfig(
+        self.answer_extraction_processing = DataProcessingConfig(
             component_type=DataProcessing,
             data_reader_config=DataSetConfig(
                 DataReader,
@@ -104,12 +104,23 @@ class AIME_PIPELINE(ExperimentConfig):
                     "transform": SequenceTransform(
                         [
                             AIMEExtractAnswer("model_output",'extracted_answer'),
-                            ExtractUsageTransform(model_config),
                         ]
                     ),
                 },
             ),
-            output_dir=os.path.join(self.log_dir, "data_post_processing_output"),
+            output_dir=os.path.join(self.log_dir, "answer_extraction_processing_output"),
+        )
+        self.final_preeval_data_processing = DataProcessingConfig(
+            component_type=DataProcessing,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.answer_extraction_processing.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform([ExtractUsageTransform(model_config),]),
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "final_preeval_data_processing_output"),
         )
 
         # Configure the evaluation and reporting component for evaluation and dataset level aggregation
@@ -120,7 +131,7 @@ class AIME_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    "path": os.path.join(self.data_post_processing.output_dir, "transformed_data.jsonl"),
+                    "path": os.path.join(self.final_preeval_data_processing.output_dir, "transformed_data.jsonl"),
                     "format": ".jsonl",
                 },
             ),
@@ -179,7 +190,7 @@ class AIME_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    "path": os.path.join(self.data_post_processing.output_dir, "transformed_data.jsonl"),
+                    "path": os.path.join(self.final_preeval_data_processing.output_dir, "transformed_data.jsonl"),
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
@@ -398,7 +409,8 @@ class AIME_PIPELINE(ExperimentConfig):
             [
                 self.data_processing_comp,
                 self.inference_comp,
-                self.data_post_processing,
+                self.answer_extraction_processing,
+                self.final_preeval_data_processing,
                 self.evalreporting_comp,
                 self.data_post_processing_addmv,
                 self.mv_evalreporting_comp,
@@ -426,6 +438,7 @@ class AIME_HYBRIDEXTRACT_PIPELINE(AIME_PIPELINE):
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from,**kwargs)
+        self.llm_extractor_max_concurrent = int(kwargs.get('llm_extractor_max_concurrent', 10))  # Default value is 1
         raw_answer_col = "model_output"
         answer_col = "extracted_answer"
         self.preeval_data_post_processing_comp = DataProcessingConfig(
@@ -438,7 +451,6 @@ class AIME_HYBRIDEXTRACT_PIPELINE(AIME_PIPELINE):
                     "transform": SequenceTransform(
                         [
                             AIMEExtractAnswer(raw_answer_col, answer_col),
-                            ExtractUsageTransform(model_config),  
                             ImputeNA(columns=answer_col, value="")
                         ]
                     ),
@@ -457,7 +469,7 @@ class AIME_HYBRIDEXTRACT_PIPELINE(AIME_PIPELINE):
             ),
             llm_extractor_model_config=OAI_GPT4O_2024_11_20_CONFIG,
             log_dir=self.log_dir,
-            llm_extractor_max_concurrent=10,
+            llm_extractor_max_concurrent=self.llm_extractor_max_concurrent,
             llm_extractor_answer_transforms=[
                 RegexTransform(
                     columns=answer_col, 
@@ -468,25 +480,15 @@ class AIME_HYBRIDEXTRACT_PIPELINE(AIME_PIPELINE):
         )
 
         # post process the response to extract the answer. This component is needed to be consistent with the regex-only eval.
-        self.data_post_processing = DataProcessingConfig(
-            component_type=DataProcessing,
-            data_reader_config=DataSetConfig(
-                DataReader,
-                {
-                    "path": os.path.join(self.llm_extraction_subpipeline[-1].output_dir, "transformed_data.jsonl"),
-                    "format": ".jsonl",
-                },
-            ),
-            output_dir=os.path.join(self.log_dir, "data_post_processing_output"),
-        )
-
+        self.final_preeval_data_processing.data_reader_config.init_args["path"] = os.path.join(
+            self.llm_extraction_subpipeline[-1].output_dir, "transformed_data.jsonl")
         return PipelineConfig(
             [
                 self.data_processing_comp,
                 self.inference_comp,
                 self.preeval_data_post_processing_comp]+
             self.llm_extraction_subpipeline+
-            [    self.data_post_processing,
+            [    self.final_preeval_data_processing,
                 self.evalreporting_comp,
                 self.data_post_processing_addmv,
                 self.mv_evalreporting_comp,
