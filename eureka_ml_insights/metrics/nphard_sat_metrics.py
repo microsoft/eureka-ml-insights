@@ -17,8 +17,9 @@ class NPHardSATMetric(Metric):
 
         1. **Input formats**
         • `optimal_assignment_list` – `List[str]`
-            A list of canonical optimal assignments, each as a comma-separated
-            string of 0/1 literals in the agreed variable orde, e.g.
+            A list of canonical optimal assignments, each expressed as a 
+            comma-separated string of 0/1 literals, following the variable 
+            order specified in the prompt instructions, e.g.
             `"1,0,1,1"`.
             – An **empty list (`[]`) represents “unsatisfiable.”**
         • `assignment_string` – `str`
