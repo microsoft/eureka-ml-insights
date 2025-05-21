@@ -254,6 +254,7 @@ class NPHARD_SAT_HYBRIDEXTRACT_PIPELINE(NPHARD_SAT_PIPELINE_MULTIPLE_RUNS):
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from,**kwargs)
         self.llm_extractor_max_concurrent = int(kwargs.get('llm_extractor_max_concurrent', 10))  # Default value is 1
         answer_col = "extracted_answer"
+        not_extracted_answer_val="-1"
         llm_extraction_subpipeline_conf = LLM_EXTRACTION_SUBPIPELINE_MIXIN()
         self.llm_extraction_subpipeline = llm_extraction_subpipeline_conf.configure_subpipeline(
             extraction_attempt_component=self.answer_extraction_processing,
@@ -268,6 +269,7 @@ class NPHARD_SAT_HYBRIDEXTRACT_PIPELINE(NPHARD_SAT_PIPELINE_MULTIPLE_RUNS):
             llm_extractor_answer_transforms=[
                 NPHARDSATExtractAnswer(answer_col,answer_col),
             ],
+            not_extracted_answer_value=not_extracted_answer_val,
         )
 
         self.final_preeval_data_processing.data_reader_config.init_args["path"] = os.path.join(

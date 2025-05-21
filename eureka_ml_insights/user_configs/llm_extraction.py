@@ -52,6 +52,7 @@ class LLM_EXTRACTION_SUBPIPELINE_MIXIN:
         log_dir: str,
         llm_extractor_max_concurrent: int = 1,
         llm_extractor_answer_transforms: list = [],
+        not_extracted_answer_value: str = "",
     ):
         """
         Args:
@@ -79,7 +80,7 @@ class LLM_EXTRACTION_SUBPIPELINE_MIXIN:
                             RunPythonTransform(
                                 "df['data_repeat_id'] = df.get('data_repeat_id', pd.Series('repeat_0', index=df.index)); df['data_point_id'] = df.get('data_point_id', df.get('uid'))"
                             ),
-                            RunPythonTransform(f"df = df[df['{extracted_answer_col}'] == '']"),
+                            RunPythonTransform(f"df = df[df['{extracted_answer_col}'] == {repr(not_extracted_answer_value)}]"),
                             ColumnRename(name_mapping={"prompt": "original_prompt"}),
                         ]
                     ),
