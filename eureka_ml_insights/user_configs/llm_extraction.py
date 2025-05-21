@@ -80,7 +80,9 @@ class LLM_EXTRACTION_SUBPIPELINE_MIXIN:
                             RunPythonTransform(
                                 "df['data_repeat_id'] = df.get('data_repeat_id', pd.Series('repeat_0', index=df.index)); df['data_point_id'] = df.get('data_point_id', df.get('uid'))"
                             ),
-                            RunPythonTransform(f"df = df[df['{extracted_answer_col}'] == {repr(not_extracted_answer_value)}]"),
+                            RunPythonTransform(
+                                f"df = df[df['{extracted_answer_col}'] == {repr(not_extracted_answer_value)}]"
+                            ),
                             ColumnRename(name_mapping={"prompt": "original_prompt"}),
                         ]
                     ),

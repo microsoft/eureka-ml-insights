@@ -28,7 +28,7 @@ from eureka_ml_insights.data_utils import (
     ExtractUsageTransform,
     HFDataReader,
     ImputeNA,
-    MMDataLoader,    
+    MMDataLoader,
     MultiplyTransform,
     SequenceTransform,
 )
@@ -111,7 +111,11 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
                 {
                     "path": os.path.join(self.answer_extraction_processing.output_dir, "transformed_data.jsonl"),
                     "format": ".jsonl",
-                    "transform": SequenceTransform([ExtractUsageTransform(model_config),]),
+                    "transform": SequenceTransform(
+                        [
+                            ExtractUsageTransform(model_config),
+                        ]
+                    ),
                 },
             ),
             output_dir=os.path.join(self.log_dir, "final_preeval_data_processing_output"),
@@ -228,9 +232,16 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
 
         # Configure the pipeline
         return PipelineConfig(
-            [self.data_processing_comp, self.inference_comp, self.answer_extraction_processing, self.final_preeval_data_processing, self.evalreporting_comp],
+            [
+                self.data_processing_comp,
+                self.inference_comp,
+                self.answer_extraction_processing,
+                self.final_preeval_data_processing,
+                self.evalreporting_comp,
+            ],
             self.log_dir,
         )
+
 
 class NPHARD_SAT_PIPELINE_MULTIPLE_RUNS(NPHARD_SAT_PIPELINE):
     """This class specifies the config for running SAT benchmark n repeated times"""
@@ -245,16 +256,17 @@ class NPHARD_SAT_PIPELINE_MULTIPLE_RUNS(NPHARD_SAT_PIPELINE):
         )
         return pipeline
 
+
 class NPHARD_SAT_HYBRIDEXTRACT_PIPELINE(NPHARD_SAT_PIPELINE_MULTIPLE_RUNS):
     """This class specifies the config for running AIME with a hybrid answer extraction"""
 
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
-        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from,**kwargs)
-        self.llm_extractor_max_concurrent = int(kwargs.get('llm_extractor_max_concurrent', 10))  # Default value is 1
+        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from, **kwargs)
+        self.llm_extractor_max_concurrent = int(kwargs.get("llm_extractor_max_concurrent", 10))  # Default value is 1
         answer_col = "extracted_answer"
-        not_extracted_answer_val="-1"
+        not_extracted_answer_val = "-1"
         llm_extraction_subpipeline_conf = LLM_EXTRACTION_SUBPIPELINE_MIXIN()
         self.llm_extraction_subpipeline = llm_extraction_subpipeline_conf.configure_subpipeline(
             extraction_attempt_component=self.answer_extraction_processing,
@@ -267,21 +279,18 @@ class NPHARD_SAT_HYBRIDEXTRACT_PIPELINE(NPHARD_SAT_PIPELINE_MULTIPLE_RUNS):
             log_dir=self.log_dir,
             llm_extractor_max_concurrent=self.llm_extractor_max_concurrent,
             llm_extractor_answer_transforms=[
-                NPHARDSATExtractAnswer(answer_col,answer_col),
+                NPHARDSATExtractAnswer(answer_col, answer_col),
             ],
             not_extracted_answer_value=not_extracted_answer_val,
         )
 
         self.final_preeval_data_processing.data_reader_config.init_args["path"] = os.path.join(
-            self.llm_extraction_subpipeline[-1].output_dir, "transformed_data.jsonl")
+            self.llm_extraction_subpipeline[-1].output_dir, "transformed_data.jsonl"
+        )
         return PipelineConfig(
-            [
-                self.data_processing_comp,
-                self.inference_comp,
-                self.answer_extraction_processing
-            ]
+            [self.data_processing_comp, self.inference_comp, self.answer_extraction_processing]
             + self.llm_extraction_subpipeline
-            + [    
+            + [
                 self.final_preeval_data_processing,
                 self.evalreporting_comp,
             ],
