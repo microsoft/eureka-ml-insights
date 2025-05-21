@@ -258,7 +258,7 @@ class NPHARD_SAT_PIPELINE_MULTIPLE_RUNS(NPHARD_SAT_PIPELINE):
 
 
 class NPHARD_SAT_HYBRIDEXTRACT_PIPELINE(NPHARD_SAT_PIPELINE_MULTIPLE_RUNS):
-    """This class specifies the config for running AIME with a hybrid answer extraction"""
+    """This class specifies the config for running SAT with a hybrid answer extraction"""
 
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
