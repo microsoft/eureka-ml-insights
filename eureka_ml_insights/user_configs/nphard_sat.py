@@ -97,7 +97,7 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
                     "transform": SequenceTransform(
                         [
                             NPHARDSATExtractAnswer("model_output", "extracted_answer"),
-                            ImputeNA(columns="extracted_answer", value=""),                            
+                            ImputeNA(columns="extracted_answer", value="-1"),
                         ]
                     ),
                 },
@@ -245,7 +245,7 @@ class NPHARD_SAT_PIPELINE_MULTIPLE_RUNS(NPHARD_SAT_PIPELINE):
         )
         return pipeline
 
-class NPHARD_SAT_HYBRIDEXTRACT_PIPELINE(NPHARD_SAT_PIPELINE):
+class NPHARD_SAT_HYBRIDEXTRACT_PIPELINE(NPHARD_SAT_PIPELINE_MULTIPLE_RUNS):
     """This class specifies the config for running AIME with a hybrid answer extraction"""
 
     def configure_pipeline(
@@ -281,12 +281,7 @@ class NPHARD_SAT_HYBRIDEXTRACT_PIPELINE(NPHARD_SAT_PIPELINE):
             + self.llm_extraction_subpipeline
             + [    
                 self.final_preeval_data_processing,
-                # self.evalreporting_comp,
-                # self.data_post_processing_addmv,
-                # self.mv_evalreporting_comp,
-                # self.posteval_data_post_processing_comp,
-                # self.bon_evalreporting_comp,
-                # self.won_evalreporting_comp
+                self.evalreporting_comp,
             ],
             self.log_dir,
         )
