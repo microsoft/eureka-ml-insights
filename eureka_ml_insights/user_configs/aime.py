@@ -453,7 +453,7 @@ class AIME_HYBRIDEXTRACT_PIPELINE(AIME_PIPELINE):
             log_dir=self.log_dir,
             llm_extractor_max_concurrent=self.llm_extractor_max_concurrent,
             llm_extractor_answer_transforms=[
-                AIMEExtractAnswer("extracted_answer","extracted_answer"),
+                AIMEExtractAnswer(answer_col,answer_col),
             ],
         )
 
