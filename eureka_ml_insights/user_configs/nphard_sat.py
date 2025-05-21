@@ -13,6 +13,9 @@ from eureka_ml_insights.configs import (
     PipelineConfig,
     PromptProcessingConfig,
 )
+from eureka_ml_insights.configs.model_configs import (
+    OAI_GPT4O_2024_11_20_CONFIG,
+)
 from eureka_ml_insights.core import (
     DataProcessing,
     EvalReporting,
@@ -24,7 +27,8 @@ from eureka_ml_insights.data_utils import (
     DataReader,
     ExtractUsageTransform,
     HFDataReader,
-    MMDataLoader,
+    ImputeNA,
+    MMDataLoader,    
     MultiplyTransform,
     SequenceTransform,
 )
@@ -37,6 +41,8 @@ from eureka_ml_insights.metrics import (
     CountAggregator,
     NPHardSATMetric,
 )
+
+from .llm_extraction import LLM_EXTRACTION_SUBPIPELINE_MIXIN
 
 """This file contains user defined configuration classes for the SAT benchmark.
 """
@@ -81,7 +87,7 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
         )
 
         # post process the response to extract the answer
-        self.data_post_processing = DataProcessingConfig(
+        self.answer_extraction_processing = DataProcessingConfig(
             component_type=DataProcessing,
             data_reader_config=DataSetConfig(
                 DataReader,
@@ -91,12 +97,24 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
                     "transform": SequenceTransform(
                         [
                             NPHARDSATExtractAnswer("model_output", "extracted_answer"),
-                            ExtractUsageTransform(model_config),
+                            ImputeNA(columns="extracted_answer", value=""),                            
                         ]
                     ),
                 },
             ),
-            output_dir=os.path.join(self.log_dir, "data_post_processing_output"),
+            output_dir=os.path.join(self.log_dir, "answer_extraction_processing_output"),
+        )
+        self.final_preeval_data_processing = DataProcessingConfig(
+            component_type=DataProcessing,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.answer_extraction_processing.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform([ExtractUsageTransform(model_config),]),
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "final_preeval_data_processing_output"),
         )
 
         # Configure the evaluation and reporting component for evaluation and dataset level aggregation
@@ -105,7 +123,7 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    "path": os.path.join(self.data_post_processing.output_dir, "transformed_data.jsonl"),
+                    "path": os.path.join(self.final_preeval_data_processing.output_dir, "transformed_data.jsonl"),
                     "format": ".jsonl",
                 },
             ),
@@ -210,10 +228,9 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
 
         # Configure the pipeline
         return PipelineConfig(
-            [self.data_processing_comp, self.inference_comp, self.data_post_processing, self.evalreporting_comp],
+            [self.data_processing_comp, self.inference_comp, self.answer_extraction_processing, self.final_preeval_data_processing, self.evalreporting_comp],
             self.log_dir,
         )
-
 
 class NPHARD_SAT_PIPELINE_MULTIPLE_RUNS(NPHARD_SAT_PIPELINE):
     """This class specifies the config for running SAT benchmark n repeated times"""
@@ -227,3 +244,49 @@ class NPHARD_SAT_PIPELINE_MULTIPLE_RUNS(NPHARD_SAT_PIPELINE):
             MultiplyTransform(n_repeats=int(n_repeats))
         )
         return pipeline
+
+class NPHARD_SAT_HYBRIDEXTRACT_PIPELINE(NPHARD_SAT_PIPELINE):
+    """This class specifies the config for running AIME with a hybrid answer extraction"""
+
+    def configure_pipeline(
+        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
+    ) -> PipelineConfig:
+        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from,**kwargs)
+        self.llm_extractor_max_concurrent = int(kwargs.get('llm_extractor_max_concurrent', 10))  # Default value is 1
+        answer_col = "extracted_answer"
+        llm_extraction_subpipeline_conf = LLM_EXTRACTION_SUBPIPELINE_MIXIN()
+        self.llm_extraction_subpipeline = llm_extraction_subpipeline_conf.configure_subpipeline(
+            extraction_attempt_component=self.answer_extraction_processing,
+            extracted_answer_col=answer_col,
+            llm_extraction_prompt_template=os.path.join(
+                os.path.dirname(__file__),
+                "../prompt_templates/nphard_sat_templates/extract_sat_answer.jinja",
+            ),
+            llm_extractor_model_config=OAI_GPT4O_2024_11_20_CONFIG,
+            log_dir=self.log_dir,
+            llm_extractor_max_concurrent=self.llm_extractor_max_concurrent,
+            llm_extractor_answer_transforms=[
+                NPHARDSATExtractAnswer(answer_col,answer_col),
+            ],
+        )
+
+        self.final_preeval_data_processing.data_reader_config.init_args["path"] = os.path.join(
+            self.llm_extraction_subpipeline[-1].output_dir, "transformed_data.jsonl")
+        return PipelineConfig(
+            [
+                self.data_processing_comp,
+                self.inference_comp,
+                self.answer_extraction_processing
+            ]
+            + self.llm_extraction_subpipeline
+            + [    
+                self.final_preeval_data_processing,
+                # self.evalreporting_comp,
+                # self.data_post_processing_addmv,
+                # self.mv_evalreporting_comp,
+                # self.posteval_data_post_processing_comp,
+                # self.bon_evalreporting_comp,
+                # self.won_evalreporting_comp
+            ],
+            self.log_dir,
+        )

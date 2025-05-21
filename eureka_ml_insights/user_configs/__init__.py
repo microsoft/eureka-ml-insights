@@ -69,7 +69,11 @@ from .nondeterminism import (
 )
 from .omni_math import (Omni_Math_PIPELINE,
                         Omni_Math_Parallel_PIPELINE)
-from .nphard_sat import NPHARD_SAT_PIPELINE, NPHARD_SAT_PIPELINE_MULTIPLE_RUNS
+from .nphard_sat import (
+    NPHARD_SAT_PIPELINE, 
+    NPHARD_SAT_PIPELINE_MULTIPLE_RUNS, 
+    NPHARD_SAT_HYBRIDEXTRACT_PIPELINE
+)
 from .nphard_tsp import NPHARD_TSP_PIPELINE, NPHARD_TSP_PIPELINE_MULTIPLE_RUNS
 from .toxigen import (
     ToxiGen_Discriminative_PIPELINE,
@@ -163,4 +167,5 @@ __all__ = [
     GSMSYMBOLIC_PIPELINE,
     NPHARD_SAT_PIPELINE,
     NPHARD_SAT_PIPELINE_MULTIPLE_RUNS,
+    NPHARD_SAT_HYBRIDEXTRACT_PIPELINE,
 ]
