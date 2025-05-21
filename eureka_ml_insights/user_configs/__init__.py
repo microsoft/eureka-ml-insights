@@ -1,6 +1,8 @@
 from .aime import (
     AIME_PIPELINE,
     AIME2025_PIPELINE,
+    AIME_HYBRIDEXTRACT_PIPELINE,
+    AIME2025_HYBRIDEXTRACT_PIPELINE,
 )
 from .ba_calendar import (
     BA_Calendar_Parallel_PIPELINE,
@@ -147,6 +149,8 @@ __all__ = [
     Kitab_Nondeterminism,
     AIME_PIPELINE,
     AIME2025_PIPELINE,
+    AIME_HYBRIDEXTRACT_PIPELINE,
+    AIME2025_HYBRIDEXTRACT_PIPELINE,
     Omni_Math_PIPELINE,
     Omni_Math_Parallel_PIPELINE,
     NPHARD_TSP_PIPELINE,
