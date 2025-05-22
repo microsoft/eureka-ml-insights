@@ -1,0 +1,23 @@
+Benchmark Name: TSP
+Paper Title: Inference-Time Scaling for Complex Tasks: Where We Stand and What Lies Ahead
+Paper Link: https://arxiv.org/pdf/2504.00294?
+Dataset Link: https://huggingface.co/datasets/GeoMeterData/nphard_sat1
+
+Benchmark Details:
+The Satisfiability (SAT) problem asks whether a propositional formula in conjunctive normal form has any assignment of truth values to its variables that makes all clauses true. The SAT benchmark dataset includes 960-instances spanning variable counts from 4 to 15. Further, the dataset also categorizes these instances into one of four categories: hard, hard with multiple solutions, easy underconstrained and easy overconstrained decided based on ratio of number of clauses and number of variables.
+
+What are the experimental design setup dimensions 
+(e.g. settings, prompt templates, dataset subsets) for this benchmark? 
+I.e. each dimension will map to one experiment.
+
+SAT has one dimension which produces aggregate accuracy. We use two prompt templates, with and without CoT.
+ 
+What are the evaluation disaggregation pivots/attributes to run metrics for?
+ 
+Results can be disaggregated by difficulty levels. One dimension is based on number of variables and other is based on ratio of number of clauses to number of variables.
+
+What are the metrics used for evaluation?
+1- Accuracy Overall
+
+Any modifications done from original version?
+N/A.
