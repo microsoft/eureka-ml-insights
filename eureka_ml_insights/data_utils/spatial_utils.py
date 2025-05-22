@@ -154,7 +154,7 @@ def extract_answer_from_text_grid(text, question_type):
     return None  # Return None if no numbers are found
 
 
-def extract_answer_from_text_map_and_maze(model_output_raw, options, match_first=False):
+def extract_answer_from_text_map_and_maze(model_output_raw, options, is_valid, match_first=False):
     """
     Extracts the answer from the text based on known model output patterns.
     Searches for both a letter and whole word answer and returns both as they are not
@@ -174,7 +174,7 @@ def extract_answer_from_text_map_and_maze(model_output_raw, options, match_first
     model_output_parsed_letter = ""
     model_output_parsed = ""
 
-    if not model_output_raw:
+    if not is_valid or not model_output_raw:
         return ""
 
     if match_first:
@@ -263,7 +263,7 @@ def extract_answer_from_text_map_and_maze(model_output_raw, options, match_first
     if answers_match:
         model_output_parsed =  answers_match[match_index]
 
-    return model_output_parsed + " or " + model_output_parsed_letter
+    return " or ".join(filter(None, [model_output_parsed, model_output_parsed_letter]))
 
 
 @dataclass
@@ -342,6 +342,6 @@ class ExtractAnswerSpatialMapAndMaze(DFTransformBase):
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         df[self.extracted_answer_column_name] = df.apply(
-            lambda x: extract_answer_from_text_map_and_maze(x[self.answer_column_name], x[self.extracted_options_column_name], self.match_first), axis=1
+            lambda x: extract_answer_from_text_map_and_maze(x[self.answer_column_name], x[self.extracted_options_column_name], x["is_valid"], self.match_first), axis=1
         )
         return df
