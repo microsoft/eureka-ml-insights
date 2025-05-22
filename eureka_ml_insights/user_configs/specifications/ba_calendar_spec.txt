@@ -1,0 +1,38 @@
+Benchmark Name: BA_Calendar
+Paper Title: BENCHAGENTS: Automated Benchmark Creation with Agent Interaction
+Paper Link: https://arxiv.org/abs/2410.22584
+Dataset Link: microsoft/ba-calendar 
+
+Benchmark Details:
+
+BA_Calendar a benchmark designed to evaluate large language models (LLMs) on complex calendar scheduling tasks. 
+It comprises 2,000 instances that simulate real-world scheduling scenarios, requiring models to consider multiple constraints such as participant availability, buffer times, task priorities, and time restrictions. 
+The dataset was generated using the BENCHAGENTS framework, which employs a multi-agent system of LLMs to automate the creation of high-quality, diverse benchmarks. 
+This setup allows for fine-grained analysis of model performance in handling intricate planning and constraint satisfaction challenges.
+
+
+What are the experimental design setup dimensions 
+(e.g. settings, prompt templates, dataset subsets) for this benchmark? 
+I.e. each dimension will map to one experiment.
+ 
+BA_Calendar_Parallel_PIPELINE - produces aggregate accuracy as well as constraint level accuracy numbers for each run and average across runs.
+ 
+What are the evaluation disaggregation pivots/attributes to run metrics for?
+ 
+Disaggregation by (group by):
+- Constraint Types - categorization already provided in the dataset
+- Constrainedness - this is a proxy attribute for difficulty and is already provided in dataset
+
+Evaluation:
+1. Constraint specific programmatic tests - test cases for each constraint
+
+What are the metrics used for evaluation?
+1. All Pass Accuracy - Aggregate dataset level accuracy of solution passing ALL constraints
+2. Avg Pass Fraction - Average Percentage of Constraints passed
+4. Token Usage - Average tokens used per problem across dataset, constraint type and constrainedness
+
+Any modifications done from original version?
+None
+
+
+

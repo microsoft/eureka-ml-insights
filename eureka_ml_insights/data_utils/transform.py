@@ -1,4 +1,5 @@
 import ast
+import logging
 import re
 from abc import abstractmethod
 from dataclasses import dataclass, field
@@ -7,23 +8,22 @@ from typing import Dict, List
 import numpy as np
 import pandas as pd
 import tiktoken
-import json
-import logging
 
 from eureka_ml_insights.configs.config import ModelConfig
 from eureka_ml_insights.models import (
+    AzureOpenAIModel,
+    AzureOpenAIOModel,
     ClaudeModel,
     ClaudeReasoningModel,
+    DeepseekR1ServerlessAzureRestEndpointModel,
+    DirectOpenAIModel,
+    DirectOpenAIOModel,
     GeminiModel,
     LlamaServerlessAzureRestEndpointModel,
     MistralServerlessAzureRestEndpointModel,
-    AzureOpenAIModel,
-    DirectOpenAIModel,
-    DirectOpenAIOModel,
-    AzureOpenAIOModel,
     TogetherModel,
-    DeepseekR1ServerlessAzureRestEndpointModel
 )
+
 
 @dataclass
 class DFTransformBase:
@@ -210,7 +210,7 @@ class ShuffleColumnsTransform(MultiColumnTransform):
     across different letter options (e.g. shuffle what choice maps to 'A' vs 'B' vs 'C').
     args:
         columns: List[str]: the list of columns from the pandas frame to be reshuffled.
-        rng: np.random.Generator: the dedicated numpy generator for the shuffling. 
+        rng: np.random.Generator: the dedicated numpy generator for the shuffling.
     """
 
     columns: List[str]
@@ -219,6 +219,7 @@ class ShuffleColumnsTransform(MultiColumnTransform):
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """For each row in df, shuffle values across these columns."""
         self.validate(df)
+
         def shuffle_row(row):
             row[self.columns] = self.rng.permutation(row[self.columns].values)
             return row
@@ -352,9 +353,9 @@ class RegexTransform(MultiColumnTransform):
         else:
             results = re.findall(self.prompt_pattern, sentence)
         if results:
-            if (self.occurrence == "first"):
+            if self.occurrence == "first":
                 return results[0]
-            elif (self.occurrence == "last"):
+            elif self.occurrence == "last":
                 return results[len(results) - 1]
         else:
             return None
@@ -403,15 +404,18 @@ class TokenCounterTransform(MultiColumnTransform):
 @dataclass
 class MajorityVoteTransform:
     """Applies the majority vote transformation to the specified model output column per id_col.
-       If model_label_column is provided, the corresponding label or score of the majority vote output will also be added."""
+    If model_label_column is provided, the corresponding label or score of the majority vote output will also be added.
+    """
 
     model_output_col: str = "model_output"  # Default column name for model outputs
     model_label_column: str = None  # Column name for model labels or scores corresponding to model outputs
     id_col: str = "data_point_id"  # Default column name for IDs
-    majority_vote_col: str = "majority_vote" # Default column name for storing majority vote
-    majority_label_col: str = "majority_label" # Default column name for storing label corresponding to majority vote output
+    majority_vote_col: str = "majority_vote"  # Default column name for storing majority vote
+    majority_label_col: str = (
+        "majority_label"  # Default column name for storing label corresponding to majority vote output
+    )
 
-    def transform(self, df: pd.DataFrame, random_state:int=0) -> pd.DataFrame:
+    def transform(self, df: pd.DataFrame, random_state: int = 0) -> pd.DataFrame:
         """
         Transforms the dataframe by calculating the majority vote of model_output_col per id_col.
         If the 'model_output' is NaN, it will be droped before calculating the majority vote.
@@ -423,17 +427,20 @@ class MajorityVoteTransform:
         Returns:
             pd.DataFrame: Transformed dataframe with majority vote for each id_col.
         """
-        # # Step 1: Group by 'ID' and calculate the majority vote within each group
-        # df[self.majority_vote_col] = df.groupby(self.id_col)[self.model_output_col].transform(
-        #     lambda x: x.dropna().mode().sample(n=1, random_state=random_state).iloc[0] if not x.dropna().mode().empty else pd.NA
-        # )
-        # return df
-        
-        result_df = df.groupby(self.id_col).apply(self.majority_vote, self.model_output_col, self.model_label_column, self.majority_vote_col, self.majority_label_col, random_state=random_state)
+        result_df = df.groupby(self.id_col).apply(
+            self.majority_vote,
+            self.model_output_col,
+            self.model_label_column,
+            self.majority_vote_col,
+            self.majority_label_col,
+            random_state=random_state,
+        )
         return result_df
 
     @staticmethod
-    def majority_vote(group, model_output_col, model_label_col, majority_vote_col, majority_label_col, random_state:int=0):
+    def majority_vote(
+        group, model_output_col, model_label_col, majority_vote_col, majority_label_col, random_state: int = 0
+    ):
         """
         Calculate majority vote for each group.
         Args:
@@ -446,11 +453,14 @@ class MajorityVoteTransform:
             pd.DataFrame: Transformed dataframe with majority vote for each id_col.
         """
         x = group[model_output_col]
-        majority_value = x.dropna().mode().sample(n=1, random_state=random_state).iloc[0] if not x.dropna().mode().empty else pd.NA
+        majority_value = (
+            x.dropna().mode().sample(n=1, random_state=random_state).iloc[0] if not x.dropna().mode().empty else pd.NA
+        )
         group[majority_vote_col] = majority_value
         if model_label_col:
             group[majority_label_col] = group.loc[group[model_output_col] == majority_value, model_label_col].iloc[0]
         return group
+
 
 @dataclass
 class ExtractUsageTransform:
@@ -462,10 +472,11 @@ class ExtractUsageTransform:
         usage_column: str, default name of the column where usage information is stored for model
         n_tokens_column: str, default name of the column where number of tokens is stored for model
     """
+
     model_config: ModelConfig
-    usage_completion_output_col: str = "usage_completion" 
+    usage_completion_output_col: str = "usage_completion"
     usage_column: str = "usage"
-    n_tokens_column: str = "n_output_tokens" 
+    n_tokens_column: str = "n_output_tokens"
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -478,33 +489,38 @@ class ExtractUsageTransform:
             pd.DataFrame: Transformed dataframe with completion token numbers in usage_completion_output_col.
         """
         usage_completion_read_col = None
-        if (self.model_config.class_name is GeminiModel):
+        if self.model_config.class_name is GeminiModel:
             usage_completion_read_col = "candidates_token_count"
-        elif (self.model_config.class_name is ClaudeModel
-              or self.model_config.class_name is ClaudeReasoningModel):
+        elif self.model_config.class_name is ClaudeModel or self.model_config.class_name is ClaudeReasoningModel:
             usage_completion_read_col = "output_tokens"
-        elif (self.model_config.class_name is AzureOpenAIOModel
-              or self.model_config.class_name is AzureOpenAIModel 
-              or self.model_config.class_name is LlamaServerlessAzureRestEndpointModel
-              or self.model_config.class_name is MistralServerlessAzureRestEndpointModel
-              or self.model_config.class_name is DeepseekR1ServerlessAzureRestEndpointModel
-              or self.model_config.class_name is DirectOpenAIModel 
-              or self.model_config.class_name is DirectOpenAIOModel
-              or self.model_config.class_name is TogetherModel):
+        elif (
+            self.model_config.class_name is AzureOpenAIOModel
+            or self.model_config.class_name is AzureOpenAIModel
+            or self.model_config.class_name is LlamaServerlessAzureRestEndpointModel
+            or self.model_config.class_name is MistralServerlessAzureRestEndpointModel
+            or self.model_config.class_name is DeepseekR1ServerlessAzureRestEndpointModel
+            or self.model_config.class_name is DirectOpenAIModel
+            or self.model_config.class_name is DirectOpenAIOModel
+            or self.model_config.class_name is TogetherModel
+        ):
             usage_completion_read_col = "completion_tokens"
         else:
-            logging.warn(f"Model {self.model_config.class_name} is not recognized for extracting completion token usage.")
+            logging.warn(
+                f"Model {self.model_config.class_name} is not recognized for extracting completion token usage."
+            )
         # if the model is one for which the usage of completion tokens is known, use that corresponding column for the model
         # otherwise, use the default "n_output_tokens" which is computed with a universal tokenizer as shown in TokenCounterTransform()
         self.validate(df, usage_completion_read_col)
         if usage_completion_read_col:
-            df[self.usage_completion_output_col] = df.apply(lambda x: self._extract_usage(x, usage_completion_read_col), axis=1)
+            df[self.usage_completion_output_col] = df.apply(
+                lambda x: self._extract_usage(x, usage_completion_read_col), axis=1
+            )
         elif self.n_tokens_column in df.columns:
             df[self.usage_completion_output_col] = df[self.n_tokens_column]
         else:
             df[self.usage_completion_output_col] = np.nan
-        return df 
-    
+        return df
+
     def validate(self, df: pd.DataFrame, usage_completion_read_col: str) -> pd.DataFrame:
         """Check that usage_columns or n_tokens_columns are present actually in the data frame.
         Args:
@@ -518,7 +534,7 @@ class ExtractUsageTransform:
 
     def _extract_usage(self, row, usage_completion_read_col):
         """
-        Extracts the token usage for a given row if usage column and corresponding completion column exists. 
+        Extracts the token usage for a given row if usage column and corresponding completion column exists.
         Args:
             row (pd.Series): A row of the dataframe.
             usage_completion_read_col (str): The column name to extract the token usage from.
