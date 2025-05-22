@@ -63,6 +63,7 @@ class LLM_EXTRACTION_SUBPIPELINE_MIXIN:
             log_dir: str directory corresponding to the output directory of the calling pipeline.
             llm_extractor_max_concurrent: int max_concurrent parameter for the inference component used for LLM extraction.
             llm_extractor_answer_transforms: list of transforms to be applied to the model output after the LLM extraction.
+            not_extracted_answer_value: str placeholder that signals no valid answer yet in the extracted_answer_col.
         Returns:
             list of components that constitute the LLM extraction subpipeline.
         """
