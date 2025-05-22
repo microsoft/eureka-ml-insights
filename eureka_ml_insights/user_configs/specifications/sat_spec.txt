@@ -1,4 +1,4 @@
-Benchmark Name: TSP
+Benchmark Name: SAT
 Paper Title: Inference-Time Scaling for Complex Tasks: Where We Stand and What Lies Ahead
 Paper Link: https://arxiv.org/pdf/2504.00294?
 Dataset Link: https://huggingface.co/datasets/GeoMeterData/nphard_sat1
