@@ -133,8 +133,8 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
         # and attempts answer extraction using an LLM. This is helpful for cases where:
         # the model under test may not completely follow the instructions in the prompt on how to mark the final answer,
         # or for reasoning models that may run out of the max token length and may not be able to add the final answer marker.
-        llm_extraction_subpipeline_conf = LLM_EXTRACTION_SUBPIPELINE_MIXIN()
-        llm_extraction_subpipeline = llm_extraction_subpipeline_conf.configure_subpipeline(
+        self.llm_extraction_subpipeline_conf = LLM_EXTRACTION_SUBPIPELINE_MIXIN()
+        self.llm_extraction_subpipeline = self.llm_extraction_subpipeline_conf.configure_subpipeline(
             extraction_attempt_component=self.preeval_data_post_processing_comp,
             extracted_answer_col="model_output",
             llm_extraction_prompt_template=os.path.join(
@@ -159,7 +159,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    "path": os.path.join(llm_extraction_subpipeline[-1].output_dir, "transformed_data.jsonl"),
+                    "path": os.path.join(self.llm_extraction_subpipeline[-1].output_dir, "transformed_data.jsonl"),
                     "format": ".jsonl",
                 },
             ),
@@ -454,7 +454,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                 self.inference_comp,
                 self.preeval_data_post_processing_comp,
             ]
-            + llm_extraction_subpipeline
+            + self.llm_extraction_subpipeline
             + [
                 self.evalreporting_comp,
                 self.posteval_data_post_processing_comp,

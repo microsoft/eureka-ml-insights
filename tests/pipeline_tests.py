@@ -327,7 +327,7 @@ class TEST_GPQA_PIPELINE(GPQA_Experiment_Pipeline):
             "path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl"),
             "n_iter": N_ITER,
         }
-        self.inference_llm_answer_extract.model_config = ModelConfig(GenericTestModel, {})
+        self.llm_extraction_subpipeline_conf.inference_llm_answer_extract.model_config = ModelConfig(GenericTestModel, {})
         return config
 
 
