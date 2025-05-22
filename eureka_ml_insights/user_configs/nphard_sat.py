@@ -398,7 +398,7 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
                 self.inference_comp,
                 self.answer_extraction_processing,
                 self.final_preeval_data_processing,
-                self.evalreporting_comp,                                
+                self.evalreporting_comp,
                 self.posteval_data_post_processing_comp,
                 self.bon_evalreporting_comp,
                 self.won_evalreporting_comp,
