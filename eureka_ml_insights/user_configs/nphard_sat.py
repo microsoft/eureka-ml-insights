@@ -294,7 +294,7 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
                 },
             ),
             aggregator_configs=[
-                # the following reports aggregate results by data_point_id and take the best out of N
+                # the following reports aggregate results by data_point_id and take the worst out of N
                 AggregatorConfig(
                     BiLevelAggregator,
                     {
