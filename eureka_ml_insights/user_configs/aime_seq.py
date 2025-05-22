@@ -22,6 +22,7 @@ from eureka_ml_insights.data_utils import (
     CopyColumn,
     DataReader,
     RunPythonTransform,
+    SamplerTransform,
     SequenceTransform,
 )
 from eureka_ml_insights.data_utils.aime_utils import AIMEExtractAnswer
@@ -41,8 +42,9 @@ RESULT_COLS = [
     "prompt",
     "ground_truth",
     "Year",
+    "Part",
     "ID",
-    "student_extracted_answer",
+    "extracted_answer",
     "verification_result",
     "usage",
 ]
@@ -60,7 +62,10 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
         super().configure_pipeline(model_config, resume_from, **kwargs)
 
         n_iter = kwargs.get("n_iter", DEFAULT_N_ITER)
-
+        # Uncomment if you want to sample a subset of the data for debugging
+        #self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
+        #    SamplerTransform(sample_count=2, random_seed=42)
+        #)
         component_configs = [self.data_processing_comp]
         for i in range(1, n_iter + 1):
             # Student inference component, reads prompts from the last prompt processing component
@@ -94,8 +99,8 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                         "transform": SequenceTransform(
                             [
                                 # extract and verify the student answer
-                                AIMEExtractAnswer(f"model_output", f"student_extracted_answer"),
-                                MetricBasedVerifier(ExactMatch, f"student_extracted_answer"),
+                                AIMEExtractAnswer(f"model_output", f"extracted_answer"),
+                                MetricBasedVerifier(ExactMatch, f"extracted_answer"),
                                 AddColumnAndData("attempt_id", i),
                                 CopyColumn(column_name_src="model_output", column_name_dst=f"student_output"),
                             ]
@@ -203,12 +208,21 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
             component_configs.append(self.prompt_processing_with_hint)
 
         # Pass the combined results from all iterations to the eval reporting component
-        self.evalreporting_comp.data_reader_config.init_args["path"] = os.path.join(
+        self.final_preeval_data_processing.data_reader_config.init_args["path"] = os.path.join(
             last_agg_dir, "transformed_data.jsonl"
         )
-        self.evalreporting_comp.metric_config.init_args["model_output_col"] = "student_extracted_answer"
 
-        component_configs.append(self.evalreporting_comp)
+        component_configs.extend(
+            [
+                self.final_preeval_data_processing,
+                self.evalreporting_comp,
+                self.data_post_processing_addmv,
+                self.mv_evalreporting_comp,
+                self.posteval_data_post_processing_comp,
+                self.bon_evalreporting_comp,
+                self.won_evalreporting_comp,
+            ]
+        )
 
         # Configure the pipeline
         return PipelineConfig(
