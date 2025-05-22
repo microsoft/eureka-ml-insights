@@ -294,7 +294,7 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
                 },
             ),
             aggregator_configs=[
-                # the first three reports aggregate results by data_point_id and take the best out of N
+                # the following reports aggregate results by data_point_id and take the best out of N
                 AggregatorConfig(
                     BiLevelAggregator,
                     {
@@ -342,8 +342,7 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "data_post_processing_mv"),
         )
-
-        # Second, compute numeric match
+        
         self.mv_evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
             data_reader_config=DataSetConfig(
