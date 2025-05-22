@@ -175,7 +175,7 @@ def extract_answer_from_text_map_and_maze(model_output_raw, options, is_valid, m
     model_output_parsed = ""
 
     if not is_valid or not model_output_raw:
-        return "invalid"
+        return ""
 
     if match_first:
         match_index = 0
