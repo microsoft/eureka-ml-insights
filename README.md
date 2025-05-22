@@ -50,6 +50,7 @@ The following table summarizes the benchmarks included in Eureka-Bench, their mo
 | FlenQA <br> 12000               | Text -> Text | Long Context Multi-hop QA | [FlenQA.zip](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/resolve/main/FlenQA.zip) |[flenQA.py](eureka_ml_insights/user_configs/flenqa.py)|
 | Kitab <br> 34217                | Text -> Text | Information Retrieval        | [Kitab.zip](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/resolve/main/Kitab.zip) |[kitab.py](eureka_ml_insights/user_configs/kitab.py)|  
 | Toxigen <br> 10500              | Text -> Text | Toxicity Detection <br> Safe Language Generation         | [ToxiGen.zip](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/resolve/main/ToxiGen.zip) |[toxigen.py](eureka_ml_insights/user_configs/toxigen.py)|
+| AIME <br> 10500              | Text -> Text | American Invitational <br>  Mathematics Examination | [AIME.zip](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/tree/main/AIME) |
 
 Note: The benchmarks on Image Understanding will be available soon on HuggingFace. Please stay tuned.
 
