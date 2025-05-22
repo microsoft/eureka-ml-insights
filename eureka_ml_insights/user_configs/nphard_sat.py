@@ -458,7 +458,7 @@ class NPHARD_SAT_HYBRIDEXTRACT_PIPELINE(NPHARD_SAT_PIPELINE_MULTIPLE_RUNS):
             + self.llm_extraction_subpipeline
             + [
                 self.final_preeval_data_processing,
-                self.evalreporting_comp,                
+                self.evalreporting_comp,
                 self.posteval_data_post_processing_comp,
                 self.bon_evalreporting_comp,
                 self.won_evalreporting_comp,
