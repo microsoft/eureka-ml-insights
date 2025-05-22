@@ -1,0 +1,43 @@
+Benchmark Name: OmniMATH
+Paper Title:  Omni-MATH: A Universal Olympiad Level Mathematic Benchmark for Large Language Models
+Paper Link: https://arxiv.org/abs/2410.07985
+Github Link: https://github.com/KbsdJames/Omni-MATH
+Dataset Link: https://huggingface.co/datasets/KbsdJames/Omni-MATH
+
+Benchmark Details:
+
+A comprehensive benchmark of 4,428 Olympiad-level math problems, meticulously categorized into 33+ sub-domains and 10 difficulty levels.
+Sourced from international competitions and AoPS, each problem includes a detailed solution and domain-specific tagging.
+
+Data Source:
+
+The dataset comprises problems and detailed solutions collected from international mathematics competitions and the AoPS community.
+All problems are converted into LaTeX and vetted for quality, with high-confidence solutions sourced from trusted platforms.
+
+What are the experimental design setup dimensions 
+(e.g. settings, prompt templates, dataset subsets) for this benchmark? 
+I.e. each dimension will map to one experiment.
+ 
+Omni_Math_Parallel_PIPELINE - produces aggregate accuracy as well as domain/difficulty level accuracy numbers for each run and average across runs.
+ 
+What are the evaluation disaggregation pivots/attributes to run metrics for?
+ 
+Disaggregation by (group by):
+- Domain - categorization already provided in dataset
+- Difficulty - categorization already provided in dataset
+
+Evaluation:
+1. LLM-as-a-judge - For GPT4-Evaluation, after obtaining the inference result of your model, you can query GPT-4 to test whether your model's output is correct.
+Prompt reused from original repo.
+
+What are the metrics used for evaluation?
+1. Accuracy - Aggregate dataset level accuracy
+2. Domain level Accuracy - Accuracy for each problem domain/category
+3. Difficulty level Accuracy - Accuracy for each problem difficulty level.
+4. Token Usage - Average tokens used per problem across dataset, domain and difficulty
+
+Any modifications done from original version?
+None
+
+
+

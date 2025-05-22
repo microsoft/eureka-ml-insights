@@ -3,8 +3,7 @@ import os
 import threading
 import time
 from collections import deque
-from concurrent.futures import ThreadPoolExecutor
-from concurrent.futures import as_completed
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from tqdm import tqdm
 
@@ -176,6 +175,8 @@ class Inference(Component):
             return data
 
     def run(self):
+        with self.appender as appender:
+            pass  # create the output file. This will guarantee that an empty inference_result.jsonl file is created even if no inference is run.
         if self.resume_from:
             self.pre_inf_results_df, self.last_uid = self.fetch_previous_inference_results()
         with self.data_loader as loader, ThreadPoolExecutor(max_workers=self.max_concurrent) as executor:
@@ -216,4 +217,3 @@ class Inference(Component):
         self.validate_response_dict(response_dict)
         data.update(response_dict)
         return data
-      

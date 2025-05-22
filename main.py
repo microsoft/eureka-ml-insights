@@ -16,8 +16,9 @@ if __name__ == "__main__":
         "--model_config", type=str, nargs="?", help="The name of the model config to use.", default=None
     )
     parser.add_argument(
-        "--model_name", type=str, help="The name of the deployed vllm model to use.", default=None
+        "--eval_model_config", type=str, nargs="?", help="The name of the model config to use.", default=None
     )
+    parser.add_argument("--model_name", type=str, help="The name of the deployed vllm model to use.", default=None)
     parser.add_argument(
         "--exp_logdir", type=str, help="The name of the subdirectory in which to save the logs.", default=None
     )
@@ -45,28 +46,31 @@ if __name__ == "__main__":
 
     experiment_config_class = args.exp_config
 
-    if args.local_vllm and args.model_config:
+    if args.local_vllm:
         from eureka_ml_insights.configs.config import ModelConfig
         from eureka_ml_insights.models import LocalVLLMModel
-        try:
-            model_config = getattr(model_configs, args.model_config)
-            if isinstance(model_config, ModelConfig):
-                for arg in ["ports", "num_servers", "model_name"]:
-                    # If command line args are provided, override the corresponding model_config init_args key.
-                    if getattr(args, arg) is not None:
-                        model_config.init_args[arg] = getattr(args, arg)
-                init_args["model_config"] = model_config
+
+        if args.model_config:
+            try:
+                model_config = getattr(model_configs, args.model_config)
+            except AttributeError:
+                raise ValueError(f"Model config class {args.model_config} not found.")
+            for arg in ["ports", "num_servers", "model_name"]:
+                # If command line args are provided, override the corresponding model_config init_args key.
+                if getattr(args, arg) is not None:
+                    model_config.init_args[arg] = getattr(args, arg)
+            init_args["model_config"] = model_config
             # Logic above is that certain deployment parameters like ports and num_servers
             # can be variable and so we allow them to be overridden by command line args.
-        except AttributeError:
-            # If there's no config, create one.
+        else:
+            # If there's no model config provided, create one. Model name is required in this case.
+            if args.model_name is None:
+                raise ValueError(
+                    "Commandline argument --model_name is required when using --local_vllm and no --model_config is provided."
+                )
+
             init_args["model_config"] = ModelConfig(
-                LocalVLLMModel,
-                {
-                    "model_name": args.model_name,
-                    "ports": args.ports,
-                    "num_servers": args.num_servers
-                }
+                LocalVLLMModel, {"model_name": args.model_name, "ports": args.ports, "num_servers": args.num_servers}
             )
 
     elif args.model_config:
@@ -74,6 +78,11 @@ if __name__ == "__main__":
             init_args["model_config"] = getattr(model_configs, args.model_config)
         except AttributeError:
             raise ValueError(f"Model config class {args.model_config} not found.")
+    if args.eval_model_config:
+        try:
+            init_args["eval_model_config"] = getattr(model_configs, args.eval_model_config)
+        except AttributeError:
+            raise ValueError(f"Model config class {args.eval_model_config} not found.")
 
     if args.resume_from:
         init_args["resume_from"] = args.resume_from
@@ -88,5 +97,8 @@ if __name__ == "__main__":
     pipeline.run()
 
     if args.local_vllm:
-        from eureka_ml_insights.models.models import _LocalVLLMDeploymentHandler
+        from eureka_ml_insights.models.models import (
+            _LocalVLLMDeploymentHandler,
+        )
+
         _LocalVLLMDeploymentHandler.shutdown_servers()

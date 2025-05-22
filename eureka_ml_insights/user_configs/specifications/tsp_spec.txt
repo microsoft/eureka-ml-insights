@@ -1,0 +1,25 @@
+Benchmark Name: TSP
+Paper Title: Inference-Time Scaling for Complex Tasks: Where We Stand and What Lies Ahead
+Paper Link: https://arxiv.org/pdf/2504.00294?
+Dataset Link: https://huggingface.co/datasets/GeoMeterData/nphard_tsp1
+
+Benchmark Details:
+The Traveling Salesman Problem (TSP) asks for the shortest possible route that visits every city in a given list exactly once and returns to the starting point. The dataset consists of 800 TSP instances, organized into eight difficulty levels with 100 instances in each level. Graphs are fully connected; Level 1 has 6 nodes, and the hardest Level 8 has 13 nodes, with edge-weight distributions also varying by level. Ground truth tours for every instance were found via brute-force enumeration of all city permutations, ensuring exact ground-truth paths.
+
+
+What are the experimental design setup dimensions 
+(e.g. settings, prompt templates, dataset subsets) for this benchmark? 
+I.e. each dimension will map to one experiment.
+
+TSP has one dimension which produces aggregate accuracy. We use two prompt templates, with and without CoT.
+ 
+What are the evaluation disaggregation pivots/attributes to run metrics for?
+ 
+Results can be disaggregated by difficulty levels (8 levels).
+
+
+What are the metrics used for evaluation?
+1- Accuracy Overall
+
+Any modifications done from original version?
+N/A.
