@@ -27,6 +27,9 @@ from eureka_ml_insights.data_utils import (
     MMDataLoader,
     MultiplyTransform,
     SequenceTransform,
+    CopyColumn,
+    ReplaceStringsTransform,
+    MajorityVoteTransform,
 )
 from eureka_ml_insights.data_utils.nphard_sat_utils import (
     NPHARDSATExtractAnswer,
@@ -208,9 +211,188 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
             output_dir=os.path.join(self.log_dir, "eval_report"),
         )
 
+        self.posteval_data_post_processing_comp = DataProcessingConfig(
+            component_type=DataProcessing,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.evalreporting_comp.output_dir, "metric_results.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                        CopyColumn(
+                                column_name_src="NPHardSATMetric_result",
+                                column_name_dst="NPHardSATMetric_result_numeric",
+                            ),
+                        ReplaceStringsTransform(
+                                columns=["NPHardSATMetric_result_numeric"],
+                                mapping={'incorrect': '0', 'correct': '1', 'none': 'NaN'},
+                                case=False)
+                        ]
+                    ),
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "posteval_data_post_processing_output"),
+        )
+
+        # Aggregate the results by best of n
+        # In this case, this is equivalent to taking the max on the numerical column of the metric.
+        self.bon_evalreporting_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.posteval_data_post_processing_comp.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl"
+                },
+            ),
+            aggregator_configs=[
+                # the first three reports aggregate results by data_point_id and take the best out of N
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "NPHardSATMetric_result_numeric"
+                        ],
+                        "first_groupby": "data_point_id",
+                        "filename_base": "NPHardSATMetric_BestOfN",
+                        "agg_fn": "max"
+                    },
+                ),
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "NPHardSATMetric_result_numeric"
+                        ],
+                        "first_groupby": "data_point_id", 
+                        "second_groupby": "category",
+                        "filename_base": "NPHardSATMetric_BestOfN_GroupBy_Category",
+                        "agg_fn": "max"
+                    },
+                ),
+                # # # aggregates results by data_point_id and takes the sum of usage for completion tokens
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "usage_completion"
+                        ],
+                        "first_groupby": "data_point_id",
+                        "filename_base": "UsageCompletion_BestOfN",
+                         "agg_fn": "sum"
+                    },
+                ),
+            ],
+            output_dir=os.path.join(self.log_dir, "bestofn_eval_report"),
+        )
+
+        # Aggregate the results by worst of n
+
+        self.won_evalreporting_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.posteval_data_post_processing_comp.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl"
+                },
+            ),
+            aggregator_configs=[
+                # the first three reports aggregate results by data_point_id and take the best out of N
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "NPHardSATMetric_result_numeric"
+                        ],
+                        "first_groupby": "data_point_id",
+                        "filename_base": "NPHardSATMetric_WorstOfN",
+                        "agg_fn": "min"
+                    },
+                ),
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "NPHardSATMetric_result_numeric"
+                        ],
+                        "first_groupby": "data_point_id", 
+                        "second_groupby": "category",
+                        "filename_base": "NPHardSATMetric_WorstOfN_GroupBy_Category",
+                        "agg_fn": "min"
+                    },
+                ),
+            ],
+            output_dir=os.path.join(self.log_dir, "worstofn_eval_report"),
+        )
+
+        # Aggregate the results by a majority vote
+        # # First, let us perform majority_vote
+        self.data_post_processing_mv = DataProcessingConfig(
+            component_type=DataProcessing,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.evalreporting_comp.output_dir, "metric_results.jsonl"),                    
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [                                                    
+                            MajorityVoteTransform(id_col="data_point_id"),                        
+                            ColumnRename(
+                                name_mapping={
+                                    "model_output": "model_output_onerun",
+                                    "majority_vote": "model_output",
+                                }
+                            ),                        
+                        ]
+                    ),
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "data_post_processing_mv"),
+        )
+
+        # Second, compute numeric match
+        self.mv_evalreporting_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.data_post_processing_mv.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
+                },
+            ),
+            metric_config=MetricConfig(NPHardSATMetric),
+            aggregator_configs=[
+                AggregatorConfig(
+                    BiLevelCountAggregator,
+                    {
+                        "column_names": [
+                            "NPHardSATMetric_result",
+                        ],
+                        "first_groupby": "data_point_id",
+                        "filename_base": "MajorityVote",
+                        "normalize": True,
+                    },
+                ),         
+            ],
+            output_dir=os.path.join(self.log_dir, "majorityvote_eval_report"),
+        )
+
+
         # Configure the pipeline
         return PipelineConfig(
-            [self.data_processing_comp, self.inference_comp, self.data_post_processing, self.evalreporting_comp],
+            [
+                self.data_processing_comp, 
+                self.inference_comp, 
+                self.data_post_processing, 
+                self.evalreporting_comp,
+                self.posteval_data_post_processing_comp,
+                self.bon_evalreporting_comp,
+                self.won_evalreporting_comp,
+                self.data_post_processing_mv,
+                self.mv_evalreporting_comp,
+            ],
             self.log_dir,
         )
 
