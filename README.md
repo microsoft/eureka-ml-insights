@@ -3,23 +3,31 @@
   <a href='https://arxiv.org/abs/2409.10566'>
     <img src=https://img.shields.io/badge/arXiv-2409.10566-b31b1b.svg>
   </a>
-  <a href='https://aka.ms/eureka-ml-insights-report'>
-    <img src=docs/figures/eureka_logo.png width="16">
-    Technical Report  
+  <a href='https://arxiv.org/pdf/2504.00294'>
+    <img src=https://img.shields.io/badge/arXiv-2504.00294-b31b1b.svg>
   </a>
-  <a href='https://aka.ms/eureka-ml-insights-blog'>
-    <img src=docs/figures/msr_blog.png width="16">
-    Blog Post
+  <a href='https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/tree/main'>
+    <img src=https://huggingface.co/front/assets/huggingface_logo-noborder.svg width="16">
+    Eureka Evaluation Logs
   </a>
   <a href='https://microsoft.github.io/eureka-ml-insights'>
     <img src=docs/figures/github.png width="16">
     Project Website
   </a>
 </p>
+
 This repository contains the code for the Eureka ML Insights framework. The framework is designed to help researchers and practitioners run reproducible evaluations of generative models using a variety of benchmarks and metrics efficiently. The framework allows the user to define custom pipelines for data processing, inference, and evaluation, and provides a set of pre-defined evaluation pipelines for key benchmarks.
 
+## 📰 News
+
+- **[2025/5/20]**: We have uploaded logs from all experiment reported in our papers on [HuggingFace](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/tree/main). 
+- **[2025/4/29]**: New blog post out [Eureka Inference-Time Scaling Insights: Where We Stand and What Lies Ahead](https://www.microsoft.com/en-us/research/articles/eureka-inference-time-scaling-insights-where-we-stand-and-what-lies-ahead/)
+- **[2025/3/31]**: ✨ We have a new paper out [Inference-Time Scaling for Complex Tasks: Where We Stand and What Lies Ahead](https://arxiv.org/abs/2504.00294)
+- **[2024/9/17]**: New blog post out [Eureka: Evaluating and understanding progress in AI](https://aka.ms/eureka-ml-insights-blog)
+- **[2024/9/17]**: ✨ New paper out [Eureka: Evaluating and Understanding Large Foundation Models](https://arxiv.org/abs/2409.10566)
 ## Table of Contents
 - [Eureka ML Insights Framework](#eureka-ml-insights-framework)
+  - [📰 News](#-news)
   - [Table of Contents](#table-of-contents)
   - [Benchmarks](#benchmarks)
   - [Installation](#installation)
@@ -46,10 +54,15 @@ The following table summarizes the benchmarks included in Eureka-Bench, their mo
 | MMMU <br> 900                 | Image -> Text | Multimodal QA        | [MMMU.zip](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/resolve/main/MMMU.zip) |[mmmu.py](eureka_ml_insights/user_configs/mmmu.py)|
 | Image Understanding <br> 10249| Image -> Text | Object Recognition <br> Object Detection <br> Visual Prompting <br> Spatial Reasoning | [IMAGE_UNDERSTANDING.zip](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/resolve/main/IMAGE_UNDERSTANDING.zip) | [object_recognition.py](eureka_ml_insights/user_configs/image_understanding/object_recognition.py) <br> [object_detection.py](eureka_ml_insights/user_configs/image_understanding/object_detection.py) <br> [visual_prompting.py](eureka_ml_insights/user_configs/image_understanding/visual_prompting.py) <br> [spatial_reasoning.py](eureka_ml_insights/user_configs/image_understanding/spatial_reasoning.py) |
 | Vision Language <br> 13500    | Image -> Text | Spatial Understanding <br> Navigation <br> Counting| [VISION_LANGUAGE.zip](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/resolve/main/VISION_LANGUAGE.zip) |[spatial_map.py](eureka_ml_insights/user_configs/vision_language/spatial_map.py) <br> [maze.py](eureka_ml_insights/user_configs/vision_language/maze.py) <br> [spatial_grid.py](eureka_ml_insights/user_configs/vision_language/spatial_grid.py)|
-| IFEval <br> 541                 | Text -> Text | Instruction Following        | [IFEval.zip](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/resolve/main/IFEval.zip) |[ifeval.py](eureka_ml_insights/user_configs/ifeval.py)|
-| FlenQA <br> 12000               | Text -> Text | Long Context Multi-hop QA | [FlenQA.zip](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/resolve/main/FlenQA.zip) |[flenQA.py](eureka_ml_insights/user_configs/flenqa.py)|
-| Kitab <br> 34217                | Text -> Text | Information Retrieval        | [Kitab.zip](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/resolve/main/Kitab.zip) |[kitab.py](eureka_ml_insights/user_configs/kitab.py)|  
+| IFEval <br> 541                 | Text -> Text | Instruction Following        | [Evaluation logs](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/resolve/main/IFEval.zip) <br> [Inference scaling logs](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/tree/main/IFEval) |[ifeval.py](eureka_ml_insights/user_configs/ifeval.py)|
+| FlenQA <br> 12000               | Text -> Text | Long Context Multi-hop QA | [Logs](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/tree/main/FlenQA) |[flenQA.py](eureka_ml_insights/user_configs/flenqa.py)|
+| Kitab <br> 34217                | Text -> Text | Information Retrieval        | [Evaluation logs](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/resolve/main/Kitab.zip) <br> [Inference scaling logs](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/tree/main/Kitab) |[kitab.py](eureka_ml_insights/user_configs/kitab.py)|  
 | Toxigen <br> 10500              | Text -> Text | Toxicity Detection <br> Safe Language Generation         | [ToxiGen.zip](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/resolve/main/ToxiGen.zip) |[toxigen.py](eureka_ml_insights/user_configs/toxigen.py)|
+| AIME <br> 10500              | Text -> Text | Mathematical Reasoning| [Logs](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/tree/main/AIME) | [aime.py](eureka_ml_insights/user_configs/aime.py)|
+| BA Calendar <br> 2000         | Text -> Text | Calendar Planning        | [Logs](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/tree/main/BA_Calendar) |[ba_calendar.py]([eureka_ml_insights/user_configs/ba_calendar.py](https://github.com/microsoft/eureka-ml-insights/blob/vibhav/sat3/eureka_ml_insights/user_configs/ba_calendar.py))|
+| GPQA <br> 448         | Text -> Text | Graduate level science QA        | [Logs](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/tree/main/GPQA) |[gpqa.py](eureka_ml_insights/user_configs/gpqa.py)|
+| TSP <br> 800         | Text -> Text | NP-Hard Traveling Salesman Problems        | [Logs](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/tree/main/TSP) |[tsp.py](eureka_ml_insights/user_configs/nphard_tsp.py)|
+| SAT <br> 960         | Text -> Text | NP-Hard Satisfiability Problems        | [Logs](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/tree/main/SAT) |[sat.py](eureka_ml_insights/user_configs/nphard_sat.py)|
 
 Note: The benchmarks on Image Understanding will be available soon on HuggingFace. Please stay tuned.
 
@@ -86,11 +99,11 @@ To reproduce the results of a pre-defined experiment pipeline, you can run the f
 
 ```python main.py --exp_config exp_config_name --model_config model_config_name --exp_logdir your_log_dir```
 
-For example, to run the `FlenQA_Experiment_Pipeline` experiment pipeline defined in `eureka_ml_insights/user_configs/flenqa.py` using the OpenAI GPT4 1106 Preview model, you can run the following command:
+For example, to run the `FlenQA_Experiment_Pipeline` experiment pipeline defined in `eureka_ml_insights/user_configs/flenqa.py` using the OpenAI O1 Preview model, you can run the following command:
 
-```python main.py --exp_config FlenQA_Experiment_Pipeline --model_config OAI_GPT4_1106_PREVIEW_CONFIG --exp_logdir gpt4_1106_preview```
+```python main.py --exp_config FlenQA_Experiment_Pipeline --model_config OAI_O1_PREVIEW_CONFIG --exp_logdir openai_o1_preview```
 
-The results of the experiment will be saved in a directory under `logs/FlenQA_Experiment_Pipeline/gpt4_1106_preview`. For each experiment you run with these configurations, a new directory will be created using the date and time of the experiment run. 
+The results of the experiment will be saved in a directory under `logs/FlenQA_Experiment_Pipeline/openai_o1_preview`. For each experiment you run with these configurations, a new directory will be created using the date and time of the experiment run. 
 For other available experiment pipelines and model configurations, see the `eureka_ml_insights/user_configs` and `eureka_ml_insights/configs` directories, respectively. In [model_configs.py](eureka_ml_insights/configs/model_configs.py) you can configure the model classes to use your API keys, Key Vault urls, endpoints, and other model-specific configurations.
 
 ## 🗺️ Overview of Experiment Pipelines
@@ -166,7 +179,7 @@ To contribute to the framework:
 - Finally, submit a pull request.
 
 # ✒️ Citation
-If you use this framework in your research, please cite the following paper:
+If you use this framework in your research, please cite the following papers:
 
 ```
 @article{eureka2024,
@@ -174,6 +187,14 @@ If you use this framework in your research, please cite the following paper:
   author={Balachandran, Vidhisha and Chen, Jingya and Joshi, Neel and Nushi, Besmira and Palangi, Hamid and Salinas, Eduardo and Vineet, Vibhav and Woffinden-Luey, James and Yousefi, Safoora},
   journal={Microsoft Research. MSR-TR-2024-33},
   year={2024}
+}
+```
+```
+@article{eureka2025,
+  title={Time Scaling for Complex Tasks: Where We Stand and What Lies Ahead},
+  author={Balachandran, Vidhisha and Chen, Jingya and Chen, Lingjiao and Garg, Shivam and Joshi, Neel and Lara, Yash and Langford, John and Nushi, Besmira and Vineet, Vibhav and Wu, Yue and Yousefi, Safoora},
+  journal={Microsoft Research. MSR-TR-2025-16},
+  year={2025}
 }
 ```
 # Responsible AI Considerations
