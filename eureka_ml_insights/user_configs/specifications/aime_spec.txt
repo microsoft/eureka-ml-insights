@@ -1,11 +1,12 @@
 Benchmark Name: The American Invitational Mathematics Examination (AIME)
-Kaggle Link: https://www.kaggle.com/datasets/hemishveeraboina/aime-problem-set-1983-2024
-Dataset Link: https://huggingface.co/datasets/qq8933/AIME_1983_2024
+Original data source: https://artofproblemsolving.com/wiki/index.php/AIME_Problems_and_Solutions
+AIME 2025: https://huggingface.co/datasets/lchen001/AIME2025
+AIME: https://huggingface.co/datasets/lchen001/AIME1983_2024
 
 Benchmark Details:
 AIME is a straightforward and easy-to-reproduce evaluation benchmark. 
 It focuses on a set of challenges from the American Invitational Mathematics Examination. 
-The dataset contains questions collected from 1983 to 2024.
+The dataset contains questions collected from 1983 to 2025.
 
 What are the experimental design setup dimensions 
 (e.g. settings, prompt templates, dataset subsets) for this benchmark? 
@@ -20,6 +21,7 @@ Disaggregation by (group by):
 
 What are the metrics used for evaluation?
 1. accuracy: The percentage of prompts that a model answers correctly.
+2. token length: The number of tokens used to generate an answer.
 
 Any modifications done from original version?
 None
