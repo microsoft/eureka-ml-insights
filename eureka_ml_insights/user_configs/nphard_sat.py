@@ -61,7 +61,7 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 HFDataReader,
                 {
-                    "path": "GeoMeterData/nphard_sat2",
+                    "path": "GeoMeterData/nphard_sat1",
                     "split": "train",
                     "transform": SequenceTransform(
                         [
