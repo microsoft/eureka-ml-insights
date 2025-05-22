@@ -1,11 +1,11 @@
-Benchmark Name: OmniMATH
+Benchmark Name: BA_Calendar
 Paper Title: BENCHAGENTS: Automated Benchmark Creation with Agent Interaction
 Paper Link: https://arxiv.org/abs/2410.22584
 Dataset Link: microsoft/ba-calendar 
 
 Benchmark Details:
 
-BenchAgents - s a benchmark designed to evaluate large language models (LLMs) on complex calendar scheduling tasks. 
+BA_Calendar a benchmark designed to evaluate large language models (LLMs) on complex calendar scheduling tasks. 
 It comprises 2,000 instances that simulate real-world scheduling scenarios, requiring models to consider multiple constraints such as participant availability, buffer times, task priorities, and time restrictions. 
 The dataset was generated using the BENCHAGENTS framework, which employs a multi-agent system of LLMs to automate the creation of high-quality, diverse benchmarks. 
 This setup allows for fine-grained analysis of model performance in handling intricate planning and constraint satisfaction challenges.
