@@ -23,16 +23,17 @@ class KitabExtractBooks(DFTransformBase):
 
 
 @dataclass
-class GPT35KitabExtractBooks(KitabExtractBooks):
+class KitabExtractBooksAddMarker(DFTransformBase):
     model_output_column: str
     model_books_column: str
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        GPT 3.5 sometimes does not follow instructions and does not add the "Output:\n" marker in its format
+        Some models (e.g. GPT3.5) sometimes does not follow instructions and do not add the "Output:\n" marker in its format
         add_output_marker adds a "Output:\n" string to the model output prior to parsing, if it detects a list start, i.e. "1."
         """
-        df[self.model_output_column] = df[self.model_output_column].apply(parse_output_reason(add_output_marker))
+        df[self.model_books_column] = df[self.model_output_column].apply(add_output_marker)
+        df[self.model_books_column] = df[self.model_books_column].apply(parse_output_reason)
         return df
 
 
@@ -62,8 +63,12 @@ def prepare_all_books_context(s):
 def add_output_marker(s):
     if s == None:
         s = "Output:\n"
-    # Look for the last occurrence of 'Output:\n'
-    last_output_index = s.rfind("Output:\n")
+    # Look for the last occurrence of 'Output:\n' with an arbitrary number of spaces
+    pattern = r"Output:\s*\n"
+    last_output_index = None
+    for match in re.finditer(pattern, s):
+        last_output_index = match.end()
+
     if last_output_index == -1 and s.find("1.") == 0:
         s = "Output:\n" + s
     return s
@@ -81,8 +86,10 @@ def parse_output_reason(s):
     """
     if s == None:
         return {"titles": [], "reasons": []}
-    # Look for the last occurrence of 'Output:\n'
-    last_output_index = s.rfind("Output:\n")
+    pattern = r"Output:\s*\n"
+    last_output_index = None
+    for match in re.finditer(pattern, s):
+        last_output_index = match.end()
 
     # If 'All Books' is found in the string but 'Output:' is not found at all
     if "All Books" in s and last_output_index == -1:
@@ -90,7 +97,7 @@ def parse_output_reason(s):
 
     # If found, only consider the text after this occurrence
     if last_output_index != -1:
-        s = s[last_output_index + len("Output:\n") :]
+        s = s[last_output_index:]
 
     # regex for extracting reason and title
     reason_pattern = r"Reason: (.*?). Title:"

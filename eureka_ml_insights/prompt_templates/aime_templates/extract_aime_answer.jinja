@@ -1,0 +1,21 @@
+We asked a large language model the following question:
+
+BEGIN INITIAL QUESTION
+
+Question: {{original_prompt}}
+
+END INITIAL QUESTION
+
+The question asks the model to give a final answer in the following format:
+
+'Final Answer: [numeric value]'. Dont box it, just provide the answer directly at the end.
+
+The model however failed to follow the specified format and gave the following answer:
+
+BEGIN RAW MODEL ANSWER
+
+Raw Model Answer: {{model_output}}
+
+END RAW MODEL ANSWER
+
+Please extract the final answer from the raw model answer according to the specified format. Do not mention any other details, only extract what the format indicates. If you are not able to find a final answer, output Final Answer: 0
