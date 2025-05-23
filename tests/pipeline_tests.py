@@ -23,6 +23,7 @@ from eureka_ml_insights.data_utils.transform import (
 )
 from eureka_ml_insights.user_configs import (
     AIME_PIPELINE,
+    AIME_SEQ_PIPELINE,
     DNA_PIPELINE,
     GEOMETER_PIPELINE,
     GSM8K_PIPELINE,
@@ -55,6 +56,7 @@ from tests.test_utils import (
     KitabTestModel,
     MultipleChoiceTestModel,
     SpatialReasoningTestModel,
+    TestChatModel,
     TestDataLoader,
     TestHFDataReader,
     TestKitabMetric,
@@ -353,6 +355,18 @@ class TEST_AIME_PIPELINE(AIME_PIPELINE):
         self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
 
+class TEST_AIME_SEQ_PIPELINE(AIME_SEQ_PIPELINE):
+    # Test config the AIME benchmark with TestChatModel on a small subset of AIME
+    def configure_pipeline(self):
+        config = super().configure_pipeline(
+            model_config=ModelConfig(TestChatModel, {})
+        )
+        self.data_processing_comp.data_reader_config.init_args["transform"].transforms.extend(
+            [
+                SamplerTransform(sample_count=N_ITER, random_seed=99),
+            ]
+        )
+        return config
 
 class TEST_GSM8K_PIPELINE(GSM8K_PIPELINE):
     # Test config the GSM8K benchmark with TestModel and TestDataLoader
@@ -624,6 +638,13 @@ class AIME_PipelineTest(PipelineTest, unittest.TestCase):
         super().test_outputs_exist()
         self.verify_n_aggregators(self.conf.component_configs[-2])
 
+class AIME_SEQ_PipelineTest(PipelineTest, unittest.TestCase):
+    def get_config(self):
+        return TEST_AIME_SEQ_PIPELINE().pipeline_config
+        
+    def test_outputs_exist(self) -> None:
+        self.eval_config = self.conf.component_configs[-6]
+        super().test_outputs_exist()
 
 class NPHARD_TSP_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):

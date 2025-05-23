@@ -4,6 +4,7 @@ from .aime import (
     AIME_HYBRIDEXTRACT_PIPELINE,
     AIME_PIPELINE,
 )
+from .aime_seq import AIME_SEQ_PIPELINE
 from .ba_calendar import (
     BA_Calendar_Parallel_PIPELINE,
     BA_Calendar_PIPELINE,
@@ -151,6 +152,7 @@ __all__ = [
     IFEval_Nondeterminism,
     Kitab_Nondeterminism,
     AIME_PIPELINE,
+    AIME_SEQ_PIPELINE,
     AIME2025_PIPELINE,
     AIME_HYBRIDEXTRACT_PIPELINE,
     AIME2025_HYBRIDEXTRACT_PIPELINE,
