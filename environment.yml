@@ -222,8 +222,6 @@ dependencies:
       - async-lru==2.0.4
       - asyncer==0.0.8
       - attrs==23.2.0
-      - autogen==0.7.0
-      - autogen-core==0.4.0
       - autopep8==2.1.0
       - azure-ai-ml==1.21.1
       - azure-ai-textanalytics==5.3.0
