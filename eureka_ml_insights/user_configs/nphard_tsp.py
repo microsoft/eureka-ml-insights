@@ -56,7 +56,7 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 HFDataReader,
                 {
-                    "path": "GeoMeterData/nphard_tsp2",
+                    "path": "GeoMeterData/nphard_tsp1",
                     "split": "train",
                     "transform": SequenceTransform(
                         [

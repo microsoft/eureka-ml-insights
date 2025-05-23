@@ -5,6 +5,7 @@ from .models import (
     ClaudeReasoningModel,
     DirectOpenAIModel,
     DirectOpenAIOModel,
+    EndpointModel,
     GeminiModel,
     HuggingFaceModel,
     KeyBasedAuthMixIn,
@@ -25,6 +26,7 @@ from .models import (
 __all__ = [
     AzureOpenAIOModel,
     DirectOpenAIOModel,
+    EndpointModel,
     HuggingFaceModel,
     KeyBasedAuthMixIn,
     LLaVAHuggingFaceModel,
