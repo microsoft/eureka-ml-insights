@@ -8,7 +8,7 @@ from eureka_ml_insights.data_utils import (
     MMDataLoader,
 )
 from eureka_ml_insights.metrics import ClassicMetric, CompositeMetric
-
+from eureka_ml_insights.models import EndpointModel
 
 class TestModel:
     def __init__(self, model_name="generic_test_model"):
@@ -18,6 +18,17 @@ class TestModel:
         time.sleep(0.1)
         return {"model_output": "model output", "is_valid": True, "response_time": 0, "n_output_tokens": 0}
 
+class TestChatModel(EndpointModel):
+    chat_mode = None
+
+    def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
+        return text_prompt
+
+    def get_response(self, request):
+        return {"model_output": "This is a test model output.", "is_valid": True, "response_time": 0, "n_output_tokens": 0}
+
+    def handle_request_error(self, e):
+        return True
 
 class TestHFDataReader(HFDataReader):
     def __init__(self, path, **kwargs):
