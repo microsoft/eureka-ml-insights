@@ -966,7 +966,7 @@ class HuggingFaceModel(Model):
         response_dict.update(
             {
                 "is_valid": is_valid,
-                "n_output_tokens": self.count_tokens(response_dict["model_output"], response_dict["is_valid"]),
+                "n_output_tokens": self.count_tokens(response_dict["model_output"], is_valid),
             }
         )
         return response_dict
