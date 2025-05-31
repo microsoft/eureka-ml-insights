@@ -61,7 +61,10 @@ from .llm_extraction import LLM_EXTRACTION_SUBPIPELINE_MIXIN
 from .mathverse import MATHVERSE_PIPELINE
 from .mathvision import MATHVISION_PIPELINE
 from .mathvista import MATHVISTA_PIPELINE
-from .mmmu import MMMU_BASELINE_PIPELINE
+from .mmmu import (
+    MMMU_BASELINE_PIPELINE,
+    MMMU_COT_PIPELINE,
+)
 from .nondeterminism import (
     Geo_Nondeterminism,
     IFEval_Nondeterminism,
@@ -131,6 +134,7 @@ __all__ = [
     Drop_Experiment_Pipeline,
     GEOMETER_PIPELINE,
     MMMU_BASELINE_PIPELINE,
+    MMMU_COT_PIPELINE,
     KITAB_ONE_BOOK_CONSTRAINT_PIPELINE,
     KITAB_ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT,
     KITAB_ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT,

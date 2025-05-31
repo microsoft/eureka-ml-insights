@@ -399,3 +399,4 @@ FodyWeavers.xsd
 *.sln.iml
 *.pyproj
 /keys
+eureka_ml_insights.egg-info/*

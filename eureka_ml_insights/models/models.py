@@ -994,7 +994,7 @@ class Phi3HFModel(HuggingFaceModel):
 
 @dataclass
 class Phi4HFModel(HuggingFaceModel):
-    """This class is used to run a self-hosted PHI3 model via HuggingFace apis."""
+    """This class is used to run a self-hosted PHI4 model via HuggingFace apis."""
 
     def __post_init__(self):
         super().__post_init__()
@@ -1006,9 +1006,10 @@ class Phi4HFModel(HuggingFaceModel):
 
     def model_template_fn(self, text_prompt, system_message=None):
         if system_message:
-            return f"<|im_start|>system<|im_sep|>\n{system_message}<|im_start|>user<|im_sep|>\n{text_prompt}<|im_end|>\n<|im_start|>assistant<|im_sep|>"
+            return f"<|im_start|>system<|im_sep|>\n{system_message}<|im_end|>\n<|im_start|>user<|im_sep|>\n{text_prompt}<|im_end|>\n<|im_start|>assistant<|im_sep|>\n"
         else:
-            return f"<|im_start|>user<|im_sep|>\n{text_prompt}<|im_end|>\n<|im_start|>assistant<|im_sep|>"
+            return f"<|im_start|>user<|im_sep|>\n{text_prompt}<|im_end|>\n<|im_start|>assistant<|im_sep|>\n"
+
 
 
 @dataclass
