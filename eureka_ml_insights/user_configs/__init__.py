@@ -10,6 +10,7 @@ from .ba_calendar import (
     BA_Calendar_PIPELINE,
     BA_Calendar_RunEvals_PIPELINE,
 )
+from .bfcl import BFCL_PIPELINE
 from .dna import DNA_PIPELINE
 from .drop import Drop_Experiment_Pipeline
 from .flenqa import FlenQA_Experiment_Pipeline
@@ -156,6 +157,7 @@ __all__ = [
     AIME2025_PIPELINE,
     AIME_HYBRIDEXTRACT_PIPELINE,
     AIME2025_HYBRIDEXTRACT_PIPELINE,
+    BFCL_PIPELINE,
     Omni_Math_PIPELINE,
     Omni_Math_Parallel_PIPELINE,
     NPHARD_TSP_PIPELINE,
