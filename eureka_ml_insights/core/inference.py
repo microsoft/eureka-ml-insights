@@ -179,21 +179,12 @@ class Inference(Component):
             pass  # create the output file. This will guarantee that an empty inference_result.jsonl file is created even if no inference is run.
         if self.resume_from:
             self.pre_inf_results_df, self.last_uid = self.fetch_previous_inference_results()
-
-        if self.max_concurrent == 1:
-            with self.data_loader as loader:
-                for record in tqdm(loader, desc="Inference Progress:"):
-                    result = self._run_single(record)
-                    if result:
-                        with self.appender as appender:
-                            appender.write(result)                 
-        else:
-            with self.data_loader as loader, ThreadPoolExecutor(max_workers=self.max_concurrent) as executor:
-                futures = [executor.submit(self._run_single, record) for record in loader]
-                for future in tqdm(as_completed(futures), total=len(loader), mininterval=2.0, desc="Inference Progress: "):
-                    result = future.result()
-                    if result:
-                        self._append_threadsafe(result)
+        with self.data_loader as loader, ThreadPoolExecutor(max_workers=self.max_concurrent) as executor:
+            futures = [executor.submit(self._run_single, record) for record in loader]
+            for future in tqdm(as_completed(futures), total=len(loader), mininterval=2.0, desc="Inference Progress: "):
+                result = future.result()
+                if result:
+                    self._append_threadsafe(result)
 
     def _append_threadsafe(self, data):
         with self.writer_lock:
