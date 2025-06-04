@@ -37,7 +37,7 @@ OFFLINE_MODEL_CONFIG = ModelConfig(
     OfflineFileModel,
     {
         "model_name": "Teacher_Agent_V1",
-        "file_path": "C:\Users\benushi\Downloads\eureka_combined\AIME_AIME2025_PIPELINE_50Run.jsonl",
+        "file_path": r"C:\Users\benushi\Downloads\eureka_combined\AIME_AIME2025_PIPELINE_50Run.jsonl",
     },
 )
 
@@ -73,7 +73,6 @@ TOGETHER_DEEPSEEK_R1_Distill_Llama_70B_CONFIG = ModelConfig(
 )
 
 # OpenAI models
-
 OPENAI_SECRET_KEY_PARAMS = {
     "key_name": "your_openai_secret_key_name",
     "local_keys_path": "keys/keys.json",
@@ -113,7 +112,7 @@ OAI_O1_PREVIEW_CONFIG = ModelConfig(
     },
 )
 
-OAI_O1_PREVIEW_AUZRE_CONFIG = ModelConfig(
+OAI_O1_PREVIEW_AZURE_CONFIG = ModelConfig(
     AzureOpenAIOModel,
     {
         "model_name": "o1-preview",
