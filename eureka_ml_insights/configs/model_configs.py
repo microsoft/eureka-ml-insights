@@ -19,6 +19,7 @@ from eureka_ml_insights.models import (
     RestEndpointModel,
     TogetherModel,
     TestModel,
+    OfflineFileModel
 )
 from eureka_ml_insights.models.models import AzureOpenAIModel
 
@@ -31,6 +32,14 @@ from .config import ModelConfig
 
 # Test model
 TEST_MODEL_CONFIG = ModelConfig(TestModel, {})
+
+OFFLINE_MODEL_CONFIG = ModelConfig(
+    OfflineFileModel,
+    {
+        "model_name": "Teacher_Agent_V1",
+        "file_path": "C:\Users\benushi\Downloads\eureka_combined\AIME_AIME2025_PIPELINE_50Run.jsonl",
+    },
+)
 
 # Together models
 TOGETHER_SECRET_KEY_PARAMS = {
