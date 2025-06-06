@@ -236,7 +236,7 @@ class BFCL_PIPELINE(ExperimentConfig):
                             ),
                             ReplaceStringsTransform(
                                 columns=["DictMatch_result_numeric"],
-                                mapping={"incorrect": "0", "correct": "1", "none": "NaN"},
+                                mapping={"true": "1", "false": "0", "none": "NaN"},
                                 case=False,
                             ),
                         ]
