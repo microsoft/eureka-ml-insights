@@ -30,7 +30,7 @@ from eureka_ml_insights.configs import(
 
 from eureka_ml_insights.metrics.reports import AverageAggregator
 from eureka_ml_insights.configs import ExperimentConfig
-from eureka_ml_insights.configs.model_configs import OAI_GPT4_1106_PREVIEW_CONFIG as PERSONAL_GPT4O
+from eureka_ml_insights.configs.model_configs import TRAPI_GPT4O_2024_08_06_CONFIG as PERSONAL_GPT4O
 
 
 
@@ -50,7 +50,7 @@ class MATHVERSE_PIPELINE(ExperimentConfig):
                     "transform": SequenceTransform(
                         [
                             ColumnRename(name_mapping={"query_cot": "prompt"}),
-                            #SamplerTransform(sample_count=32, random_seed=1234),
+                            # SamplerTransform(sample_count=32, random_seed=1234),
                         ]
                     ),
                 },
@@ -68,6 +68,7 @@ class MATHVERSE_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
+            max_concurrent=10,
         )
 
         # Eval data pre processing component round 1 (answer extraction).
