@@ -1,4 +1,4 @@
-"""This file contains an implementation of the MathVerse eval: https://mathverse-cuhk.github.io/. 
+"""This file contains an implementation of the MathVerse eval: https://mathverse-cuhk.github.io/.  
 """
 
 import os
@@ -171,17 +171,16 @@ class MATHVERSE_PIPELINE(ExperimentConfig):
             self.log_dir,
         )
 
-
 class MATHVERSE_Parallel_PIPELINE(MATHVERSE_PIPELINE):
-    """This class specifies the config for running MATHVERSE benchmark 5 repeated times"""
+    """This class specifies the config for running the MATHVERSE benchmark 5 repeated times"""
 
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         # data preprocessing
-        self.data_processing_comp.data_reader_config.init_args["transform"].transforms[-1] = MultiplyTransform(
-            n_repeats=5
+        self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
+            MultiplyTransform(n_repeats=5)
         )
         return pipeline
 
