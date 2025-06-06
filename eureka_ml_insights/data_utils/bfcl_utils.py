@@ -33,5 +33,6 @@ class BFCLExtractAnswer(DFTransformBase):
                 if isinstance(result, dict):
                     return json.dumps(result)
             except Exception:
-                pass
-        return "{}"
+                return None
+                #pass
+        return None
