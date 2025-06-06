@@ -1,4 +1,4 @@
-"""This file contains an implementation of the MathVerse eval: https://mathverse-cuhk.github.io/.
+"""This file contains an implementation of the MathVerse eval: https://mathverse-cuhk.github.io/. 
 """
 
 import os
@@ -16,6 +16,7 @@ from eureka_ml_insights.data_utils import (
     MMDataLoader,
     SamplerTransform,
     SequenceTransform,
+    MultiplyTransform,
 )
 
 from eureka_ml_insights.configs import(
@@ -50,7 +51,7 @@ class MATHVERSE_PIPELINE(ExperimentConfig):
                     "transform": SequenceTransform(
                         [
                             ColumnRename(name_mapping={"query_cot": "prompt"}),
-                            # SamplerTransform(sample_count=32, random_seed=1234),
+                            SamplerTransform(sample_count=10, random_seed=1234),
                         ]
                     ),
                 },
@@ -58,7 +59,7 @@ class MATHVERSE_PIPELINE(ExperimentConfig):
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
         )
 
-        # Configure the inference component
+        # Configure the inference component 
         self.inference_comp = InferenceConfig(
             component_type=Inference,
             model_config=model_config,
@@ -169,3 +170,19 @@ class MATHVERSE_PIPELINE(ExperimentConfig):
             ],
             self.log_dir,
         )
+
+
+class MATHVERSE_Parallel_PIPELINE(MATHVERSE_PIPELINE):
+    """This class specifies the config for running MATHVERSE benchmark 5 repeated times"""
+
+    def configure_pipeline(
+        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
+    ) -> PipelineConfig:
+        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
+        # data preprocessing
+        self.data_processing_comp.data_reader_config.init_args["transform"].transforms[-1] = MultiplyTransform(
+            n_repeats=2
+        )
+        return pipeline
+
+
