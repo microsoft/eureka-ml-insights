@@ -1,6 +1,6 @@
 Below are two answers to a math question. Question is [Question], [Standard Answer] is the standard answer to the question, and [Model_answer] is the answer extracted from a model's output to this question.  Determine whether these two answers are consistent.
 Please note that only when the [Model_answer] completely matches the [Standard Answer] means they are consistent. For multiple choice questions, consider that the model answer may contain the letter representing the answer value. For non-multiple-choice questions, if the meaning is expressed in the same way, it is also considered consistent, for example, 0.5m and 50cm.
-If they are consistent, Judgment is 1; if they are different, Judgment is 0.  
+If they are consistent, Judgement is 1; if they are different, Judgement is 0.  
 
 [Question]: Write the set of numbers represented on the number line in interval notation.
 [Standard Answer]: (-2,1]
@@ -21,6 +21,11 @@ Judgement: 0
 [Standard Answer]: C
 [Model_answer] : null
 Judgement: 0
+
+[Question]: Given the graph of the line that intersects with x-axis at -3 and with y-axis at 4, determine its equation. A. y = \\frac{{4}}{{3}}x + 4 B. Cannot determine.\n
+[Standard Answer]: A
+[Model_answer] : y = \\frac{{4}}{{3}}x + 4
+Judgement: 1
 
 [Question]: {{query}}
 [Standard Answer]: {{answer}}
