@@ -94,7 +94,7 @@ class NumericalAggregator(Aggregator):
         super()._validate_data(data)
         """ Ensure that the data is numeric."""
         for col in self.column_names:
-            data[col] = pd.to_numeric(data[col], errors="raise")
+             data[col] = pd.to_numeric(data[col], errors="coerce")
 
 
 class SumAggregator(NumericalAggregator):

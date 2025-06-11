@@ -95,6 +95,7 @@ class MATHVERSE_PIPELINE(ExperimentConfig):
                 MMDataLoader,
                 {"path": os.path.join(self.eval_data_pre_processing.output_dir, "transformed_data.jsonl"), "load_images":False},
             ),
+            max_concurrent=10,
             output_dir=os.path.join(self.log_dir, "eval_inference_result"),
         )
 
@@ -123,6 +124,7 @@ class MATHVERSE_PIPELINE(ExperimentConfig):
                 MMDataLoader,
                 {"path": os.path.join(self.eval_data_pre_processing_two.output_dir, "transformed_data.jsonl"), "load_images":False},
             ),
+            max_concurrent=10,
             output_dir=os.path.join(self.log_dir, "eval_inference_result_two"),
         )
 
@@ -168,3 +170,18 @@ class MATHVERSE_PIPELINE(ExperimentConfig):
             ],
             self.log_dir,
         )
+
+class MATHVERSE_REPORTING_PIPELINE(MATHVERSE_PIPELINE):
+    """This method is used to define an eval pipeline with only a metric report component,
+    on the MathVerse dataset."""
+
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
+        super().configure_pipeline(model_config, resume_from)
+        self.evalreporting_comp.data_reader_config.init_args["path"] = resume_from
+
+        return PipelineConfig(
+            [
+                self.evalreporting_comp,
+            ],
+            self.log_dir,
+        )    

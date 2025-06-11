@@ -176,3 +176,18 @@ class MATHVISTA_PIPELINE(ExperimentConfig):
             ],
             self.log_dir,
         )
+
+class MATHVISTA_REPORTING_PIPELINE(MATHVISTA_PIPELINE):
+    """This method is used to define an eval pipeline with only a metric report component,
+    on the MathVista dataset."""
+
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
+        super().configure_pipeline(model_config, resume_from)
+        self.evalreporting_comp.data_reader_config.init_args["path"] = resume_from
+
+        return PipelineConfig(
+            [
+                self.evalreporting_comp,
+            ],
+            self.log_dir,
+        )
