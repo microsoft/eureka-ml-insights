@@ -184,4 +184,25 @@ class MATHVERSE_REPORTING_PIPELINE(MATHVERSE_PIPELINE):
                 self.evalreporting_comp,
             ],
             self.log_dir,
-        )    
+        )   
+
+class MATHVERSE_FILE_PIPELINE(MATHVERSE_PIPELINE):
+    """This method is used to define an pipeline for a dataset on disk
+    on the MathVerse dataset."""
+
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
+        super().configure_pipeline(model_config, resume_from)
+        self.inference_comp.resume_from = None
+        self.inference_comp.data_loader_config.init_args["path"] = resume_from
+
+        return PipelineConfig(
+            [
+                self.inference_comp,
+                self.eval_data_pre_processing,
+                self.eval_inference_comp,
+                self.eval_data_pre_processing_two,
+                self.eval_inference_comp_two,
+                self.evalreporting_comp,
+            ],
+            self.log_dir,
+        )         
