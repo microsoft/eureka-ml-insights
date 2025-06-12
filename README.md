@@ -1,19 +1,9 @@
 # Eureka ML Insights Framework
 <p align="left">
-  <a href='https://arxiv.org/abs/2409.10566'>
-    <img src=https://img.shields.io/badge/arXiv-2409.10566-b31b1b.svg>
-  </a>
-  <a href='https://arxiv.org/pdf/2504.00294'>
-    <img src=https://img.shields.io/badge/arXiv-2504.00294-b31b1b.svg>
-  </a>
-  <a href='https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/tree/main'>
-    <img src=https://huggingface.co/front/assets/huggingface_logo-noborder.svg width="16">
-    Eureka Evaluation Logs
-  </a>
-  <a href='https://microsoft.github.io/eureka-ml-insights'>
-    <img src=docs/figures/github.png width="16">
-    Project Website
-  </a>
+  <a href='https://arxiv.org/abs/2409.10566'><img src=https://img.shields.io/badge/arXiv-2409.10566-b31b1b.svg></a>
+  <a href='https://arxiv.org/pdf/2504.00294'><img src=https://img.shields.io/badge/arXiv-2504.00294-b31b1b.svg></a>
+  <a href='https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/tree/main'><img src=https://huggingface.co/front/assets/huggingface_logo-noborder.svg width="16">Eureka Evaluation Logs</a>
+  <a href='https://microsoft.github.io/eureka-ml-insights'><img src=docs/figures/github.png width="16">Project Website</a>
 </p>
 
 This repository contains the code for the Eureka ML Insights framework. The framework is designed to help researchers and practitioners run reproducible evaluations of generative models using a variety of benchmarks and metrics efficiently. The framework allows the user to define custom pipelines for data processing, inference, and evaluation, and provides a set of pre-defined evaluation pipelines for key benchmarks.
