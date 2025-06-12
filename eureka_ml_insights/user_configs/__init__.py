@@ -13,6 +13,7 @@ from .ba_calendar import (
 from .dna import DNA_PIPELINE
 from .drop import Drop_Experiment_Pipeline
 from .flenqa import FlenQA_Experiment_Pipeline
+from .flickr30k import FLICKR30K_PIPELINE
 from .geometer import GEOMETER_PIPELINE
 from .gpqa import GPQA_Experiment_Pipeline, GPQA_PIPELINE_5Run
 from .gsm8k import GSM8K_MUTATED_PIPELINE, GSM8K_PIPELINE, GSMSYMBOLIC_PIPELINE
@@ -169,4 +170,5 @@ __all__ = [
     NPHARD_SAT_PIPELINE,
     NPHARD_SAT_PIPELINE_MULTIPLE_RUNS,
     NPHARD_SAT_HYBRIDEXTRACT_PIPELINE,
+    FLICKR30K_PIPELINE
 ]
