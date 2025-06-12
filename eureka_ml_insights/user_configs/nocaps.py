@@ -53,7 +53,7 @@ class NOCAPS_PIPELINE(ExperimentConfig):
                     "transform": SequenceTransform(
                         [
                             AddColumnAndData(column_name="prompt", data="Write a brief caption to summarize the contents of the image."),
-                            SamplerTransform(sample_count=200, random_seed=1234),
+                            #SamplerTransform(sample_count=200, random_seed=1234),
                         ]
                     ),
                 },
@@ -112,7 +112,7 @@ class NOCAPS_PIPELINE(ExperimentConfig):
                         [
                             AddColumn(column_name="score"),
                             CopyColumn(column_name_src="model_output", column_name_dst="score"),
-                            MapStringsTransform(columns=["score"], mapping = lambda x: "-1" if not isinstance(x, str) else x.split("SCORE: ")[-1] if x.find("SCORE: ") != -1 else x.split("SCORE ")[-1] if x.find("SCORE ") != -1 else None),
+                            MapStringsTransform(columns=["score"], mapping = lambda x: x.split("SCORE: ")[-1][0] if isinstance(x, str) and x.find("SCORE: ") != -1 else "-1"),
                         ]
                     )
                 },
