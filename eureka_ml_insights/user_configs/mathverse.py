@@ -29,11 +29,12 @@ from eureka_ml_insights.configs import(
     PromptProcessingConfig,
 )
 
-from eureka_ml_insights.metrics.reports import AverageAggregator
+from eureka_ml_insights.metrics.reports import AverageAggregator, BiLevelAggregator    
 from eureka_ml_insights.configs import ExperimentConfig
-from eureka_ml_insights.configs.model_configs import TRAPI_GPT4O_2024_08_06_CONFIG as PERSONAL_GPT4O
+from eureka_ml_insights.configs.model_configs import TRAPI_GPT4O_2024_11_20_CONFIG as PERSONAL_GPT4O
 
 
+ 
 
 class MATHVERSE_PIPELINE(ExperimentConfig):
     def configure_pipeline(
@@ -51,7 +52,7 @@ class MATHVERSE_PIPELINE(ExperimentConfig):
                     "transform": SequenceTransform(
                         [
                             ColumnRename(name_mapping={"query_cot": "prompt"}),
-                            # SamplerTransform(sample_count=10, random_seed=1234),
+                            SamplerTransform(sample_count=10, random_seed=1234),
                         ]
                     ),
                 },
@@ -98,6 +99,7 @@ class MATHVERSE_PIPELINE(ExperimentConfig):
                 {"path": os.path.join(self.eval_data_pre_processing.output_dir, "transformed_data.jsonl"), "load_images":False},
             ),
             output_dir=os.path.join(self.log_dir, "eval_inference_result"),
+            max_concurrent=10,
         )
 
         # Eval data pre processing component round 2 (LLM scoring).
@@ -126,6 +128,7 @@ class MATHVERSE_PIPELINE(ExperimentConfig):
                 {"path": os.path.join(self.eval_data_pre_processing_two.output_dir, "transformed_data.jsonl"), "load_images":False},
             ),
             output_dir=os.path.join(self.log_dir, "eval_inference_result_two"),
+            max_concurrent=10,
         )
 
         self.evalreporting_comp = EvalReportingConfig(
@@ -133,7 +136,10 @@ class MATHVERSE_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    "path": os.path.join(self.eval_inference_comp_two.output_dir, "inference_result.jsonl"),
+                    # "path": os.path.join(self.eval_inference_comp_two.output_dir, "inference_result.jsonl"),
+                    # "path": "/home/vivineet/projects/evaluation/eureka-ml-insights/logs/MATHVERSE_Parallel_PIPELINE/mathverse_O1/2025-06-11-15-47-57.990036/eval_inference_result_two/inference_result.jsonl",
+                    # "format": ".jsonl",
+                    "path": "/home/vivineet/projects/evaluation/eureka-ml-insights/logs/MATHVERSE_Parallel_PIPELINE/mathverse_gpt4o_2024_08_06/2025-06-10-10-47-22.763957/eval_inference_result_two/inference_result.jsonl",
                     "format": ".jsonl",
                     "transform": ColumnRename(name_mapping={"model_output": "score"}),
                 },
@@ -154,18 +160,31 @@ class MATHVERSE_PIPELINE(ExperimentConfig):
                         "group_by": ["question_type", "problem_version"],
                     },
                 ),
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": ["score"],
+                        "first_groupby": "data_point_id",
+                        "filename_base": "MathVerse_Score_BestOfN",
+                        "agg_fn": "max",
+                    },
+                ),
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
         )
 
+
+
+
+
         return PipelineConfig(
             [
                 self.data_processing_comp,
-                self.inference_comp,
-                self.eval_data_pre_processing,
-                self.eval_inference_comp,
-                self.eval_data_pre_processing_two,
-                self.eval_inference_comp_two,
+                # self.inference_comp,
+                # self.eval_data_pre_processing,
+                # self.eval_inference_comp,
+                # self.eval_data_pre_processing_two,
+                # self.eval_inference_comp_two,
                 self.evalreporting_comp,
             ],
             self.log_dir,

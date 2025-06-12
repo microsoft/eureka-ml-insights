@@ -93,8 +93,28 @@ class NumericalAggregator(Aggregator):
     def _validate_data(self, data):
         super()._validate_data(data)
         """ Ensure that the data is numeric."""
-        for col in self.column_names:
-            data[col] = pd.to_numeric(data[col], errors="raise")
+        # rowid=0
+
+            
+        # for col in self.column_names:         
+        #     tmp = pd.to_numeric(data[col], errors="coerce")   # bad parses → NaN
+        #     bad_mask = tmp.isna() & data[col].notna()         # keep genuine failures, not pre-existing NaNs
+
+        #     # show indices + original values that failed
+        #     bad_rows = data.loc[bad_mask, col]
+        #     print(bad_rows)        # or log / raise a custom error   
+
+        # # breakpoint()
+
+        for col in self.column_names:            
+            # print("came to col: ", rowid)
+            # print(col)
+            # rowid=rowid+1
+            data[col] = pd.to_numeric(data[col], errors="coerce").fillna(0)
+            # data[col] = converted.where(data[col].isna(), 0)
+
+
+        # breakpoint()         
 
 
 class SumAggregator(NumericalAggregator):
