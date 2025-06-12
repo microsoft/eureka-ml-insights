@@ -1,4 +1,4 @@
-"""This file contains an implementation of the flickr30k eval.
+"""This file contains an implementation of the NoCaps eval.
 """
 
 import os
@@ -38,7 +38,7 @@ from eureka_ml_insights.configs import ExperimentConfig
 from eureka_ml_insights.configs.model_configs import OAI_GPT4_1106_PREVIEW_CONFIG as PERSONAL_GPT4O
 
 
-class FLICKR30K_PIPELINE(ExperimentConfig):
+class NOCAPS_PIPELINE(ExperimentConfig):
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
@@ -48,12 +48,12 @@ class FLICKR30K_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 HFDataReader,
                 {
-                    "path": "nlphuji/flickr30k",
-                    "split": "test",
+                    "path": "HuggingFaceM4/NoCaps",
+                    "split": "validation",
                     "transform": SequenceTransform(
                         [
                             AddColumnAndData(column_name="prompt", data="Write a brief caption to summarize the contents of the image."),
-                            SamplerTransform(sample_count=1000, random_seed=1234),
+                            SamplerTransform(sample_count=200, random_seed=1234),
                         ]
                     ),
                 },
@@ -85,7 +85,7 @@ class FLICKR30K_PIPELINE(ExperimentConfig):
                 },
             ),
             prompt_template_path=os.path.join(
-                os.path.dirname(__file__), "../prompt_templates/flickr30k_templates/scoring_prompt.jinja"
+                os.path.dirname(__file__), "../prompt_templates/nocaps_templates/scoring_prompt.jinja"
             ),
             output_dir=os.path.join(self.log_dir, "eval_data_pre_processing_output"),
         )
@@ -112,7 +112,7 @@ class FLICKR30K_PIPELINE(ExperimentConfig):
                         [
                             AddColumn(column_name="score"),
                             CopyColumn(column_name_src="model_output", column_name_dst="score"),
-                            MapStringsTransform(columns=["score"], mapping = lambda x: "-1" if not isinstance(x, str) else x.split("SCORE: ")[-1] if x.find("SCORE: ") != -1 else x.split("SCORE ")[-1] if x.find("SCORE ") != -1 else "0"),
+                            MapStringsTransform(columns=["score"], mapping = lambda x: "-1" if not isinstance(x, str) else x.split("SCORE: ")[-1] if x.find("SCORE: ") != -1 else x.split("SCORE ")[-1] if x.find("SCORE ") != -1 else None),
                         ]
                     )
                 },
@@ -124,7 +124,7 @@ class FLICKR30K_PIPELINE(ExperimentConfig):
                         "agg_class": AverageAggregator,
                         "value": "-1",
                         "column_names": ["score"],
-                        "filename_base": "Flickr30K_Score",
+                        "filename_base": "NoCaps_Score",
                         "ignore_non_numeric": True,
                     },
                 ),

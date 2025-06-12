@@ -63,6 +63,7 @@ from .mathverse import MATHVERSE_PIPELINE
 from .mathvision import MATHVISION_PIPELINE
 from .mathvista import MATHVISTA_PIPELINE
 from .mmmu import MMMU_BASELINE_PIPELINE
+from .nocaps import NOCAPS_PIPELINE
 from .nondeterminism import (
     Geo_Nondeterminism,
     IFEval_Nondeterminism,
@@ -170,5 +171,6 @@ __all__ = [
     NPHARD_SAT_PIPELINE,
     NPHARD_SAT_PIPELINE_MULTIPLE_RUNS,
     NPHARD_SAT_HYBRIDEXTRACT_PIPELINE,
-    FLICKR30K_PIPELINE
+    FLICKR30K_PIPELINE,
+    NOCAPS_PIPELINE,
 ]
