@@ -13,6 +13,7 @@ from .ba_calendar import (
 from .dna import DNA_PIPELINE
 from .drop import Drop_Experiment_Pipeline
 from .flenqa import FlenQA_Experiment_Pipeline
+from .flickr30k import FLICKR30K_PIPELINE
 from .geometer import GEOMETER_PIPELINE
 from .gpqa import GPQA_Experiment_Pipeline, GPQA_PIPELINE_5Run
 from .gsm8k import GSM8K_MUTATED_PIPELINE, GSM8K_PIPELINE, GSMSYMBOLIC_PIPELINE
@@ -62,6 +63,7 @@ from .mathverse import MATHVERSE_PIPELINE
 from .mathvision import MATHVISION_PIPELINE
 from .mathvista import MATHVISTA_PIPELINE
 from .mmmu import MMMU_BASELINE_PIPELINE
+from .nocaps import NOCAPS_PIPELINE
 from .nondeterminism import (
     Geo_Nondeterminism,
     IFEval_Nondeterminism,
@@ -169,4 +171,6 @@ __all__ = [
     NPHARD_SAT_PIPELINE,
     NPHARD_SAT_PIPELINE_MULTIPLE_RUNS,
     NPHARD_SAT_HYBRIDEXTRACT_PIPELINE,
+    FLICKR30K_PIPELINE,
+    NOCAPS_PIPELINE,
 ]
