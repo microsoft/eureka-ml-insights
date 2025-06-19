@@ -59,7 +59,12 @@ class Inference(Component):
         self.period = MINUTE
 
         # parallel inference parameters
-        self.max_concurrent = max_concurrent
+        if self.model.max_concurrent and hasattr(self.model, "handler"):
+            self.max_concurrent = self.model.max_concurrent * len(self.model.handler.clients)
+        elif self.model.max_concurrent:
+            self.max_concurrent = self.model.max_concurrent
+        else:
+            self.max_concurrent = max_concurrent
         self.chat_mode = chat_mode
         self.model.chat_mode = self.chat_mode
         self.output_dir = output_dir
@@ -179,17 +184,88 @@ class Inference(Component):
             pass  # create the output file. This will guarantee that an empty inference_result.jsonl file is created even if no inference is run.
         if self.resume_from:
             self.pre_inf_results_df, self.last_uid = self.fetch_previous_inference_results()
-        with self.data_loader as loader, ThreadPoolExecutor(max_workers=self.max_concurrent) as executor:
-            futures = [executor.submit(self._run_single, record) for record in loader]
-            for future in tqdm(as_completed(futures), total=len(loader), mininterval=2.0, desc="Inference Progress: "):
-                result = future.result()
-                if result:
-                    self._append_threadsafe(result)
+
+        # If batch_size > 1 and the model supports batch inference, opt for that instead of single inference.
+        if hasattr(self.model, 'batch_size') and self.model.batch_size > 1:
+            if hasattr(self.model, 'batch_generate') and callable(self.model.batch_generate):
+                self._run_batch_inference()
+
+        else:
+            with self.data_loader as loader, ThreadPoolExecutor(max_workers=self.max_concurrent) as executor:
+                futures = [executor.submit(self._run_single, record) for record in loader]
+                for future in tqdm(as_completed(futures), total=len(loader), mininterval=2.0, desc="Inference Progress: "):
+                    result = future.result()
+                    if result:
+                        self._append_threadsafe(result)
 
     def _append_threadsafe(self, data):
         with self.writer_lock:
             with self.appender as appender:
                 appender.write(data)
+
+    def _run_batch_inference(self):
+
+        # Check if the model requires equal prompt length for batch inference
+        # and if the get_prompt_length method is defined and callable.
+        eq_prompts = hasattr(self.model, 'requires_equal_prompt_length') and self.model.requires_equal_prompt_length
+        if eq_prompts and (not hasattr(self.model, 'get_prompt_length') or not callable(self.model.get_prompt_length)):
+            raise ValueError("Model requires equal prompt length for batch inference, but get_prompt_length method is not defined or callable.")
+        
+        batches = {}
+        # Organize all records from the data loader into batches (based on existence of image and prompt length, if required).
+        with self.data_loader as loader:
+            for record in loader:
+                data, model_args, model_kwargs = record
+                if self.resume_from and (data["uid"] <= self.last_uid):
+                    prev_result = self.retrieve_exisiting_result(data, self.pre_inf_results_df)
+                    if prev_result:
+                        self._append_threadsafe(prev_result)
+                else:
+                    num_imgs = len(model_args[1]) if (len(model_args) > 1 and model_args[1] is not None and isinstance(model_args[1], list)) else 0
+                    prompt_length = self.model.get_prompt_length(model_args[0], images_exist = (num_imgs > 0)) if eq_prompts else -1
+                    key = (num_imgs, prompt_length)
+                    if key not in batches:
+                        batches[key] = [[]]
+                    cur_batch = batches[key][-1]
+                    if len(cur_batch) < self.model.batch_size:
+                        cur_batch.append(record)
+                    else:
+                        batches[key].append([record])
+            all_batches = [batch for batch_list in batches.values() for batch in batch_list if len(batch) > 0]
+
+        # Determine the number of servers if remote-hosted, and kick off the batch inference using ThreadPoolExecutor.
+        if hasattr(self.model, "ports") and self.model.ports is not None and isinstance(self.model.ports, list):
+            num_threads = len(self.model.ports)
+        else:
+            num_threads = 1
+        with ThreadPoolExecutor(max_workers=num_threads) as executor:
+            futures = [executor.submit(self._run_batch, *(batch, i)) for i, batch in enumerate(all_batches)]
+            for future in tqdm(as_completed(futures), total=len(all_batches), mininterval=2.0, desc="Batch Inference Progress: "):
+                future.result()
+
+    def _run_batch(self, records: list[tuple[dict, tuple, dict]], index: int):
+        """Runs model.batch_generate() with respect to a batch of elements from the dataloader."""
+
+        prompts = []
+        query_images = []
+        for record in records:
+            _, model_args, _ = record
+            prompts.append(model_args[0])
+            if len(model_args) > 1:
+                if model_args[1] is None:
+                    query_images = None
+                elif isinstance(model_args[1], list) and len(model_args[1]) == 0:
+                    query_images = None
+                elif isinstance(model_args[1], list):
+                    query_images.append(model_args[1])
+                else:
+                    query_images.append([model_args[1]])
+        response_dicts = self.model.batch_generate(prompts, query_images=query_images, index=index)
+        for record, response_dict in zip(records, response_dicts):
+            self.validate_response_dict(response_dict)
+            data, _, _ = record
+            data.update(response_dict)
+            self._append_threadsafe(data)
 
     def _run_single(self, record: tuple[dict, tuple, dict]):
         """Runs model.generate() with respect to a single element of the dataloader."""
