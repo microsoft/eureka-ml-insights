@@ -37,7 +37,10 @@ OFFLINE_MODEL_CONFIG = ModelConfig(
     OfflineFileModel,
     {
         "model_name": "Teacher_Agent_V1",
-        "file_path": r"C:\Users\benushi\Downloads\eureka_combined\AIME_AIME2025_PIPELINE_50Run.jsonl",
+        # This file contains the offline results from a model or agentic system
+        # The file should contain at least the following fields:
+        # "model_output", "prompt", and "data_repeat_id" for experiments that have several runs/repeats
+        "file_path": r"your_offline_model_results.jsonl",
     },
 )
 
