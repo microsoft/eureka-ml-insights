@@ -1,0 +1,174 @@
+# az ml job create --file phi_sumbit_aml_gpqa_baltic_15B_info_density.yaml --resource-group aifrontiers --workspace-name aifrontiers_ws
+$schema: https://azuremlschemas.azureedge.net/latest/sweepJob.schema.json
+type: sweep
+compute: /subscriptions/22da88f6-1210-4de2-a5a3-da4c7c2a1213/resourcegroups/gcr-singularity/providers/microsoft.machinelearningservices/virtualclusters/baltic08
+resources:
+  instance_count: 1
+  # instance_type: Singularity.ND12_H100_v5 # 1 GPU (for baltic08)
+  # instance_type: Singularity.ND24_H100_v5 # 2 GPUs (for baltic08)
+  # instance_type: Singularity.ND48_H100_v5 # 4 GPUs (for baltic08)
+  # instance_type: Singularity.ND96r_H100_v5 # 8 GPUs (for baltic08)
+  instance_type: Singularity.ND96r_H100_v5 # 8 GPUs (for baltic08)
+  properties:
+    ComputeSpecification:
+      Automatic: false
+    AISuperComputer:
+      imageVersion: ''
+      interactive: false
+      sshPublicKey: ""
+      enableAzmlInt: true
+      priority: Low
+      # priority: Medium
+      # priority: High
+      # slaTier: Standard
+      slaTier: Premium
+experiment_name: eureka_phi_evaluation_vaish
+display_name: p1_info_density_step_75_eval_gpqa_5_samples
+tags:
+  Project_Name: AI Frontiers Foundation Models and Evaluation
+  ProjectID: PRJ-0423-A26
+  Experiment: Eureka_Phi_Evaluation
+trial:
+  code: ./
+  command: |
+    export MODEL_NAME=$(echo ${{search_space.model_config}} | cut -d',' -f1)
+    export MODEL_PATH=$(echo ${{search_space.model_config}} | cut -d',' -f2)
+    export MAX_SEQ_LEN=$(echo ${{search_space.model_config}} | cut -d',' -f3)
+    export MAX_EVAL_SEQ_LEN=$(echo ${{search_space.model_config}} | cut -d',' -f4)
+    export MODEL_TYPE=$(echo ${{search_space.model_config}} | cut -d',' -f5)
+    export EXPERIMENT_NAME=eval_5x
+    export EXPERIMENT_OUTPUT_DIR=$(echo ${{outputs.output_dir}}/$MODEL_NAME/$EXPERIMENT_NAME/temperature_${{search_space.temperature}})
+    if [[ $MODEL_TYPE == "reasoning" ]]; then
+        export VLLM_MODEL_NAME=$(echo vllm-local-reasoning-phi-$MODEL_NAME)
+    else
+        export VLLM_MODEL_NAME=$(echo vllm-local-$MODEL_NAME)
+    fi
+
+    echo "MODEL_NAME: $MODEL_NAME"
+    echo "MODEL_PATH: $MODEL_PATH"
+    echo "MAX_SEQ_LEN: $MAX_SEQ_LEN"
+    echo "MAX_EVAL_SEQ_LEN: $MAX_EVAL_SEQ_LEN"
+    echo "MODEL_TYPE: $MODEL_TYPE"
+    echo "EXPERIMENT_NAME: $EXPERIMENT_NAME"
+    echo "EXPERIMENT_OUTPUT_DIR: $EXPERIMENT_OUTPUT_DIR"
+    echo "VLLM_MODEL_NAME: $VLLM_MODEL_NAME"
+
+    # create the experiment output directory
+    mkdir -p $EXPERIMENT_OUTPUT_DIR && rm -rf $EXPERIMENT_OUTPUT_DIR/*
+
+    # save the current working directory in a variable
+    export CURRENT_DIR=$(pwd)
+    echo "Current working directory: $CURRENT_DIR"
+
+
+    # cd into vllm inference scripts directory
+    cd /workspace/phyagi-sdk/scripts/tools/vllm_inference/
+
+    # get phyagi api key from azure key vault
+    export PHYAGI_API_KEY=$(python keyvault_secrets.py --secret-name phigen-api-key-eval --get --output_only_secret)
+    
+    export MODEL_PATH=$MODEL_PATH
+
+    # start vllm servers
+    source start_vllm_servers.sh --world-size=$VLLM_LOCAL_NUM_INSTANCES --pretrained-model=${{outputs.output_ckpt}}/$MODEL_PATH --tokenizer-model=${{outputs.output_ckpt}}/$MODEL_PATH --base-port=$VLLM_LOCAL_BASE_PORT --api-key="none" --max-model-len=$MAX_SEQ_LEN --served-model-name=$VLLM_MODEL_NAME --dtype=bfloat16 --max-num-batched-tokens=65536 --seed=${{search_space.seed}} --generation-config=auto --override-generation-config='{\"temperature\": ${{search_space.temperature}}, \"top_p\": 0.95, \"do_sample\": true, \"eos_token_id\":100265, \"pad_token_id\":100349, \"max_length\": $MAX_SEQ_LEN}'
+    
+    # wait for the servers to start
+    while true; do
+
+      servers_online=0
+      for (( i = 0; i < $((VLLM_LOCAL_NUM_INSTANCES)); i++ )) do
+          port=$(( $VLLM_LOCAL_BASE_PORT + i))
+          url="http://0.0.0.0:${port}/health"
+          response=$(curl -s -o /dev/null -w "%{http_code}" "$url")
+
+          if [ "$response" -eq 200 ]; then
+              servers_online=$((servers_online + 1))
+          fi
+      done
+
+      if [ $servers_online -eq $((VLLM_LOCAL_NUM_INSTANCES)) ]; then
+          echo "All servers are online."
+          break
+      else
+          echo "Waiting for $(( $VLLM_LOCAL_NUM_INSTANCES - servers_online)) more servers to come online..."
+      fi
+
+      sleep 10
+    done
+
+    # run Eureka evaluation
+    cd ${CURRENT_DIR}
+    pip install -e .
+    pip show vllm
+    python main.py --local_vllm --num_servers "$VLLM_LOCAL_NUM_INSTANCES" --ports 8000 8001 8002 8003 8004 8005 8006 8007 --exp_config "$EUREKA_EXPERIMENT_CONFIG" --model_config "$EUREKA_MODEL_CONFIG" --model_name "$VLLM_MODEL_NAME" --exp_logdir "$EUREKA_EXPLOGDIR"
+    
+
+    most_recent_dir=$(ls -td logs/$EUREKA_EXPERIMENT_CONFIG/$EUREKA_EXPLOGDIR/*/ | head -n 1)
+    if [[ -n "$most_recent_dir" ]]; then
+      echo "Backing up logs from: $most_recent_dir"
+      # copy the most recent directory to ${{outputs.output_dir}}/phi_reasoning/
+      mkdir -p ${{outputs.output_dir}}/$EUREKA_EXPERIMENT_CONFIG/$EUREKA_EXPLOGDIR/
+      cp -r $most_recent_dir ${{outputs.output_dir}}/$EUREKA_EXPERIMENT_CONFIG/$EUREKA_EXPLOGDIR/
+    else
+      echo "No log directory found yet."
+    fi
+        
+  environment: azureml:reasoning-lm:110425_v1 # for baltic08
+  #environment: azureml:reasoning-lm:120425_v1 # for baltic08
+  environment_variables:
+    EUREKA_EXPERIMENT_CONFIG: GPQA_PIPELINE_5Run
+    EUREKA_EXPLOGDIR: Info_density_step_75_REASONING_Vaish_GPQA_5_samples
+    EUREKA_MODEL_CONFIG: VLLM_PHI_4_RL_APRIL_2025_CONFIG_30K 
+    JOB_EXECUTION_MODE: Basic
+    AZUREML_COMPUTE_USE_COMMON_RUNTIME: 'true'
+    _AZUREML_SINGULARITY_JOB_UAI: /subscriptions/d4fe558f-6660-4fe7-99ec-ae4716b5e03f/resourcegroups/aifrontiers/providers/Microsoft.ManagedIdentity/userAssignedIdentities/aifrontiers
+    VLLM_LOCAL_NUM_INSTANCES: '8'
+    VLLM_LOCAL_BASE_PORT: '8000'
+    PHIGEN_AUTO_IBALL: 'False'
+    PHIGEN_HOME: '/workspace/phigen_home'
+inputs:
+  # resume_from:
+  #   type: uri_folder
+  #   path: azureml://datastores/aifshared/paths/inference_results/vaish
+  #   mode: ro_mount
+  input_ckpt:
+    type: uri_folder
+    path: azureml://subscriptions/d4fe558f-6660-4fe7-99ec-ae4716b5e03f/resourcegroups/aifrontiers/workspaces/aifrontiers_ws/datastores/sos/paths/output/p0-grpo-topk_density_grpo/2025-05-24_10-34-08/checkpoints/
+    mode: ro_mount
+  # tokenizer:
+  #   type: uri_folder
+  #   path: azureml://datastores/aifshared/paths/phi_ckpts/tokenizer_files/
+  #   mode: ro_mount
+  # simpleevalprompts:
+  #   type: uri_folder
+  #   path: azureml://datastores/aifshared/paths/eval_prompts/
+  #   mode: ro_mount
+outputs:
+  output_ckpt:
+    type: uri_folder
+    path: azureml://subscriptions/d4fe558f-6660-4fe7-99ec-ae4716b5e03f/resourcegroups/aifrontiers/workspaces/aifrontiers_ws/datastores/sos/paths/output/p0-grpo-topk_density_grpo/2025-05-24_10-34-08/checkpoints/
+    mode: rw_mount
+  output_dir:
+    type: uri_folder
+    path: azureml://datastores/aifshared/paths/evals/vaish/logs
+    mode: rw_mount
+sampling_algorithm: grid
+search_space:
+  model_config:
+    type: choice
+    values:
+      - global_step_75/actor/huggingface,global_step_75/actor/huggingface,32768,30000,reasoning
+  temperature:
+    type: choice
+    values:
+      - 0.8
+  seed:
+    type: choice
+    values:
+      - 42
+objective:
+  primary_metric: dummy_metric
+  goal: maximize
+limits:
+  max_total_trials: 1000
+  max_concurrent_trials: 4

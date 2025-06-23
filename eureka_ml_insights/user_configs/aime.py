@@ -742,7 +742,7 @@ class AIME_PIPELINE5Run_2025(AIME_PIPELINE):
             data_reader_config=DataSetConfig(
                 HFDataReader,
                 {
-                    "path": "lchen001/AIME2025",
+                    "path": "lchen001/AIME2024",
                     "split": "train",
                     "transform": SequenceTransform(
                         [
