@@ -98,6 +98,13 @@ from .vision_language.spatial_map import (
     SPATIAL_MAP_TEXTONLY_PIPELINE,
 )
 
+from .tutoring_eval import (
+    TUTORING_Experiment_Pipeline,
+    TUTORING_PIPELINE_5Run,
+    TutoringMistakeDetection,
+    ConversationFormatter,
+)
+
 __all__ = [
     LLM_EXTRACTION_SUBPIPELINE_MIXIN,
     OBJECT_DETECTION_PAIRS_PIPELINE,
