@@ -56,7 +56,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
             prompt_template_path=os.path.join(
-                os.path.dirname(__file__), "../prompt_templates/ba_calendar_templates/calendar_scheduling_cot.jinja"
+                os.path.dirname(__file__), "../prompt_templates/ba_calendar_templates/calendar_scheduling_v2instruct.jinja"
             ),
             data_reader_config=DataSetConfig(
                 HFDataReader,
@@ -64,6 +64,9 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                    "path": "microsoft/ba-calendar",
                    "split": "test",
                    "transform": SequenceTransform([
+                       RunPythonTransform(
+                           "df['task_prompt'] = df['task_prompt'].apply(lambda x: x.split('Do not respond with any additional information or comments.')[1])"
+                       ),
                        ColumnRename(name_mapping={"task_prompt": "prompt"}),
                        #SamplerTransform(random_seed=5, sample_count=10),
                        MultiplyTransform(n_repeats=1),

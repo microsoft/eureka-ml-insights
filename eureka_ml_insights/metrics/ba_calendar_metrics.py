@@ -95,7 +95,7 @@ class BACalendarMetric(CompositeMetric):
         result.update(self.check_meeting_duration_programmatic(instance, solution))
         result.update(self.check_buffer_time_programmatic(instance, solution))
         result.update(self.check_no_weekends_programmatic(instance, solution))
-        result.update(self.check_time_restrictions_programmatic(instance, solution))
+        result.update(self.check_time_restrictions_programmatic(instance, solution, include_buffer=True))
         result.update(self.check_specific_times_programmatic(instance, solution))
         result.update(self.check_priority_programmatic(instance, solution))
         all_correct = 1
@@ -215,7 +215,7 @@ class BACalendarMetric(CompositeMetric):
         no_weekends = day_of_week < 5
         return {'no_weekends_programmatic_check': int(no_weekends)}
 
-    def check_time_restrictions_programmatic(self, instance, solution):
+    def check_time_restrictions_programmatic(self, instance, solution, include_buffer=True):
         if not instance['constraints'].get('no_meetings_before', True) and not instance['constraints'].get('no_meetings_after', True):
             # return {'time_restrictions_programmatic_check': 'NA'}
             return {'time_restrictions_programmatic_check': None}
@@ -225,6 +225,10 @@ class BACalendarMetric(CompositeMetric):
 
         _, time_range = solution.split()
         start_time, end_time = parse_time_block(time_range)
+        if include_buffer:
+            buffer_time = instance['constraints'].get('buffer_time_before_and_after_meeting', 0)
+            start_time -= timedelta(minutes=buffer_time)
+            end_time += timedelta(minutes=buffer_time)
 
         no_meetings_before = instance['constraints'].get('no_meetings_before')
         no_meetings_after = instance['constraints'].get('no_meetings_after')
@@ -258,9 +262,9 @@ class BACalendarMetric(CompositeMetric):
             buffer_time = constraints['buffer_time_before_and_after_meeting']
         else:
             buffer_time = 0
+        availability = json.loads(metadata['availability'].replace("'", '"'))
         for day in params['days_of_week']: # TODO: revisit this post data release to ensure consistency
             common_time_slots = None
-            availability = json.loads(metadata['availability'].replace("'", '"'))
             for participant, schedule in availability.items():
                 if day in schedule:
                     participant_time_slots = []
@@ -274,11 +278,14 @@ class BACalendarMetric(CompositeMetric):
                         common_time_slots = set(participant_time_slots)
                     else:
                         common_time_slots = common_time_slots.intersection(participant_time_slots)
+                else:
+                    common_time_slots = common_time_slots.intersection(set())
             if common_time_slots:
                 first_available_slot = sorted(list(common_time_slots))[0]
                 first_available_start = (first_available_slot[0]+timedelta(minutes=buffer_time)).strftime('%H:%M')
                 first_available_end = (first_available_slot[1]-timedelta(minutes=buffer_time)).strftime('%H:%M')
                 result = solution == f"{day} {first_available_start}-{first_available_end}"
+                break
         return {'priority_programmatic_check': int(result)}
 
     def check_specific_times_programmatic(self, instance, solution):
