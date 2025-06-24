@@ -462,6 +462,9 @@ class DataReader:
         elif self.format == ".jsonl":
             log.info(f"Loading JSONL Data From {self.path}.")
             df = pd.read_json(self.path, lines=True, convert_dates=False, convert_axes=False, **self.kwargs)
+        elif self.format == ".json":
+            log.info(f"Loading JSON Data From {self.path}.")
+            df = pd.read_json(self.path, lines=False, convert_dates=False, convert_axes=False, **self.kwargs)            
         else:
             log.info(f"Data format is: {self.format}, default to read as csv.")
             df = pd.read_csv(self.path, **self.kwargs)
