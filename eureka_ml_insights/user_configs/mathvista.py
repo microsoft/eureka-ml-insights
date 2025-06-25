@@ -1,4 +1,7 @@
-"""This file contains an implementation of the MathVista eval: https://mathvista.github.io/.
+"""Implementation of the MathVista eval.
+
+This module provides an implementation for the MathVista eval:
+https://mathvista.github.io/.
 """
 
 import os
@@ -35,10 +38,27 @@ from eureka_ml_insights.metrics.reports import AverageAggregator
 from eureka_ml_insights.configs import ExperimentConfig
 from eureka_ml_insights.configs.model_configs import OAI_GPT4_1106_PREVIEW_CONFIG as PERSONAL_GPT4O
 
+
 class MATHVISTA_PIPELINE(ExperimentConfig):
+    """A pipeline configuration for the MathVista evaluation.
+
+    This class extends ExperimentConfig to define a pipeline that processes 
+    MathVista data, performs inference, and evaluates the results.
+    """
+
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
+        """Configure the pipeline for MathVista evaluation.
+
+        Args:
+            model_config (ModelConfig): The configuration for the model to be used in inference.
+            resume_from (str, optional): Path to a checkpoint to resume from. Defaults to None.
+            **kwargs (dict[str, Any]): Additional keyword arguments for pipeline configuration.
+
+        Returns:
+            PipelineConfig: The configured pipeline for MathVista evaluation.
+        """
         # Configure the data processing component.
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,

@@ -26,14 +26,32 @@ from eureka_ml_insights.configs import (
 )
 from eureka_ml_insights.configs import ExperimentConfig
 
-"""This file contains user defined configuration classes for the geometric reasoning task on geometer dataset.
+"""Module containing user-defined configuration classes for the geometric reasoning task on the geometer dataset.
+
+This module includes the Drop_Experiment_Pipeline class that configures a pipeline for the DROP dataset.
 """
 
 
 class Drop_Experiment_Pipeline(ExperimentConfig):
+    """Provides configuration for a pipeline that processes, infers, and evaluates data for the DROP dataset.
+
+    This class extends from ExperimentConfig and overrides the configure_pipeline method to set up a pipeline
+    configuration for the DROP experiment.
+    """
+
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
+        """Configures the pipeline components for the DROP experiment.
+
+        Args:
+            model_config (ModelConfig): The model configuration to be used for inference.
+            resume_from (str, optional): The path to resume from a saved checkpoint. Defaults to None.
+            **kwargs (dict[str, Any]): Additional keyword arguments for pipeline configuration.
+
+        Returns:
+            PipelineConfig: The complete pipeline configuration object.
+        """
         # Configure the data processing component.
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,

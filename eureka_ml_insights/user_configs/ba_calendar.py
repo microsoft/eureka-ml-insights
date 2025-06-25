@@ -1,3 +1,10 @@
+"""This module defines pipeline configurations for BA Calendar tasks.
+
+It includes multiple classes that define different pipeline configurations 
+for data processing, inference, evaluation, and reporting for BA Calendar 
+tasks.
+"""
+
 import os
 from typing import Any
 
@@ -49,9 +56,28 @@ from ..configs.experiment_config import ExperimentConfig
 
 
 class BA_Calendar_PIPELINE(ExperimentConfig):
-    """This class specifies the config for running any benchmark on any model"""
+    """Specifies the configuration for running any benchmark on any model.
 
-    def configure_pipeline(self, model_config=None, resume_from=None, resume_logdir=None, **kwargs) -> PipelineConfig:
+    BA_Calendar_PIPELINE extends the ExperimentConfig class. It defines 
+    the data processing, inference, evaluation reporting, and other components 
+    needed to run a BA Calendar pipeline.
+    """
+
+    def configure_pipeline(
+        self, model_config=None, resume_from=None, resume_logdir=None, **kwargs
+    ) -> PipelineConfig:
+        """Configures the pipeline components and returns a PipelineConfig object.
+
+        Args:
+            model_config (Optional[ModelConfig]): The model configuration object.
+            resume_from (Optional[str]): Directory to resume from. Defaults to None.
+            resume_logdir (Optional[str]): Directory of logs to resume from. Defaults to None.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            PipelineConfig: The configured pipeline containing data processing, 
+                inference, evaluation reporting, and other components.
+        """
         # data preprocessing
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
@@ -336,7 +362,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "data_majvote_output"),
         )
-        # Second, compute eaxct match
+        # Second, compute exact match
         self.majvote_evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
             data_reader_config=DataSetConfig(
@@ -417,11 +443,28 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
 
 
 class BA_Calendar_Parallel_PIPELINE(BA_Calendar_PIPELINE):
-    """This class specifies the config for running BA Calendar benchmark 5 repeated times"""
+    """Specifies the configuration for running the BA Calendar benchmark repeated 5 times.
+
+    BA_Calendar_Parallel_PIPELINE extends BA_Calendar_PIPELINE with an adjusted 
+    data processing transform that multiplies the data by 5 repeats.
+    """
 
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
+        """Configures the pipeline components and returns a PipelineConfig object.
+
+        This method modifies the last transform step to multiply the dataset 
+        by 5.
+
+        Args:
+            model_config (ModelConfig): The model configuration object.
+            resume_from (Optional[str]): Directory to resume from. Defaults to None.
+            **kwargs (dict[str, Any]): Additional keyword arguments.
+
+        Returns:
+            PipelineConfig: The configured pipeline with data repeated 5 times.
+        """
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         # data preprocessing
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms[-1] = MultiplyTransform(
@@ -429,12 +472,32 @@ class BA_Calendar_Parallel_PIPELINE(BA_Calendar_PIPELINE):
         )
         return pipeline
 
+
 class BA_Calendar_RunEvals_PIPELINE(BA_Calendar_PIPELINE):
-    """This class specifies the config for running BA Calendar benchmark 5 repeated times"""
+    """Specifies the configuration for running BA Calendar benchmark.
+
+    BA_Calendar_RunEvals_PIPELINE extends BA_Calendar_PIPELINE, focusing primarily 
+    on the evaluation steps. It adjusts the relevant data reader paths and 
+    can optionally sample the dataset.
+    """
 
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, resume_logdir: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
+        """Configures the pipeline components for evaluation and returns a PipelineConfig object.
+
+        This method updates the path for reading inference results and 
+        sets up the evaluation and reporting components.
+
+        Args:
+            model_config (ModelConfig): The model configuration object.
+            resume_from (Optional[str]): The path to resume from. Defaults to None.
+            resume_logdir (Optional[str]): The path to the log directory. Defaults to None.
+            **kwargs (dict[str, Any]): Additional keyword arguments.
+
+        Returns:
+            PipelineConfig: The pipeline configured for evaluation steps only.
+        """
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from, resume_logdir=resume_logdir)
         self.evalreporting_comp.data_reader_config.init_args["path"] = resume_from
         # self.data_processing_comp.data_reader_config.init_args["transform"].transforms.insert(0, SamplerTransform(random_seed=5, sample_count=100))

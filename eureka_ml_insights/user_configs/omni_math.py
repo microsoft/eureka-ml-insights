@@ -1,3 +1,10 @@
+"""This module contains classes for configuring Omni Math pipelines and running benchmarks.
+
+Classes:
+    Omni_Math_PIPELINE: Provides the configuration for running any benchmark on any model.
+    Omni_Math_Parallel_PIPELINE: Configures and runs the Omni Math benchmark multiple times in parallel.
+"""
+
 import os
 from typing import Any
 
@@ -34,10 +41,27 @@ from ..configs.config import (
 )
 from ..configs.experiment_config import ExperimentConfig
 
+
 class Omni_Math_PIPELINE(ExperimentConfig):
-    """This class specifies the config for running any benchmark on any model"""
+    """Provides the configuration for running any benchmark on any model.
+
+    This class extends ExperimentConfig and sets up a pipeline consisting of data
+    processing, inference, evaluation, and reporting steps for benchmarking.
+    """
 
     def configure_pipeline(self, model_config=None, resume_from=None, eval_resume_from=None, eval_model_config=None, **kwargs) -> PipelineConfig:
+        """Configures the pipeline components for running a benchmark.
+
+        Args:
+            model_config (ModelConfig, optional): Configuration for the primary model.
+            resume_from (str, optional): If provided, the path from which to resume the main inference workflow.
+            eval_resume_from (str, optional): If provided, the path from which to resume the evaluation inference workflow.
+            eval_model_config (ModelConfig, optional): Configuration for the evaluation model.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            PipelineConfig: The configured pipeline object.
+        """
         # data preprocessing
 
         self.data_processing_comp = PromptProcessingConfig(
@@ -150,7 +174,6 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                     },
                 ),
                 # the next three reports take the average and std for all repeats
-                # the resulting numbers are the average and std of N pass@1 scores, where N is number of repeats
                 AggregatorConfig(BiLevelAggregator, 
                     {
                         "column_names": [
@@ -737,7 +760,7 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                         "filename_base": "Correctness_MajVote_by_sec_sub_domain",
                         "group_by": "sec_sub_domain",
                     },
-                ),
+               ),
                 AggregatorConfig(CountAggregator,
                     {
                         "column_names": [
@@ -775,12 +798,32 @@ class Omni_Math_PIPELINE(ExperimentConfig):
             self.log_dir,
         )
 
+
 class Omni_Math_Parallel_PIPELINE(Omni_Math_PIPELINE):
-    """This class specifies the config for running Omni Math benchmark 5 repeated times"""
+    """Configures and runs the Omni Math benchmark multiple times in parallel.
+
+    This class extends Omni_Math_PIPELINE and overrides pipeline configuration
+    to repeat the Omni Math benchmark a specified number of times.
+    """
 
     def configure_pipeline(
             self, model_config: ModelConfig, resume_from: str = None, eval_resume_from: str = None, eval_model_config: ModelConfig = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
+        """Configures the pipeline to run Omni Math benchmarks multiple times in parallel.
+
+        This method modifies the data preprocessing step of the parent pipeline to
+        repeat the Omni Math dataset a certain number of times.
+
+        Args:
+            model_config (ModelConfig): Configuration for the primary model.
+            resume_from (str, optional): If provided, the path from which to resume the main inference workflow.
+            eval_resume_from (str, optional): If provided, the path from which to resume the evaluation inference workflow.
+            eval_model_config (ModelConfig, optional): Configuration for the evaluation model.
+            **kwargs (dict[str, Any]): Additional keyword arguments.
+
+        Returns:
+            PipelineConfig: The updated pipeline configuration object.
+        """
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from, eval_resume_from=eval_resume_from, eval_model_config=eval_model_config)
         # data preprocessing
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms[-1] = MultiplyTransform(n_repeats=5)

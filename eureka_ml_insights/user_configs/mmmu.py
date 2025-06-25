@@ -1,3 +1,10 @@
+"""Module providing a pipeline configuration for the MMMU dataset.
+
+This module defines a pipeline configuration class and its method for setting up
+data processing, inference, and evaluation reporting components for the MMMU dataset.
+"""
+
+
 import os
 from typing import Any
 
@@ -20,7 +27,7 @@ from eureka_ml_insights.data_utils.mmmu_utils import (
 )
 from eureka_ml_insights.metrics import CountAggregator, MMMUMetric
 
-from eureka_ml_insights.configs import(
+from eureka_ml_insights.configs import (
     AggregatorConfig,
     DataSetConfig,
     EvalReportingConfig,
@@ -33,32 +40,53 @@ from eureka_ml_insights.configs import(
 
 
 class MMMU_BASELINE_PIPELINE(ExperimentConfig):
-    """
-    This defines an ExperimentConfig pipeline for the MMMU dataset.
-    There is no model_config by default and the model config must be passed in via command lime.
+    """Defines an ExperimentConfig pipeline for the MMMU dataset.
+
+    There is no default model configuration for this pipeline. The model
+    configuration must be provided at runtime via the command line.
     """
 
-    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any] ) -> PipelineConfig:
-    
+    def configure_pipeline(
+        self,
+        model_config: ModelConfig,
+        resume_from: str = None,
+        **kwargs: dict[str, Any]
+    ) -> PipelineConfig:
+        """Configures a pipeline consisting of data processing, inference, and evaluation/reporting.
+
+        Args:
+            model_config (ModelConfig):
+                The model configuration to be used by the inference component.
+            resume_from (str, optional):
+                A path indicating where to resume the inference component from, if applicable.
+            **kwargs (dict[str, Any]):
+                Additional keyword arguments.
+
+        Returns:
+            PipelineConfig:
+                The configured pipeline consisting of data processing, inference, and
+                evaluation/reporting components.
+        """
+
         self.data_processing_comp = PromptProcessingConfig(
-        component_type=PromptProcessing,
-        data_reader_config=DataSetConfig(
-            HFDataReader,
-            {
-                "path": "MMMU/MMMU",
-                "split": "validation",
-                "tasks": MMMUAll,
-                "transform": SequenceTransform(
-                    [
-                        ASTEvalTransform(columns=["options"]),
-                        CreateMMMUPrompts(),
-                        ColumnRename(name_mapping={"answer": "ground_truth", "options": "target_options"}),
-                    ]
-                ),
-            },
-        ),
-        output_dir=os.path.join(self.log_dir, "data_processing_output"),
-        ignore_failure=False,
+            component_type=PromptProcessing,
+            data_reader_config=DataSetConfig(
+                HFDataReader,
+                {
+                    "path": "MMMU/MMMU",
+                    "split": "validation",
+                    "tasks": MMMUAll,
+                    "transform": SequenceTransform(
+                        [
+                            ASTEvalTransform(columns=["options"]),
+                            CreateMMMUPrompts(),
+                            ColumnRename(name_mapping={"answer": "ground_truth", "options": "target_options"}),
+                        ]
+                    ),
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "data_processing_output"),
+            ignore_failure=False,
         )
 
         # Configure the inference component
@@ -104,4 +132,7 @@ class MMMU_BASELINE_PIPELINE(ExperimentConfig):
         )
 
         # Configure the pipeline
-        return PipelineConfig([self.data_processing_comp, self.inference_comp, self.evalreporting_comp], self.log_dir)
+        return PipelineConfig(
+            [self.data_processing_comp, self.inference_comp, self.evalreporting_comp],
+            self.log_dir
+        )

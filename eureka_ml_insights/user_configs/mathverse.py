@@ -1,4 +1,6 @@
-"""This file contains an implementation of the MathVerse eval: https://mathverse-cuhk.github.io/.
+"""Module containing an implementation of the MathVerse eval.
+
+For more information, see: https://mathverse-cuhk.github.io/.
 """
 
 import os
@@ -33,11 +35,26 @@ from eureka_ml_insights.configs import ExperimentConfig
 from eureka_ml_insights.configs.model_configs import OAI_GPT4_1106_PREVIEW_CONFIG as PERSONAL_GPT4O
 
 
-
 class MATHVERSE_PIPELINE(ExperimentConfig):
+    """Extends the ExperimentConfig to define a pipeline configuration for the MathVerse evaluation process."""
+
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
+        """Configures the pipeline for the MathVerse evaluation.
+
+        This method sets up data processing, inference, and evaluation reporting components 
+        for the MathVerse evaluation pipeline.
+
+        Args:
+            model_config (ModelConfig): The configuration specifying the model to be used for inference.
+            resume_from (str, optional): A path for resuming the pipeline from a previous checkpoint. Defaults to None.
+            **kwargs (dict[str, Any]): Additional keyword arguments for pipeline configuration.
+
+        Returns:
+            PipelineConfig: The configured pipeline, comprising data processing, inference, 
+            and evaluation reporting components.
+        """
         # Configure the data processing component.
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,

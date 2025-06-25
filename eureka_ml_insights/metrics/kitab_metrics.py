@@ -1,3 +1,12 @@
+"""
+This module provides the KitabMetric class for evaluating constraints on textual data,
+including checking for human names, city names, word counts, publishing years, etc.
+It leverages the Azure Language Service for entity recognition and fuzzy matching
+for approximate checks. It also relies on GPT-4 preprocessed human names to validate
+titles. Metrics such as completeness, correctness, and constrainedness are computed
+to aid in the assessment of model-generated outputs against ground truth data.
+"""
+
 # This file was authored by authors of the Kitab dataset (https://huggingface.co/datasets/microsoft/kitab)
 # All code in this file is copied from the original source repository and then adapted to fit this repository.
 # The original license for this code is Community Data License Agreement - Permissive - Version 2.0
@@ -24,14 +33,26 @@ from eureka_ml_insights.metrics import CompositeMetric
 from eureka_ml_insights.secret_management import get_secret
 from eureka_ml_insights.data_utils import kitab_utils
 
+
 class KitabMetric(CompositeMetric):
+    """
+    A metric class that extends CompositeMetric to evaluate constraints on
+    text dataset rows. This includes checking for author correctness, constraints
+    such as word counts, human names, city names, and data completeness.
+    """
+
     stopwords = set(["a", "an", "the", "in", "is", "of", "on", "for", "with", "to", "and"])
 
     def __init__(self, temp_path_names, azure_lang_service_config):
         """
-        args:
-            temp_path_names: path where to store the pre extracted human names via gpt-4. The file is then used to complement human names extracted via gpt-4 with those extracted via the Azure Language service.
-            azure_lang_service_config: config dict for the Azure Language Service that will be used for evaluating human and city name constraints.
+        Initializes the KitabMetric class.
+
+        Args:
+            temp_path_names (str): Path where to store the pre-extracted human names via GPT-4.
+                The file is then used to complement human names extracted via GPT-4 with those
+                extracted via the Azure Language Service.
+            azure_lang_service_config (dict): Configuration dictionary for the Azure Language Service
+                that will be used for evaluating human and city name constraints.
         """
         super().__init__()
         self.gpt4_names = kitab_utils.get_gpt4_preprocessed_names(
@@ -49,55 +70,62 @@ class KitabMetric(CompositeMetric):
         self.text_analytics_credential = self.get_verified_credential()
 
     def get_verified_credential(self):
+        """
+        Attempts to create and validate a credential for the Azure Text Analytics Client.
+        Tries first AzureKeyCredential, then DefaultAzureCredential as a fallback,
+        returning either one if successful.
+
+        Returns:
+            AzureKeyCredential or DefaultAzureCredential: A verified credential for the Azure
+                Text Analytics if successfully created, otherwise None.
+        """
         model_version = "latest"
         try:
             text_analytics_client = TextAnalyticsClient(endpoint=self.endpoint, credential=AzureKeyCredential(self.key))
             text_analytics_client.recognize_entities(["New York City"], model_version=model_version)
             return AzureKeyCredential(self.key)
         except Exception as e:
-            logging.info(f"Failed to create the TextAnalyticsClient using AzureKeyCredential")
+            logging.info("Failed to create the TextAnalyticsClient using AzureKeyCredential")
             logging.info("The error is caused by: {}".format(e))
         try:
             text_analytics_client = TextAnalyticsClient(endpoint=self.endpoint, credential=DefaultAzureCredential())
             text_analytics_client.recognize_entities(["New York City"], model_version=model_version)
             return DefaultAzureCredential()
         except Exception as e:
-            logging.info(f"Failed to create the TextAnalyticsClient using DefaultAzureCredential")
+            logging.info("Failed to create the TextAnalyticsClient using DefaultAzureCredential")
             logging.info("The error is caused by: {}".format(e))
         return None
 
     def __evaluate__(self, row):
+        """
+        Evaluates a single row of data. If the row is invalid, returns 'none',
+        otherwise processes and returns the evaluation result.
+
+        Args:
+            row (dict): A dictionary containing row data. Must include the 'is_valid' key.
+
+        Returns:
+            str or dict: 'none' if the row is invalid, otherwise a dictionary of
+            evaluation metrics produced by process_row.
+        """
         if not row["is_valid"]:
             return "none"
         return self.process_row(row, self.gpt4_names)
 
     def process_row(self, row, gpt4_names):
         """
-        Process a row of data to identify correct, incorrect, and hallucinated book titles based on given constraints.
+        Processes a row of data to identify correct, incorrect, and hallucinated book titles
+        based on given constraints.
+
         Args:
-            row (dict): A dictionary containing the input row data with columns 'mapped_books', 'model_books',
-                        'all_books', 'raw_books', 'constraint_type', and 'constraints'.
+            row (dict): A dictionary containing the input row data with keys:
+                'mapped_books', 'model_books', 'all_books', 'raw_books', 'constraint_type',
+                and 'constraints'.
             gpt4_names (list): A list of human names used by the GPT-4 model for comparison.
+
         Returns:
-            tuple: A tuple containing three elements:
-                - A dictionary containing the processed results including correct, incorrect, and hallucinated book
-                     titles, counts, and mappings.
-                - An integer representing the number of unmapped raw books.
-                - An integer representing the original count of model books before processing.
-        Raises:
-            ValueError: If the input row or constraints are not in the expected format.
-        Note:
-            This function assumes the following format for input row:
-            - 'mapped_books', 'all_books', 'raw_books' are lists of book titles in string format.
-            - 'model_books' is either a list of book titles in string format or a dictionary containing 'titles' key
-                 with a list of book titles.
-            Constraints can be of the following types:
-            - 'starts-with': Check if the model books start with a specified prefix.
-            - 'ends-with': Check if the model books end with a specified suffix.
-            - 'word-count': Check if the model books have a specified word count.
-            - 'publishing-year': Check if the model books' publishing year falls within a specified range.
-            - 'human-name': Check if the model books contain a specified human name.
-            - 'city-name': Check if the model books contain a specified city name.
+            dict: A dictionary containing processed results, such as correct, incorrect,
+            and hallucinated book titles, counts, mappings, completeness, and correctness.
         """
         satisfied = []
         unsatisfied = []
@@ -118,7 +146,7 @@ class KitabMetric(CompositeMetric):
 
         len(model_books)
 
-        # check for not_from_author, map model books to data books
+        # Map model books to data books or identify them as not from author
         existing_titles_model_titles = {}
         for book in model_books.copy():
             if book == "":
@@ -128,7 +156,6 @@ class KitabMetric(CompositeMetric):
             if not any(book in item for item in all_books) and not any(item in book for item in all_books):
                 close_enough, existing_title = self.fuzzy_compare(book, all_books, threshold=80)
                 if not close_enough:
-                    # book not in raw_books:
                     if not any(book in item for item in raw_books) and not any(item in book for item in raw_books):
                         close_enough_raw, _ = self.fuzzy_compare(book, raw_books, threshold=80)
                         if not close_enough_raw:
@@ -137,7 +164,7 @@ class KitabMetric(CompositeMetric):
                     raw_unmapped.append(book)
                     model_books.remove(book)
                     continue
-            # book in all_books. So Check if in mapped_books and then:
+
             if existing_title == "":
                 existing_title = next((item for item in all_books if book in item or item in book), None)
 
@@ -146,7 +173,7 @@ class KitabMetric(CompositeMetric):
 
             existing_titles_model_titles[existing_title].append(book)
 
-        # check for satisfaction for non-hallucinated books
+        # Check constraints for non-hallucinated books
         constraint_list = row["constraints"].split(",")
         constraint_count = len(constraint_list)
         if constraint_count == 1:
@@ -163,12 +190,9 @@ class KitabMetric(CompositeMetric):
                 satisfied = satisfied_c
                 unsatisfied = unsatisfied_c
             else:
-                # the list of books that satisfy both constraints is the intersection of the respective lists
-                # that satisfy each constraint individually
                 satisfied = list(set(satisfied_c).intersection(satisfied))
-                # the list of books that do not satisfy at least one of constraints is the (distinct) union of the respective lists
-                # that do not satisfy each constraint individually
                 unsatisfied = list(set(unsatisfied_c).union(unsatisfied))
+
         not_from_author = list(set(not_from_author))
         satisfied = list(set(satisfied))
         unsatisfied = list(set(unsatisfied))
@@ -180,13 +204,11 @@ class KitabMetric(CompositeMetric):
         count_not_from_author = len(not_from_author)
         count_raw_unmapped = len(raw_unmapped)
         number_of_clusters = count_not_from_author + len(existing_titles_model_titles.keys())
-        # query constrainedness is defined as \kappa = 1 - \frac{S}{N}
-        # where S is the number of ground truth books that satisfy the constraint
-        # N is the total number of books for the author
-        # the higher the constrainedness of a query, the more difficult the query is
+
+        # Constrainedness computation
         constrainedness = 1 - count_mapped_books / count_all_books
 
-        # compute satisfaction, unsatisfaction, and not from author rates based on counts
+        # Compute satisfaction, unsatisfaction, and not from author rates
         if number_of_clusters > 0:
             satisfied_rate = count_satisfied / number_of_clusters
             unsatisfied_rate = count_unsatisfied / number_of_clusters
@@ -196,7 +218,7 @@ class KitabMetric(CompositeMetric):
             unsatisfied_rate = np.nan
             not_from_author_rate = np.nan
 
-        # compute completeness and correctness
+        # Compute completeness
         if ast.literal_eval(row["mapped_books"]):
             set_mapped_books = set(self.process_title(book) for book in ast.literal_eval(row["mapped_books"]))
             set_satisfied = set(self.process_title(book) for book in ast.literal_eval(str(satisfied)))
@@ -209,7 +231,6 @@ class KitabMetric(CompositeMetric):
 
         all_correct = int((completeness == 1) & (satisfied_rate == 1) & (not_from_author_rate == 0))
 
-        # handle corner cases
         if row["mapped_books"] == "[]" and row["model_books"] == "[]":
             completeness = 1
             satisfied_rate = 1
@@ -218,7 +239,6 @@ class KitabMetric(CompositeMetric):
             all_correct = 1
         elif row["mapped_books"] == "[]" and row["model_books"] != "[]":
             completeness = np.nan
-            # the rest is unchanged
         elif row["mapped_books"] != "[]" and row["model_books"] == "[]":
             completeness = 0
             satisfied_rate = np.nan
@@ -252,6 +272,21 @@ class KitabMetric(CompositeMetric):
     def compute_satisfaction_unsatisfaction(
         self, existing_titles_model_titles, single_constraint, constraint_type, all_books, str_all_books
     ):
+        """
+        Determines which titles satisfy or do not satisfy a single constraint.
+
+        Args:
+            existing_titles_model_titles (dict): A mapping from recognized titles to lists of model books.
+            single_constraint (str): The textual representation of the constraint (e.g., "starts with J.").
+            constraint_type (str): The type of constraint (e.g., "starts-with").
+            all_books (list): A list of all possible books (processed titles).
+            str_all_books (str): A string representation of all books, used for year parsing.
+
+        Returns:
+            dict: A dictionary with two keys:
+                "satisfied": A list of titles that satisfy the constraint.
+                "unsatisfied": A list of titles that do not satisfy the constraint.
+        """
         satisfied = []
         unsatisfied = []
         if single_constraint[-1] != ".":
@@ -299,7 +334,6 @@ class KitabMetric(CompositeMetric):
                         unsatisfied.append(existing_title)
                     else:
                         satisfied.append(existing_title)
-
             elif constraint_type == "city-name":
                 if "doesn't" not in single_constraint:
                     if self.check_city_name(model_book_list):
@@ -316,23 +350,21 @@ class KitabMetric(CompositeMetric):
 
     def process_title(self, title):
         """
-        Process a book title by converting it to lowercase, replacing '&' with 'and',
+        Processes a book title by converting it to lowercase, replacing '&' with 'and',
         removing punctuation, and excluding common starting words ('the', 'a', 'an').
-        Parameters:
-        title (str): Input book title.
+
+        Args:
+            title (str): Input book title.
+
         Returns:
-        str: Processed book title.
+            str: Processed book title.
         """
-        # Convert string to lowercase
         title = title.lower()
-        # Replace '&' with 'and'
         title = title.replace("&", "and")
 
-        # Remove punctuation
         translator = str.maketrans("", "", string.punctuation)
         title = title.translate(translator)
 
-        # Remove first word if it's in ['the', 'a', 'an']
         first_word = title.split()[0] if title.split() else ""
         if first_word in ["the", "a", "an"]:
             title = " ".join(title.split()[1:])
@@ -341,27 +373,33 @@ class KitabMetric(CompositeMetric):
 
     def process_all_books(self, title):
         """
-        Process a book title by removing the (xxxx) format at the end of the title.
-        Parameters:
-        title (str): Input book title.
+        Processes a book title by removing the (xxxx) format at the end of the title.
+
+        Args:
+            title (str): Input book title.
+
         Returns:
-        str: Processed book title.
+            str: Processed book title without trailing year information.
         """
-        # Use a regex pattern to remove the (xxxx) format
-        pattern = r"\(\d{3,4}\)$"
+        pattern = r"\\(\\d{3,4}\\)$"
+        pattern = r"\(\d{3,4}\)$"  # Corrected double escaping from the original code
         processed_title = re.sub(pattern, "", title).strip()
         return processed_title
 
     def fuzzy_compare(self, title, list_of_title, threshold=90):
         """
-        Perform fuzzy string comparison between the input title and a list of titles.
-        Parameters:
-        title (str): Input book title.
-        list_of_titles (list): List of book titles for comparison.
-        threshold (int): Minimum similarity score required for a match (default is 90).
+        Performs fuzzy string comparison between the input title and a list of titles, checking
+        for approximate matches above a given threshold.
+
+        Args:
+            title (str): Input book title to compare.
+            list_of_title (list): A list of book titles against which to compare.
+            threshold (int, optional): Minimum similarity score required for a match
+                (default is 90).
+
         Returns:
-        tuple: A tuple containing a boolean indicating if a match was found and the matched title (if found).
-        Example: (True, 'Matching Title') or (False, '')
+            tuple: A tuple with a boolean indicating if a match was found and the matched title
+            (if any). For example, (True, 'Matching Title') or (False, '').
         """
         for compare_title in list_of_title:
             if fuzz.ratio(compare_title, title) >= threshold:
@@ -370,11 +408,15 @@ class KitabMetric(CompositeMetric):
 
     def extract_cities(self, text):
         """
-        Extract cities mentioned in the input text using Azure Text Analytics and external data source.
-        Parameters:
-        text (str): Input text containing city names.
+        Extracts city names mentioned in the input text using Azure Text Analytics and
+        an external data source that verifies city existence.
+
+        Args:
+            text (str): Input text containing city names.
+
         Returns:
-        list: A list of extracted city names.
+            list: A list of extracted city names. The function checks recognized location
+            entities against a public API for city data.
         """
         error_flag = True
         max_tries = 10
@@ -387,15 +429,12 @@ class KitabMetric(CompositeMetric):
                     endpoint=self.endpoint, credential=self.text_analytics_credential
                 )
 
-                # Use the given text as the input
                 input_texts = [text]
-
                 result = text_analytics_client.recognize_entities(input_texts, model_version="latest")
 
                 error_flag = any([review.is_error for review in result])
                 result = [review for review in result if not review.is_error]
 
-                # Extract location entities
                 location_entities = []
                 for review in result:
                     for entity in review.entities:
@@ -424,11 +463,13 @@ class KitabMetric(CompositeMetric):
 
     def extract_persons(self, text):
         """
-        Extract persons mentioned in the input text using Azure Text Analytics service.
-        Parameters:
-        text (str): Input text containing person names.
+        Extracts person names mentioned in the input text using Azure Text Analytics service.
+
+        Args:
+            text (str): Input text containing person names.
+
         Returns:
-        list: A list of extracted person names.
+            list: A list of extracted person names.
         """
         error_flag = True
         max_tries = 10
@@ -439,9 +480,7 @@ class KitabMetric(CompositeMetric):
                 text_analytics_client = TextAnalyticsClient(
                     endpoint=self.endpoint, credential=self.text_analytics_credential, api_version="2023-04-01"
                 )
-                # Use the given text as the input
                 input_texts = [text]
-
                 result = text_analytics_client.recognize_entities(input_texts, model_version="2023-04-15-preview")
 
                 error_flag = any([review.is_error for review in result])
@@ -482,24 +521,33 @@ class KitabMetric(CompositeMetric):
         return persons
 
     def handle_azure_language_service_exception(self, e):
+        """
+        Handles exceptions from Azure Language Service calls by logging a warning
+        and waiting for a moment before retrying.
+
+        Args:
+            e (Exception): The exception raised during the Azure Language Service call.
+        """
         logging.warning(f"Azure Language Service call failed: {e}")
         time.sleep(1)
 
     def check_starts_with(self, books, l):
         """
-        Check if any book title in the given list starts with the specified letter or word.
-        Parameters:
-        books (list): List of book titles.
-        l (str): Letter or word to check for at the beginning of the titles.
-        stopwords (list): List of stopwords to ignore (default is an empty list).
+        Checks if any book title in the given list starts with a specified letter or word.
+        Considers stopwords within the title.
+
+        Args:
+            books (list): List of book titles.
+            l (str): Letter or word to check for at the beginning of the titles.
+
         Returns:
-        bool: True if any title starts with the specified letter or word, False otherwise.
+            bool: True if any title starts with the specified letter or word, False otherwise.
         """
         for s in books:
             words = s.split()
-            if words[0].lower().startswith(l.lower()):
+            if words and words[0].lower().startswith(l.lower()):
                 return True
-            if words[0].lower() in self.stopwords:
+            if words and words[0].lower() in self.stopwords:
                 words.pop(0)
             if words and words[0].lower().startswith(l.lower()):
                 return True
@@ -507,12 +555,14 @@ class KitabMetric(CompositeMetric):
 
     def check_ends_with(self, books, l):
         """
-        Check if any book title in the given list ends with the specified letter or word.
-        Parameters:
-        books (list): List of book titles.
-        l (str): Letter or word to check for at the end of the titles.
+        Checks if any book title in the given list ends with the specified letter or word.
+
+        Args:
+            books (list): List of book titles.
+            l (str): Letter or word to check for at the end of the titles.
+
         Returns:
-        bool: True if any title ends with the specified letter or word, False otherwise.
+            bool: True if any title ends with the specified letter or word, False otherwise.
         """
         for s in books:
             words = s.split()
@@ -522,13 +572,15 @@ class KitabMetric(CompositeMetric):
 
     def check_word_count(self, books, c, delta=1):
         """
-        Check if any book title in the given list has a word count within a specified range.
-        Parameters:
-        books (list): List of book titles.
-        c (int): Target word count to check against.
-        delta (int): Allowable difference from the target word count (default is 1).
+        Checks if any book title in the given list has a word count within a specified range.
+
+        Args:
+            books (list): List of book titles.
+            c (int): Target word count to check against.
+            delta (int, optional): Allowable difference from the target word count (default is 1).
+
         Returns:
-        bool: True if any title has a word count within the specified range, False otherwise.
+            bool: True if any title has a word count within the specified range, False otherwise.
         """
         for s in books:
             word_count = len(s.split())
@@ -538,12 +590,15 @@ class KitabMetric(CompositeMetric):
 
     def check_publishing_year(self, pub_year, year_range):
         """
-        Check if the given publishing year falls within the specified year range.
-        Parameters:
-        pub_year (int): The publishing year to be checked.
-        year_range (tuple): A tuple containing two integers representing the start and end of the allowed year range.
+        Checks if the given publishing year falls within the specified year range.
+
+        Args:
+            pub_year (int): The publishing year to be checked.
+            year_range (list): A list of integers representing the start and end
+                of the allowed year range.
+
         Returns:
-        bool: True if the publishing year is within the specified range, False otherwise.
+            bool: True if the publishing year is within the specified range, False otherwise.
         """
         if pub_year >= year_range[0] and pub_year <= year_range[1]:
             return True
@@ -552,12 +607,15 @@ class KitabMetric(CompositeMetric):
 
     def check_human_name(self, books, gpt4_names):
         """
-        Check if any book title contains a human name, either by direct extraction or fuzzy comparison.
-        Parameters:
-        books (list): List of book titles to check.
-        gpt4_names (set): Set of human names generated by GPT-4 for fuzzy comparison.
+        Checks if any book title contains a human name, either by direct extraction
+        from the text or via fuzzy comparison with GPT-4 provided names.
+
+        Args:
+            books (list): List of book titles to check.
+            gpt4_names (list): List of human names generated by GPT-4 for fuzzy comparison.
+
         Returns:
-        bool: True if any title contains a human name, False otherwise.
+            bool: True if any title contains a human name, False otherwise.
         """
         for book in books:
             if len(self.extract_persons(book)) > 0 or self.fuzzy_compare(book, gpt4_names, 80)[0]:
@@ -566,11 +624,13 @@ class KitabMetric(CompositeMetric):
 
     def check_city_name(self, books):
         """
-        Check if any book title contains a city name.
-        Parameters:
-        books (list): List of book titles to check.
+        Checks if any book title contains a city name.
+
+        Args:
+            books (list): List of book titles to check.
+
         Returns:
-        bool: True if any title contains a city name, False otherwise.
+            bool: True if any title contains a city name, False otherwise.
         """
         for book in books:
             if len(self.extract_cities(book)) > 0:

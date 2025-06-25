@@ -1,3 +1,8 @@
+"""
+This module defines pipeline configurations for running the GSM8K benchmark and its variations,
+including transformations, inference steps, and various evaluations for different model configurations.
+"""
+
 import json
 import os
 from typing import Any, Optional
@@ -40,7 +45,13 @@ from eureka_ml_insights.metrics.reports import (
 
 
 class GSM8K_PIPELINE(ExperimentConfig):
-    """This class specifies the config for running GSM8K benchmark on any model"""
+    """
+    Specifies the configuration for running the GSM8K benchmark on any model.
+
+    This class extends ExperimentConfig and sets up the data processing, inference,
+    post-processing, and evaluation components for the GSM8K dataset. It also allows
+    for multiple runs of the pipeline to enable additional aggregations.
+    """
 
     def configure_pipeline(
         self,
@@ -49,6 +60,18 @@ class GSM8K_PIPELINE(ExperimentConfig):
         n_repeats: int = 1,
         **kwargs: dict[str, Any],
     ) -> PipelineConfig:
+        """
+        Configures the pipeline steps for running the GSM8K benchmark.
+
+        Args:
+            model_config (ModelConfig): Configuration for the model to be used during inference.
+            resume_from (str, optional): Path to resume from if the pipeline restarts. Defaults to None.
+            n_repeats (int, optional): Number of times to repeat the pipeline run. Defaults to 1.
+            **kwargs (dict[str, Any]): Additional keyword arguments.
+
+        Returns:
+            PipelineConfig: The pipeline configuration containing all steps to run the GSM8K benchmark.
+        """
 
         # --------------------------------------
         # * Data preprocessing
@@ -185,9 +208,14 @@ class GSM8K_PIPELINE(ExperimentConfig):
 
     def _configure_multirun_steps(self) -> list[Any]:
         """
-        Builds and returns all additional aggregator configs and post-eval steps
-        needed for multi-run analysis: separate/average of runs, best-of-n,
-        worst-of-n, usage stats, and majority voting.
+        Configures and returns additional aggregator configurations and post-evaluation steps
+        required for multi-run analysis.
+
+        This includes aggregator configurations for separate/average runs, best-of-n, worst-of-n,
+        usage statistics, and majority voting.
+
+        Returns:
+            list[Any]: A list of additional steps to extend the pipeline for multi-run analysis.
         """
 
         # Extend aggregator configs on the existing evalreporting_comp
@@ -379,7 +407,12 @@ class GSM8K_PIPELINE(ExperimentConfig):
 
 
 class GSM8K_MUTATED_PIPELINE(GSM8K_PIPELINE):
-    """This class specifies the config for running mutated GSM8K benchmark on any model"""
+    """
+    Specifies the configuration for running the mutated GSM8K benchmark on any model.
+
+    This class modifies the data loading to use mutated GSM8K datasets and applies optional
+    transformations such as sampling and different prompt templates.
+    """
 
     def configure_pipeline(
         self,
@@ -391,6 +424,21 @@ class GSM8K_MUTATED_PIPELINE(GSM8K_PIPELINE):
         prompt_template_name: Optional[str] = None,
         **kwargs: dict[str, Any],
     ) -> PipelineConfig:
+        """
+        Configures the pipeline steps for the mutated GSM8K benchmark.
+
+        Args:
+            model_config (ModelConfig): Configuration for the model to be used during inference.
+            resume_from (str, optional): Path to resume from if the pipeline restarts. Defaults to None.
+            mutation_type (str, optional): The type of data mutation to use. Defaults to "Factual".
+            n_repeats (Optional[int], optional): Number of times to repeat the pipeline run. Defaults to 1.
+            sample_count (Optional[int], optional): Number of samples to draw from the dataset. Defaults to None.
+            prompt_template_name (Optional[str], optional): Name of the prompt template file. Defaults to None.
+            **kwargs (dict[str, Any]): Additional keyword arguments.
+
+        Returns:
+            PipelineConfig: The pipeline configuration containing all steps to run the mutated GSM8K benchmark.
+        """
 
         pipeline = super().configure_pipeline(
             model_config=model_config,
@@ -480,9 +528,26 @@ class GSM8K_MUTATED_PIPELINE(GSM8K_PIPELINE):
 
 
 class GSMSYMBOLIC_PIPELINE(GSM8K_PIPELINE):
-    """This class specifies the config for running GSM8K benchmark on any model"""
+    """
+    Specifies the configuration for running the GSM-Symbolic benchmark on any model.
+
+    This class modifies the data reader configuration to use the GSM-Symbolic dataset,
+    leveraging the same pipeline structure as GSM8K_PIPELINE.
+    """
 
     def configure_pipeline(self, model_config, resume_from=None, n_repeats=1, **kwargs):
+        """
+        Configures the pipeline steps for the GSM-Symbolic benchmark.
+
+        Args:
+            model_config: Configuration for the model to be used during inference.
+            resume_from (str, optional): Path to resume from if the pipeline restarts. Defaults to None.
+            n_repeats (int, optional): Number of times to repeat the pipeline run. Defaults to 1.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            PipelineConfig: The pipeline configuration containing all steps to run the GSM-Symbolic benchmark.
+        """
         pipeline = super().configure_pipeline(
             model_config,
             resume_from,

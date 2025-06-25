@@ -1,3 +1,10 @@
+"""This module defines pipeline configurations for running AIME benchmarks.
+
+It includes classes for standard, year-based, and hybrid extraction pipelines. 
+Each class provides a configure_pipeline method to define the 
+data processing, inference, extraction, and evaluation components.
+"""
+
 import os
 from typing import Any
 
@@ -47,11 +54,27 @@ from .llm_extraction import LLM_EXTRACTION_SUBPIPELINE_MIXIN
 
 
 class AIME_PIPELINE(ExperimentConfig):
-    """This class specifies the config for running AIME benchmark on any model"""
+    """Config for running AIME benchmark on any model.
+
+    This class inherits from ExperimentConfig and defines the pipeline configuration
+    for the AIME tasks, including data processing, inference, extraction, and
+    evaluation.
+    """
 
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
+        """Configure the pipeline for the AIME benchmark.
+
+        Args:
+            model_config (ModelConfig): The model configuration.
+            resume_from (str, optional): The checkpoint path to resume from. Defaults to None.
+            **kwargs (dict[str, Any]): Additional keyword arguments such as
+                'n_repeat' (int) and 'max_concurrent' (int).
+
+        Returns:
+            PipelineConfig: The pipeline configuration containing all components.
+        """
         self.n_repeats = int(kwargs.get('n_repeat', 1))  # Default value is 1
         self.max_concurrent = int(kwargs.get('max_concurrent', 1))  # Default value is 1
         # data preprocessing
@@ -422,22 +445,53 @@ class AIME_PIPELINE(ExperimentConfig):
             self.log_dir,
         )
 
+
 class AIME2025_PIPELINE(AIME_PIPELINE):
-    """This class specifies the config for running AIME 2025 benchmark"""
+    """Config for running AIME 2025 benchmark.
+
+    This class inherits from AIME_PIPELINE and modifies the data path
+    to the 2025 dataset.
+    """
 
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
+        """Configure the pipeline for the AIME 2025 benchmark.
+
+        Args:
+            model_config (ModelConfig): The model configuration.
+            resume_from (str, optional): The checkpoint path to resume from. Defaults to None.
+            **kwargs (dict[str, Any]): Additional keyword arguments.
+
+        Returns:
+            PipelineConfig: The pipeline configuration for the AIME 2025 tasks.
+        """
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from,**kwargs)
         self.data_processing_comp.data_reader_config.init_args["path"] = "lchen001/AIME2025"
         return pipeline
-    
+
+
 class AIME_HYBRIDEXTRACT_PIPELINE(AIME_PIPELINE):
-    """This class specifies the config for running AIME with a hybrid answer extraction"""
+    """Config for running AIME with a hybrid answer extraction.
+
+    This class inherits from AIME_PIPELINE and adds a subpipeline
+    for LLM-based answer extraction.
+    """
 
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
+        """Configure the pipeline with an additional LLM-based extraction step.
+
+        Args:
+            model_config (ModelConfig): The model configuration.
+            resume_from (str, optional): The checkpoint path to resume from. Defaults to None.
+            **kwargs (dict[str, Any]): Additional keyword arguments, including
+                'llm_extractor_max_concurrent' which defaults to 10.
+
+        Returns:
+            PipelineConfig: The pipeline configuration including the LLM extraction subpipeline.
+        """
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from,**kwargs)
         self.llm_extractor_max_concurrent = int(kwargs.get('llm_extractor_max_concurrent', 10))  # Default value is 1
         answer_col = "extracted_answer"
@@ -475,13 +529,28 @@ class AIME_HYBRIDEXTRACT_PIPELINE(AIME_PIPELINE):
             ],
             self.log_dir,
         )
-    
+
+
 class AIME2025_HYBRIDEXTRACT_PIPELINE(AIME_HYBRIDEXTRACT_PIPELINE):
-    """This class specifies the config for running AIME 2025 benchmark"""
+    """Config for running AIME 2025 benchmark with a hybrid answer extraction.
+
+    This class inherits from AIME_HYBRIDEXTRACT_PIPELINE and modifies the
+    data path to the 2025 dataset.
+    """
 
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
+        """Configure the pipeline with a hybrid answer extraction for the AIME 2025 benchmark.
+
+        Args:
+            model_config (ModelConfig): The model configuration.
+            resume_from (str, optional): The checkpoint path to resume from. Defaults to None.
+            **kwargs (dict[str, Any]): Additional keyword arguments.
+
+        Returns:
+            PipelineConfig: The configured pipeline object for AIME 2025 with hybrid extraction.
+        """
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from,**kwargs)
         self.data_processing_comp.data_reader_config.init_args["path"] = "lchen001/AIME2025"
         return pipeline

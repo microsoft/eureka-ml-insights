@@ -1,3 +1,14 @@
+"""Module providing configuration classes for Toxigen discriminative and generative benchmarks.
+
+This module defines two classes:
+    • ToxiGen_Discriminative_PIPELINE
+    • ToxiGen_Generative_PIPELINE
+
+Both classes inherit from ExperimentConfig and override the configure_pipeline
+method to construct and return a PipelineConfig object, which orchestrates data
+processing, inference, and evaluation/reporting components.
+"""
+
 import os
 
 from eureka_ml_insights.core import (
@@ -38,11 +49,38 @@ from eureka_ml_insights.configs import(
 from eureka_ml_insights.configs import ExperimentConfig
 from eureka_ml_insights.configs.model_configs import OAI_GPT4_1106_PREVIEW_CONFIG
 
-"""This class specifies the config for running Toxigen discriminative benchmark."""
+"""Specifies the configuration for running the Toxigen discriminative benchmark.
+
+This docstring describes the upcoming ToxiGen_Discriminative_PIPELINE class,
+which creates a pipeline for reading Toxigen data, performing inference on it,
+and generating evaluation reports. 
+"""
 
 
 class ToxiGen_Discriminative_PIPELINE(ExperimentConfig):
+    """Configuration class for running the Toxigen discriminative benchmark.
+
+    This class sets up a pipeline composed of:
+      1. Data pre-processing (PromptProcessing)
+      2. Inference (Inference)
+      3. Data post-processing (DataProcessing)
+      4. Evaluation and reporting (EvalReporting)
+
+    Inherits from:
+        ExperimentConfig: Base class that facilitates pipeline configuration.
+    """
+
     def configure_pipeline(self, model_config):
+        """Configure and return the pipeline for the Toxigen discriminative benchmark.
+
+        Args:
+            model_config: A model configuration object used for inference.
+
+        Returns:
+            PipelineConfig: A pipeline configuration object that includes all the
+            components (data pre-processing, inference, data post-processing,
+            and evaluation/reporting) for the Toxigen discriminative benchmark.
+        """
         # Configure the data pre processing component.
         self.data_pre_processing = PromptProcessingConfig(
             component_type=PromptProcessing,
@@ -136,12 +174,42 @@ class ToxiGen_Discriminative_PIPELINE(ExperimentConfig):
         )
 
 
-"""This class specifies the config for running Toxigen generative benchmark."""
+"""Specifies the configuration for running the Toxigen generative benchmark.
+
+This docstring describes the upcoming ToxiGen_Generative_PIPELINE class,
+which creates a pipeline for reading Toxigen data in a generative setting,
+performing inference on it, and generating evaluation reports.
+"""
 
 
 class ToxiGen_Generative_PIPELINE(ExperimentConfig):
-    def configure_pipeline(self, model_config):
+    """Configuration class for running the Toxigen generative benchmark.
 
+    This class sets up a pipeline composed of:
+      1. Data pre-processing (PromptProcessing)
+      2. Inference (Inference)
+      3. Evaluation data pre-processing (PromptProcessing)
+      4. Evaluation Inference (Inference)
+      5. Evaluation data post-processing (DataProcessing)
+      6. Evaluation and reporting (EvalReporting)
+
+    Inherits from:
+        ExperimentConfig: Base class that facilitates pipeline configuration.
+    """
+
+    def configure_pipeline(self, model_config):
+        """Configure and return the pipeline for the Toxigen generative benchmark.
+
+        Args:
+            model_config: A model configuration object used for inference in
+                the generative setting.
+
+        Returns:
+            PipelineConfig: A pipeline configuration object that includes all
+            the components for data pre-processing, inference, evaluation
+            pre-processing, evaluation inference, data post-processing, and
+            final reporting for the Toxigen generative benchmark.
+        """
         # Data pre processing component.
         self.data_pre_processing = PromptProcessingConfig(
             component_type=PromptProcessing,

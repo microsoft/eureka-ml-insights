@@ -1,4 +1,6 @@
-""" This file contains an implementation of the Math-V eval: https://github.com/mathllm/MATH-V
+"""Module implementing the MATH-V evaluation logic.
+
+For more details, see: https://github.com/mathllm/MATH-V
 """
 
 import os
@@ -37,9 +39,27 @@ from eureka_ml_insights.metrics.reports import AverageAggregator
 from eureka_ml_insights.configs import ExperimentConfig
 
 class MATHVISION_PIPELINE(ExperimentConfig):
+    """A pipeline configuration for MATHVISION experiments.
+
+    This class extends from ExperimentConfig and sets up the pipeline 
+    for data processing, inference, post-processing, and evaluation 
+    in the MATHVISION scenario.
+    """
+
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
+        """Configures and returns the pipeline for MATHVISION experiments.
+
+        Args:
+            model_config (ModelConfig): The configuration for the model to be used.
+            resume_from (str, optional): A path to resume from a previous checkpoint.
+                Defaults to None.
+            **kwargs (dict[str, Any]): Additional keyword arguments.
+
+        Returns:
+            PipelineConfig: The fully configured pipeline.
+        """
         # Configure the data processing component.
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,

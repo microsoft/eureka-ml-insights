@@ -37,24 +37,35 @@ from eureka_ml_insights.configs import (
 )
 from eureka_ml_insights.configs.model_configs import OAI_GPT4O_2024_11_20_CONFIG
 
-"""This file contains example user defined configuration classes for the maze task.
-In order to define a new configuration, a new class must be created that directly or indirectly
- inherits from UserDefinedConfig and the user_init method should be implemented.
-You can inherit from one of the existing user defined classes below and override the necessary
-attributes to reduce the amount of code you need to write.
+"""Example user defined configuration classes for the maze task.
 
-The user defined configuration classes are used to define your desired *pipeline* that can include
-any number of *component*s. Find *component* options in the core module.
+In order to define a new configuration, a new class must be created that directly or 
+indirectly inherits from UserDefinedConfig and the user_init method should be implemented.
+You can inherit from one of the existing user defined classes below and override the
+necessary attributes to reduce the amount of code you need to write.
+
+The user defined configuration classes are used to define your desired pipeline that can 
+include any number of components. Find component options in the core module.
 
 Pass the name of the class to the main.py script to run the pipeline.
 """
 
 
 class MAZE_PIPELINE(ExperimentConfig):
-    """This method is used to define an eval pipeline with inference and metric report components,
-    on the spatial reasoning dataset."""
+    """Defines an evaluation pipeline with inference and metric report components 
+    on the spatial reasoning dataset.
+    """
 
     def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
+        """Configures the pipeline for the maze task.
+
+        Args:
+            model_config (ModelConfig): The model configuration.
+            resume_from (str, optional): Path to resume from. Defaults to None.
+
+        Returns:
+            PipelineConfig: The configured pipeline.
+        """
         # Configure the data processing component.
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
@@ -200,8 +211,6 @@ class MAZE_PIPELINE(ExperimentConfig):
             ),
             metric_config=MetricConfig(SubstringExistsMatch),
             aggregator_configs=[
-                # the first three reports aggregate the metrics per experiment repeat
-                # each repeat can be considered as an individual pass@1 score
                 AggregatorConfig(CountAggregator, 
                     {
                         "column_names": ["SubstringExistsMatch_result"], 
@@ -216,8 +225,6 @@ class MAZE_PIPELINE(ExperimentConfig):
                         "filename_base": "SubstringExistsMatch_GroupBy_task_SeparateRuns", 
                         "normalize": True
                     }),
-                # the next three reports take the average and std for all repeats
-                # the resulting numbers are the average and std of N pass@1 scores, where N is number of repeats
                 AggregatorConfig(BiLevelCountAggregator, 
                     {
                         "column_names": ["SubstringExistsMatch_result"], 
@@ -233,7 +240,6 @@ class MAZE_PIPELINE(ExperimentConfig):
                         "filename_base": "SubstringExistsMatch_GroupBy_task_AllRuns", 
                         "normalize": True
                     }),
-                # three similar reports for average completion usage
                 AggregatorConfig(BiLevelAggregator, 
                     {
                         "column_names": ["usage_completion"], 
@@ -278,7 +284,6 @@ class MAZE_PIPELINE(ExperimentConfig):
         )
 
         # Aggregate the results by best of n
-        # In this case, this is equivalent to taking the max on the numerical column of the metric.
         self.bon_evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
             data_reader_config=DataSetConfig(
@@ -289,7 +294,6 @@ class MAZE_PIPELINE(ExperimentConfig):
                 },
             ),
             aggregator_configs=[
-                # the first three reports aggregate results by data_point_id and take the best out of N
                 AggregatorConfig(
                     BiLevelAggregator,
                     {
@@ -313,7 +317,6 @@ class MAZE_PIPELINE(ExperimentConfig):
                         "agg_fn": "max"
                     },
                 ),
-                # aggregates results by data_point_id and takes the sum of usage for completion tokens
                 AggregatorConfig(
                     BiLevelAggregator,
                     {
@@ -339,7 +342,6 @@ class MAZE_PIPELINE(ExperimentConfig):
                 },
             ),
             aggregator_configs=[
-                # the first three reports aggregate results by data_point_id and take the best out of N
                 AggregatorConfig(
                     BiLevelAggregator,
                     {
@@ -404,7 +406,6 @@ class MAZE_PIPELINE(ExperimentConfig):
             ),
             metric_config=MetricConfig(SubstringExistsMatch),
             aggregator_configs=[
-                # these three reports aggregate the metrics for the majority vote results
                 AggregatorConfig(CountAggregator, 
                     {
                         "column_names": ["SubstringExistsMatch_result"], 
@@ -441,10 +442,21 @@ class MAZE_PIPELINE(ExperimentConfig):
             self.log_dir,
         )
 
+
 class MAZE_COT_PIPELINE(MAZE_PIPELINE):
-    """This class extends MAZE_PIPELINE to use a COT prompt."""
+    """Extends MAZE_PIPELINE to use a chain-of-thought (COT) prompt.
+    """
 
     def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
+        """Configures the pipeline to use a COT prompt.
+
+        Args:
+            model_config (ModelConfig): The model configuration.
+            resume_from (str, optional): Path to resume from. Defaults to None.
+
+        Returns:
+            PipelineConfig: The configured pipeline.
+        """
         config = super().configure_pipeline(model_config, resume_from)
         self.data_processing_comp.prompt_template_path=os.path.join(
                 os.path.dirname(__file__),
@@ -454,19 +466,40 @@ class MAZE_COT_PIPELINE(MAZE_PIPELINE):
 
 
 class MAZE_TEXTONLY_PIPELINE(MAZE_PIPELINE):
-    """This class extends MAZE_PIPELINE to use text only data."""
+    """Extends MAZE_PIPELINE to use text-only data.
+    """
 
     def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
+        """Configures the pipeline to use text-only data.
+
+        Args:
+            model_config (ModelConfig): The model configuration.
+            resume_from (str, optional): Path to resume from. Defaults to None.
+
+        Returns:
+            PipelineConfig: The configured pipeline.
+        """
         config = super().configure_pipeline(model_config, resume_from)
         self.data_processing_comp.data_reader_config.init_args["tasks"] = (
             "maze_text_only"
         )
         return config
 
+
 class MAZE_COT_TEXTONLY_PIPELINE(MAZE_COT_PIPELINE):
-    """This class extends MAZE_COT_PIPELINE to use text only data."""
+    """Extends MAZE_COT_PIPELINE to use text-only data.
+    """
 
     def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
+        """Configures the pipeline to use a COT prompt on text-only data.
+
+        Args:
+            model_config (ModelConfig): The model configuration.
+            resume_from (str, optional): Path to resume from. Defaults to None.
+
+        Returns:
+            PipelineConfig: The configured pipeline.
+        """
         config = super().configure_pipeline(model_config, resume_from)
         self.data_processing_comp.data_reader_config.init_args["tasks"] = (
             "maze_text_only"
@@ -475,10 +508,21 @@ class MAZE_COT_TEXTONLY_PIPELINE(MAZE_COT_PIPELINE):
 
 
 class MAZE_REPORTING_PIPELINE(MAZE_PIPELINE):
-    """This method is used to define an eval pipeline with only a metric report component,
-    on the maze dataset."""
+    """Defines an evaluation pipeline with only a metric report component 
+    on the maze dataset.
+    """
 
     def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
+        """Configures the pipeline for evaluation with only a metric report component.
+
+        Args:
+            model_config (ModelConfig): The model configuration.
+            resume_from (str, optional): Path to resume from, which takes the place 
+                of the standard data path. Defaults to None.
+
+        Returns:
+            PipelineConfig: The configured pipeline.
+        """
         super().configure_pipeline(model_config, resume_from)
         self.preeval_data_post_processing_comp.data_reader_config.init_args["path"] = resume_from
         # Configure the pipeline

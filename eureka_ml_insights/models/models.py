@@ -1,4 +1,9 @@
-"""This module contains classes for interacting with various models, including API-based models and HuggingFace models."""
+"""Module for interacting with various models, including API-based models and HuggingFace models.
+
+This module provides multiple classes that define and manage model interactions, including
+chat-based and endpoint-based workflows. They handle text-based requests, token counting,
+and authentication for a variety of model endpoints.
+"""
 
 import json
 import logging
@@ -12,16 +17,17 @@ from dataclasses import dataclass
 import anthropic
 import requests
 import tiktoken
-from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+from azure.identity import DefaultAzureCredential, get_bearer_token_provider, AzureCliCredential
 
 from eureka_ml_insights.secret_management import get_secret
 
 
 @dataclass
 class Model(ABC):
-    """This class is used to define the structure of a model class.
-    Any model class should inherit from this class and implement the generate method that returns a dict
-    containing the model_output, is_valid, and other relevant information.
+    """Base class for defining the structure of a model.
+
+    Any model class should inherit from this class and implement the 'generate' method that returns
+    a dictionary containing the 'model_output', 'is_valid', and other relevant information.
     """
 
     chat_mode: bool = False
@@ -29,17 +35,30 @@ class Model(ABC):
 
     @abstractmethod
     def generate(self, text_prompt, *args, **kwargs):
+        """Generates a response from the model.
+
+        Args:
+            text_prompt (str): The text prompt for which the model needs to generate a response.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Raises:
+            NotImplementedError: If not implemented by a subclass.
+        """
         raise NotImplementedError
 
     def count_tokens(self, model_output: str = None, is_valid: bool = False):
-        """
-        This method uses tiktoken tokenizer to count the number of tokens in the response.
-        See: https://github.com/openai/openai-cookbook/blob/main/examples/How_to_count_tokens_with_tiktoken.ipynb
-        args:
-            model_output (str): the text response from the model.
-            is_valid (bool): whether the response is valid or not.
-        returns:
-            n_output_tokens (int): the number of tokens in the text response.
+        """Counts the number of tokens in the response.
+
+        Uses the tiktoken tokenizer to count the number of tokens in the model's response. See:
+        https://github.com/openai/openai-cookbook/blob/main/examples/How_to_count_tokens_with_tiktoken.ipynb
+
+        Args:
+            model_output (str, optional): The text response from the model.
+            is_valid (bool, optional): Whether the response is valid.
+
+        Returns:
+            int or None: The number of tokens in the text response, or None if the response is invalid or None.
         """
         encoding = tiktoken.get_encoding("cl100k_base")
         if model_output is None or not is_valid:
@@ -49,13 +68,20 @@ class Model(ABC):
             return n_output_tokens
 
     def base64encode(self, query_images):
+        """Encodes a list of images as base64 strings.
+
+        Args:
+            query_images (list): A list of PIL Images to be encoded as base64 strings.
+
+        Returns:
+            list: A list of base64-encoded string representations of the images.
+        """
         import base64
         from io import BytesIO
 
         encoded_images = []
 
         for query_image in query_images:
-
             buffered = BytesIO()
             query_image.save(buffered, format="JPEG")
             base64_bytes = base64.b64encode(buffered.getvalue())
@@ -67,21 +93,29 @@ class Model(ABC):
 
 @dataclass
 class KeyBasedAuthMixIn:
-    """This class is used to handle key-based authentication for models."""
+    """Mixin class that handles key-based authentication for models."""
 
     api_key: str = None
     secret_key_params: dict = None
 
     def __post_init__(self):
+        """Initializes the mixin, ensuring that either an API key or secret key parameters are provided.
+
+        Raises:
+            ValueError: If neither an API key nor secret key parameters are provided.
+        """
         if self.api_key is None and self.secret_key_params is None:
             raise ValueError("Either api_key or secret_key_params must be provided.")
         self.api_key = self.get_api_key()
 
     def get_api_key(self):
-        """
-        This method is used to get the api_key for the models that require key-based authentication.
-        Either api_key (str) or secret_key_params (dict) must be provided.
-        if api_key is not directly provided, secret_key_params must be provided to get the api_key using get_secret method.
+        """Gets the API key for key-based authentication.
+
+        Either the 'api_key' or 'secret_key_params' must be provided. If 'api_key' is not directly provided,
+        'secret_key_params' must be used to retrieve the API key using 'get_secret'.
+
+        Returns:
+            str: The API key.
         """
         if self.api_key is None:
             self.api_key = get_secret(**self.secret_key_params)
@@ -90,27 +124,50 @@ class KeyBasedAuthMixIn:
 
 @dataclass
 class EndpointModel(Model):
-    """This class is used to interact with API-based models."""
+    """Abstract class for interacting with API-based models."""
 
     num_retries: int = 3
 
     @abstractmethod
     def create_request(self, text_prompt, *args, **kwargs):
+        """Creates a request for the model.
+
+        Args:
+            text_prompt (str): The text prompt to generate the request.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Raises:
+            NotImplementedError: Must be implemented by subclasses.
+        """
         raise NotImplementedError
 
     @abstractmethod
     def get_response(self, request):
-        # must return the model output and the response time
+        """Gets the response from the model.
+
+        Args:
+            request: The request object created by create_request.
+
+        Returns:
+            dict: A dictionary containing the model output and the response time.
+
+        Raises:
+            NotImplementedError: Must be implemented by subclasses.
+        """
         raise NotImplementedError
 
     def update_chat_history(self, query_text, model_output, *args, **kwargs):
-        """
-        This method is used to update the chat history with the model response.
-        args:
-            query_text (str): the text prompt to generate the response.
-            model_output (str): the text response from the model.
-        returns:
-            previous_messages (list): a list of messages in the chat history.
+        """Updates the chat history with the model response.
+
+        Args:
+            query_text (str): The text prompt to generate the model response.
+            model_output (str): The text response from the model.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            list: A list of messages representing the chat history.
         """
         previous_messages = kwargs.get("previous_messages", [])
         previous_messages.append({"role": "user", "content": query_text})
@@ -118,15 +175,16 @@ class EndpointModel(Model):
         return previous_messages
 
     def generate(self, query_text, *args, **kwargs):
-        """
-        Calls the endpoint to generate the model response.
-        args:
-            query_text (str): the text prompt to generate the response.
-            query_images (list): list of images in base64 bytes format to be included in the request.
-            system_message (str): the system message to be included in the request.
-        returns:
-            response_dict (dict): a dictionary containing the model_output, is_valid, response_time, and n_output_tokens,
-                                  and any other relevant information returned by the model.
+        """Calls the endpoint to generate the model response.
+
+        Args:
+            query_text (str): The text prompt to generate the response.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments (may include 'query_images' and 'system_message').
+
+        Returns:
+            dict: A dictionary containing 'model_output', 'is_valid', 'response_time', 'n_output_tokens',
+                and any other relevant information returned by the model.
         """
         response_dict = {}
         if hasattr(self, "system_message") and self.system_message:
@@ -178,11 +236,24 @@ class EndpointModel(Model):
 
     @abstractmethod
     def handle_request_error(self, e):
+        """Handles errors that occur during the request.
+
+        Args:
+            e (Exception): The exception encountered.
+
+        Returns:
+            bool: True if the error should cause an immediate return, False otherwise.
+
+        Raises:
+            NotImplementedError: Must be implemented by subclasses.
+        """
         raise NotImplementedError
 
 
 @dataclass
 class RestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
+    """Class for interacting with REST-based endpoint models."""
+
     url: str = None
     model_name: str = None
     temperature: float = 0
@@ -194,7 +265,20 @@ class RestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
     timeout: int = None
 
     def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
-        """Creates a request for the model."""
+        """Creates a request for the REST endpoint model.
+
+        Args:
+            text_prompt (str): The text prompt to generate the model response.
+            query_images (list, optional): List of images in base64 bytes format to be included in the request.
+            system_message (str, optional): System message to be included in the request.
+            previous_messages (list, optional): List of previous messages to maintain chat state.
+
+        Returns:
+            urllib.request.Request: The request object to be sent to the model endpoint.
+
+        Raises:
+            NotImplementedError: If images are passed, as they're not supported yet.
+        """
         messages = []
         if system_message:
             messages.append({"role": "system", "content": system_message})
@@ -216,8 +300,6 @@ class RestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
             raise NotImplementedError("Images are not supported for RestEndpointModel endpoints yet.")
 
         body = str.encode(json.dumps(data))
-        # The azureml-model-deployment header will force the request to go to a specific deployment.
-        # Remove this header to have the request observe the endpoint traffic rules
         headers = {
             "Content-Type": "application/json",
             "Authorization": ("Bearer " + self.api_key),
@@ -226,20 +308,37 @@ class RestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
         return urllib.request.Request(self.url, body, headers)
 
     def get_response(self, request):
-        # Get the model response and measure the time taken.
+        """Obtains the model response from the REST endpoint.
+
+        Measures the response time, parses the model output, and returns both.
+
+        Args:
+            request (urllib.request.Request): The request object to be sent to the model endpoint.
+
+        Returns:
+            dict: Contains 'model_output' and 'response_time'.
+        """
         start_time = time.time()
         response = urllib.request.urlopen(request, timeout=self.timeout)
         end_time = time.time()
-        # Parse the response and return the model output.
         res = json.loads(response.read())
         model_output = res["output"]
         response_time = end_time - start_time
         return {"model_output": model_output, "response_time": response_time}
 
     def handle_request_error(self, e):
+        """Handles request errors for the REST endpoint.
+
+        Logs detailed information about the error.
+
+        Args:
+            e (Exception): The exception encountered.
+
+        Returns:
+            bool: False to indicate that the operation should not proceed further.
+        """
         if isinstance(e, urllib.error.HTTPError):
             logging.info("The request failed with status code: " + str(e.code))
-            # Print the headers - they include the request ID and the timestamp, which are useful for debugging.
             logging.info(e.info())
             logging.info(e.read().decode("utf8", "ignore"))
         else:
@@ -249,9 +348,12 @@ class RestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
 
 @dataclass
 class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
-    """This class can be used for serverless Azure model deployments."""
+    """Class for serverless Azure model deployments.
 
-    """https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-serverless?tabs=azure-ai-studio"""
+    Additional information:
+    https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-serverless?tabs=azure-ai-studio
+    """
+
     url: str = None
     model_name: str = None
     stream: bool = False
@@ -259,36 +361,48 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
     timeout: int = None
 
     def __post_init__(self):
+        """Initializes the serverless Azure REST endpoint model with either an API key or a bearer token."""
         try:
             super().__post_init__()
             self.headers = {
                 "Content-Type": "application/json",
                 "Authorization": ("Bearer " + self.api_key),
-                # The behavior of the API when extra parameters are indicated in the payload.
-                # Using pass-through makes the API to pass the parameter to the underlying model.
-                # Use this value when you want to pass parameters that you know the underlying model can support.
-                # https://learn.microsoft.com/en-us/azure/machine-learning/reference-model-inference-chat-completions?view=azureml-api-2
                 "extra-parameters": "pass-through",
             }
         except ValueError:
-            self.bearer_token_provider = get_bearer_token_provider(DefaultAzureCredential(), self.auth_scope)
+            self.bearer_token_provider = get_bearer_token_provider(AzureCliCredential(), self.auth_scope)
             self.headers = {
                 "Content-Type": "application/json",
                 "Authorization": ("Bearer " + self.bearer_token_provider()),
-                # The behavior of the API when extra parameters are indicated in the payload.
-                # Using pass-through makes the API to pass the parameter to the underlying model.
-                # Use this value when you want to pass parameters that you know the underlying model can support.
-                # https://learn.microsoft.com/en-us/azure/machine-learning/reference-model-inference-chat-completions?view=azureml-api-2
                 "extra-parameters": "pass-through",
             }
 
     @abstractmethod
     def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
-        # Exact model parameters are model-specific.
-        # The method cannot be implemented unless the model being deployed is known.
+        """Creates a request for the serverless Azure REST endpoint model.
+
+        Args:
+            text_prompt (str): The text prompt for the model.
+            query_images (list, optional): List of images to be included in the request.
+            system_message (str, optional): System message for the request.
+            previous_messages (list, optional): Previous messages in the chat.
+
+        Raises:
+            NotImplementedError: Must be implemented by subclasses.
+        """
         raise NotImplementedError
 
     def get_response(self, request):
+        """Gets the response from the Azure REST endpoint.
+
+        Measures the response time, parses the model output, and includes usage details if present.
+
+        Args:
+            request (urllib.request.Request): The request object.
+
+        Returns:
+            dict: Contains 'model_output', 'response_time', and optionally 'usage'.
+        """
         start_time = time.time()
         response = urllib.request.urlopen(request, timeout=self.timeout)
         end_time = time.time()
@@ -304,9 +418,18 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
         return response_dict
 
     def handle_request_error(self, e):
+        """Handles errors that occur during a serverless Azure REST endpoint request.
+
+        Logs the error details for debugging.
+
+        Args:
+            e (Exception): The exception encountered.
+
+        Returns:
+            bool: False to indicate that the operation should not proceed further.
+        """
         if isinstance(e, urllib.error.HTTPError):
             logging.info("The request failed with status code: " + str(e.code))
-            # Print the headers - they include the request ID and the timestamp, which are useful for debugging.
             logging.info(e.info())
             logging.info(e.read().decode("utf8", "ignore"))
         else:
@@ -316,9 +439,12 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
 
 @dataclass
 class LlamaServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
-    """Tested for Llama 3.1 405B Instruct deployments and Llama 3.2 90B Vision Instruct."""
+    """Serverless Azure REST endpoint model for Llama-based deployments.
 
-    """See https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-llama?tabs=llama-three for the api reference."""
+    Tested for Llama 3.1 405B Instruct deployments and Llama 3.2 90B Vision Instruct.
+    See:
+    https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-llama?tabs=llama-three
+    """
 
     temperature: float = 0
     max_tokens: int = 2000
@@ -331,6 +457,23 @@ class LlamaServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
     ignore_eos: bool = False
 
     def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
+        """Creates a request for the Llama serverless Azure REST endpoint.
+
+        Supports an optional single image for the Llama vision model. The image is base64-encoded
+        and added to the request message if provided.
+
+        Args:
+            text_prompt (str): The user prompt text.
+            query_images (list, optional): List containing a single image (for Llama vision model).
+            system_message (str, optional): The system message to be included.
+            previous_messages (list, optional): Previous messages for maintaining chat history.
+
+        Returns:
+            urllib.request.Request: The request object to be sent to the Llama endpoint.
+
+        Raises:
+            ValueError: If more than one image is provided for the Llama vision model.
+        """
         messages = []
         if system_message:
             messages.append({"role": "system", "content": system_message})
@@ -370,22 +513,47 @@ class LlamaServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
 
 @dataclass
 class MistralServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
-    """Tested for Mistral Large 2 2407 deployments."""
+    """Serverless Azure REST endpoint model for Mistral-based deployments.
 
-    """See https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-mistral?tabs=mistral-large#mistral-chat-api for the api reference."""
+    Tested for Mistral Large 2 2407 deployments. Refer to:
+    https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-mistral?tabs=mistral-large#mistral-chat-api
+    """
+
     temperature: float = 0
     max_tokens: int = 2000
     top_p: float = 1
     safe_prompt: bool = False
 
     def __post_init__(self):
+        """Initializes the Mistral serverless Azure REST endpoint model.
+
+        Enforces constraints on top_p if temperature is zero, following the Mistral chat API guidelines.
+        """
         if self.temperature == 0 and self.top_p != 1:
-            warning_message = "Top_p must be 1 when using greedy sampling. Temperature zero means greedy sampling. Top_p will be reset to 1. See https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-mistral?tabs=mistral-large#mistral-chat-api for more information."
+            warning_message = (
+                "Top_p must be 1 when using greedy sampling. Temperature zero means greedy sampling. "
+                "Top_p will be reset to 1. See https://learn.microsoft.com/en-us/azure/ai-studio/"
+                "how-to/deploy-models-mistral?tabs=mistral-large#mistral-chat-api for more information."
+            )
             logging.warning(warning_message)
             self.top_p = 1
         super().__post_init__()
 
     def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
+        """Creates a request for the Mistral serverless Azure REST endpoint.
+
+        Args:
+            text_prompt (str): The text prompt for which the model generates a response.
+            query_images (list, optional): Not supported for this model.
+            system_message (str, optional): The system message to be included.
+            previous_messages (list, optional): Previous messages in the chat.
+
+        Returns:
+            urllib.request.Request: The request object.
+
+        Raises:
+            NotImplementedError: If images are provided, as they're not supported.
+        """
         messages = []
         if system_message:
             messages.append({"role": "system", "content": system_message})
@@ -399,8 +567,6 @@ class MistralServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
             "max_tokens": self.max_tokens,
             "temperature": self.temperature,
             "top_p": self.top_p,
-            # Safe_prompt activates an optional system prompt to enforce guardrails.
-            # See https://docs.mistral.ai/capabilities/guardrailing/
             "safe_prompt": self.safe_prompt,
             "stream": self.stream,
         }
@@ -410,13 +576,32 @@ class MistralServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
 
 @dataclass
 class DeepseekR1ServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
-    # setting temperature to 0.6 as suggested in https://huggingface.co/deepseek-ai/DeepSeek-R1
+    """Serverless Azure REST endpoint model for DeepSeek-R1.
+
+    Parameters are set following suggestions from:
+    https://huggingface.co/deepseek-ai/DeepSeek-R1
+    """
+
     temperature: float = 0.6
     max_tokens: int = 4096
     top_p: float = 0.95
     presence_penalty: float = 0
 
     def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
+        """Creates a request for the DeepSeek-R1 serverless Azure REST endpoint.
+
+        Args:
+            text_prompt (str): The text prompt to generate the model response.
+            query_images (list, optional): Not supported for this model.
+            system_message (str, optional): The system message to be included in the request.
+            previous_messages (list, optional): The previous messages in the chat.
+
+        Returns:
+            urllib.request.Request: The request object.
+
+        Raises:
+            NotImplementedError: If images are provided, as they're not supported.
+        """
         messages = []
         if system_message:
             messages.append({"role": "system", "content": system_message})
@@ -437,14 +622,28 @@ class DeepseekR1ServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointMode
         body = str.encode(json.dumps(data))
         return urllib.request.Request(self.url, body, self.headers)
 
-
 @dataclass
 class OpenAICommonRequestResponseMixIn:
     """
-    This mixin class defines the request and response handling for most OpenAI models.
+    Defines the request and response handling for most OpenAI models.
+
+    This mixin provides methods to create a chat request body and parse the response
+    from the OpenAI API.
     """
 
     def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
+        """
+        Creates a request dictionary for use with the OpenAI chat API.
+
+        Args:
+            text_prompt (str): The user-provided text prompt.
+            query_images (Optional[List[str]]): A list of images to encode and include, if any.
+            system_message (Optional[str]): The system message to include in the conversation, if any.
+            previous_messages (Optional[List[Dict]]): A list of previous messages in the conversation.
+
+        Returns:
+            Dict: A request body dictionary that can be passed to the OpenAI API.
+        """
         messages = []
         if system_message:
             messages.append({"role": "system", "content": system_message})
@@ -470,6 +669,15 @@ class OpenAICommonRequestResponseMixIn:
         return request_body
 
     def get_response(self, request):
+        """
+        Sends a chat completion request to the OpenAI API and returns the parsed response.
+
+        Args:
+            request (Dict): The request body to send to the OpenAI API.
+
+        Returns:
+            Dict: A dictionary containing the model output, response time, and optional usage information.
+        """
         start_time = time.time()
         completion = self.client.chat.completions.create(
             model=self.model_name,
@@ -498,12 +706,20 @@ class OpenAICommonRequestResponseMixIn:
 
 
 class AzureOpenAIClientMixIn:
-    """This mixin provides some methods to interact with Azure OpenAI models."""
+    """
+    Provides Azure OpenAI-specific client methods and error handling.
+    """
 
     def get_client(self):
+        """
+        Retrieves the Azure OpenAI client.
+
+        Returns:
+            AzureOpenAI: The Azure OpenAI client instance.
+        """
         from openai import AzureOpenAI
 
-        token_provider = get_bearer_token_provider(DefaultAzureCredential(), self.auth_scope)
+        token_provider = get_bearer_token_provider(AzureCliCredential(), self.auth_scope)
         return AzureOpenAI(
             azure_endpoint=self.url,
             api_version=self.api_version,
@@ -511,6 +727,19 @@ class AzureOpenAIClientMixIn:
         )
 
     def handle_request_error(self, e):
+        """
+        Handles an error that occurs while making a request to the Azure OpenAI service.
+
+        If the error is due to content filtering, logs a warning and returns (None, False, True).
+        Otherwise, logs the exception and returns False.
+
+        Args:
+            e (Exception): The exception raised during the request.
+
+        Returns:
+            Union[Tuple[None, bool, bool], bool]: Either a tuple indicating a content filter block
+            or False indicating the request can be retried.
+        """
         # if the error is due to a content filter, there is no need to retry
         if hasattr(e, "code") and e.code == "content_filter":
             logging.warning("Content filtered.")
@@ -522,9 +751,17 @@ class AzureOpenAIClientMixIn:
 
 
 class DirectOpenAIClientMixIn(KeyBasedAuthMixIn):
-    """This mixin class provides some methods for using OpenAI models dirctly (not through Azure)"""
+    """
+    Provides client retrieval and error handling for direct OpenAI usage.
+    """
 
     def get_client(self):
+        """
+        Retrieves the direct OpenAI client.
+
+        Returns:
+            OpenAI: The direct OpenAI client instance.
+        """
         from openai import OpenAI
 
         return OpenAI(
@@ -533,13 +770,36 @@ class DirectOpenAIClientMixIn(KeyBasedAuthMixIn):
         )
 
     def handle_request_error(self, e):
+        """
+        Handles an error that occurs while making a request to the direct OpenAI service.
+
+        Args:
+            e (Exception): The exception that was raised.
+
+        Returns:
+            bool: Always returns False, indicating the request can be retried.
+        """
         logging.warning(e)
         return False
 
 
 @dataclass
 class AzureOpenAIModel(OpenAICommonRequestResponseMixIn, AzureOpenAIClientMixIn, EndpointModel):
-    """This class is used to interact with Azure OpenAI models."""
+    """
+    Interacts with Azure OpenAI models using the provided configuration.
+
+    Attributes:
+        url (str): The Azure OpenAI endpoint URL.
+        model_name (str): The name of the model.
+        temperature (float): The temperature setting for the model.
+        max_tokens (int): The maximum number of tokens to generate.
+        top_p (float): The top-p sampling parameter.
+        frequency_penalty (float): The frequency penalty.
+        presence_penalty (float): The presence penalty.
+        seed (int): An optional seed for reproducibility.
+        api_version (str): The API version used for Azure OpenAI.
+        auth_scope (str): The authentication scope for Azure OpenAI.
+    """
 
     url: str = None
     model_name: str = None
@@ -553,12 +813,29 @@ class AzureOpenAIModel(OpenAICommonRequestResponseMixIn, AzureOpenAIClientMixIn,
     auth_scope: str = "https://cognitiveservices.azure.com/.default"
 
     def __post_init__(self):
+        """
+        Initializes the AzureOpenAIModel instance by obtaining the Azure OpenAI client.
+        """
         self.client = self.get_client()
 
 
 @dataclass
 class DirectOpenAIModel(OpenAICommonRequestResponseMixIn, DirectOpenAIClientMixIn, EndpointModel):
-    """This class is used to interact with OpenAI models dirctly (not through Azure)"""
+    """
+    Interacts directly with OpenAI models using the provided configuration.
+
+    Attributes:
+        model_name (str): The name of the model.
+        temperature (float): The temperature setting for the model.
+        max_tokens (int): The maximum number of tokens to generate.
+        top_p (float): The top-p sampling parameter.
+        frequency_penalty (float): The frequency penalty.
+        presence_penalty (float): The presence penalty.
+        seed (int): An optional seed for reproducibility.
+        api_version (str): The API version used by OpenAI.
+        base_url (str): The base URL for the OpenAI API.
+        extra_body (dict): Additional data to include in the request body.
+    """
 
     model_name: str = None
     temperature: float = 0
@@ -572,12 +849,31 @@ class DirectOpenAIModel(OpenAICommonRequestResponseMixIn, DirectOpenAIClientMixI
     extra_body: dict = None
 
     def __post_init__(self):
+        """
+        Initializes the DirectOpenAIModel instance by obtaining the API key and direct OpenAI client.
+        """
         self.api_key = self.get_api_key()
         self.client = self.get_client()
 
 
 class OpenAIOModelsRequestResponseMixIn:
+    """
+    Defines request creation and response handling for OpenAI O1 models.
+    """
+
     def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
+        """
+        Creates a request dictionary for use with OpenAI O1 chat models.
+
+        Args:
+            text_prompt (str): The text prompt to send to the model.
+            query_images (Optional[List[str]]): A list of images to encode and include, if supported by the model.
+            system_message (Optional[str]): A system or developer message to pass to the model.
+            previous_messages (Optional[List[Dict]]): A list of previous conversation messages.
+
+        Returns:
+            Dict: The request body dictionary to pass to the OpenAI API.
+        """
         messages = []
         if system_message and "o1-preview" in self.model_name:
             logging.warning("System and developer messages are not supported by OpenAI O1 preview model.")
@@ -612,6 +908,18 @@ class OpenAIOModelsRequestResponseMixIn:
         return request_body
 
     def get_response(self, request):
+        """
+        Sends the request to the OpenAI O1 model and returns the parsed response.
+
+        Depending on whether the model is an O1 preview or not, it may or may not support
+        certain parameters such as developer/system messages or reasoning effort.
+
+        Args:
+            request (Dict): The request body for the chat completion.
+
+        Returns:
+            Dict: A dictionary containing the model output, response time, and optional usage details.
+        """
         start_time = time.time()
         if "o1-preview" in self.model_name:
             if self.reasoning_effort == "high":
@@ -651,11 +959,24 @@ class OpenAIOModelsRequestResponseMixIn:
 
 @dataclass
 class DirectOpenAIOModel(OpenAIOModelsRequestResponseMixIn, DirectOpenAIClientMixIn, EndpointModel):
+    """
+    Interacts directly with OpenAI O1 models using the provided configuration.
+
+    Attributes:
+        model_name (str): The name of the model.
+        temperature (float): The temperature setting for generation.
+        max_completion_tokens (int): Not currently used due to API constraints.
+        top_p (float): The top-p sampling parameter.
+        seed (int): An optional seed for reproducibility.
+        frequency_penalty (float): The frequency penalty.
+        presence_penalty (float): The presence penalty.
+        reasoning_effort (str): The level of reasoning effort requested.
+        base_url (str): The base URL for the OpenAI API.
+        extra_body (dict): Additional data to include in the request.
+    """
+
     model_name: str = None
     temperature: float = 1
-    # Not used currently, because the API throws:
-    # "Completions.create() got an unexpected keyword argument 'max_completion_tokens'"
-    # although this argument is documented in the OpenAI API documentation.
     max_completion_tokens: int = 2000
     top_p: float = 1
     seed: int = 0
@@ -666,19 +987,36 @@ class DirectOpenAIOModel(OpenAIOModelsRequestResponseMixIn, DirectOpenAIClientMi
     extra_body: dict = None
 
     def __post_init__(self):
+        """
+        Initializes the DirectOpenAIOModel instance by obtaining the API key and direct OpenAI client.
+        """
         self.api_key = self.get_api_key()
         self.client = self.get_client()
 
 
 @dataclass
 class AzureOpenAIOModel(OpenAIOModelsRequestResponseMixIn, AzureOpenAIClientMixIn, EndpointModel):
+    """
+    Interacts with Azure OpenAI O1 models using the provided configuration.
+
+    Attributes:
+        url (str): The Azure endpoint for O1 models.
+        model_name (str): The name of the O1 model.
+        temperature (float): The temperature setting for generation.
+        max_completion_tokens (int): Not currently used due to API constraints.
+        top_p (float): The top-p sampling parameter.
+        seed (int): An optional seed for reproducibility.
+        frequency_penalty (float): The frequency penalty.
+        presence_penalty (float): The presence penalty.
+        reasoning_effort (str): The level of reasoning effort requested.
+        api_version (str): The API version for Azure capabilities.
+        auth_scope (str): The scope for Azure authentication.
+    """
+
     url: str = None
     model_name: str = None
     temperature: float = 1
-    # Not used currently, because the API throws:
-    # "Completions.create() got an unexpected keyword argument 'max_completion_tokens'"
-    # although this argument is documented in the OpenAI API documentation.
-    max_completion_tokens: int = 2000
+    max_completion_tokens: int = 64000
     top_p: float = 1
     seed: int = 0
     frequency_penalty: float = 0
@@ -688,12 +1026,24 @@ class AzureOpenAIOModel(OpenAIOModelsRequestResponseMixIn, AzureOpenAIClientMixI
     auth_scope: str = "https://cognitiveservices.azure.com/.default"
 
     def __post_init__(self):
+        """
+        Initializes the AzureOpenAIOModel instance by obtaining the Azure OpenAI client.
+        """
         self.client = self.get_client()
 
 
 @dataclass
 class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
-    """This class is used to interact with Gemini models through the python api."""
+    """
+    Interacts with Gemini models through the Python API.
+
+    Attributes:
+        timeout (int): The API request timeout in seconds.
+        model_name (str): The name of the Gemini model.
+        temperature (float): The temperature setting for generation.
+        max_tokens (int): The maximum number of tokens to generate.
+        top_p (float): The top-p sampling parameter.
+    """
 
     timeout: int = 600
     model_name: str = None
@@ -702,6 +1052,10 @@ class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
     top_p: float = 0.95
 
     def __post_init__(self):
+        """
+        Initializes the GeminiModel by configuring the generative AI client with the provided API key
+        and safety settings. Also sets up the generation config.
+        """
         super().__post_init__()
         import google.generativeai as genai
         from google.generativeai.types import HarmBlockThreshold, HarmCategory
@@ -719,6 +1073,18 @@ class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
         )
 
     def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
+        """
+        Creates a request for generating content with Gemini models.
+
+        Args:
+            text_prompt (str): The text prompt to send to the model.
+            query_images (Optional[List[str]]): Image data to pass to the model.
+            system_message (Optional[str]): An optional system instruction to pass to the model.
+            previous_messages (Optional[List[Dict]]): A list of previous conversation messages (unused).
+
+        Returns:
+            Union[str, List[str]]: The prompt alone, or a list combining the prompt and images.
+        """
         import google.generativeai as genai
 
         if self.model_name == "gemini-1.0-pro":
@@ -734,6 +1100,15 @@ class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
             return text_prompt
 
     def get_response(self, request):
+        """
+        Sends the request to the Gemini model and returns the parsed response.
+
+        Args:
+            request (Union[str, List[str]]): The text prompt or a combined prompt and images.
+
+        Returns:
+            Dict: A dictionary containing the model output, response time, and usage metadata if available.
+        """
         start_time = time.time()
         gemini_response = None
         try:
@@ -769,28 +1144,28 @@ class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
         return response_dict
 
     def handle_gemini_error(self, e, gemini_response):
-        """Handles exceptions originating from making requests to Gemini through the python api.
+        """
+        Handles exceptions originating from making requests to the Gemini API.
 
-        args:
-            e: Exception that occurred during getting a response.
-            gemini_response: The response object from the gemini model.
-        returns:
-            _type_: do_return (True if the call should not be attempted again).
+        If the model explicitly or implicitly blocks the prompt, logs a warning
+        indicating the block reason and raises the exception again.
+
+        Args:
+            e (Exception): The exception that occurred.
+            gemini_response (Any): The response object from the Gemini model.
+
+        Raises:
+            Exception: Re-raises the provided exception after handling.
         """
         # Handling cases where the model explicitly blocks prompts and provides a reason for it.
-        # In these cases, there is no need to make a new attempt as the model will continue to explicitly block the request, do_return = True.
         if e.__class__.__name__ == "ValueError" and gemini_response.prompt_feedback.block_reason > 0:
             logging.warning(
                 f"Attempt failed due to explicitly blocked input prompt: {e} Block Reason {gemini_response.prompt_feedback.block_reason}"
             )
 
-        # Handling cases where the model implicitly blocks prompts and does not provide an explicit block reason for it but rather an empty content.
-        # In these cases, there is no need to make a new attempt as the model will continue to implicitly block the request, do_return = True.
-        # Note that, in some cases, the model may still provide a finish reason as shown here https://ai.google.dev/api/generate-content?authuser=2#FinishReason
+        # Handling cases where the model implicitly blocks prompts and does not provide an explicit block reason.
         elif e.__class__.__name__ == "IndexError" and len(gemini_response.parts) == 0:
             logging.warning(f"Attempt failed due to implicitly blocked input prompt and empty model output: {e}")
-            # For cases where there are some response candidates do_return is still True because in most cases these candidates are incomplete.
-            # Trying again may not necessarily help, unless in high temperature regimes.
             if len(gemini_response.candidates) > 0:
                 logging.warning(f"The response is not empty and has : {len(gemini_response.candidates)} candidates")
                 logging.warning(
@@ -803,13 +1178,34 @@ class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
         raise e
 
     def handle_request_error(self, e):
-        # Any error case not handled in handle_gemini_error will be attempted again, do_return = False.
+        """
+        Handles an error that occurs while making a request to the Gemini model.
+
+        Any error case not handled in handle_gemini_error will be attempted again.
+
+        Args:
+            e (Exception): The exception that was raised.
+
+        Returns:
+            bool: Always returns False, indicating the request can be retried.
+        """
         return False
 
 
 @dataclass
 class TogetherModel(OpenAICommonRequestResponseMixIn, KeyBasedAuthMixIn, EndpointModel):
-    """This class is used to interact with Together models through the together python api."""
+    """
+    Interacts with Together models through the together Python API.
+
+    Attributes:
+        timeout (int): The API request timeout in seconds.
+        model_name (str): The name of the Together model.
+        temperature (float): The temperature setting for generation.
+        max_tokens (int): The maximum number of tokens to generate.
+        top_p (float): The top-p sampling parameter.
+        presence_penalty (float): The presence penalty.
+        stop (List[str]): A list of stop tokens for generation.
+    """
 
     timeout: int = 600
     model_name: str = None
@@ -820,12 +1216,24 @@ class TogetherModel(OpenAICommonRequestResponseMixIn, KeyBasedAuthMixIn, Endpoin
     stop = ["<｜end▁of▁sentence｜>"]
 
     def __post_init__(self):
+        """
+        Initializes the TogetherModel by setting up the Together client with the provided API key.
+        """
         from together import Together
 
         self.api_key = self.get_api_key()
         self.client = Together(api_key=self.api_key)
 
     def get_response(self, request):
+        """
+        Sends the request to the Together model and returns the parsed response.
+
+        Args:
+            request (Dict): The request body for the Together chat completion.
+
+        Returns:
+            Dict: A dictionary containing the model output, response time, and optional usage details.
+        """
         start_time = time.time()
         completion = self.client.chat.completions.create(
             model=self.model_name,
@@ -850,12 +1258,35 @@ class TogetherModel(OpenAICommonRequestResponseMixIn, KeyBasedAuthMixIn, Endpoin
         return response_dict
 
     def handle_request_error(self, e):
-        return False
+        """
+        Handles an error that occurs while making a request to the Together service.
 
+        Args:
+            e (Exception): The exception that was raised.
+
+        Returns:
+            bool: Always returns False, indicating the request can be retried.
+        """
+        return False
 
 @dataclass
 class HuggingFaceModel(Model):
-    """This class is used to run a self-hosted language model via HuggingFace apis."""
+    """Runs a self-hosted language model via HuggingFace APIs.
+
+    This class handles loading and running a HuggingFace language model locally
+    with optional quantization and flash attention usage.
+
+    Attributes:
+        model_name (str): The name of the HuggingFace model to use.
+        device (str): The device to use for inference (e.g., "cpu" or "cuda").
+        max_tokens (int): The maximum number of tokens to generate.
+        temperature (float): The temperature for sampling-based generation.
+        top_p (float): The top-p (nucleus) sampling parameter.
+        do_sample (bool): Whether to sample or not, setting to False uses greedy decoding.
+        apply_model_template (bool): If True, applies a template to the prompt before generating.
+        quantize (bool): Whether to quantize the model for memory savings.
+        use_flash_attn (bool): Whether to use flash attention 2 if supported.
+    """
 
     model_name: str = None
     device: str = "cpu"
@@ -869,11 +1300,22 @@ class HuggingFaceModel(Model):
     use_flash_attn: bool = False
 
     def __post_init__(self):
-        # The device need to be set before get_model() is called
+        """Initializes model-related attributes after the dataclass has been populated.
+
+        This method sets the device by picking an available GPU or falling back
+        to CPU before actually loading the model.
+        """
+        # The device needs to be set before get_model() is called
         self.device = self.pick_available_device()
         self.get_model()
 
     def get_model(self):
+        """Loads the HuggingFace model and tokenizer.
+
+        If quantization is enabled, applies 4-bit quantization. Otherwise, loads
+        the model with standard precision. Tokenizer is also loaded using the
+        same model name.
+        """
         import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -882,7 +1324,6 @@ class HuggingFaceModel(Model):
             from transformers import BitsAndBytesConfig
 
             logging.info("Quantizing model")
-            # specify how to quantize the model
             quantization_config = BitsAndBytesConfig(
                 load_in_4bit=True,
                 bnb_4bit_compute_dtype=torch.float16,
@@ -899,9 +1340,13 @@ class HuggingFaceModel(Model):
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, use_fast=False)
 
     def pick_available_device(self):
-        """
-        This method will enumerate all GPU devices and return the one with the lowest utilization.
-        This is useful in running locally hosted HuggingFace models on multi-gpu machines.
+        """Selects the device with the lowest GPU utilization or defaults to CPU.
+
+        Enumerates all available GPU devices, checks utilization, and returns the
+        device with the lowest utilization. If no GPU is available, returns 'cpu'.
+
+        Returns:
+            str: Name of the chosen device (e.g., 'cuda:0' or 'cpu').
         """
         import numpy as np
         import torch
@@ -923,6 +1368,18 @@ class HuggingFaceModel(Model):
         return device
 
     def _generate(self, text_prompt, query_images=None):
+        """Generates text given a prompt and optional images.
+
+        Args:
+            text_prompt (str): The text prompt for the model to process.
+            query_images (list, optional): A list of images (if supported by the model).
+
+        Returns:
+            dict: A dictionary containing:
+                "model_output" (str): The generated text response.
+                "response_time" (float): The time taken for the generation.
+        """
+        import time
 
         inputs = self.tokenizer(text_prompt, return_tensors="pt").to(self.device)
         start_time = time.time()
@@ -947,6 +1404,21 @@ class HuggingFaceModel(Model):
         }
 
     def generate(self, text_prompt, query_images=None, system_message=None):
+        """Generates a text response, optionally applying a model-specific template.
+
+        Args:
+            text_prompt (str): The text prompt for generation.
+            query_images (list, optional): A list of images (if supported by the model).
+            system_message (str, optional): A system message to be prepended or otherwise
+                integrated into the template.
+
+        Returns:
+            dict: A dictionary containing:
+                "model_output" (str): The generated text response.
+                "response_time" (float): The time taken for generation.
+                "is_valid" (bool): Whether the generation was successful.
+                "n_output_tokens" (int): Number of tokens in the generated output.
+        """
         response_dict = {}
 
         if text_prompt:
@@ -972,39 +1444,76 @@ class HuggingFaceModel(Model):
         return response_dict
 
     def model_template_fn(self, text_prompt, system_message=None):
+        """Applies a basic template to the prompt.
+
+        If a system message is provided, it is prepended to the text prompt.
+
+        Args:
+            text_prompt (str): The original text prompt.
+            system_message (str, optional): A system message to prepend.
+
+        Returns:
+            str: The prompt with the optional system message attached.
+        """
         return system_message + " " + text_prompt if system_message else text_prompt
 
 
 @dataclass
 class Phi3HFModel(HuggingFaceModel):
-    """This class is used to run a self-hosted PHI3 model via HuggingFace apis."""
+    """Runs a self-hosted PHI3 model via HuggingFace APIs.
+
+    Extends HuggingFaceModel, applying a PHI3-specific prompt template.
+    """
 
     def __post_init__(self):
+        """Initializes and checks if the model name is a PHI3 model."""
         super().__post_init__()
         if "microsoft/Phi-3" not in self.model_name:
             logging.warning(
                 "This model class applies a template to the prompt that is specific to Phi-3 models"
-                "but your model is not a Phi-3 model."
+                " but your model is not a Phi-3 model."
             )
 
     def model_template_fn(self, text_prompt, system_message=None):
+        """Applies the PHI3-specific template to the prompt.
+
+        Args:
+            text_prompt (str): The text prompt for generation.
+            system_message (str, optional): A system message to prepend.
+
+        Returns:
+            str: The prompt with the PHI3-specific template.
+        """
         text_prompt = super().model_template_fn(text_prompt, system_message)
         return f"<|user|>\n{text_prompt}<|end|>\n<|assistant|>"
 
 
 @dataclass
 class Phi4HFModel(HuggingFaceModel):
-    """This class is used to run a self-hosted PHI3 model via HuggingFace apis."""
+    """Runs a self-hosted PHI4 model via HuggingFace APIs.
+
+    Extends HuggingFaceModel, applying a PHI4-specific prompt template.
+    """
 
     def __post_init__(self):
+        """Initializes and checks if the model name is a PHI4 model."""
         super().__post_init__()
         if "microsoft/phi-4" not in self.model_name:
             logging.warning(
                 "This model class applies a template to the prompt that is specific to Phi-4 models"
-                "but your model is not a Phi-4 model."
+                " but your model is not a Phi-4 model."
             )
 
     def model_template_fn(self, text_prompt, system_message=None):
+        """Applies the PHI4-specific template to the prompt.
+
+        Args:
+            text_prompt (str): The text prompt for generation.
+            system_message (str, optional): A system message to prepend.
+
+        Returns:
+            str: The prompt with the PHI4-specific template.
+        """
         if system_message:
             return f"<|im_start|>system<|im_sep|>\n{system_message}<|im_start|>user<|im_sep|>\n{text_prompt}<|im_end|>\n<|im_start|>assistant<|im_sep|>"
         else:
@@ -1013,17 +1522,27 @@ class Phi4HFModel(HuggingFaceModel):
 
 @dataclass
 class LLaVAHuggingFaceModel(HuggingFaceModel):
-    """This class is used to run a self-hosted LLaVA model via HuggingFace apis."""
+    """Runs a self-hosted LLaVA model via HuggingFace APIs.
+
+    Extends HuggingFaceModel, applying an image-based prompt template for LLaVA.
+    """
 
     def __post_init__(self):
+        """Initializes and checks if the model name is a LLaVA model."""
         super().__post_init__()
         if "llava" not in self.model_name:
             logging.warning(
                 "This model class applies a template to the prompt that is specific to LLAVA models"
-                "but your model is not a LLAVA model."
+                " but your model is not a LLAVA model."
             )
 
     def get_model(self):
+        """Loads the LLaVA model and processor.
+
+        If quantization is enabled, applies 4-bit quantization. Otherwise, loads
+        the model with standard precision. The appropriate LLaVA variant is chosen
+        depending on the model name (v1.6, etc.).
+        """
         import torch
         from transformers import (
             AutoProcessor,
@@ -1037,7 +1556,6 @@ class LLaVAHuggingFaceModel(HuggingFaceModel):
             from transformers import BitsAndBytesConfig
 
             logging.info("Quantizing model")
-            # specify how to quantize the model
             quantization_config = BitsAndBytesConfig(
                 load_in_4bit=True,
                 bnb_4bit_compute_dtype=torch.float16,
@@ -1060,10 +1578,22 @@ class LLaVAHuggingFaceModel(HuggingFaceModel):
                 device_map=self.device,
                 use_flash_attention_2=self.use_flash_attn,
             )
-
             self.processor = AutoProcessor.from_pretrained(self.model_name)
 
     def _generate(self, text_prompt, query_images=None):
+        """Generates a response given a text prompt and optional image(s).
+
+        Args:
+            text_prompt (str): The text prompt to generate a response for.
+            query_images (list, optional): A list with an image to use as context.
+
+        Returns:
+            dict: A dictionary containing:
+                "model_output" (str): The generated text response.
+                "response_time" (float): The time taken for the generation.
+        """
+        import time
+
         inputs = self.processor(text=text_prompt, images=query_images, return_tensors="pt").to(self.device)
         start_time = time.time()
         output_ids = self.model.generate(
@@ -1087,7 +1617,17 @@ class LLaVAHuggingFaceModel(HuggingFaceModel):
         }
 
     def generate(self, text_prompt, query_images=None, system_message=None):
+        """Generates a response using a LLaVA model, with optional images.
 
+        Args:
+            text_prompt (str): The text prompt for generation.
+            query_images (list, optional): A list containing a single image to use.
+            system_message (str, optional): Additional system message or instruction.
+
+        Returns:
+            dict: A dictionary containing generation results. If multiple images are
+                provided, returns an error message in the dictionary.
+        """
         if query_images and len(query_images) > 1:
             logging.error(f"Not implemented for more than 1 image. {len(query_images)} images are in the prompt")
             return {"model_output": None, "is_valid": False, "response_time": None, "n_output_tokens": None}
@@ -1095,6 +1635,17 @@ class LLaVAHuggingFaceModel(HuggingFaceModel):
         return super().generate(text_prompt, query_images=query_images, system_message=system_message)
 
     def model_template_fn(self, text_prompt, system_message=None):
+        """Applies an image-based template to the text prompt for LLaVA models.
+
+        The exact template depends on the LLaVA model variant (v1.6, v1.6-mistral, etc.).
+
+        Args:
+            text_prompt (str): The text prompt to transform.
+            system_message (str, optional): An additional system message.
+
+        Returns:
+            str: The transformed text prompt with an image token included.
+        """
         text_prompt = f"<image>\n{text_prompt}"
 
         if "v1.6-mistral" in self.model_name:
@@ -1103,7 +1654,11 @@ class LLaVAHuggingFaceModel(HuggingFaceModel):
             if system_message:
                 text_prompt = f"{system_message} USER: {text_prompt} ASSISTANT:"
             else:
-                text_prompt = f"A chat between a curious human and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the human's questions. USER: {text_prompt} ASSISTANT:"
+                text_prompt = (
+                    f"A chat between a curious human and an artificial intelligence assistant. "
+                    f"The assistant gives helpful, detailed, and polite answers to the human's questions. "
+                    f"USER: {text_prompt} ASSISTANT:"
+                )
         elif "v1.6-34b" in self.model_name:
             if system_message:
                 text_prompt = f"<|im_start|>system\n{system_message}<|im_end|><|im_start|>user\n{text_prompt}<|im_end|><|im_start|>assistant\n"
@@ -1120,15 +1675,29 @@ class LLaVAHuggingFaceModel(HuggingFaceModel):
 
 @dataclass
 class LLaVAModel(LLaVAHuggingFaceModel):
-    """This class is used to run a self-hosted LLaVA model via the LLaVA package."""
+    """Runs a self-hosted LLaVA model using the LLaVA package.
+
+    Extends LLaVAHuggingFaceModel to handle model loading and inference through
+    the dedicated LLaVA package utilities.
+
+    Attributes:
+        model_base (str): The base model to use for LLaVA.
+        num_beams (int): The number of beams for beam search decoding.
+    """
 
     model_base: str = None
     num_beams: int = 1
 
     def __post_init__(self):
+        """Initializes the LLaVA model after the dataclass has been populated."""
         super().__post_init__()
 
     def get_model(self):
+        """Loads the LLaVA model and tokenizer using the LLaVA package.
+
+        This method overrides the base HuggingFace loading routine and uses
+        dedicated LLaVA utilities for model setup.
+        """
         from llava.mm_utils import get_model_name_from_path
         from llava.model.builder import load_pretrained_model
         from llava.utils import disable_torch_init
@@ -1154,8 +1723,20 @@ class LLaVAModel(LLaVAHuggingFaceModel):
         self.tokenizer = tokenizer
 
     def _generate(self, text_prompt, query_images=None, system_message=None):
+        """Generates a response using the LLaVA package.
 
+        Args:
+            text_prompt (str): The text prompt to process.
+            query_images (list, optional): A list of images for multimodal generation.
+            system_message (str, optional): Additional system message for context.
+
+        Returns:
+            dict: A dictionary containing:
+                "model_output" (str): The generated text response.
+                "response_time" (float): The time taken for generation.
+        """
         import torch
+        import time
         from llava.constants import IMAGE_TOKEN_INDEX
         from llava.mm_utils import process_images, tokenizer_image_token
 
@@ -1192,12 +1773,27 @@ class LLaVAModel(LLaVAHuggingFaceModel):
             "response_time": response_time,
         }
 
-
 @dataclass
 class VLLMModel(Model):
-    """This class is used to run a self-hosted language model via vLLM apis.
-    This class uses the chat() functionality of vLLM which applies a template included in the HF model files.
-    If the model files do not include a template, no template will be applied.
+    """Runs a self-hosted language model via vLLM APIs.
+
+    Uses the chat() functionality of vLLM, which applies a template included
+    in the HF model files. If the model files do not include a template, no
+    template will be applied.
+
+    Attributes:
+        model_name (str): Name or path of the model.
+        trust_remote_code (bool): Whether to trust custom code from the remote model.
+        tensor_parallel_size (int): Number of tensor parallel instances.
+        dtype (str): Data type used by the model.
+        quantization (str): Quantization method used by the model.
+        seed (int): Random seed.
+        gpu_memory_utilization (float): Fraction of GPU memory to use.
+        cpu_offload_gb (float): Amount of CPU offloading in GB.
+        temperature (float): Sampling temperature.
+        top_p (float): Nucleus sampling probability threshold.
+        top_k (int): Top-k sampling cutoff.
+        max_tokens (int): Maximum number of tokens in the generated response.
     """
 
     model_name: str = None
@@ -1215,10 +1811,20 @@ class VLLMModel(Model):
     max_tokens: int = 2000
 
     def __post_init__(self):
+        """Initializes the vLLM model after dataclass fields are set.
+
+        Returns:
+            None
+        """
         # vLLM automatically picks an available devices when get_model() is called
         self.get_model()
 
     def get_model(self):
+        """Initializes and stores the LLM instance from vLLM.
+
+        Returns:
+            None
+        """
         from vllm import LLM
 
         self.model = LLM(
@@ -1233,6 +1839,15 @@ class VLLMModel(Model):
         )
 
     def _generate(self, text_prompt, query_images=None):
+        """Generates a response from the model using the vLLM chat interface.
+
+        Args:
+            text_prompt (str): The prompt for the model.
+            query_images (optional): Additional images to pass to the model. Defaults to None.
+
+        Returns:
+            dict: A dictionary containing "model_output" and "response_time".
+        """
         from vllm import SamplingParams
 
         sampling_params = SamplingParams(
@@ -1254,6 +1869,17 @@ class VLLMModel(Model):
         }
 
     def generate(self, text_prompt, query_images=None, system_message=None):
+        """Generates a response from the model.
+
+        Args:
+            text_prompt (str): The prompt for the model.
+            query_images (optional): Additional images to pass to the model. Defaults to None.
+            system_message (optional): A system message to prepend. Defaults to None.
+
+        Returns:
+            dict: A dictionary with the generated response, including "model_output",
+                "is_valid", "response_time", and "n_output_tokens".
+        """
         response_dict = {}
         model_output = None
         response_time = None
@@ -1284,6 +1910,15 @@ class VLLMModel(Model):
         return response_dict
 
     def create_request(self, text_prompt, system_message=None):
+        """Creates a list of messages suitable for the vLLM chat interface.
+
+        Args:
+            text_prompt (str): The user's prompt.
+            system_message (optional): A system message to prepend. Defaults to None.
+
+        Returns:
+            list: A list of dictionaries representing messages.
+        """
         if system_message:
             return [
                 {"role": "system", "content": system_message},
@@ -1294,7 +1929,11 @@ class VLLMModel(Model):
 
 
 class _LocalVLLMDeploymentHandler:
-    """This class is used to handle the deployment of vLLM servers."""
+    """Handles the deployment of vLLM servers.
+
+    Attributes:
+        logs (list): References to logs of the servers, which contain PIDs for shutdown.
+    """
 
     # Chose against dataclass here so we have the option to accept kwargs
     # and pass them to the vLLM deployment script.
@@ -1316,6 +1955,24 @@ class _LocalVLLMDeploymentHandler:
         cpu_offload_gb: float = 0,
         ports: list = None,
     ):
+        """Initializes the local vLLM deployment handler.
+
+        Args:
+            model_name (str): Name or path of the model to deploy.
+            num_servers (int): Number of servers to deploy.
+            trust_remote_code (bool): Whether to trust remote code.
+            tensor_parallel_size (int): Number of tensor parallel instances.
+            pipeline_parallel_size (int): Number of pipeline parallel instances.
+            dtype (str): Data type used by the model.
+            quantization (str): Quantization method used.
+            seed (int): Random seed.
+            gpu_memory_utilization (float): Fraction of GPU memory to use.
+            cpu_offload_gb (float): Amount of CPU offloading in GB.
+            ports (list): List of ports at which servers will be hosted.
+        Raises:
+            ValueError: If model_name is not specified.
+            RuntimeError: If not all servers can be started.
+        """
         if not model_name:
             raise ValueError("LocalVLLM model_name must be specified.")
         self.model_name = model_name
@@ -1336,7 +1993,13 @@ class _LocalVLLMDeploymentHandler:
             raise RuntimeError(f"Failed to start all servers.")
 
     def _get_clients(self):
-        """Get clients to access vllm servers, by checking for running servers and deploying if necessary."""
+        """Gets clients to access vLLM servers.
+
+        Checks for running servers and deploys them if necessary.
+
+        Returns:
+            list: A list of OpenAIClient objects for each healthy server.
+        """
         from openai import OpenAI as OpenAIClient
 
         # If the user passes ports, check if the servers are running and populate clients accordingly.
@@ -1370,8 +2033,11 @@ class _LocalVLLMDeploymentHandler:
         raise RuntimeError(f"Failed to start all servers.")
 
     def get_healthy_ports(self) -> list[str]:
-        """Check if servers are running."""
+        """Checks if vLLM servers are running.
 
+        Returns:
+            list[str]: A list of ports that are healthy and running.
+        """
         healthy_ports = []
         for port in self.ports:
             try:
@@ -1382,8 +2048,11 @@ class _LocalVLLMDeploymentHandler:
         return healthy_ports
 
     def deploy_servers(self):
-        """Deploy vLLM servers in background threads using the specified parameters."""
+        """Deploys vLLM servers in background threads using the specified parameters.
 
+        Returns:
+            None
+        """
         logging.info(f"No vLLM servers are running. Starting {self.num_servers} new servers at {self.ports}.")
         import datetime
         import os
@@ -1402,8 +2071,18 @@ class _LocalVLLMDeploymentHandler:
             background_thread.start()
 
     def deploy_server(self, index: int, gpus_per_port: int, log_file: str):
-        """Deploy a single vLLM server using gpus_per_port many gpus starting at index*gpus_per_port."""
+        """Deploys a single vLLM server.
 
+        Uses gpus_per_port GPUs starting at index*gpus_per_port.
+
+        Args:
+            index (int): Index of the server to deploy.
+            gpus_per_port (int): Number of GPUs to allocate per server.
+            log_file (str): File path to store the server logs.
+
+        Returns:
+            None
+        """
         import subprocess
 
         port = 8000 + index
@@ -1442,8 +2121,11 @@ class _LocalVLLMDeploymentHandler:
 
     @classmethod
     def shutdown_servers(cls):
-        """Shutdown all vLLM servers deployed during this run."""
+        """Shuts down all vLLM servers deployed during this run.
 
+        Returns:
+            None
+        """
         import os
         import re
         import signal
@@ -1466,12 +2148,32 @@ local_vllm_deployment_handlers: dict[str, _LocalVLLMDeploymentHandler] = {}
 
 @dataclass
 class LocalVLLMModel(OpenAICommonRequestResponseMixIn, EndpointModel):
-    """This class is used for vLLM servers running locally.
+    """Represents a local vLLM server deployment.
 
-    In case the servers are already deployed, specify the
-    model_name and the ports at which the servers are hosted.
-    Otherwise instantiating will initiate a deployment with
-    any deployment parameters specified."""
+    In case the servers are already deployed, specify the model_name and the
+    ports at which the servers are hosted. Otherwise, instantiating this class
+    will initiate a server deployment using any specified deployment parameters.
+
+    Attributes:
+        model_name (str): Name or path of the model.
+        num_servers (int): Number of servers to deploy.
+        trust_remote_code (bool): Whether to trust remote code.
+        tensor_parallel_size (int): Number of tensor parallel instances.
+        pipeline_parallel_size (int): Number of pipeline parallel instances.
+        dtype (str): Data type used by the model.
+        quantization (str): Quantization method used by the model.
+        seed (int): Random seed.
+        gpu_memory_utilization (float): Fraction of GPU memory to use.
+        cpu_offload_gb (float): Amount of CPU offloading in GB.
+        ports (list): Ports at which servers are hosted or will be hosted.
+        handler (_LocalVLLMDeploymentHandler): Deployment handler instance.
+        temperature (float): Sampling temperature.
+        top_p (float): Nucleus sampling probability threshold.
+        top_k (int): Top-k sampling cutoff.
+        max_tokens (int): Maximum number of tokens in the generated response.
+        frequency_penalty (float): Frequency penalty.
+        presence_penalty (float): Presence penalty.
+    """
 
     model_name: str = None
 
@@ -1499,15 +2201,30 @@ class LocalVLLMModel(OpenAICommonRequestResponseMixIn, EndpointModel):
     presence_penalty: float = 0
 
     def __post_init__(self):
+        """Initializes the local vLLM model deployment.
+
+        Raises:
+            ValueError: If model_name is not specified.
+        """
         if not self.model_name:
             raise ValueError("LocalVLLM model_name must be specified.")
         self.handler = self._get_local_vllm_deployment_handler()
 
     @property
     def client(self):
+        """Randomly selects a client from the list of deployed servers.
+
+        Returns:
+            OpenAIClient: A client for sending requests to the vLLM server.
+        """
         return random.choice(self.handler.clients)
 
     def _get_local_vllm_deployment_handler(self):
+        """Gets or creates a local vLLM deployment handler for this model.
+
+        Returns:
+            _LocalVLLMDeploymentHandler: The handler responsible for server deployment.
+        """
         if self.model_name not in local_vllm_deployment_handlers:
             with local_vllm_model_lock:
                 if self.model_name not in local_vllm_deployment_handlers:
@@ -1528,12 +2245,28 @@ class LocalVLLMModel(OpenAICommonRequestResponseMixIn, EndpointModel):
         return local_vllm_deployment_handlers[self.model_name]
 
     def handle_request_error(self, e):
+        """Handles any request error that occurs during inference.
+
+        Args:
+            e (Exception): The exception raised during inference.
+
+        Returns:
+            bool: Always returns False indicating the request was not successful.
+        """
         return False
 
 
 @dataclass
 class ClaudeModel(EndpointModel, KeyBasedAuthMixIn):
-    """This class is used to interact with Claude models through the python api."""
+    """Interacts with Claude models through the Python API.
+
+    Attributes:
+        model_name (str): Name of the Claude model.
+        temperature (float): Sampling temperature.
+        max_tokens (int): Maximum number of tokens in the generated response.
+        top_p (float): Nucleus sampling probability threshold.
+        timeout (int): Request timeout in seconds.
+    """
 
     model_name: str = None
     temperature: float = 0
@@ -1542,6 +2275,11 @@ class ClaudeModel(EndpointModel, KeyBasedAuthMixIn):
     timeout: int = 60
 
     def __post_init__(self):
+        """Initializes the Claude client after dataclass fields are set.
+
+        Returns:
+            None
+        """
         super().__post_init__()
         self.client = anthropic.Anthropic(
             api_key=self.api_key,
@@ -1549,6 +2287,17 @@ class ClaudeModel(EndpointModel, KeyBasedAuthMixIn):
         )
 
     def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
+        """Creates a request payload for Claude.
+
+        Args:
+            text_prompt (str): The user's prompt.
+            query_images (optional): Additional images to encode and send. Defaults to None.
+            system_message (optional): A system message to prepend. Defaults to None.
+            previous_messages (optional): A list of previous conversation messages. Defaults to None.
+
+        Returns:
+            dict: A dictionary containing 'messages' and optionally 'system'.
+        """
         messages = []
         user_content = text_prompt
         if previous_messages:
@@ -1574,6 +2323,14 @@ class ClaudeModel(EndpointModel, KeyBasedAuthMixIn):
             return {"messages": messages}
 
     def get_response(self, request):
+        """Sends a request to the Claude model and gets a response.
+
+        Args:
+            request (dict): The request payload to be sent.
+
+        Returns:
+            dict: A dictionary containing "model_output", "response_time", and optionally "usage".
+        """
         start_time = time.time()
         completion = self.client.messages.create(
             model=self.model_name,
@@ -1594,12 +2351,32 @@ class ClaudeModel(EndpointModel, KeyBasedAuthMixIn):
         return response_dict
 
     def handle_request_error(self, e):
+        """Handles any request error that occurs during Claude inference.
+
+        Args:
+            e (Exception): The exception raised during inference.
+
+        Returns:
+            bool: Always returns False indicating the request was not successful.
+        """
         return False
 
 
 @dataclass
 class ClaudeReasoningModel(ClaudeModel):
-    """This class is used to interact with Claude reasoning models through the python api."""
+    """Interacts with Claude reasoning models through the Python API.
+
+    Allows usage of a 'thinking' parameter for advanced reasoning.
+
+    Attributes:
+        model_name (str): Name of the Claude reasoning model.
+        temperature (float): Sampling temperature.
+        max_tokens (int): Maximum number of tokens in the generated response.
+        timeout (int): Request timeout in seconds.
+        thinking_enabled (bool): Whether thinking mode is enabled.
+        thinking_budget (int): Token budget for thinking mode.
+        top_p (float): This parameter is not supported and will be ignored.
+    """
 
     model_name: str = None
     temperature: float = 1.0
@@ -1610,6 +2387,15 @@ class ClaudeReasoningModel(ClaudeModel):
     top_p: float = None
 
     def get_response(self, request):
+        """Sends a request to the Claude reasoning model and gets a response.
+
+        Args:
+            request (dict): The request payload to be sent.
+
+        Returns:
+            dict: A dictionary containing "model_output", "response_time",
+                "thinking_output", "redacted_thinking_output", and optionally "usage".
+        """
         model_output = None
         response_time = None
         thinking_output = None
@@ -1652,9 +2438,21 @@ class ClaudeReasoningModel(ClaudeModel):
 
 @dataclass
 class TestModel(Model):
-    # This class is used for testing purposes only. It only waits for a specified time and returns a response.
+    """A model used for testing purposes only.
+
+    This model waits for a specified time and returns a predetermined response.
+    """
 
     def generate(self, text_prompt, **kwargs):
+        """Generates a test response.
+
+        Args:
+            text_prompt (str): The input prompt (unused).
+
+        Returns:
+            dict: A dictionary containing "model_output", "is_valid", "response_time",
+                and "n_output_tokens".
+        """
         output = "This is a test response."
         is_valid = True
         return {

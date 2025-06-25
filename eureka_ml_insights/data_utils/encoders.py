@@ -1,11 +1,31 @@
+"""This module provides classes and functions for JSON encoding of numpy data types."""
+
 import json
 import base64
 import numpy as np
 
+
 class NumpyEncoder(json.JSONEncoder):
-    """Special json encoder for numpy types"""
+    """Encodes numpy data types into JSON-compatible formats.
+
+    Extends the standard json.JSONEncoder to handle numeric, array, and bytes
+    objects from numpy.
+    """
 
     def default(self, obj):
+        """Returns a JSON-serializable version of the given object.
+
+        If the object is a numpy integer or float, it is converted to the
+        appropriate Python type (int or float). If the object is a numpy array,
+        it is converted to a list. If the object is a bytes object, it is
+        Base64-encoded. Otherwise, the default json.JSONEncoder method is called.
+
+        Args:
+            obj (Any): The object to serialize.
+
+        Returns:
+            Any: A JSON-serializable representation of the given object.
+        """
         if isinstance(
             obj,
             (

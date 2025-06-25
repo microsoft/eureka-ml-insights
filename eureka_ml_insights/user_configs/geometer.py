@@ -1,3 +1,9 @@
+"""User-defined configuration classes for the geometric reasoning task on the Geometer dataset.
+
+This module defines a specialized experiment configuration class, which configures
+the pipeline for data processing, inference, and evaluation on the Geometer dataset.
+"""
+
 import os
 from typing import Any
 
@@ -11,7 +17,7 @@ from eureka_ml_insights.data_utils import (
 )
 from eureka_ml_insights.metrics import CountAggregator, GeoMCQMetric
 
-from eureka_ml_insights.configs import(
+from eureka_ml_insights.configs import (
     AggregatorConfig,
     DataSetConfig,
     EvalReportingConfig,
@@ -23,13 +29,27 @@ from eureka_ml_insights.configs import(
 )
 from eureka_ml_insights.configs import ExperimentConfig
 
-"""This file contains user defined configuration classes for the geometric reasoning task on geometer dataset.
-"""
 
 class GEOMETER_PIPELINE(ExperimentConfig):
+    """Configuration class for the GEOMETER pipeline.
+
+    This class provides methods to configure data processing, inference,
+    and evaluation components for the Geometer dataset.
+    """
+
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
+        """Configures the pipeline with data processing, inference, and evaluation steps.
+
+        Args:
+            model_config (ModelConfig): The model configuration to be used.
+            resume_from (str, optional): A path to resume inference from a previous checkpoint. Defaults to None.
+            **kwargs (dict[str, Any]): Additional keyword arguments.
+
+        Returns:
+            PipelineConfig: The configured pipeline object.
+        """
         # Configure the data processing component.
         data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
@@ -60,7 +80,7 @@ class GEOMETER_PIPELINE(ExperimentConfig):
             resume_from=resume_from,
         )
 
-        # # Configure the evaluation and reporting component.
+        # Configure the evaluation and reporting component.
         evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
             data_reader_config=DataSetConfig(
@@ -81,7 +101,7 @@ class GEOMETER_PIPELINE(ExperimentConfig):
             output_dir=os.path.join(self.log_dir, "eval_report"),
         )
 
-        # # Configure the pipeline
+        # Configure the pipeline
         return PipelineConfig(
             [
                 data_processing_comp,

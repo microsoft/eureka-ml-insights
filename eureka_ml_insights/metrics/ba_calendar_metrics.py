@@ -1,3 +1,11 @@
+"""
+This module provides functionality for validating and scoring meeting time slot solutions
+against specified constraints. It includes helper functions for parsing and filtering
+time slots, and a composite metric class (BACalendarMetric) that checks the solution
+format, availability, meeting duration, buffer time, weekend usage, time restrictions,
+specific times restrictions, and meeting priority.
+"""
+
 # This file was authored by BenchAgents authors and is being reused under the MIT license.
 # All code in this file is directly copied from the original source repository.
 # https://github.com/microsoft/benchagents
@@ -13,12 +21,32 @@ import pandas as pd
 
 from eureka_ml_insights.metrics.metrics_base import CompositeMetric
 
-# Helper functions
 def check_time_slot_format(solution):
+    """Check if the provided solution string matches the required time slot format.
+
+    The format is:
+    (Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday) HH:MM-HH:MM
+
+    Args:
+        solution (str): The proposed meeting time slot string.
+
+    Returns:
+        bool: True if it matches the required format, False otherwise.
+    """
     pattern = r"^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday) ([0-9]|[01]\d|2[0-3]):[0-5]\d-([0-9]|[01]\d|2[0-3]):[0-5]\d$"
     return bool(re.match(pattern, solution))
 
 def generate_time_slots(start_time, end_time, granularity):
+    """Generate time slots of a given granularity between start_time and end_time.
+
+    Args:
+        start_time (datetime): The start datetime.
+        end_time (datetime): The end datetime.
+        granularity (int): The size of each slot in minutes.
+
+    Returns:
+        list: A list of tuples representing start and end times for each slot.
+    """
     granularity=5
     slots = []
     current_time = start_time
@@ -28,12 +56,29 @@ def generate_time_slots(start_time, end_time, granularity):
     return slots
 
 def parse_time_block(time_block):
+    """Parse a string time block in the format 'HH:MM-HH:MM' into datetime objects.
+
+    Args:
+        time_block (str): The string representing a time block.
+
+    Returns:
+        tuple: A tuple of two datetime objects (start_time, end_time).
+    """
     start_str, end_str = time_block.split('-')
     start_time = datetime.strptime(start_str, "%H:%M")
     end_time = datetime.strptime(end_str, "%H:%M")
     return start_time, end_time
 
 def filter_slots_by_duration(time_slots, duration):
+    """Filter time slots by ensuring at least the specified duration from a starting slot.
+
+    Args:
+        time_slots (list): A list of tuples (start, end) for time slots.
+        duration (int): Required minimum duration in minutes.
+
+    Returns:
+        list: A list of tuples (start, end) that meet the minimum duration requirement.
+    """
     filtered_slots = []
     for i in range(len(time_slots)):
         accumulated_duration = timedelta()
@@ -45,6 +90,17 @@ def filter_slots_by_duration(time_slots, duration):
     return filtered_slots
 
 def filter_slots_by_constraints(time_slots, constraints, day):
+    """Filter the given time slots by various constraints (no meetings before/after,
+    no meetings on weekends, no meetings during specific times).
+
+    Args:
+        time_slots (list): A list of tuples (start_time, end_time) representing slots.
+        constraints (dict): A dictionary containing various meeting constraints.
+        day (str): The day of the week for the given time slots.
+
+    Returns:
+        list: A list of tuples (start_time, end_time) that satisfy all constraints.
+    """
     filtered_slots = []
     for slot in time_slots:
         start_time, end_time = slot
@@ -68,22 +124,40 @@ def filter_slots_by_constraints(time_slots, constraints, day):
     return filtered_slots
 
 class BACalendarMetric(CompositeMetric):
-    """
-    Composite metric for evaluating if a response for each criteria.
+    """A composite metric for evaluating if a response meets certain constraints.
 
-    This metric evaluates if a given response follows the provided constraints.
+    This metric checks the response's format, availability, meeting duration,
+    buffer time, weekend usage, time restrictions, specific time restrictions,
+    and meeting priority.
     """
 
     def __init__(self):
+        """Initialize the BACalendarMetric with a default no-solution response."""
         super().__init__()
         self.no_solution_response = "No common time slot available"
 
     def __evaluate__(self, row):
+        """Evaluate the row using programmatic tests.
+
+        Args:
+            row (dict): The row/instance data containing constraints and solutions.
+
+        Returns:
+            dict: A dictionary containing the results of the evaluation.
+        """
         results = {}
         results.update(self.run_programmatic_tests(row))
         return results
 
     def run_programmatic_tests(self, instance):
+        """Run programmatic tests for the provided instance.
+
+        Args:
+            instance (dict): The instance containing the solution and constraints.
+
+        Returns:
+            dict: A dictionary containing the outcomes of all programmatic checks.
+        """
         result = {}
         solution = instance['model_output']
         solution = solution.strip('"').strip('`').strip('\n')
@@ -111,22 +185,36 @@ class BACalendarMetric(CompositeMetric):
         return result
 
     def is_formatted(self, solution):
-        run_tests=True
+        """Check if the proposed solution is in the correct format.
+
+        Args:
+            solution (str): The proposed meeting time slot string.
+
+        Returns:
+            bool: True if the solution is correctly formatted, False otherwise.
+        """
+        run_tests = True
         if solution == self.no_solution_response:
-            run_tests=False
+            run_tests = False
         if not check_time_slot_format(solution):
-            run_tests=False
+            run_tests = False
         return run_tests
 
     def check_availability_programmatic(self, instance, solution):
+        """Check whether the solution meets the availability constraints for all participants.
+
+        Args:
+            instance (dict): The instance containing metadata (including availability) and constraints.
+            solution (str): The proposed meeting time slot.
+
+        Returns:
+            dict: A dictionary with the availability check result (1 or 0, or None if N/A).
+        """
         if not instance['constraints'].get('availability', True):
-            # result = {'availability_programmatic_check': 'NA'}
-            result = {'availability_programmatic_check': None}
-            return result
+            return {'availability_programmatic_check': None}
         
         if not self.is_formatted(solution):
-            result = {'availability_programmatic_check': 0}
-            return result
+            return {'availability_programmatic_check': 0}
 
         day, time_range = solution.split()
         start_time, end_time = parse_time_block(time_range)
@@ -150,14 +238,20 @@ class BACalendarMetric(CompositeMetric):
         return {'availability_programmatic_check': all_available}
 
     def check_meeting_duration_programmatic(self, instance, solution):
+        """Check if the proposed solution's meeting duration matches the expected duration.
+
+        Args:
+            instance (dict): The instance containing constraints (including meeting_duration).
+            solution (str): The proposed meeting time slot.
+
+        Returns:
+            dict: A dictionary with the meeting duration check result (1 or 0, or None if N/A).
+        """
         if not instance['constraints'].get('meeting_duration', True):
-            # result = {'meeting_duration_programmatic_check': 'NA'}
-            result = {'meeting_duration_programmatic_check': None}
-            return result
+            return {'meeting_duration_programmatic_check': None}
         
         if not self.is_formatted(solution):
-            result = {'meeting_duration_programmatic_check': 0}
-            return result
+            return {'meeting_duration_programmatic_check': 0}
 
         _, time_range = solution.split()
         start_time, end_time = parse_time_block(time_range)
@@ -166,17 +260,22 @@ class BACalendarMetric(CompositeMetric):
 
         return {'meeting_duration_programmatic_check': int(meeting_duration == expected_duration)}
 
-
     def check_buffer_time_programmatic(self, instance, solution):
+        """Check if the solution respects the required buffer time before and after the meeting.
+
+        Args:
+            instance (dict): The instance containing constraints (including buffer_time_before_and_after_meeting).
+            solution (str): The proposed meeting time slot.
+
+        Returns:
+            dict: A dictionary with the buffer time check result (1 or 0, or None if N/A).
+        """
         buffer_time = instance['constraints'].get('buffer_time_before_and_after_meeting', True)
         if buffer_time is None or not buffer_time:
-            # result = {'buffer_time_programmatic_check': 'NA'}
-            result = {'buffer_time_programmatic_check': None}
-            return result
+            return {'buffer_time_programmatic_check': None}
         
         if not self.is_formatted(solution):
-            result = {'buffer_time_programmatic_check': 0}
-            return result
+            return {'buffer_time_programmatic_check': 0}
 
         buffer_time = instance['constraints']['buffer_time_before_and_after_meeting']
         day, time_range = solution.split()
@@ -203,8 +302,16 @@ class BACalendarMetric(CompositeMetric):
         return {'buffer_time_programmatic_check': all_buffer_respected}
 
     def check_no_weekends_programmatic(self, instance, solution):
+        """Check if the proposed solution does not fall on weekends, if that constraint is required.
+
+        Args:
+            instance (dict): The instance containing constraints (including no_meetings_on_weekends).
+            solution (str): The proposed meeting time slot.
+
+        Returns:
+            dict: A dictionary with the weekend check result (1 or 0, or None if N/A).
+        """
         if not instance['constraints'].get('no_meetings_on_weekends', True):
-            # return {'no_weekends_programmatic_check': 'NA'}
             return {'no_weekends_programmatic_check': None}
         
         if not self.is_formatted(solution):
@@ -216,8 +323,16 @@ class BACalendarMetric(CompositeMetric):
         return {'no_weekends_programmatic_check': int(no_weekends)}
 
     def check_time_restrictions_programmatic(self, instance, solution):
+        """Check if the proposed solution adheres to the no_meetings_before and no_meetings_after constraints.
+
+        Args:
+            instance (dict): The instance containing constraints for time restrictions.
+            solution (str): The proposed meeting time slot.
+
+        Returns:
+            dict: A dictionary indicating if the time restrictions are satisfied.
+        """
         if not instance['constraints'].get('no_meetings_before', True) and not instance['constraints'].get('no_meetings_after', True):
-            # return {'time_restrictions_programmatic_check': 'NA'}
             return {'time_restrictions_programmatic_check': None}
         
         if not self.is_formatted(solution):
@@ -243,8 +358,19 @@ class BACalendarMetric(CompositeMetric):
         return {'time_restrictions_programmatic_check': 1}
 
     def check_priority_programmatic(self, instance, solution):
+        """Check if the proposed solution meets the high-priority meeting constraint, if enabled.
+
+        This involves ensuring the selected time slot is the earliest possible slot
+        that meets all constraints.
+
+        Args:
+            instance (dict): The instance containing constraints, metadata, and parameters.
+            solution (str): The proposed meeting time slot.
+
+        Returns:
+            dict: A dictionary indicating if the proposed solution meets the priority constraints.
+        """
         if not instance['constraints'].get('high_priority_meeting', False):
-            # return {'priority_programmatic_check': 'NA'}
             return {'priority_programmatic_check': None}
         
         if not self.is_formatted(solution):
@@ -258,7 +384,7 @@ class BACalendarMetric(CompositeMetric):
             buffer_time = constraints['buffer_time_before_and_after_meeting']
         else:
             buffer_time = 0
-        for day in params['days_of_week']: # TODO: revisit this post data release to ensure consistency
+        for day in params['days_of_week']:
             common_time_slots = None
             availability = json.loads(metadata['availability'].replace("'", '"'))
             for participant, schedule in availability.items():
@@ -282,8 +408,16 @@ class BACalendarMetric(CompositeMetric):
         return {'priority_programmatic_check': int(result)}
 
     def check_specific_times_programmatic(self, instance, solution):
+        """Check if the proposed solution avoids times when meetings are disallowed.
+
+        Args:
+            instance (dict): The instance containing constraints (including no_meetings_during_specific_times).
+            solution (str): The proposed meeting time slot.
+
+        Returns:
+            dict: A dictionary indicating if the specific times constraint is satisfied.
+        """
         if not instance['constraints'].get('no_meetings_during_specific_times', True):
-            # return {'specific_times_programmatic_check': 'NA'}
             return {'specific_times_programmatic_check': None}
         
         if not self.is_formatted(solution):
@@ -301,10 +435,17 @@ class BACalendarMetric(CompositeMetric):
         return {'specific_times_programmatic_check': result}
 
     def compute_constrainedness_programmatic(self, instance):
-        """
-        Compute the constrainedness of the problem based on the constraints and availability.
-        The constrainedness is defined as (1 - the ratio of feasible slots to total slots).
-        The higher the constrainedness, the more constrained the problem is.
+        """Compute the problem's constrainedness based on constraints and availability.
+
+        Constrainedness is defined as (1 - the ratio of feasible slots to total slots).
+        The higher the constrainedness, the more constrained the problem is. The result
+        is also bucketed into intervals of 0.1.
+
+        Args:
+            instance (dict): The instance containing constraints, availability, and parameters.
+
+        Returns:
+            dict: A dictionary containing 'constrainedness' and 'constrainedness_bucket'.
         """
         params = instance['params']
         constraints = instance['constraints']
@@ -341,9 +482,9 @@ class BACalendarMetric(CompositeMetric):
                     else:
                         union_time_slots = union_time_slots.union(participant_time_slots_unconstrained)
             if common_time_slots:
-                feasible_slots +=len(common_time_slots)
+                feasible_slots += len(common_time_slots)
             if union_time_slots:
-                total_slots+=len(union_time_slots)
+                total_slots += len(union_time_slots)
 
         # Calculate constrainedness ratio
         if total_slots > 0:
@@ -354,6 +495,4 @@ class BACalendarMetric(CompositeMetric):
         # Bucket the constrainedness ratio into intervals of 0.2
         constrainedness_bucket = round(math.floor(constrainedness_ratio / 0.1) * 0.1, 4)
 
-        # Add test result
         return {'constrainedness': constrainedness_ratio, 'constrainedness_bucket': constrainedness_bucket}
-        

@@ -1,3 +1,7 @@
+"""
+This module defines the AIME_SEQ_PIPELINE class and configures the iterative pipeline used in the AIME benchmark.
+"""
+
 import os
 from typing import Any
 
@@ -52,11 +56,30 @@ resume_from_dict = {}
 
 
 class AIME_SEQ_PIPELINE(AIME_PIPELINE):
-    """This class specifies the config for running AIME benchmark on any model"""
+    """
+    Specifies the configuration for running the AIME benchmark on any model.
+
+    This class inherits from AIME_PIPELINE and configures multiple inference steps, verification,
+    hint generation, and other steps used in the AIME benchmark pipeline.
+    """
 
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
+        """
+        Configures the iterative pipeline for the AIME benchmark.
+
+        This method sets up multiple inference steps, verification processes, and hint generation
+        to iteratively refine the solution to the AIME question.
+
+        Args:
+            model_config (ModelConfig): The configuration for the model.
+            resume_from (str, optional): The checkpoint or directory to resume from. Defaults to None.
+            **kwargs (dict[str, Any]): Additional arguments to pass to the pipeline configuration.
+
+        Returns:
+            PipelineConfig: The complete configuration for the AIME pipeline.
+        """
 
         # this call to super will configure the initial prompt processing and final eval reporting comps that can be reused.
         super().configure_pipeline(model_config, resume_from, **kwargs)

@@ -1,3 +1,9 @@
+"""
+This module provides functions for retrieving secrets from Azure Key Vault or a local JSON file cache.
+It includes functionality to look up secrets locally, fall back to Azure if necessary,
+and optionally cache new secrets in a local JSON file.
+"""
+
 import json
 import logging
 import os
@@ -9,16 +15,20 @@ from azure.keyvault.secrets import SecretClient
 logging.basicConfig(level=logging.INFO, format="%(filename)s - %(funcName)s - %(message)s")
 
 
-def get_secret(key_name: str, local_keys_path:Optional[str]=None, key_vault_url:Optional[str]=None) -> Optional[str]:
-    """This function retrieves a key from key vault or if it is locally cached in a file.
-    args:
-        key_name: str, the name of the key to retrieve.
-        local_keys_path: str, the path to the keys file where the key is cached or should be cached by this method.
-        key_vault_url: str, the url of the key vault to retrieve the key from if not found in the local keys file.
-    Returns:
-        key_value: str, the value of the key if found, otherwise None.
+def get_secret(key_name: str, local_keys_path: Optional[str] = None, key_vault_url: Optional[str] = None) -> Optional[str]:
     """
+    Retrieves a key from Azure Key Vault or a local file cache.
 
+    Args:
+        key_name (str): The name of the key to retrieve.
+        local_keys_path (Optional[str], optional): The path to the keys file where the key is
+            cached or should be cached by this method.
+        key_vault_url (Optional[str], optional): The URL of the key vault to retrieve the key
+            from if not found in the local keys file.
+
+    Returns:
+        Optional[str]: The value of the key if found, otherwise None.
+    """
     keys_dict = {}
 
     # make sure one of local_keys_path or key_vault_url is provided
@@ -38,7 +48,8 @@ def get_secret(key_name: str, local_keys_path:Optional[str]=None, key_vault_url:
     if key_value is None:
         if key_vault_url is None:
             raise ValueError(
-                f"Key [{key_name}] not found in local keys file [{local_keys_path}] and key_vault_url is not provided."
+                f"Key [{key_name}] not found in local keys file [{local_keys_path}] and "
+                f"key_vault_url is not provided."
             )
         else:
             key_value = get_key_from_azure(key_name, key_vault_url)
@@ -60,12 +71,15 @@ def get_secret(key_name: str, local_keys_path:Optional[str]=None, key_vault_url:
 
 
 def get_key_from_azure(key_name: str, key_vault_url: str) -> Optional[str]:
-    """This function retrieves a key from azure key vault.
-    args:
-        key_name: str, the name of the key to retrieve.
-        key_vault_url: str, the url of the key vault to retrieve the key from.
+    """
+    Retrieves a key from Azure Key Vault.
+
+    Args:
+        key_name (str): The name of the key to retrieve.
+        key_vault_url (str): The URL of the Azure Key Vault to retrieve the key from.
+
     Returns:
-        key_value: str, the value of the key if found, otherwise None.
+        Optional[str]: The value of the key if found, otherwise None.
     """
     logging.getLogger("azure").setLevel(logging.ERROR)
     try:
@@ -90,13 +104,17 @@ def get_key_from_azure(key_name: str, key_vault_url: str) -> Optional[str]:
 
 
 def get_key_from_local_file(key_name: str, local_keys_path: str) -> tuple[Optional[str], Dict[str, str]]:
-    """This function retrieves a key from a local file.
-    args:
-        key_name: str, the name of the key to retrieve.
-        local_keys_path: str, the path to the local keys file.
+    """
+    Retrieves a key from a local file.
+
+    Args:
+        key_name (str): The name of the key to retrieve.
+        local_keys_path (str): The path to the local keys file.
+
     Returns:
-        key_value: str, the value of the key if found in the local file, otherwise None.
-        keys_dict: dict, a dictionary containing the keys cached in the local file.
+        tuple[Optional[str], Dict[str, str]]: A tuple containing:
+            - Optional[str]: The value of the key if found in the local file, otherwise None.
+            - Dict[str, str]: A dictionary containing the keys cached in the local file.
     """
     keys_dict = {}
     key_value = None
@@ -110,12 +128,15 @@ def get_key_from_local_file(key_name: str, local_keys_path: str) -> tuple[Option
 
 
 def get_cached_keys_dict(local_keys_path: str) -> Dict[str, str]:
-    """This function retrieves the keys cached in local json file.
-    args:
-        local_keys_path: str, the path to the local keys file.
+    """
+    Retrieves the cached keys from a local JSON file.
+
+    Args:
+        local_keys_path (str): The path to the local keys file.
+
     Returns:
-        keys_dict: dict, a dictionary containing the keys cached in the local file
-                   or an empty dictionary if the file does not exist or can't be decoded.
+        Dict[str, str]: A dictionary containing the keys cached in the local file,
+        or an empty dictionary if the file does not exist or cannot be decoded.
     """
     try:
         with open(local_keys_path, "r") as file:

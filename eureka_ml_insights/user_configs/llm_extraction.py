@@ -1,21 +1,30 @@
 import os
 
-"""This file contains the LLM_EXTRACTION_SUBPIPELINE_MIXIN class, which is used to configure the LLM extraction subpipeline.
-To be used after the extraction attempt component in the main pipeline which should be a DataProcessing component passed to the configure_subpipeline method.
-The transformed_data.jsonl file from the extraction attempt component is used as input to the LLM extraction subpipeline, and must contain the following columns:
+"""
+Module for configuring the LLM extraction subpipeline.
+
+This module contains the LLM_EXTRACTION_SUBPIPELINE_MIXIN class, which is used to
+configure the LLM extraction subpipeline. Use it after the extraction attempt
+component in the main pipeline, which should be a DataProcessing component passed
+to the configure_subpipeline method.
+
+The transformed_data.jsonl file from the extraction attempt component is used as
+input to the LLM extraction subpipeline, and must contain the following columns:
 - prompt
 - uid
 - data_point_id (optional) is added in this subpipeline if not present
 - data_repeat_id (optional) is added in this subpipeline if not present
 - {extracted_answer_col}
-The output of the LLM extraction subpipeline is a transformed_data.jsonl file with the following new/updated columns:
+
+The output of the LLM extraction subpipeline is a transformed_data.jsonl file with
+the following new/updated columns:
 - prompt (the prompt used for the LLM extraction)
 - original_prompt (the original prompt present in the input data to this subpipeline)
 - data_repeat_id (if not already present in the input data)
 - data_point_id (if not already present in the input data)
-- {extracted_answer_col} column containing the llm-extracted answer where the original extracted_answer_col was empty
+- {extracted_answer_col} column containing the LLM-extracted answer where the
+  original extracted_answer_col was empty.
 """
-
 
 from eureka_ml_insights.configs import (
     DataJoinConfig,
@@ -41,7 +50,12 @@ from eureka_ml_insights.data_utils import (
 
 
 class LLM_EXTRACTION_SUBPIPELINE_MIXIN:
-    """This class specifies the config for running the LLM extraction subpipeline"""
+    """
+    Configures the LLM extraction subpipeline.
+
+    This mixin is used to define the steps needed for extracting answers
+    using a large language model (LLM) in a subpipeline.
+    """
 
     def configure_subpipeline(
         self,
@@ -55,17 +69,28 @@ class LLM_EXTRACTION_SUBPIPELINE_MIXIN:
         not_extracted_answer_value: str = "",
     ):
         """
+        Configures and returns the LLM extraction subpipeline components.
+
         Args:
-            extraction_attempt_component: DataProcessing component that was used to extract the answer.
-            extracted_answer_col: str name of the column that contains the extracted answer in the output of the extraction_attempt_component.
-            llm_extraction_prompt_template: str path to the prompt template file for the LLM extraction.
-            llm_extractor_model_config: ModelConfig config for the LLM model to be used for extraction.
-            log_dir: str directory corresponding to the output directory of the calling pipeline.
-            llm_extractor_max_concurrent: int max_concurrent parameter for the inference component used for LLM extraction.
-            llm_extractor_answer_transforms: list of transforms to be applied to the model output after the LLM extraction.
-            not_extracted_answer_value: str placeholder that signals no valid answer yet in the extracted_answer_col.
+            extraction_attempt_component (DataProcessing): DataProcessing component that
+                was used to extract the answer.
+            extracted_answer_col (str): Name of the column that contains the extracted
+                answer in the output of the extraction_attempt_component.
+            llm_extraction_prompt_template (str): Path to the prompt template file for
+                the LLM extraction.
+            llm_extractor_model_config (ModelConfig): Config for the LLM model to be
+                used for extraction.
+            log_dir (str): Directory corresponding to the output directory of the
+                calling pipeline.
+            llm_extractor_max_concurrent (int, optional): max_concurrent parameter for
+                the inference component used for LLM extraction. Defaults to 1.
+            llm_extractor_answer_transforms (list, optional): List of transforms to be
+                applied to the model output after the LLM extraction. Defaults to [].
+            not_extracted_answer_value (str, optional): Placeholder that signals no valid
+                answer yet in the extracted_answer_col. Defaults to "".
+
         Returns:
-            list of components that constitute the LLM extraction subpipeline.
+            list: A list of components that constitute the LLM extraction subpipeline.
         """
 
         self.filter_empty_answer = PromptProcessingConfig(

@@ -1,3 +1,16 @@
+"""Module containing example user-defined configuration classes for the spatial map task.
+
+In order to define a new configuration, a new class must be created that directly or indirectly
+inherits from UserDefinedConfig and the user_init method should be implemented. You can inherit
+from one of the existing user-defined classes below and override the necessary attributes to
+reduce the amount of code you need to write.
+
+The user-defined configuration classes are used to define your desired pipeline that can include
+any number of components. Find component options in the core module.
+
+Pass the name of the class to the main.py script to run the pipeline.
+"""
+
 import os
 
 from eureka_ml_insights.configs.experiment_config import ExperimentConfig
@@ -37,24 +50,20 @@ from eureka_ml_insights.configs import (
 )
 from eureka_ml_insights.configs.model_configs import OAI_GPT4O_2024_11_20_CONFIG
 
-"""This file contains example user defined configuration classes for the spatial map task.
-In order to define a new configuration, a new class must be created that directly or indirectly
- inherits from UserDefinedConfig and the user_init method should be implemented.
-You can inherit from one of the existing user defined classes below and override the necessary
-attributes to reduce the amount of code you need to write.
-
-The user defined configuration classes are used to define your desired *pipeline* that can include
-any number of *component*s. Find *component* options in the core module.
-
-Pass the name of the class to the main.py script to run the pipeline.
-"""
-
 
 class SPATIAL_MAP_PIPELINE(ExperimentConfig):
-    """This method is used to define an eval pipeline with inference and metric report components,
-    on the spatial map dataset."""
+    """Defines an evaluation pipeline with inference and metric report components on the spatial map dataset."""
 
     def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
+        """Configures the pipeline by setting up data processing, inference, evaluation, and other components for the spatial map dataset.
+
+        Args:
+            model_config (ModelConfig): Configuration for the model to be used.
+            resume_from (str, optional): Path to resume from. Defaults to None.
+
+        Returns:
+            PipelineConfig: The configured pipeline.
+        """
         # Configure the data processing component.
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
@@ -322,7 +331,7 @@ class SPATIAL_MAP_PIPELINE(ExperimentConfig):
                         ],
                         "first_groupby": "data_point_id",
                         "filename_base": "UsageCompletion_BestOfN",
-                         "agg_fn": "sum"
+                        "agg_fn": "sum"
                     },
                 ),
             ],
@@ -440,31 +449,65 @@ class SPATIAL_MAP_PIPELINE(ExperimentConfig):
             ],
             self.log_dir,
         )
+
+
 class SPATIAL_MAP_COT_PIPELINE(SPATIAL_MAP_PIPELINE):
-    """This class extends SPATIAL_MAP_PIPELINE to use a COT prompt."""
+    """Extends SPATIAL_MAP_PIPELINE to use a chain-of-thought (CoT) prompt."""
 
     def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
+        """Configures the pipeline by setting up data processing, inference, evaluation, and other components
+        for the spatial map dataset with a chain-of-thought prompt.
+
+        Args:
+            model_config (ModelConfig): Configuration for the model to be used.
+            resume_from (str, optional): Path to resume from. Defaults to None.
+
+        Returns:
+            PipelineConfig: The configured pipeline.
+        """
         config = super().configure_pipeline(model_config, resume_from)
-        self.data_processing_comp.prompt_template_path=os.path.join(
-                os.path.dirname(__file__),
-                "../../prompt_templates/vision_language_templates/cot.jinja",
-            )
+        self.data_processing_comp.prompt_template_path = os.path.join(
+            os.path.dirname(__file__),
+            "../../prompt_templates/vision_language_templates/cot.jinja",
+        )
         return config
 
+
 class SPATIAL_MAP_TEXTONLY_PIPELINE(SPATIAL_MAP_PIPELINE):
-    """This class extends SPATIAL_MAP_PIPELINE to use text only data."""
+    """Extends SPATIAL_MAP_PIPELINE to use text-only data."""
 
     def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
+        """Configures the pipeline by setting up data processing, inference, evaluation, and other components
+        for the spatial map dataset with text-only data.
+
+        Args:
+            model_config (ModelConfig): Configuration for the model to be used.
+            resume_from (str, optional): Path to resume from. Defaults to None.
+
+        Returns:
+            PipelineConfig: The configured pipeline.
+        """
         config = super().configure_pipeline(model_config, resume_from)
         self.data_processing_comp.data_reader_config.init_args["tasks"] = (
             "spatial_map_text_only"
         )
         return config
 
+
 class SPATIAL_MAP_COT_TEXTONLY_PIPELINE(SPATIAL_MAP_COT_PIPELINE):
-    """This class extends SPATIAL_MAP_PIPELINE to use text only data."""
+    """Extends SPATIAL_MAP_COT_PIPELINE to use text-only data."""
 
     def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
+        """Configures the pipeline by setting up data processing, inference, evaluation, and other components
+        for the spatial map dataset with text-only data and a chain-of-thought prompt.
+
+        Args:
+            model_config (ModelConfig): Configuration for the model to be used.
+            resume_from (str, optional): Path to resume from. Defaults to None.
+
+        Returns:
+            PipelineConfig: The configured pipeline.
+        """
         config = super().configure_pipeline(model_config, resume_from)
         self.data_processing_comp.data_reader_config.init_args["tasks"] = (
             "spatial_map_text_only"
@@ -473,10 +516,18 @@ class SPATIAL_MAP_COT_TEXTONLY_PIPELINE(SPATIAL_MAP_COT_PIPELINE):
 
 
 class SPATIAL_MAP_REPORTING_PIPELINE(SPATIAL_MAP_PIPELINE):
-    """This method is used to define an eval pipeline with only a metric report component,
-    on the spatial map dataset."""
+    """Defines an evaluation pipeline with only a metric report component on the spatial map dataset."""
 
     def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
+        """Configures the pipeline by setting up evaluation and reporting components only, on the spatial map dataset.
+
+        Args:
+            model_config (ModelConfig): Configuration for the model to be used.
+            resume_from (str, optional): Path to the data on which to run the metric report. Defaults to None.
+
+        Returns:
+            PipelineConfig: The configured pipeline.
+        """
         super().configure_pipeline(model_config, resume_from)
         self.preeval_data_post_processing_comp.data_reader_config.init_args["path"] = resume_from
         # Configure the pipeline
