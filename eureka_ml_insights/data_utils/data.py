@@ -18,6 +18,7 @@ from eureka_ml_insights.secret_management import get_secret
 
 from .encoders import NumpyEncoder
 from .transform import DFTransformBase
+import time
 
 log = logging.getLogger("data_reader")
 
@@ -625,12 +626,23 @@ class HFDataReader(DataReader):
         if self.tasks is not None and not isinstance(self.tasks, list):
             self.tasks = [self.tasks]
         df_frames = []
+
+        def safe_load_dataset(*args, **kwargs):
+            for attempt in range(5):
+                try:
+                    return load_dataset(*args, **kwargs)
+                except Exception as e:
+                    wait_time = 2 ** attempt
+                    print(f"Load failed (attempt {attempt + 1}/5): {e}. Retrying in {wait_time}s...")
+                    time.sleep(wait_time)
+            raise RuntimeError("Failed to load dataset after 5 attempts.")
+    
         if self.tasks is None:
             if self.load_data_from_disk:
                 dataset_dict = load_from_disk(self.path)
                 hf_dataset = [dataset_dict[split] for split in self.split]
             else:
-                hf_dataset = load_dataset(self.path, cache_dir=self.cache_dir, split=self.split)
+                hf_dataset = safe_load_dataset(self.path, cache_dir=self.cache_dir, split=self.split)
             for i, data_split in enumerate(hf_dataset):
                 task_df = self._hf_to_dataframe(data_split)
                 task_df["__hf_split"] = self.split[i]
@@ -641,7 +653,7 @@ class HFDataReader(DataReader):
                     dataset_dict = load_from_disk(self.path)
                     hf_dataset = [dataset_dict[task][split] for split in self.split]
                 else:
-                    hf_dataset = load_dataset(self.path, task, cache_dir=self.cache_dir, split=self.split)
+                    hf_dataset = safe_load_dataset(self.path, task, cache_dir=self.cache_dir, split=self.split)
                 for i, data_split in enumerate(hf_dataset):
                     task_df = self._hf_to_dataframe(data_split)
                     task_df["__hf_task"] = task
