@@ -39,6 +39,10 @@ class MATHVISTA_PIPELINE(ExperimentConfig):
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
+        
+        # Get the user provided LLM judge configuration, defaulting to PERSONAL_GPT4O if not provided.
+        LLM_JUDGE_CONFIG = kwargs.get("llm_judge_config", PERSONAL_GPT4O)
+
         # Configure the data processing component.
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,

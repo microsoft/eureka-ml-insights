@@ -109,7 +109,7 @@ class MMMU_BASELINE_PIPELINE(ExperimentConfig):
 class MMMU_COT_PIPELINE(MMMU_BASELINE_PIPELINE):
     """This class extends MMMU_BASELINE_PIPELINE to use a COT prompt."""
 
-    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any] ) -> PipelineConfig:
         config = super().configure_pipeline(model_config, resume_from)
         self.data_processing_comp.prompt_template_path=os.path.join(
                 os.path.dirname(__file__),

@@ -38,6 +38,10 @@ class MATHVERSE_PIPELINE(ExperimentConfig):
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
+        
+        # Get the user provided LLM judge configuration, defaulting to PERSONAL_GPT4O if not provided.
+        LLM_JUDGE_CONFIG = kwargs.get("llm_judge_config", PERSONAL_GPT4O)
+
         # Configure the data processing component.
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
@@ -90,7 +94,7 @@ class MATHVERSE_PIPELINE(ExperimentConfig):
         # Eval Inference component round 1 (answer extraction).
         self.eval_inference_comp = InferenceConfig(
             component_type=Inference,
-            model_config=PERSONAL_GPT4O,
+            model_config=LLM_JUDGE_CONFIG,
             data_loader_config=DataSetConfig(
                 MMDataLoader,
                 {"path": os.path.join(self.eval_data_pre_processing.output_dir, "transformed_data.jsonl"), "load_images":False},
@@ -119,7 +123,7 @@ class MATHVERSE_PIPELINE(ExperimentConfig):
         # Eval Inference component round 2 (LLM scoring)
         self.eval_inference_comp_two = InferenceConfig(
             component_type=Inference,
-            model_config=PERSONAL_GPT4O,
+            model_config=LLM_JUDGE_CONFIG,
             data_loader_config=DataSetConfig(
                 MMDataLoader,
                 {"path": os.path.join(self.eval_data_pre_processing_two.output_dir, "transformed_data.jsonl"), "load_images":False},
