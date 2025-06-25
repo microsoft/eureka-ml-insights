@@ -96,6 +96,7 @@ from .vision_language.spatial_map import (
     SPATIAL_MAP_REPORTING_PIPELINE,
     SPATIAL_MAP_TEXTONLY_PIPELINE,
 )
+from .vstar_bench import VSTAR_BENCH_PIPELINE
 
 __all__ = [
     LLM_EXTRACTION_SUBPIPELINE_MIXIN,
@@ -173,4 +174,5 @@ __all__ = [
     NPHARD_SAT_HYBRIDEXTRACT_PIPELINE,
     FLICKR30K_PIPELINE,
     NOCAPS_PIPELINE,
+    VSTAR_BENCH_PIPELINE,
 ]
