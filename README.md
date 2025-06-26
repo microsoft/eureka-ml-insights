@@ -12,9 +12,9 @@ This repository contains the code for the Eureka ML Insights framework. The fram
 
 - **[2025/5/20]**: <img src=https://huggingface.co/front/assets/huggingface_logo-noborder.svg width="16"> We have uploaded logs from all experiment reported in our papers on [HuggingFace](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/tree/main). 
 - **[2025/4/29]**: <img src=readme_docs/figures/msr_blog.png width="16"> New blog post out [Eureka Inference-Time Scaling Insights: Where We Stand and What Lies Ahead](https://www.microsoft.com/en-us/research/articles/eureka-inference-time-scaling-insights-where-we-stand-and-what-lies-ahead/)
-- **[2025/3/31]**: <img src=readme_docs/figures/arxiv_logo.png width="16"> We have a new technical report out [Inference-Time Scaling for Complex Tasks: Where We Stand and What Lies Ahead](https://arxiv.org/abs/2504.00294)
+- **[2025/3/31]**: <img src=readme_docs/figures/arxiv_logo.svg width="16"> We have a new technical report out [Inference-Time Scaling for Complex Tasks: Where We Stand and What Lies Ahead](https://arxiv.org/abs/2504.00294)
 - **[2024/9/17]**: <img src=readme_docs/figures/msr_blog.png width="16"> New blog post out [Eureka: Evaluating and understanding progress in AI](https://aka.ms/eureka-ml-insights-blog)
-- **[2024/9/17]**: <img src=readme_docs/figures/arxiv_logo.png width="16"> New technical report out [Eureka: Evaluating and Understanding Large Foundation Models](https://arxiv.org/abs/2409.10566)
+- **[2024/9/17]**: <img src=readme_docs/figures/arxiv_logo.svg width="16"> New technical report out [Eureka: Evaluating and Understanding Large Foundation Models](https://arxiv.org/abs/2409.10566)
 ## Table of Contents
 - [Eureka ML Insights Framework](#eureka-ml-insights-framework)
   - [📰 News](#-news)
