@@ -4,20 +4,15 @@ from typing import Any
 from eureka_ml_insights.configs.experiment_config import ExperimentConfig
 from eureka_ml_insights.core import EvalReporting, Inference, PromptProcessing
 from eureka_ml_insights.data_utils import (
-    ASTEvalTransform,
     ColumnRename,
     CopyColumn,
     DataReader,
-    MapStringsTransform,
+    ExtractBoundingBox,
+    SamplerTransform,
     MMDataLoader,
     SequenceTransform,
 )
-from eureka_ml_insights.data_utils.mmmu_utils import (
-    CreateMMMUPrompts,
-    MMMUAll,
-    MMMUTaskToCategories,
-)
-from eureka_ml_insights.metrics import CountAggregator, MMMUMetric
+from eureka_ml_insights.metrics import CountAggregator, BiLevelCountAggregator, BboxMetric
 
 from eureka_ml_insights.configs import(
     AggregatorConfig,
@@ -44,9 +39,10 @@ class SCREENSPOT_PIPELINE(ExperimentConfig):
         data_reader_config=DataSetConfig(
             DataReader,
             {
-                "path": "/mnt/phimmwestus3_datasets/EVAL/ScreenSpot/screenspot_desktop.json",                
+                "path": "/mnt/phimmwestus3_datasets/EVAL/ScreenSpot/screenspot_all.jsonl",                
                 "transform": SequenceTransform(
                     [
+                        #SamplerTransform(sample_count=2, random_seed=42),                   
                         ColumnRename(name_mapping={"img_filename": "image"}),
                     ]
                 ),
@@ -72,37 +68,44 @@ class SCREENSPOT_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
+            max_concurrent=20,
         )
 
-        # # Configure the evaluation and reporting component.
-        # self.evalreporting_comp = EvalReportingConfig(
-        #     component_type=EvalReporting,
-        #     data_reader_config=DataSetConfig(
-        #         DataReader,
-        #         {
-        #             "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
-        #             "format": ".jsonl",
-        #             "transform": SequenceTransform(
-        #                 [
-        #                     CopyColumn(column_name_src="__hf_task", column_name_dst="category"),
-        #                     MapStringsTransform(
-        #                         columns=["category"],
-        #                         mapping=MMMUTaskToCategories,
-        #                     ),
-        #                 ]
-        #             ),
-        #         },
-        #     ),
-        #     metric_config=MetricConfig(MMMUMetric),
-        #     aggregator_configs=[
-        #         AggregatorConfig(CountAggregator, {"column_names": ["MMMUMetric_result"], "normalize": True}),
-        #         AggregatorConfig(
-        #             CountAggregator,
-        #             {"column_names": ["MMMUMetric_result"], "group_by": "category", "normalize": True},
-        #         ),
-        #     ],
-        #     output_dir=os.path.join(self.log_dir, "eval_report"),
-        #)
+        self.evalreporting_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            ColumnRename(name_mapping={"model_output": "model_output_raw"}),
+                            ExtractBoundingBox(
+                                answer_column_name="model_output_raw",
+                                extracted_answer_column_name="model_output",
+                            ),
+                        ],
+                    ),
+                },
+            ),
+            metric_config=MetricConfig(BboxMetric),
+            aggregator_configs=[
+                AggregatorConfig(CountAggregator, {"column_names": ["BboxMetric_result"], "normalize": True}),
+                AggregatorConfig(
+                    BiLevelCountAggregator,
+                    {
+                        "column_names": [
+                            "BboxMetric_result",
+                        ],
+                        "first_groupby": "task",
+                        "second_groupby": "data_type",
+                        "normalize": True,
+                    },
+                ),
+            ],
+            output_dir=os.path.join(self.log_dir, "eval_report"),
+        )
 
         # Configure the pipeline
-        return PipelineConfig([self.data_processing_comp, self.inference_comp], self.log_dir)
+        return PipelineConfig([self.data_processing_comp, self.inference_comp, self.evalreporting_comp], self.log_dir)

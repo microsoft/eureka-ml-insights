@@ -19,6 +19,7 @@ from .spatial_utils import (
     ExtractAnswerSpatialMapAndMaze,
     ExtractQuestionOptions,
 )
+from .screenspot_utils import ExtractBoundingBox
 from .transform import (
     AddColumn,
     AddColumnAndData,
@@ -80,4 +81,5 @@ __all__ = [
     MajorityVoteTransform,
     NumpyEncoder,
     ExtractUsageTransform,
+    ExtractBoundingBox,
 ]

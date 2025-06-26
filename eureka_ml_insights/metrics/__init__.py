@@ -8,6 +8,7 @@ from .metrics_base import (
     IdentityMetric,
     Metric,
     SubstringExistsMatch,
+    BboxMetric,
 )
 from .mmmu_metrics import MMMUMetric
 from .nphard_sat_metrics import NPHardSATMetric
@@ -60,4 +61,5 @@ __all__ = [
     ValueFilteredAggregator,
     NPHardTSPMetric,
     NPHardSATMetric,
+    BboxMetric,
 ]
