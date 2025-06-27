@@ -58,12 +58,11 @@ from .kitab import (
     Phi_KITAB_TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT,
 )
 from .llm_extraction import LLM_EXTRACTION_SUBPIPELINE_MIXIN
-from .mathverse import MATHVERSE_PIPELINE, MATHVERSE_REPORTING_PIPELINE, MATHVERSE_FILE_PIPELINE
+from .mathverse import MATHVERSE_PIPELINE
 from .mathvision import MATHVISION_PIPELINE
-from .mathvista import MATHVISTA_PIPELINE, MATHVISTA_REPORTING_PIPELINE
+from .mathvista import MATHVISTA_PIPELINE
 from .mmmu import (
     MMMU_BASELINE_PIPELINE,
-    MMMU_COT_PIPELINE,
 )
 from .nondeterminism import (
     Geo_Nondeterminism,
@@ -98,12 +97,12 @@ from .vision_language.spatial_map import (
     SPATIAL_MAP_TEXTONLY_PIPELINE,
 )
 
-from .tutoring_eval import (
-    TUTORING_Experiment_Pipeline,
-    TUTORING_PIPELINE_5Run,
-    TutoringMistakeDetection,
-    ConversationFormatter,
-)
+#from .tutoring_eval import (
+#    TUTORING_Experiment_Pipeline,
+#    TUTORING_PIPELINE_5Run,
+#    TutoringMistakeDetection,
+#    ConversationFormatter,
+#)
 
 from .iam_line import (
     IAM_LINE_BASELINE_PIPELINE,
@@ -147,7 +146,7 @@ __all__ = [
     Drop_Experiment_Pipeline,
     GEOMETER_PIPELINE,
     MMMU_BASELINE_PIPELINE,
-    MMMU_COT_PIPELINE,
+    #MMMU_COT_PIPELINE,
     KITAB_ONE_BOOK_CONSTRAINT_PIPELINE,
     KITAB_ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT,
     KITAB_ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT,
@@ -178,10 +177,10 @@ __all__ = [
     NPHARD_TSP_PIPELINE,
     NPHARD_TSP_PIPELINE_MULTIPLE_RUNS,
     MATHVERSE_PIPELINE,
-    MATHVERSE_REPORTING_PIPELINE,
-    MATHVERSE_FILE_PIPELINE,
+    #MATHVERSE_REPORTING_PIPELINE,
+    #MATHVERSE_FILE_PIPELINE,
     MATHVISTA_PIPELINE,
-    MATHVISTA_REPORTING_PIPELINE,
+    #MATHVISTA_REPORTING_PIPELINE,
     MATHVISION_PIPELINE,
     GSM8K_PIPELINE,
     GSM8K_MUTATED_PIPELINE,
