@@ -1,6 +1,7 @@
 """This module contains classes for interacting with various models, including API-based models and HuggingFace models."""
 
 import json
+import pandas as pd
 import logging
 import random
 import threading
@@ -87,7 +88,6 @@ class KeyBasedAuthMixIn:
         if self.api_key is None:
             self.api_key = get_secret(**self.secret_key_params)
         return self.api_key
-
 
 @dataclass
 class EndpointModel(Model):
@@ -180,6 +180,109 @@ class EndpointModel(Model):
     @abstractmethod
     def handle_request_error(self, e):
         raise NotImplementedError
+
+@dataclass
+class OfflineFileModel(Model):
+    """This class is used to read pre-generated model/system results via a local file."""
+
+    file_path: str = None
+    model_name: str = None
+    df_results: pd.DataFrame = None
+
+    def __post_init__(self):
+        if not self.file_path:
+            raise ValueError("file_path must be provided.")
+        if not self.model_name:
+            raise ValueError("Model name must be provided as additional information on the model/system that was previous used for generating the file in file_path.")
+        
+        # Load the results from the file into a DataFrame that can be reused for reading all individual results later.
+        try:
+            self.df_results = pd.read_json(self.file_path, lines=True)
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Error: File '{self.file_path}' not found.")
+        except ValueError as ve:
+            raise ValueError(f"Error reading JSON from '{self.file_path}': {ve}")
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+        
+        # Check for required columns in the file
+        required_columns = {"prompt", "model_output"}
+        missing_columns = required_columns - set(self.df_results.columns)
+        if missing_columns:
+            raise ValueError(f"Error: Missing required columns in file_path: {missing_columns}")
+        return None
+
+    def generate(self, query_text, *args, **kwargs):
+        """
+        Reads the file from file_path to retrieve the model response.
+        args:
+            query_text (str): the text prompt to generate the response.
+            data_repeat_id (str): the id of the repeat for the same prompt, if the initial file has multiple repeats for the same prompt.
+        returns:
+            response_dict (dict): a dictionary containing the model_output, is_valid, response_time, and n_output_tokens,
+                                  and any other relevant information returned by the model.
+        """
+        response_dict = {}
+        if hasattr(self, "system_message") and self.system_message:
+            if "system_message" in kwargs:
+                logging.warning(
+                    "Warning: System message is passed via the dataloader but will not be used because the inference results are precomputed offline in file_path."
+                )
+            kwargs["system_message"] = self.system_message
+
+        if hasattr(self, "query_images") and self.system_message:
+            if "query_images" in kwargs:
+                logging.warning(
+                    "Warning: Images are not yet supported for this model class."
+                )
+            kwargs["query_images"] = self.query_images
+
+        if hasattr(self, "chat_mode") and self.chat_mode:
+            if "chat_mode" in kwargs:
+                logging.warning(
+                    "Warning: Chat mode is not supported for this model class."
+                )
+
+        model_output = None
+        is_valid = False
+        response_time = 0 # This is a dummy value, as the response time is not available for offline files.
+        n_output_tokens = None
+
+        try:
+            model_response = self.get_response(query_text, kwargs.get("data_repeat_id", None))
+            model_output = model_response["model_output"]
+            is_valid = model_response["is_valid"]
+        except Exception as e:
+            logging.warning("Warning: ")
+
+        response_dict.update(
+            {
+                "is_valid": is_valid,
+                "model_output": model_output,
+                "response_time": response_time,
+                "n_output_tokens": n_output_tokens or self.count_tokens(model_output, is_valid),
+            }
+        )
+        return response_dict
+    
+    def get_response(self, target_prompt, target_repeat_id):
+        if target_repeat_id is None:
+            filtered_df = self.df_results[(self.df_results['prompt'] == target_prompt)]
+        else:
+            filtered_df = self.df_results[(self.df_results['data_repeat_id'] == target_repeat_id) & (self.df_results['prompt'] == target_prompt)]
+
+
+        # Check if a matching record exists
+        if not filtered_df.empty:
+            if len(filtered_df) > 1:
+                logging.warning(f"Warning: More than one matching record found ({len(filtered_df)} records). Returning the first one.")
+            model_output = str(filtered_df.iloc[0]['model_output'])
+            # If the model output is empty, return None and is_valid as False
+            if len(model_output) == 0:
+                return {"model_output": None, "is_valid": False}
+            return {"model_output": filtered_df.iloc[0]['model_output'], "is_valid": True}
+        else:
+            return {"model_output": None, "is_valid": False}    
 
 
 @dataclass

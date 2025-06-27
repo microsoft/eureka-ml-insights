@@ -189,3 +189,42 @@ class MetricBasedVerifier:
         # rename the result column to "verification_reuslt"
         data.rename(columns={self.metric_class.__name__ + "_result": "verification_result"}, inplace=True)
         return data
+    
+
+class BboxMetric(Metric):
+    """This class is a base class for metrics that require ground truths and predictions."""
+
+    def __init__(self, model_output_col: str = "model_output", normalized: bool = False):
+        super().__init__()
+        self.model_output_col = model_output_col
+        self.normalized = normalized
+
+    def validate_data(self, data):
+        """This method checks if the data has the required fields."""
+        super().validate_data(data)
+        assert "bbox" in data.columns, "Data does not have 'bbox' field."
+        assert self.model_output_col in data.columns, f"Data does not have '{self.model_output_col}' field."
+        return True
+
+    def __evaluate__(self, bbox_answer, bbox, is_valid):
+        import ast
+
+        if not is_valid or not bbox_answer:
+            return "none"
+        
+        bbox = [bbox[0], bbox[1], bbox[0] + bbox[2], bbox[1] + bbox[3]]
+        #bbox_answer = ast.literal_eval(bbox_answer)
+        click_point = [(bbox_answer[0] + bbox_answer[2]) / 2, (bbox_answer[1] + bbox_answer[3]) / 2]
+
+        # Check if the predicted point falls in the ground truth box
+        if (bbox[0] <= click_point[0] <= bbox[2]) and (bbox[1] <= click_point[1] <= bbox[3]):
+            return "correct"
+        else:
+            return "incorrect"
+
+    def evaluate(self, data):
+        self.validate_data(data)
+        data[self.__class__.__name__ + "_result"] = data.apply(
+            lambda x: self.__evaluate__(x[self.model_output_col], x["bbox_normalized"] if self.normalized else x["bbox"], x["is_valid"]), axis=1
+        )
+        return data    
