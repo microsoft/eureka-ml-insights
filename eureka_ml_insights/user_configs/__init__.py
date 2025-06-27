@@ -13,7 +13,6 @@ from .ba_calendar import (
 from .dna import DNA_PIPELINE
 from .drop import Drop_Experiment_Pipeline
 from .flenqa import FlenQA_Experiment_Pipeline
-from .flickr30k import FLICKR30K_PIPELINE
 from .geometer import GEOMETER_PIPELINE
 from .gpqa import GPQA_Experiment_Pipeline, GPQA_PIPELINE_5Run
 from .gsm8k import GSM8K_MUTATED_PIPELINE, GSM8K_PIPELINE, GSMSYMBOLIC_PIPELINE
@@ -62,8 +61,9 @@ from .llm_extraction import LLM_EXTRACTION_SUBPIPELINE_MIXIN
 from .mathverse import MATHVERSE_PIPELINE
 from .mathvision import MATHVISION_PIPELINE
 from .mathvista import MATHVISTA_PIPELINE
-from .mmmu import MMMU_BASELINE_PIPELINE
-from .nocaps import NOCAPS_PIPELINE
+from .mmmu import (
+    MMMU_BASELINE_PIPELINE,
+)
 from .nondeterminism import (
     Geo_Nondeterminism,
     IFEval_Nondeterminism,
@@ -95,6 +95,19 @@ from .vision_language.spatial_map import (
     SPATIAL_MAP_PIPELINE,
     SPATIAL_MAP_REPORTING_PIPELINE,
     SPATIAL_MAP_TEXTONLY_PIPELINE,
+)
+
+#from .tutoring_eval import (
+#    TUTORING_Experiment_Pipeline,
+#    TUTORING_PIPELINE_5Run,
+#    TutoringMistakeDetection,
+#    ConversationFormatter,
+#)
+
+from .iam_line import (
+    IAM_LINE_BASELINE_PIPELINE,
+    CharacterErrorRateMetric,
+    CustomIAMLineDataReader,
 )
 
 __all__ = [
@@ -133,6 +146,7 @@ __all__ = [
     Drop_Experiment_Pipeline,
     GEOMETER_PIPELINE,
     MMMU_BASELINE_PIPELINE,
+    #MMMU_COT_PIPELINE,
     KITAB_ONE_BOOK_CONSTRAINT_PIPELINE,
     KITAB_ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT,
     KITAB_ONE_BOOK_CONSTRAINT_PIPELINE_SELF_CONTEXT,
@@ -163,7 +177,10 @@ __all__ = [
     NPHARD_TSP_PIPELINE,
     NPHARD_TSP_PIPELINE_MULTIPLE_RUNS,
     MATHVERSE_PIPELINE,
+    #MATHVERSE_REPORTING_PIPELINE,
+    #MATHVERSE_FILE_PIPELINE,
     MATHVISTA_PIPELINE,
+    #MATHVISTA_REPORTING_PIPELINE,
     MATHVISION_PIPELINE,
     GSM8K_PIPELINE,
     GSM8K_MUTATED_PIPELINE,
@@ -171,6 +188,4 @@ __all__ = [
     NPHARD_SAT_PIPELINE,
     NPHARD_SAT_PIPELINE_MULTIPLE_RUNS,
     NPHARD_SAT_HYBRIDEXTRACT_PIPELINE,
-    FLICKR30K_PIPELINE,
-    NOCAPS_PIPELINE,
 ]
