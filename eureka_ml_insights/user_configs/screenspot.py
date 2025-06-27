@@ -26,10 +26,10 @@ from eureka_ml_insights.configs import(
 )
 
 
-class SCREENSPOT_PIPELINE(ExperimentConfig):
+class SCREENSPOT_NORMALIZED_PIPELINE(ExperimentConfig):
     """
-    This defines an ExperimentConfig pipeline for the SCREENSPOT dataset.
-    There is no model_config by default and the model config must be passed in via command lime.
+    This defines an ExperimentConfig pipeline for the SCREENSPOT dataset using normalized coordinates.
+    There is no model_config by default and the model config must be passed in via command line.
     """
 
     def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any] ) -> PipelineConfig:
@@ -49,7 +49,7 @@ class SCREENSPOT_PIPELINE(ExperimentConfig):
             },          
         ),
         prompt_template_path=os.path.join(
-            os.path.dirname(__file__), "../prompt_templates/screenspot_templates/basic.jinja"
+            os.path.dirname(__file__), "../prompt_templates/screenspot_templates/normalized.jinja"
         ),          
         output_dir=os.path.join(self.log_dir, "data_processing_output"),
         ignore_failure=False,
@@ -89,7 +89,7 @@ class SCREENSPOT_PIPELINE(ExperimentConfig):
                     ),
                 },
             ),
-            metric_config=MetricConfig(BboxMetric),
+            metric_config=MetricConfig(BboxMetric, {"normalized": True}),
             aggregator_configs=[
                 AggregatorConfig(CountAggregator, {"column_names": ["BboxMetric_result"], "normalize": True}),
                 AggregatorConfig(
@@ -109,3 +109,18 @@ class SCREENSPOT_PIPELINE(ExperimentConfig):
 
         # Configure the pipeline
         return PipelineConfig([self.data_processing_comp, self.inference_comp, self.evalreporting_comp], self.log_dir)
+
+class SCREENSPOT_UNNORMALIZED_PIPELINE(SCREENSPOT_NORMALIZED_PIPELINE):
+    """
+    This defines an ExperimentConfig pipeline for the SCREENSPOT dataset using normalized coordinates.
+    There is no model_config by default and the model config must be passed in via command line.
+    """
+
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any] ) -> PipelineConfig:
+        config = super().configure_pipeline(model_config, resume_from)
+        self.data_processing_comp.prompt_template_path=os.path.join(
+                os.path.dirname(__file__),
+            os.path.dirname(__file__), "../prompt_templates/screenspot_templates/unnormalized.jinja"
+            )
+        self.evalreporting_comp.metric_config = MetricConfig(BboxMetric, {"normalized": False})
+        return config

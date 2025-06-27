@@ -5,6 +5,8 @@ from typing import List
 
 import pandas as pd
 
+import ast
+
 from .transform import DFTransformBase, MultiColumnTransform
 
 def extract_bounding_box(model_output_raw, is_valid):
@@ -26,8 +28,8 @@ def extract_bounding_box(model_output_raw, is_valid):
     if not is_valid or not model_output_raw:
         return ""
 
-    # Regular expression pattern to match the first bounding box in the format [[x0,y0,x1,y1]]
-    pattern = r'\[(\d+,\s*\d+,\s*\d+,\s*\d+)\]'
+    # Regular expression pattern to match the first bounding box in the format [x0,y0,x1,y1]
+    pattern = r'\[\s*([-\d\.]+,\s*[-\d\.]+,\s*[-\d\.]+,\s*[-\d\.]+)\s*\]'
 
     # Search for the last match in the text
     matches = re.findall(pattern, model_output_raw)
@@ -35,7 +37,7 @@ def extract_bounding_box(model_output_raw, is_valid):
     if matches:
         # Get the last match and return as tuple of integers
         bbox = matches[-1]
-
+        bbox = ast.literal_eval(bbox)
     return bbox
 
 @dataclass
