@@ -37,7 +37,10 @@ def extract_bounding_box(model_output_raw, is_valid):
     if matches:
         # Get the last match and return as tuple of integers
         bbox = matches[-1]
-        bbox = ast.literal_eval(bbox)
+        try:
+            bbox = ast.literal_eval(bbox)
+        except:
+            bbox = None
     return bbox
 
 @dataclass
