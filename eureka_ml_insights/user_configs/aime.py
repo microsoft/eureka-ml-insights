@@ -703,6 +703,64 @@ class AIME_PIPLELINE_HYBRIDEXTRACTION50Run_2025(AIME_PIPLELINE_HYBRIDEXTRACTION)
             self.log_dir,
         )
 
+class AIME_PIPLELINE_HYBRIDEXTRACTION32Run_2025(AIME_PIPLELINE_HYBRIDEXTRACTION):
+    """This class specifies the config for running AIME benchmark 5 repeated times"""
+
+    def configure_pipeline(
+        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
+    ) -> PipelineConfig:
+        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
+        # data preprocessing
+        self.data_processing_comp = PromptProcessingConfig(
+            component_type=PromptProcessing,
+            data_reader_config=DataSetConfig(
+                HFDataReader,
+                {
+                    "path": "lchen001/AIME2025",
+                    "split": "train",
+                    "transform": SequenceTransform(
+                        [
+                            ColumnRename(
+                                name_mapping={
+                                    "Question": "prompt",
+                                    "Answer": "ground_truth",
+                                }
+                            ),
+                        ],
+                    ),
+                },
+            ),
+            prompt_template_path=os.path.join(
+                os.path.dirname(__file__), "../prompt_templates/aime_templates/Template_1clean.jinja"
+            ),
+            output_dir=os.path.join(self.log_dir, "data_processing_output"),
+        )
+
+        # data preprocessing
+        self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
+            MultiplyTransform(n_repeats=32)
+        )
+        
+        # Configure the pipeline; this is necessary for resume_from to work
+        return PipelineConfig(
+            [
+                self.data_processing_comp,
+                self.inference_comp,
+                self.preeval_data_post_processing_comp,
+                self.filter_empty_answer,
+                self.inference_llm_answer_extract,
+                self.data_join,
+                self.data_post_processing,
+                self.evalreporting_comp,
+                self.data_post_processing_addmv,
+                self.mv_evalreporting_comp,
+                self.posteval_data_post_processing_comp,
+                self.bon_evalreporting_comp,
+                self.won_evalreporting_comp
+            ],
+            self.log_dir,
+        )
+
 class AIME_PIPLELINE_HYBRIDEXTRACTION5Run(AIME_PIPLELINE_HYBRIDEXTRACTION):
     """This class specifies the config for running AIME benchmark 5 repeated times"""
 

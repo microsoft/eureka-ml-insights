@@ -23,7 +23,7 @@ resources:
       # slaTier: Standard
       slaTier: Premium
 experiment_name: eureka_phi_evaluation_vaish
-display_name: p1_info_density_step_65_eval_aime_83_24_5_samples
+display_name: p1_info_density_step_75_eval_aime_2024_32_samples_rerun_eval
 tags:
   Project_Name: AI Frontiers Foundation Models and Evaluation
   ProjectID: PRJ-0423-A26
@@ -116,8 +116,8 @@ trial:
   environment: azureml:reasoning-lm:110425_v1 # for baltic08
   #environment: azureml:reasoning-lm:120425_v1 # for baltic08
   environment_variables:
-    EUREKA_EXPERIMENT_CONFIG: AIME_PIPELINE5Run
-    EUREKA_EXPLOGDIR: Info_density_step_65_REASONING_Vaish_Aime_83_24_5_samples
+    EUREKA_EXPERIMENT_CONFIG: AIME_PIPELINE32Run_2025
+    EUREKA_EXPLOGDIR: Info_density_step_75_REASONING_Vaish_Aime_24_32_samples_rerun_eval
     EUREKA_MODEL_CONFIG: VLLM_PHI_4_RL_APRIL_2025_CONFIG_30K
     JOB_EXECUTION_MODE: Basic
     AZUREML_COMPUTE_USE_COMMON_RUNTIME: 'true'

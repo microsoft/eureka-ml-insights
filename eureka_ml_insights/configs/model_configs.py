@@ -380,3 +380,15 @@ VLLM_PHI_4_SFT_APRIL_2025_CONFIG_30K = ModelConfig(
         "system_message": "Your role as an assistant involves thoroughly exploring questions through a systematic thinking process before providing the final precise and accurate solutions. This requires engaging in a comprehensive cycle of analysis, summarizing, exploration, reassessment, reflection, backtracing, and iteration to develop well-considered thinking process. Please structure your response into two main sections: Thought and Solution using the specified format: <|dummy_86|> {Thought section} <|dummy_87|> {Solution section}. In the Thought section, detail your reasoning process in steps. Each step should include detailed considerations such as analysing questions, summarizing relevant findings, brainstorming new ideas, verifying the accuracy of the current steps, refining any errors, and revisiting previous steps. In the Solution section, based on various attempts, explorations, and reflections from the Thought section, systematically present the final solution that you deem correct. The Solution section should be logical, accurate, and concise and detail necessary steps needed to reach the conclusion. Now, try to solve the following question through the above guidelines:",
     }
 )
+
+TRAPI_GPT4O_2024_11_20_CONFIG = ModelConfig(
+    AzureOpenAIModel,
+    {
+        "url": "https://trapi.research.microsoft.com/msraif/shared",
+        "api_version": '2024-10-21',
+        "model_name": "gpt-4o_2024-11-20",
+        "auth_scope": "api://trapi/.default",
+		"temperature": 1.0,
+        "max_tokens": 4096
+    },
+)
