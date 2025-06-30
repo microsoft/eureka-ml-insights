@@ -13,6 +13,7 @@ from .ba_calendar import (
 from .dna import DNA_PIPELINE
 from .drop import Drop_Experiment_Pipeline
 from .flenqa import FlenQA_Experiment_Pipeline
+from .flickr30k import FLICKR30K_PIPELINE
 from .geometer import GEOMETER_PIPELINE
 from .gpqa import GPQA_Experiment_Pipeline, GPQA_PIPELINE_5Run
 from .gsm8k import GSM8K_MUTATED_PIPELINE, GSM8K_PIPELINE, GSMSYMBOLIC_PIPELINE
@@ -61,10 +62,12 @@ from .llm_extraction import LLM_EXTRACTION_SUBPIPELINE_MIXIN
 from .mathverse import MATHVERSE_PIPELINE, MATHVERSE_REPORTING_PIPELINE, MATHVERSE_FILE_PIPELINE
 from .mathvision import MATHVISION_PIPELINE
 from .mathvista import MATHVISTA_PIPELINE, MATHVISTA_REPORTING_PIPELINE
+from .mmlu import MMLU_BASELINE_PIPELINE
 from .mmmu import (
     MMMU_BASELINE_PIPELINE,
     MMMU_COT_PIPELINE,
 )
+from .nocaps import NOCAPS_PIPELINE
 from .nondeterminism import (
     Geo_Nondeterminism,
     IFEval_Nondeterminism,
@@ -146,6 +149,7 @@ __all__ = [
     GPQA_PIPELINE_5Run,
     Drop_Experiment_Pipeline,
     GEOMETER_PIPELINE,
+    MMLU_BASELINE_PIPELINE,
     MMMU_BASELINE_PIPELINE,
     MMMU_COT_PIPELINE,
     KITAB_ONE_BOOK_CONSTRAINT_PIPELINE,
@@ -193,4 +197,6 @@ __all__ = [
     SCREENSPOT_UNNORMALIZED_PIPELINE,
     SCREENSPOT_PRO_NORMALIZED_PIPELINE,
     SCREENSPOT_PRO_UNNORMALIZED_PIPELINE,
+    FLICKR30K_PIPELINE,
+    NOCAPS_PIPELINE,
 ]
