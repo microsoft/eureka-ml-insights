@@ -92,7 +92,7 @@ class KeyBasedAuthMixIn:
 class EndpointModel(Model):
     """This class is used to interact with API-based models."""
 
-    num_retries: int = 3
+    num_retries: int = 10
 
     @abstractmethod
     def create_request(self, text_prompt, *args, **kwargs):

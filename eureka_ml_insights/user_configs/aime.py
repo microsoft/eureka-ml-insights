@@ -50,7 +50,8 @@ from eureka_ml_insights.metrics.reports import (
     BiLevelAggregator,
 )
 
-from eureka_ml_insights.configs.model_configs import OAI_GPT4O_2024_11_20_CONFIG
+# from eureka_ml_insights.configs.model_configs import OAI_GPT4O_2024_11_20_CONFIG
+from eureka_ml_insights.configs.model_configs import TRAPI_GPT4O_2024_11_20_CONFIG
 
 # from eureka_ml_insights.data_utils.transform import MajorityVoteTransform
 
@@ -507,7 +508,7 @@ class AIME_PIPLELINE_HYBRIDEXTRACTION(AIME_PIPELINE):
         
         self.inference_llm_answer_extract = InferenceConfig(
             component_type=Inference,
-            model_config=OAI_GPT4O_2024_11_20_CONFIG,
+            model_config=TRAPI_GPT4O_2024_11_20_CONFIG,
             data_loader_config=DataSetConfig(
                 MMDataLoader,
                 {"path": os.path.join(self.filter_empty_answer.output_dir, "transformed_data.jsonl")},
@@ -800,7 +801,7 @@ class AIME_PIPELINE5Run_2025(AIME_PIPELINE):
             data_reader_config=DataSetConfig(
                 HFDataReader,
                 {
-                    "path": "lchen001/AIME2024",
+                    "path": "lchen001/AIME2025",
                     "split": "train",
                     "transform": SequenceTransform(
                         [

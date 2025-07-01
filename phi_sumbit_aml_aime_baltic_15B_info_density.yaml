@@ -17,13 +17,13 @@ resources:
       interactive: false
       sshPublicKey: ""
       enableAzmlInt: true
-      priority: Low
+      priority: Medium
       # priority: Medium
       # priority: High
       # slaTier: Standard
       slaTier: Premium
 experiment_name: eureka_phi_evaluation_vaish
-display_name: p1_info_density_step_75_eval_aime_2024_32_samples_rerun_eval
+display_name: p0_resume_hybrid_info_density_step_75_eval_aime_83_24_5_samples_25k
 tags:
   Project_Name: AI Frontiers Foundation Models and Evaluation
   ProjectID: PRJ-0423-A26
@@ -100,7 +100,7 @@ trial:
     cd ${CURRENT_DIR}
     pip install -e .
     pip show vllm
-    python main.py --local_vllm --num_servers "$VLLM_LOCAL_NUM_INSTANCES" --ports 8000 8001 8002 8003 8004 8005 8006 8007 --exp_config "$EUREKA_EXPERIMENT_CONFIG" --model_config "$EUREKA_MODEL_CONFIG" --model_name "$VLLM_MODEL_NAME" --exp_logdir "$EUREKA_EXPLOGDIR"
+    python main.py --local_vllm --num_servers "$VLLM_LOCAL_NUM_INSTANCES" --ports 8000 8001 8002 8003 8004 8005 8006 8007 --exp_config "$EUREKA_EXPERIMENT_CONFIG" --model_config "$EUREKA_MODEL_CONFIG" --model_name "$VLLM_MODEL_NAME" --exp_logdir "$EUREKA_EXPLOGDIR" --resume_from ${{inputs.resume_from}}/info_density_step_75_aime_83_24_5_samples_inference_result.jsonl
     
 
     most_recent_dir=$(ls -td logs/$EUREKA_EXPERIMENT_CONFIG/$EUREKA_EXPLOGDIR/*/ | head -n 1)
@@ -116,9 +116,9 @@ trial:
   environment: azureml:reasoning-lm:110425_v1 # for baltic08
   #environment: azureml:reasoning-lm:120425_v1 # for baltic08
   environment_variables:
-    EUREKA_EXPERIMENT_CONFIG: AIME_PIPELINE32Run_2025
-    EUREKA_EXPLOGDIR: Info_density_step_75_REASONING_Vaish_Aime_24_32_samples_rerun_eval
-    EUREKA_MODEL_CONFIG: VLLM_PHI_4_RL_APRIL_2025_CONFIG_30K
+    EUREKA_EXPERIMENT_CONFIG: AIME_PIPLELINE_HYBRIDEXTRACTION5Run
+    EUREKA_EXPLOGDIR: Info_density_step_75_REASONING_Vaish
+    EUREKA_MODEL_CONFIG: VLLM_PHI_4_RL_APRIL_2025_CONFIG_25K
     JOB_EXECUTION_MODE: Basic
     AZUREML_COMPUTE_USE_COMMON_RUNTIME: 'true'
     _AZUREML_SINGULARITY_JOB_UAI: /subscriptions/d4fe558f-6660-4fe7-99ec-ae4716b5e03f/resourcegroups/aifrontiers/providers/Microsoft.ManagedIdentity/userAssignedIdentities/aifrontiers
@@ -127,10 +127,10 @@ trial:
     PHIGEN_AUTO_IBALL: 'False'
     PHIGEN_HOME: '/workspace/phigen_home'
 inputs:
-  # resume_from:
-  #   type: uri_folder
-  #   path: azureml://datastores/aifshared/paths/inference_results/vaish
-  #   mode: ro_mount
+  resume_from:
+    type: uri_folder
+    path: azureml://datastores/aifshared/paths/inference_results/vaish
+    mode: ro_mount
   input_ckpt:
     type: uri_folder
     path: azureml://subscriptions/d4fe558f-6660-4fe7-99ec-ae4716b5e03f/resourcegroups/aifrontiers/workspaces/aifrontiers_ws/datastores/sos/paths/output/p0-grpo-topk_density_grpo/2025-05-24_10-34-08/checkpoints/
@@ -157,7 +157,7 @@ search_space:
   model_config:
     type: choice
     values:
-      - global_step_75/actor/huggingface,global_step_75/actor/huggingface,32768,30000,reasoning
+      - global_step_75/actor/huggingface,global_step_75/actor/huggingface,32768,25000,reasoning
   temperature:
     type: choice
     values:
