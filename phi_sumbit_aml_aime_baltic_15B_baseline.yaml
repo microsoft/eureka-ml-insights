@@ -23,7 +23,7 @@ resources:
       # slaTier: Standard
       slaTier: Premium
 experiment_name: exp_name
-display_name: p0_release_eval_aime_83_24_5_samples_25k
+display_name: p0_release_eval_hybrid_aime_25_32_samples
 tags:
   Project_Name: AI Frontiers Foundation Models and Evaluation
   ProjectID: PRJ-0423-A26
