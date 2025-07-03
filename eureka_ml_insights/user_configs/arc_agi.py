@@ -359,25 +359,45 @@ class ARC_AGI_v1_PIPELINE_5050_SUBSET(ExperimentConfig):
             metric_config=MetricConfig(ExactMatch),
             aggregator_configs=[
                 AggregatorConfig(
-                    CountAggregator,
-                    {
-                        "column_names": [
-                            "ExactMatch_result",
-                        ],
-                        "filename_base": "OverallMetrics_Separate_Runs_Grouped",
-                        "normalize": True,
-                        "group_by": "split",
-                    },
-                ),
-                AggregatorConfig(
                     CountAggregator, 
                     {
                         "column_names": [
                             "ExactMatch_result",
                         ],
+                        "group_by": "data_repeat_id",
                         "normalize": True,
-                        "filename_base": "OverallMetrics_Separate_Runs_Total",
+                        "filename_base": "ExactMatch_SeparateRuns",
                     }),
+                AggregatorConfig(
+                    CountAggregator,
+                    {
+                        "column_names": [
+                            "ExactMatch_result",
+                        ],
+                        "group_by":["data_repeat_id", "split"],
+                        "filename_base": "ExactMatch_GroupBy_DatasetSplit_SeparateRuns",
+                        "normalize": True,
+                    },
+                ),
+                AggregatorConfig(
+                    BiLevelCountAggregator,
+                    {
+                        "column_names": ["ExactMatch_result"],
+                        "first_groupby": "data_repeat_id",
+                        "filename_base": "ExactMatch_AllRuns",
+                        "normalize": True,
+                    },
+                ),
+                AggregatorConfig(
+                    BiLevelCountAggregator,
+                    {
+                        "column_names": ["ExactMatch_result"],
+                        "first_groupby": ["data_repeat_id", "split"],
+                        "second_groupby": "split",
+                        "filename_base": "ExactMatch_GroupBy_DatasetSplit_AllRuns",
+                        "normalize": True,
+                    },
+                ),
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
         )
@@ -423,7 +443,7 @@ class ARC_AGI_v1_PIPELINE_5050_SUBSET(ExperimentConfig):
                             "ExactMatch_result_numeric",
                         ],
                         "first_groupby": "uid",
-                        "filename_base": "ExactMatch_Total_BestOfN",
+                        "filename_base": "ExactMatch_BestOfN",
                     }),
                 # the first three reports aggregate results by data_point_id and take the best out of N
                 AggregatorConfig(
@@ -434,12 +454,102 @@ class ARC_AGI_v1_PIPELINE_5050_SUBSET(ExperimentConfig):
                         ],
                         "first_groupby": "uid",
                         "second_groupby": "split",
-                        "filename_base": "ExactMatch_Grouped_BestOfN",
+                        "filename_base": "ExactMatch_GroupBy_DatasetSplit_BestOfN",
                         "agg_fn": "max"
                     },
                 ),
             ],
             output_dir=os.path.join(self.log_dir, "bestofn_eval_report"),
+        )
+
+        self.worst_of_n_evalreporting_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.posteval_data_post_processing_comp.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl"
+                },
+            ),
+            aggregator_configs=[
+                AggregatorConfig(
+                    BiLevelAggregator, 
+                    {
+                        "column_names": [
+                            "ExactMatch_result_numeric",
+                        ],
+                        "first_groupby": "uid",
+                        "filename_base": "ExactMatch_WorstOfN",
+                    }),
+                # the first three reports aggregate results by data_point_id and take the best out of N
+                AggregatorConfig(
+                    BiLevelAggregator,
+                    {
+                        "column_names": [
+                            "ExactMatch_result_numeric"
+                        ],
+                        "first_groupby": "uid",
+                        "second_groupby": "split",
+                        "filename_base": "ExactMatch_GroupBy_DatasetSplit_WorstOfN",
+                        "agg_fn": "min"
+                    },
+                ),
+            ],
+            output_dir=os.path.join(self.log_dir, "worstofn_eval_report"),
+        )
+
+        # aggregate the output by majority vote
+        self.data_post_processing_mv = DataProcessingConfig(
+            component_type=DataProcessing,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.evalreporting_comp.output_dir, "metric_results.jsonl"),
+                    "format": ".jsonl",
+                    "transform": SequenceTransform(
+                        [
+                            MajorityVoteTransform(model_output_col="model_output"),
+                            ColumnRename(
+                                name_mapping={
+                                    "model_output": "model_output_onerun",
+                                    "majority_vote": "model_output",
+                                }
+                            ),
+                            RunPythonTransform("df = df[df['data_repeat_id'] == 'repeat_0']"),
+                        ]
+                    ),
+                },
+            ),
+            output_dir=os.path.join(self.log_dir, "data_post_processing_mv"),
+        )
+
+        self.mv_evalreporting_comp = EvalReportingConfig(
+            component_type=EvalReporting,
+            data_reader_config=DataSetConfig(
+                DataReader,
+                {
+                    "path": os.path.join(self.data_post_processing_mv.output_dir, "transformed_data.jsonl"),
+                    "format": ".jsonl",
+                },
+            ),
+            metric_config=MetricConfig(ExactMatch),
+            aggregator_configs=[
+                # these three reports aggregate the metrics for the majority vote results
+                AggregatorConfig(
+                    CountAggregator,
+                    {"column_names": ["ExactMatch_result"], "filename_base": "MajorityVote", "normalize": True},
+                ),
+                AggregatorConfig(
+                    CountAggregator,
+                    {
+                        "column_names": ["ExactMatch_result"],
+                        "group_by": ["split"],
+                        "filename_base": "MajorityVote_GroupBy_DatasetSplit",
+                        "normalize": True,
+                    },
+                ),
+            ],
+            output_dir=os.path.join(self.log_dir, "majorityvote_eval_report"),
         )
 
         # Configure the pipeline
@@ -451,6 +561,9 @@ class ARC_AGI_v1_PIPELINE_5050_SUBSET(ExperimentConfig):
                 self.evalreporting_comp,
                 self.posteval_data_post_processing_comp,
                 self.best_of_n_evalreporting_comp,
+                self.worst_of_n_evalreporting_comp,
+                self.data_post_processing_mv,
+                self.mv_evalreporting_comp,
             ],
             self.log_dir,
         )
