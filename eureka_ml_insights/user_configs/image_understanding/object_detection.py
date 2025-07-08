@@ -1,17 +1,21 @@
-"""Module for object detection configuration classes.
-
-This module provides example user-defined configuration classes for object detection tasks.
-In order to define a new configuration, create a class that directly or indirectly inherits
-from ExperimentConfig and implement the configure_pipeline method. You can also inherit
-from one of the existing user-defined classes and override the necessary attributes to
-reduce the amount of code you need to write.
-
-These user-defined configuration classes are used to define the desired pipeline, which
-can include any number of components. Available component options can be found in the
-core module. Pass the name of the class to the main.py script to run the pipeline.
-"""
-
 import os
+
+from eureka_ml_insights.configs.experiment_config import ExperimentConfig
+from eureka_ml_insights.core import EvalReporting, Inference, PromptProcessing
+from eureka_ml_insights.data_utils import (
+    HFDataReader,
+    HFJsonReader,
+    MMDataLoader,
+    ColumnRename,
+    CopyColumn,
+    DataReader,
+    PrependStringTransform,
+    SequenceTransform,
+)
+from eureka_ml_insights.metrics import (
+    CocoDetectionAggregator,
+    CocoObjectDetectionMetric,
+)
 
 from eureka_ml_insights.configs import (
     AggregatorConfig,
@@ -22,46 +26,28 @@ from eureka_ml_insights.configs import (
     PipelineConfig,
     PromptProcessingConfig,
 )
-from eureka_ml_insights.configs.experiment_config import ExperimentConfig
-from eureka_ml_insights.core import EvalReporting, Inference, PromptProcessing
-from eureka_ml_insights.data_utils import (
-    DataReader,
-    HFDataReader,
-    HFJsonReader,
-    MMDataLoader,
-)
-from eureka_ml_insights.metrics import (
-    CocoDetectionAggregator,
-    CocoObjectDetectionMetric,
-)
-
 from .common import LOCAL_DATA_PIPELINE
+
+"""This file contains example user defined configuration classes for the object detection task.
+In order to define a new configuration, a new class must be created that directly or indirectly
+ inherits from ExperimentConfig and the configure_pipeline method should be implemented.
+You can inherit from one of the existing user defined classes below and override the necessary
+attributes to reduce the amount of code you need to write.
+
+The user defined configuration classes are used to define your desired *pipeline* that can include
+any number of *component*s. Find *component* options in the core module.
+
+Pass the name of the class to the main.py script to run the pipeline.
+"""
 
 
 class OBJECT_DETECTION_PAIRS_PIPELINE(ExperimentConfig):
-    """ExperimentConfig pipeline for the object detection (pairs condition).
-
-    This class defines a pipeline for object detection on pairs of objects.
-    There is no default model configuration; the model configuration must be
-    passed in via the command line.
-
-    Attributes:
-        data_processing_comp (PromptProcessingConfig): Configuration for data processing.
-        inference_comp (InferenceConfig): Configuration for inference.
-        evalreporting_comp (EvalReportingConfig): Configuration for evaluation and reporting.
+    """
+    This defines an ExperimentConfig pipeline for the object detection dataset, pairs condition.
+    There is no model_config by default and the model config must be passed in via command lime.
     """
 
     def configure_pipeline(self, model_config, resume_from=None):
-        """Configure and return the pipeline.
-
-        Args:
-            model_config: The model configuration to be used.
-            resume_from (str, optional): Path to resume training from. Defaults to None.
-
-        Returns:
-            PipelineConfig: The configured pipeline, consisting of data processing,
-            inference, and evaluation/reporting components.
-        """
         # Configure the data processing component.
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
@@ -93,7 +79,7 @@ class OBJECT_DETECTION_PAIRS_PIPELINE(ExperimentConfig):
         target_coco_json_reader = HFJsonReader(
             repo_id="microsoft/IMAGE_UNDERSTANDING",
             repo_type="dataset",
-            filename="object_detection_pairs/coco_instances.json",
+            filename="object_detection_pairs/coco_instances.json",            
         )
 
         # Configure the evaluation and reporting component.
@@ -127,24 +113,13 @@ class OBJECT_DETECTION_PAIRS_PIPELINE(ExperimentConfig):
 
 
 class OBJECT_DETECTION_SINGLE_PIPELINE(OBJECT_DETECTION_PAIRS_PIPELINE):
-    """ExperimentConfig pipeline for single object detection condition.
-
-    This class extends OBJECT_DETECTION_PAIRS_PIPELINE to use the single object condition
-    instead of pairs.
-    """
+    """This class extends OBJECT_DETECTION_PAIRS_PIPELINE to use the single object condition."""
 
     def configure_pipeline(self, model_config, resume_from=None):
-        """Configure and return the pipeline using the single object condition.
-
-        Args:
-            model_config: The model configuration to be used.
-            resume_from (str, optional): Path to resume training from. Defaults to None.
-
-        Returns:
-            PipelineConfig: The configured pipeline with the single object condition.
-        """
         config = super().configure_pipeline(model_config, resume_from)
-        self.data_processing_comp.data_reader_config.init_args["tasks"] = "object_detection_single"
+        self.data_processing_comp.data_reader_config.init_args["tasks"] = (
+            "object_detection_single"
+        )
 
         target_coco_json_reader = HFJsonReader(
             repo_id="microsoft/IMAGE_UNDERSTANDING",
@@ -159,42 +134,12 @@ class OBJECT_DETECTION_SINGLE_PIPELINE(OBJECT_DETECTION_PAIRS_PIPELINE):
 
 
 class OBJECT_DETECTION_PAIRS_LOCAL_PIPELINE(LOCAL_DATA_PIPELINE, OBJECT_DETECTION_PAIRS_PIPELINE):
-    """Local pipeline for object detection pairs condition.
-
-    This class combines LOCAL_DATA_PIPELINE and OBJECT_DETECTION_PAIRS_PIPELINE,
-    allowing for local data paths.
-    """
-
     def configure_pipeline(self, model_config, resume_from=None):
-        """Configure and return the local pipeline for object detection pairs.
-
-        Args:
-            model_config: The model configuration to be used.
-            resume_from (str, optional): Path to resume training from. Defaults to None.
-
-        Returns:
-            PipelineConfig: The configured local pipeline.
-        """
         local_path = "/home/neel/data/spatial_understanding"
         return super().configure_pipeline(model_config, resume_from, local_path)
 
 
 class OBJECT_DETECTION_SINGLE_LOCAL_PIPELINE(LOCAL_DATA_PIPELINE, OBJECT_DETECTION_SINGLE_PIPELINE):
-    """Local pipeline for object detection single condition.
-
-    This class combines LOCAL_DATA_PIPELINE and OBJECT_DETECTION_SINGLE_PIPELINE,
-    allowing for local data paths.
-    """
-
     def configure_pipeline(self, model_config, resume_from=None):
-        """Configure and return the local pipeline for single object detection.
-
-        Args:
-            model_config: The model configuration to be used.
-            resume_from (str, optional): Path to resume training from. Defaults to None.
-
-        Returns:
-            PipelineConfig: The configured local pipeline for single object detection.
-        """
         local_path = "/home/neel/data/spatial_understanding"
         return super().configure_pipeline(model_config, resume_from, local_path)

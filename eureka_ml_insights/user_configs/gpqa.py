@@ -1,11 +1,6 @@
 import os
 
-"""Module for user-defined configuration classes for the GPQA dataset.
-
-This module provides classes that configure the pipeline for the GPQA dataset, 
-including data processing, inference, evaluation reporting, and other configurations 
-specific to the GPQA domain.
-"""
+"""This file contains user defined configuration classes for the GPQA dataset."""
 
 from typing import Any
 
@@ -58,40 +53,10 @@ from eureka_ml_insights.metrics import (
 
 from .llm_extraction import LLM_EXTRACTION_SUBPIPELINE_MIXIN
 
-
 class GPQA_Experiment_Pipeline(ExperimentConfig):
-    """Configures a pipeline for a GPQA experiment.
-
-    This class sets up data processing, inference, evaluation, and post-processing
-    components to run a GPQA experiment pipeline.
-
-    Attributes:
-        data_processing_comp (PromptProcessingConfig): Configuration for the prompt processing component.
-        inference_comp (InferenceConfig): Configuration for the inference component.
-        preeval_data_post_processing_comp (DataProcessingConfig): Data processing configuration before evaluation.
-        llm_extraction_subpipeline_conf (LLM_EXTRACTION_SUBPIPELINE_MIXIN): Subpipeline configuration for LLM-based extraction.
-        llm_extraction_subpipeline (list): The subpipeline used for LLM-based extraction.
-        evalreporting_comp (EvalReportingConfig): Configuration for evaluation reporting.
-        posteval_data_post_processing_comp (DataProcessingConfig): Data processing configuration after evaluation.
-        bon_evalreporting_comp (EvalReportingConfig): Evaluation reporting configuration for best-of-N aggregation.
-        won_evalreporting_comp (EvalReportingConfig): Evaluation reporting configuration for worst-of-N aggregation.
-        data_post_processing_mv (DataProcessingConfig): Data processing configuration for majority vote.
-        mv_evalreporting_comp (EvalReportingConfig): Evaluation reporting configuration for majority vote results.
-    """
-
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
-        """Configures the GPQA pipeline with data processing, inference, and evaluation steps.
-
-        Args:
-            model_config (ModelConfig): The model configuration to be used for inference.
-            resume_from (str, optional): The path to a previous run for resuming the pipeline. Defaults to None.
-            **kwargs (dict[str, Any]): Additional keyword arguments.
-
-        Returns:
-            PipelineConfig: The configured pipeline.
-        """
         rng = np.random.default_rng(42)
         # Configure the data processing component.
         self.data_processing_comp = PromptProcessingConfig(
@@ -164,8 +129,10 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "preeval_data_post_processing_output"),
         )
-        # Inserts an llm-based extraction subpipeline that filters all rows where the regex answer extraction did not work,
-        # and attempts answer extraction using an LLM.
+        # Inserts an llm-based extraction subpipeline that filters all rows where the regex answer extraction did not work, 
+        # and attempts answer extraction using an LLM. This is helpful for cases where:
+        # the model under test may not completely follow the instructions in the prompt on how to mark the final answer,
+        # or for reasoning models that may run out of the max token length and may not be able to add the final answer marker.
         self.llm_extraction_subpipeline_conf = LLM_EXTRACTION_SUBPIPELINE_MIXIN()
         self.llm_extraction_subpipeline = self.llm_extraction_subpipeline_conf.configure_subpipeline(
             extraction_attempt_component=self.preeval_data_post_processing_comp,
@@ -199,6 +166,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
             metric_config=MetricConfig(ExactMatch),
             aggregator_configs=[
                 # the first three reports aggregate the metrics per experiment repeat
+                # each repeat can be considered as an individual pass@1 score
                 AggregatorConfig(
                     CountAggregator,
                     {
@@ -227,6 +195,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                     },
                 ),
                 # the next three reports take the average and std for all repeats
+                # the resulting numbers are the average and std of N pass@1 scores, where N is number of repeats
                 AggregatorConfig(
                     BiLevelCountAggregator,
                     {
@@ -499,25 +468,11 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
 
 
 class GPQA_PIPELINE_5Run(GPQA_Experiment_Pipeline):
-    """Config for running the GPQA benchmark with five repeated runs.
-
-    Extends GPQA_Experiment_Pipeline to multiply the dataset by five for
-    repeated experiments.
-    """
+    """This class specifies the config for running the GPQA benchmark 5 repeated times"""
 
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
-        """Configures the pipeline to run the GPQA benchmark five times by extending the base pipeline.
-
-        Args:
-            model_config (ModelConfig): The model configuration to be used for inference.
-            resume_from (str, optional): The path to a previous run for resuming the pipeline. Defaults to None.
-            **kwargs (dict[str, Any]): Additional keyword arguments.
-
-        Returns:
-            PipelineConfig: The configured pipeline.
-        """
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         # data preprocessing
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(

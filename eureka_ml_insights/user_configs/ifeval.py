@@ -1,11 +1,3 @@
-"""
-Module for configuring and running IFEval benchmarks.
-
-This module defines several pipeline configurations for benchmarking models
-using the IFEval benchmark. It includes classes for setting up data processing,
-inference, evaluation, and reporting components.
-"""
-
 import os
 from typing import Any
 
@@ -43,28 +35,11 @@ from eureka_ml_insights.metrics.reports import (
 
 
 class IFEval_PIPELINE(ExperimentConfig):
-    """
-    Configures and runs the IFEval benchmark on any model.
-
-    This class extends ExperimentConfig to define a pipeline consisting of
-    data processing, inference, evaluation, post-processing, and instruction-level
-    evaluation components.
-    """
+    """This class specifies the config for running IFEval benchmark on any model"""
 
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
-        """
-        Configures the pipeline for the IFEval benchmark.
-
-        Args:
-            model_config (ModelConfig): The configuration for the model to be used.
-            resume_from (str, optional): Path to a checkpoint to resume from. Defaults to None.
-            **kwargs (dict[str, Any]): Additional keyword arguments for pipeline configuration.
-
-        Returns:
-            PipelineConfig: The configured pipeline.
-        """
 
         # data preprocessing
         self.data_processing_comp = PromptProcessingConfig(
@@ -226,28 +201,11 @@ class IFEval_PIPELINE(ExperimentConfig):
 
 
 class IFEval_Parallel_PIPELINE(IFEval_PIPELINE):
-    """
-    Configures and runs the IFEval benchmark multiple times in parallel.
-
-    This class extends IFEval_PIPELINE to repeat the data multiple times during
-    data processing, enabling parallel evaluations.
-    """
+    """This class specifies the config for running IFEval benchmark 5 repeated times"""
 
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
-        """
-        Configures the pipeline for the parallel IFEval benchmark.
-
-        Args:
-            model_config (ModelConfig): The configuration for the model to be used.
-            resume_from (str, optional): Path to a checkpoint to resume from. Defaults to None.
-            **kwargs (dict[str, Any]): Additional keyword arguments for pipeline configuration.
-
-        Returns:
-            PipelineConfig: The configured pipeline with repeated data transforms.
-        """
-
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         # data preprocessing
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms[-1] = MultiplyTransform(
@@ -257,12 +215,7 @@ class IFEval_Parallel_PIPELINE(IFEval_PIPELINE):
 
 
 class IFEval_Phi_Parallel_PIPELINE(IFEval_Parallel_PIPELINE):
-    """
-    Configures and runs the IFEval benchmark for Phi-reasoning models.
-
-    This class extends IFEval_Parallel_PIPELINE and adds custom post-processing
-    to handle 'thinking tokens' in model responses.
-    """
+    """This class specifies the config for running IFEval benchmark for Phi-reasoning models"""
 
     def configure_pipeline(
         self,
@@ -271,19 +224,6 @@ class IFEval_Phi_Parallel_PIPELINE(IFEval_Parallel_PIPELINE):
         thinking_token: str = "</think>",
         **kwargs: dict[str, Any]
     ) -> PipelineConfig:
-        """
-        Configures the pipeline for the Phi-reasoning IFEval benchmark.
-
-        Args:
-            model_config (ModelConfig): The configuration for the model to be used.
-            resume_from (str, optional): Path to a checkpoint to resume from. Defaults to None.
-            thinking_token (str, optional): The token that precedes hidden reasoning logic. Defaults to "</think>".
-            **kwargs (dict[str, Any]): Additional keyword arguments for pipeline configuration.
-
-        Returns:
-            PipelineConfig: The configured pipeline with custom response processing.
-        """
-
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         # eval data processing
         self.evalreporting_comp.data_reader_config.init_args["transform"].transforms.append(

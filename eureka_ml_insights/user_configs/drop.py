@@ -1,17 +1,6 @@
 import os
 from typing import Any
 
-from eureka_ml_insights.configs import (
-    AggregatorConfig,
-    DataSetConfig,
-    EvalReportingConfig,
-    ExperimentConfig,
-    InferenceConfig,
-    MetricConfig,
-    ModelConfig,
-    PipelineConfig,
-    PromptProcessingConfig,
-)
 from eureka_ml_insights.core import EvalReporting, Inference, PromptProcessing
 from eureka_ml_insights.data_utils import (
     CopyColumn,
@@ -25,32 +14,26 @@ from eureka_ml_insights.data_utils import (
 )
 from eureka_ml_insights.metrics import AverageAggregator, MaxTokenF1ScoreMetric
 
-"""Module containing user-defined configuration classes for the geometric reasoning task on the geometer dataset.
+from eureka_ml_insights.configs import (
+    AggregatorConfig,
+    DataSetConfig,
+    EvalReportingConfig,
+    InferenceConfig,
+    MetricConfig,
+    ModelConfig,
+    PipelineConfig,
+    PromptProcessingConfig,
+)
+from eureka_ml_insights.configs import ExperimentConfig
 
-This module includes the Drop_Experiment_Pipeline class that configures a pipeline for the DROP dataset.
+"""This file contains user defined configuration classes for the geometric reasoning task on geometer dataset.
 """
 
 
 class Drop_Experiment_Pipeline(ExperimentConfig):
-    """Provides configuration for a pipeline that processes, infers, and evaluates data for the DROP dataset.
-
-    This class extends from ExperimentConfig and overrides the configure_pipeline method to set up a pipeline
-    configuration for the DROP experiment.
-    """
-
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
-        """Configures the pipeline components for the DROP experiment.
-
-        Args:
-            model_config (ModelConfig): The model configuration to be used for inference.
-            resume_from (str, optional): The path to resume from a saved checkpoint. Defaults to None.
-            **kwargs (dict[str, Any]): Additional keyword arguments for pipeline configuration.
-
-        Returns:
-            PipelineConfig: The complete pipeline configuration object.
-        """
         # Configure the data processing component.
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,

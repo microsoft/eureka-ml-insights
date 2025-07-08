@@ -23,6 +23,7 @@ from eureka_ml_insights.models import (
     RestEndpointModel,
     TestModel,
     TogetherModel,
+    OfflineFileModel
 )
 
 from .config import ModelConfig
@@ -34,6 +35,17 @@ from .config import ModelConfig
 
 # Test model
 TEST_MODEL_CONFIG = ModelConfig(TestModel, {})
+
+OFFLINE_MODEL_CONFIG = ModelConfig(
+    OfflineFileModel,
+    {
+        "model_name": "Teacher_Agent_V1",
+        # This file contains the offline results from a model or agentic system
+        # The file should contain at least the following fields:
+        # "model_output", "prompt", and "data_repeat_id" for experiments that have several runs/repeats
+        "file_path": r"your_offline_model_results.jsonl",
+    },
+)
 
 # Together models
 TOGETHER_SECRET_KEY_PARAMS = {
@@ -67,7 +79,6 @@ TOGETHER_DEEPSEEK_R1_Distill_Llama_70B_CONFIG = ModelConfig(
 )
 
 # OpenAI models
-
 OPENAI_SECRET_KEY_PARAMS = {
     "key_name": "your_openai_secret_key_name",
     "local_keys_path": "keys/keys.json",
@@ -117,7 +128,7 @@ OAI_O1_PREVIEW_CONFIG = ModelConfig(
     },
 )
 
-OAI_O1_PREVIEW_AUZRE_CONFIG = ModelConfig(
+OAI_O1_PREVIEW_AZURE_CONFIG = ModelConfig(
     AzureOpenAIOModel,
     {
         "model_name": "o1-preview",

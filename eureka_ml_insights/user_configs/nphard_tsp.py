@@ -1,9 +1,3 @@
-"""Module for user-defined configuration classes for the Traveling Salesman Problem (TSP).
-
-This module includes classes to configure TSP pipelines, including prompt processing, inference,
-data post-processing, evaluation, best-of-N aggregation, worst-of-N aggregation, and majority voting.
-"""
-
 import os
 from typing import Any
 
@@ -48,35 +42,21 @@ from eureka_ml_insights.metrics import (
     NPHardTSPMetric,
 )
 
+"""This file contains user defined configuration classes for the Traveling Salesman Problem (TSP).
+"""
+
 
 class NPHARD_TSP_PIPELINE(ExperimentConfig):
-    """Configuration class for the TSP pipeline.
-
-    This class sets up the pipeline for TSP tasks, including prompt processing, inference,
-    data post-processing, evaluation, best-of-N aggregation, worst-of-N aggregation,
-    and majority voting.
-    """
-
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
-        """Configures and returns a pipeline for the TSP.
-
-        Args:
-            model_config (ModelConfig): The model configuration.
-            resume_from (str, optional): A path to resume inference from. Defaults to None.
-            **kwargs (dict[str, Any]): Additional keyword arguments.
-
-        Returns:
-            PipelineConfig: The configured pipeline.
-        """
         # Configure the data processing component.
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
             data_reader_config=DataSetConfig(
                 HFDataReader,
                 {
-                    "path": "GeoMeterData/nphard_tsp1",
+                    "path": "microsoft/tsp",
                     "split": "train",
                     "transform": SequenceTransform(
                         [
@@ -382,25 +362,11 @@ class NPHARD_TSP_PIPELINE(ExperimentConfig):
 
 
 class NPHARD_TSP_PIPELINE_MULTIPLE_RUNS(NPHARD_TSP_PIPELINE):
-    """Specifies the configuration for running the TSP benchmark multiple times.
-
-    This class extends NPHARD_TSP_PIPELINE to run the TSP benchmark n repeated times
-    by adding a multiplication transform to the data processing component.
-    """
+    """This class specifies the config for running TSP benchmark n repeated times"""
 
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
-        """Configures and returns a pipeline for multiple runs of the TSP.
-
-        Args:
-            model_config (ModelConfig): The model configuration.
-            resume_from (str, optional): A path to resume inference from. Defaults to None.
-            **kwargs (dict[str, Any]): Additional keyword arguments.
-
-        Returns:
-            PipelineConfig: The configured pipeline with repeated runs.
-        """
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         # data preprocessing
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(

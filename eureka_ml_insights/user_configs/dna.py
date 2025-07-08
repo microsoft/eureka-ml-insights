@@ -1,20 +1,11 @@
-"""This module provides the DNA_PIPELINE class for configuring and running a Do-Not-Answer benchmark experiment on various models."""
-
 import os
 from typing import Any, Optional
 
-from eureka_ml_insights.configs import (
-    AggregatorConfig,
-    DataProcessingConfig,
-    DataSetConfig,
-    EvalReportingConfig,
-    ExperimentConfig,
-    InferenceConfig,
-    ModelConfig,
-    PipelineConfig,
-    PromptProcessingConfig,
+from eureka_ml_insights.core import (
+    DataProcessing,
+    Inference,
+    PromptProcessing,
 )
-from eureka_ml_insights.core import DataProcessing, Inference, PromptProcessing
 from eureka_ml_insights.core.eval_reporting import EvalReporting
 from eureka_ml_insights.data_utils import (
     ColumnRename,
@@ -27,39 +18,27 @@ from eureka_ml_insights.data_utils.dna_utils import DNAParseLabel
 from eureka_ml_insights.data_utils.transform import AddColumn
 from eureka_ml_insights.metrics.reports import CountAggregator
 
+from eureka_ml_insights.configs import (
+    AggregatorConfig,
+    DataProcessingConfig,
+    DataSetConfig,
+    EvalReportingConfig,
+    InferenceConfig,
+    ModelConfig,
+    PipelineConfig,
+    PromptProcessingConfig,
+)
+from eureka_ml_insights.configs import ExperimentConfig
+from eureka_ml_insights.configs.model_configs import OAI_GPT4_1106_PREVIEW_CONFIG
+
 
 class DNA_PIPELINE(ExperimentConfig):
-    """Configures the setup for the Do-Not-Answer benchmark on any model.
+    """This class specifies the config for running Do-Not-Answer benchmark on any model"""
 
-    Inherits from ExperimentConfig to build a pipeline that processes data,
-    performs inference, evaluates results, and generates reports.
-    """
-
-    def configure_pipeline(
-        self,
-        model_config: ModelConfig,
-        eval_model_config: ModelConfig,
-        resume_from: Optional[str] = None,
-        eval_resume_from: Optional[str] = None,
-        **kwargs: dict[str, Any]
-    ) -> PipelineConfig:
-        """Configures the pipeline for the Do-Not-Answer benchmark.
-
-        This method sets up the various pipeline components, including data processing,
-        inference, evaluation, and reporting. It returns a PipelineConfig object containing
-        all the configured components.
-
-        Args:
-            model_config (ModelConfig): Configuration for the main model.
-            eval_model_config (ModelConfig): Configuration for the evaluation model.
-            resume_from (Optional[str]): Path to resume the main model inference from a checkpoint.
-            eval_resume_from (Optional[str]): Path to resume the evaluation model inference from a checkpoint.
-            **kwargs (dict[str, Any]): Additional keyword arguments.
-
-        Returns:
-            PipelineConfig: The configured pipeline with all components (data processing,
-            inference, evaluation, and reporting).
-        """
+    def configure_pipeline(self, model_config: ModelConfig, eval_model_config: ModelConfig,
+            resume_from: str = None, eval_resume_from: str = None,
+                           **kwargs: dict[str, Any]) -> PipelineConfig:
+   
         # data preprocessing
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,

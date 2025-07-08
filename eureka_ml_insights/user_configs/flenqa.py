@@ -1,24 +1,6 @@
-"""This module provides an experiment pipeline configuration for the FLenQA dataset.
-
-It defines the FlenQA_Experiment_Pipeline class, which sets up data preprocessing,
-inference, data post-processing, and evaluation/reporting components for the pipeline.
-"""
-
 import os
-from typing import Any
+from typing import Any, Optional
 
-from eureka_ml_insights.configs import (
-    AggregatorConfig,
-    DataProcessingConfig,
-    DataSetConfig,
-    EvalReportingConfig,
-    ExperimentConfig,
-    InferenceConfig,
-    MetricConfig,
-    ModelConfig,
-    PipelineConfig,
-    PromptProcessingConfig,
-)
 from eureka_ml_insights.core import (
     DataProcessing,
     EvalReporting,
@@ -35,31 +17,24 @@ from eureka_ml_insights.data_utils import (
 from eureka_ml_insights.data_utils.flenqa_utils import FlenQAOutputProcessor
 from eureka_ml_insights.metrics import CountAggregator, ExactMatch
 
+from eureka_ml_insights.configs import (
+    AggregatorConfig,
+    DataProcessingConfig,
+    DataSetConfig,
+    EvalReportingConfig,
+    InferenceConfig,
+    MetricConfig,
+    ModelConfig,
+    PipelineConfig,
+    PromptProcessingConfig,
+)
+from eureka_ml_insights.configs import ExperimentConfig
+
 
 class FlenQA_Experiment_Pipeline(ExperimentConfig):
-    """Defines a pipeline configuration for FLenQA experiments.
-
-    This class extends ExperimentConfig and sets up:
-      - Data preprocessing
-      - Inference
-      - Data post-processing
-      - Evaluation/reporting
-    """
-
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
-        """Configures the pipeline steps for a FLenQA experiment.
-
-        Args:
-            model_config (ModelConfig): Configuration for the model used in inference.
-            resume_from (str, optional): Path to a checkpoint or saved state from which to resume the pipeline.
-            **kwargs (dict[str, Any]): Additional keyword arguments for the pipeline configuration.
-
-        Returns:
-            PipelineConfig: The configured pipeline consisting of data preprocessing, inference,
-                data post-processing, and evaluation/reporting components.
-        """
         # Configure the data pre processing component.
         self.data_pre_processing = PromptProcessingConfig(
             component_type=PromptProcessing,

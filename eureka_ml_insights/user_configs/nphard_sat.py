@@ -47,42 +47,21 @@ from eureka_ml_insights.metrics import (
 
 from .llm_extraction import LLM_EXTRACTION_SUBPIPELINE_MIXIN
 
-"""Module for user-defined configuration classes for the SAT benchmark.
-
-This module provides classes to configure pipelines for tasks involving 
-NPHARD SAT, including data processing, inference, answer extraction, 
-evaluation, and reporting.
+"""This file contains user defined configuration classes for the SAT benchmark.
 """
 
 
 class NPHARD_SAT_PIPELINE(ExperimentConfig):
-    """Configuration for the NPHARD SAT pipeline.
-
-    Provides a method to configure the pipeline for NPHARD SAT experiments,
-    including data processing, inference, evaluation, and reporting.
-    """
-
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, n_repeats: int = 1, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
-        """Configures the pipeline for the NPHARD SAT experiment.
-
-        Args:
-            model_config (ModelConfig): The model configuration.
-            resume_from (str, optional): Path to resume from saved pipeline artifacts.
-            n_repeats (int, optional): Number of repeats. Defaults to 1.
-            **kwargs (dict[str, Any]): Additional keyword arguments.
-
-        Returns:
-            PipelineConfig: The configured pipeline.
-        """
         # Configure the data processing component.
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
             data_reader_config=DataSetConfig(
                 HFDataReader,
                 {
-                    "path": "GeoMeterData/nphard_sat1",
+                    "path": "microsoft/sat",
                     "split": "train",
                     "transform": SequenceTransform(
                         [
@@ -431,26 +410,11 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
 
 
 class NPHARD_SAT_PIPELINE_MULTIPLE_RUNS(NPHARD_SAT_PIPELINE):
-    """Config for running the SAT benchmark multiple times.
-
-    Extends the NPHARD_SAT_PIPELINE to allow repeating the experiment
-    multiple times by adding a multiplication transform in data processing.
-    """
+    """This class specifies the config for running SAT benchmark n repeated times"""
 
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, n_repeats: int = 1, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
-        """Configures the pipeline for multiple runs.
-
-        Args:
-            model_config (ModelConfig): The model configuration.
-            resume_from (str, optional): Path to resume from previously saved pipeline artifacts.
-            n_repeats (int, optional): Number of times to repeat the experiment. Defaults to 1.
-            **kwargs (dict[str, Any]): Additional keyword arguments.
-
-        Returns:
-            PipelineConfig: The configured pipeline for multiple runs.
-        """
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         # data preprocessing
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
@@ -460,25 +424,11 @@ class NPHARD_SAT_PIPELINE_MULTIPLE_RUNS(NPHARD_SAT_PIPELINE):
 
 
 class NPHARD_SAT_HYBRIDEXTRACT_PIPELINE(NPHARD_SAT_PIPELINE_MULTIPLE_RUNS):
-    """Configuration for running SAT with a hybrid answer extraction.
-
-    Extends the NPHARD_SAT_PIPELINE_MULTIPLE_RUNS class to incorporate an additional
-    LLM-based extraction subpipeline after the initial answer extraction step.
-    """
+    """This class specifies the config for running SAT with a hybrid answer extraction"""
 
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
-        """Configures the pipeline for a hybrid answer extraction approach in SAT.
-
-        Args:
-            model_config (ModelConfig): The model configuration.
-            resume_from (str, optional): Path to resume from saved pipeline artifacts.
-            **kwargs (dict[str, Any]): Additional keyword arguments for the subpipeline setup.
-
-        Returns:
-            PipelineConfig: The configured pipeline for the hybrid approach.
-        """
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from, **kwargs)
         self.llm_extractor_max_concurrent = int(kwargs.get("llm_extractor_max_concurrent", 10))  # Default value is 1
         answer_col = "extracted_answer"

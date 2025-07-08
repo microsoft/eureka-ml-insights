@@ -1,7 +1,3 @@
-"""
-This module defines the AIME_SEQ_PIPELINE class and configures the iterative pipeline used in the AIME benchmark.
-"""
-
 import os
 from typing import Any
 
@@ -26,6 +22,7 @@ from eureka_ml_insights.data_utils import (
     CopyColumn,
     DataReader,
     RunPythonTransform,
+    SamplerTransform,
     SequenceTransform,
 )
 from eureka_ml_insights.data_utils.aime_utils import AIMEExtractAnswer
@@ -55,39 +52,20 @@ resume_from_dict = {}
 
 
 class AIME_SEQ_PIPELINE(AIME_PIPELINE):
-    """
-    Specifies the configuration for running the AIME benchmark on any model.
-
-    This class inherits from AIME_PIPELINE and configures multiple inference steps, verification,
-    hint generation, and other steps used in the AIME benchmark pipeline.
-    """
+    """This class specifies the config for running AIME benchmark on any model"""
 
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
-        """
-        Configures the iterative pipeline for the AIME benchmark.
-
-        This method sets up multiple inference steps, verification processes, and hint generation
-        to iteratively refine the solution to the AIME question.
-
-        Args:
-            model_config (ModelConfig): The configuration for the model.
-            resume_from (str, optional): The checkpoint or directory to resume from. Defaults to None.
-            **kwargs (dict[str, Any]): Additional arguments to pass to the pipeline configuration.
-
-        Returns:
-            PipelineConfig: The complete configuration for the AIME pipeline.
-        """
 
         # this call to super will configure the initial prompt processing and final eval reporting comps that can be reused.
         super().configure_pipeline(model_config, resume_from, **kwargs)
 
         n_iter = kwargs.get("n_iter", DEFAULT_N_ITER)
         # Uncomment if you want to sample a subset of the data for debugging
-        # self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
+        #self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
         #    SamplerTransform(sample_count=2, random_seed=42)
-        # )
+        #)
         component_configs = [self.data_processing_comp]
         for i in range(1, n_iter + 1):
             # Student inference component, reads prompts from the last prompt processing component

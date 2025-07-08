@@ -1,5 +1,18 @@
 import os
 
+from eureka_ml_insights.configs.experiment_config import ExperimentConfig
+from eureka_ml_insights.core import EvalReporting, Inference, PromptProcessing
+from eureka_ml_insights.data_utils import (
+    HFDataReader,    
+    MMDataLoader,
+    ColumnRename,
+    DataLoader,
+    DataReader,
+    ExtractAnswerGrid,
+    PrependStringTransform,
+    SequenceTransform,
+)
+from eureka_ml_insights.metrics import CaseInsensitiveMatch, CountAggregator
 from eureka_ml_insights.configs import (
     AggregatorConfig,
     DataSetConfig,
@@ -10,51 +23,25 @@ from eureka_ml_insights.configs import (
     PipelineConfig,
     PromptProcessingConfig,
 )
-from eureka_ml_insights.configs.experiment_config import ExperimentConfig
-from eureka_ml_insights.core import EvalReporting, Inference, PromptProcessing
-from eureka_ml_insights.data_utils import (
-    ColumnRename,
-    DataReader,
-    ExtractAnswerGrid,
-    HFDataReader,
-    MMDataLoader,
-    SequenceTransform,
-)
-from eureka_ml_insights.metrics import CaseInsensitiveMatch, CountAggregator
 
-"""
-This module contains example user-defined configuration classes for the grid counting task.
-
+"""This file contains example user defined configuration classes for the grid counting task.
 In order to define a new configuration, a new class must be created that directly or indirectly
-inherits from UserDefinedConfig, and the user_init method should be implemented.
-You can inherit from one of the existing user-defined classes below and override the necessary
+ inherits from UserDefinedConfig and the user_init method should be implemented.
+You can inherit from one of the existing user defined classes below and override the necessary
 attributes to reduce the amount of code you need to write.
 
-The user-defined configuration classes are used to define your desired pipeline that can include
-any number of components. Find component options in the core module.
+The user defined configuration classes are used to define your desired *pipeline* that can include
+any number of *component*s. Find *component* options in the core module.
 
 Pass the name of the class to the main.py script to run the pipeline.
 """
 
 
 class SPATIAL_GRID_PIPELINE(ExperimentConfig):
-    """
-    A user-defined configuration class that sets up an evaluation pipeline with inference
-    and metric reporting components on the grid counting dataset.
-    """
+    """This method is used to define an eval pipeline with inference and metric report components,
+    on the grid counting dataset."""
 
     def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
-        """
-        Configures the pipeline with data processing, inference, and evaluation/reporting components.
-
-        Args:
-            model_config (ModelConfig): The model configuration object specifying model settings.
-            resume_from (str, optional): If provided, path to a checkpoint from which to resume. Defaults to None.
-
-        Returns:
-            PipelineConfig: The configured pipeline containing the data processing, inference, and
-            evaluation/reporting components.
-        """
         # Configure the data processing component.
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
@@ -124,44 +111,21 @@ class SPATIAL_GRID_PIPELINE(ExperimentConfig):
 
 
 class SPATIAL_GRID_TEXTONLY_PIPELINE(SPATIAL_GRID_PIPELINE):
-    """
-    A user-defined configuration class that extends SPATIAL_GRID_PIPELINE to use text-only data.
-    """
+    """This class extends SPATIAL_GRID_PIPELINE to use text only data."""
 
     def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
-        """
-        Configures the pipeline for text-only data by adjusting the tasks argument.
-
-        Args:
-            model_config (ModelConfig): The model configuration object specifying model settings.
-            resume_from (str, optional): If provided, path to a checkpoint from which to resume. Defaults to None.
-
-        Returns:
-            PipelineConfig: The configured pipeline.
-        """
         config = super().configure_pipeline(model_config, resume_from)
-        self.data_processing_comp.data_reader_config.init_args["tasks"] = "spatial_grid_text_only"
+        self.data_processing_comp.data_reader_config.init_args["tasks"] = (
+            "spatial_grid_text_only"
+        )
         return config
 
 
 class SPATIAL_GRID_REPORTING_PIPELINE(SPATIAL_GRID_PIPELINE):
-    """
-    A user-defined configuration class that sets up an evaluation pipeline with only a metric
-    report component on the grid counting dataset.
-    """
+    """This method is used to define an eval pipeline with only a metric report component,
+    on the grid counting dataset."""
 
     def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
-        """
-        Configures the pipeline to include only the evaluation and reporting component.
-
-        Args:
-            model_config (ModelConfig): The model configuration object specifying model settings.
-            resume_from (str, optional): The path from which to load inference results.
-                Defaults to None.
-
-        Returns:
-            PipelineConfig: The configured pipeline containing only the evaluation/reporting component.
-        """
         super().configure_pipeline(model_config, resume_from)
         self.evalreporting_comp.data_reader_config.init_args["path"] = resume_from
         return PipelineConfig([self.evalreporting_comp], self.log_dir)

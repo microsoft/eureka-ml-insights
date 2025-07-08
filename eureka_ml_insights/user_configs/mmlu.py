@@ -10,15 +10,18 @@ from eureka_ml_insights.data_utils import (
     DataReader,
     HFDataReader,
     MapStringsTransform,
-    MMDataLoader,
     SequenceTransform,
+    AddColumnAndData,
+    SamplerTransform,
 )
-from eureka_ml_insights.data_utils.mmmu_utils import (
-    CreateMMMUPrompts,
-    MMMUAll,
-    MMMUTaskToCategories,
+from eureka_ml_insights.data_utils.mmlu_utils import (
+    CreateMMLUPrompts,
+    MMLUAll,
+    MMLUTaskToCategories,
 )
 from eureka_ml_insights.metrics import CountAggregator, MMMUMetric
+
+from eureka_ml_insights.data_utils.data import DataLoader
 
 from eureka_ml_insights.configs import(
     AggregatorConfig,
@@ -32,9 +35,9 @@ from eureka_ml_insights.configs import(
 )
 
 
-class MMMU_BASELINE_PIPELINE(ExperimentConfig):
+class MMLU_BASELINE_PIPELINE(ExperimentConfig):
     """
-    This defines an ExperimentConfig pipeline for the MMMU dataset.
+    This defines an ExperimentConfig pipeline for the MMLU dataset.
     There is no model_config by default and the model config must be passed in via command lime.
     """
 
@@ -45,14 +48,16 @@ class MMMU_BASELINE_PIPELINE(ExperimentConfig):
         data_reader_config=DataSetConfig(
             HFDataReader,
             {
-                "path": "MMMU/MMMU",
-                "split": "validation",
-                "tasks": MMMUAll,
+                "path": "cais/mmlu",
+                "split": "test",
+                "tasks": ["abstract_algebra"], #MMLUAll,
                 "transform": SequenceTransform(
                     [
-                        ASTEvalTransform(columns=["options"]),
-                        CreateMMMUPrompts(),
-                        ColumnRename(name_mapping={"answer": "ground_truth", "options": "target_options"}),
+                        # ASTEvalTransform(columns=["choices"]),
+                        CreateMMLUPrompts(),
+                        ColumnRename(name_mapping={"answer": "ground_truth", "choices": "target_options"}),
+                        AddColumnAndData("question_type", "multiple-choice"),
+                        # SamplerTransform(sample_count=10, random_seed=42),
                     ]
                 ),
             },
@@ -66,7 +71,7 @@ class MMMU_BASELINE_PIPELINE(ExperimentConfig):
             component_type=Inference,
             model_config=model_config,
             data_loader_config=DataSetConfig(
-                MMDataLoader,
+                DataLoader,
                 {"path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl")},
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
@@ -86,7 +91,7 @@ class MMMU_BASELINE_PIPELINE(ExperimentConfig):
                             CopyColumn(column_name_src="__hf_task", column_name_dst="category"),
                             MapStringsTransform(
                                 columns=["category"],
-                                mapping=MMMUTaskToCategories,
+                                mapping=MMLUTaskToCategories,
                             ),
                         ]
                     ),

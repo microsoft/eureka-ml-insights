@@ -1,8 +1,30 @@
 import os
 
+from eureka_ml_insights.configs.experiment_config import ExperimentConfig
+from eureka_ml_insights.core import EvalReporting, Inference, PromptProcessing, DataProcessing, DataJoin
+
+from eureka_ml_insights.data_utils import (
+    AddColumn,
+    HFDataReader,  
+    DataLoader,  
+    MMDataLoader,
+    CopyColumn,
+    ExtractUsageTransform,
+    ReplaceStringsTransform,
+    RunPythonTransform,
+    MajorityVoteTransform,
+    ColumnRename,
+    DataReader,
+    ExtractQuestionOptions,
+    ExtractAnswerSpatialMapAndMaze,
+    MultiplyTransform,
+    SequenceTransform,
+    RegexTransform,
+)
+from eureka_ml_insights.metrics import SubstringExistsMatch, BiLevelAggregator, BiLevelCountAggregator, CountAggregator
+
 from eureka_ml_insights.configs import (
     AggregatorConfig,
-    DataJoinConfig,
     DataProcessingConfig,
     DataSetConfig,
     EvalReportingConfig,
@@ -11,72 +33,28 @@ from eureka_ml_insights.configs import (
     ModelConfig,
     PipelineConfig,
     PromptProcessingConfig,
+    DataJoinConfig,    
 )
-from eureka_ml_insights.configs.experiment_config import ExperimentConfig
-from eureka_ml_insights.configs.model_configs import (
-    OAI_GPT4O_2024_11_20_CONFIG,
-)
-from eureka_ml_insights.core import (
-    DataJoin,
-    DataProcessing,
-    EvalReporting,
-    Inference,
-    PromptProcessing,
-)
-from eureka_ml_insights.data_utils import (
-    AddColumn,
-    ColumnRename,
-    CopyColumn,
-    DataLoader,
-    DataReader,
-    ExtractAnswerSpatialMapAndMaze,
-    ExtractQuestionOptions,
-    ExtractUsageTransform,
-    HFDataReader,
-    MajorityVoteTransform,
-    MMDataLoader,
-    MultiplyTransform,
-    RegexTransform,
-    ReplaceStringsTransform,
-    RunPythonTransform,
-    SequenceTransform,
-)
-from eureka_ml_insights.metrics import (
-    BiLevelAggregator,
-    BiLevelCountAggregator,
-    CountAggregator,
-    SubstringExistsMatch,
-)
+from eureka_ml_insights.configs.model_configs import OAI_GPT4O_2024_11_20_CONFIG
 
-"""Example user defined configuration classes for the maze task.
+"""This file contains example user defined configuration classes for the maze task.
+In order to define a new configuration, a new class must be created that directly or indirectly
+ inherits from UserDefinedConfig and the user_init method should be implemented.
+You can inherit from one of the existing user defined classes below and override the necessary
+attributes to reduce the amount of code you need to write.
 
-In order to define a new configuration, a new class must be created that directly or 
-indirectly inherits from UserDefinedConfig and the user_init method should be implemented.
-You can inherit from one of the existing user defined classes below and override the
-necessary attributes to reduce the amount of code you need to write.
-
-The user defined configuration classes are used to define your desired pipeline that can 
-include any number of components. Find component options in the core module.
+The user defined configuration classes are used to define your desired *pipeline* that can include
+any number of *component*s. Find *component* options in the core module.
 
 Pass the name of the class to the main.py script to run the pipeline.
 """
 
 
 class MAZE_PIPELINE(ExperimentConfig):
-    """Defines an evaluation pipeline with inference and metric report components
-    on the spatial reasoning dataset.
-    """
+    """This method is used to define an eval pipeline with inference and metric report components,
+    on the spatial reasoning dataset."""
 
     def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
-        """Configures the pipeline for the maze task.
-
-        Args:
-            model_config (ModelConfig): The model configuration.
-            resume_from (str, optional): Path to resume from. Defaults to None.
-
-        Returns:
-            PipelineConfig: The configured pipeline.
-        """
         # Configure the data processing component.
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
@@ -120,10 +98,10 @@ class MAZE_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            ExtractUsageTransform(model_config),
+                            ExtractUsageTransform(model_config),                        
                             ExtractQuestionOptions(
-                                prompt_column_name="prompt",
-                                extracted_options_column_name="target_options_answers",
+                                    prompt_column_name="prompt",
+                                    extracted_options_column_name="target_options_answers",
                             ),
                             ColumnRename(name_mapping={"model_output": "model_output_raw"}),
                             ExtractAnswerSpatialMapAndMaze(
@@ -149,7 +127,7 @@ class MAZE_PIPELINE(ExperimentConfig):
                         [
                             RunPythonTransform("df = df[df['model_output'] == '']"),
                             ColumnRename(name_mapping={"prompt": "initial_prompt"}),
-                            AddColumn(column_name="prompt"),
+                            AddColumn(column_name="prompt")
                         ]
                     ),
                 },
@@ -169,8 +147,8 @@ class MAZE_PIPELINE(ExperimentConfig):
                 {"path": os.path.join(self.filter_empty_answer.output_dir, "transformed_data.jsonl")},
             ),
             output_dir=os.path.join(self.log_dir, "llm_answer_extract_inference_result"),
-            max_concurrent=1,
-        )
+            max_concurrent=1
+        )        
 
         self.data_join = DataJoinConfig(
             component_type=DataJoin,
@@ -189,9 +167,7 @@ class MAZE_PIPELINE(ExperimentConfig):
                     "transform": SequenceTransform(
                         [
                             # drop all columns except the uid and model_output
-                            RunPythonTransform(
-                                "df = df[[col for col in ['data_repeat_id','data_point_id', 'model_output'] if col in df.columns]]"
-                            ),
+                            RunPythonTransform("df = df[[col for col in ['data_repeat_id','data_point_id', 'model_output'] if col in df.columns]]"),
                             RegexTransform(
                                 columns="model_output",
                                 prompt_pattern=r"Final Answer:\s*(.+)",
@@ -202,8 +178,8 @@ class MAZE_PIPELINE(ExperimentConfig):
                 },
             ),
             output_dir=os.path.join(self.log_dir, "data_join_output"),
-            pandas_merge_args={"on": ["data_repeat_id", "data_point_id"], "how": "left"},
-        )
+            pandas_merge_args={"on": ['data_repeat_id', 'data_point_id'], "how": "left"},
+        )        
 
         # Configure the evaluation and reporting component.
         self.evalreporting_comp = EvalReportingConfig(
@@ -217,71 +193,62 @@ class MAZE_PIPELINE(ExperimentConfig):
                         [
                             # consolidate model_output_y to replace the original model_output whenever empty
                             # the initial if statement checks whether there has been a join beforehand
-                            RunPythonTransform(
-                                "df['model_output'] = df.apply(lambda row: row['model_output'] if 'model_output_x' not in row else row['model_output_y'] if row['model_output_x'] == '' else row['model_output_x'], axis=1)"
-                            ),
+                            RunPythonTransform("df['model_output'] = df.apply(lambda row: row['model_output'] if 'model_output_x' not in row else row['model_output_y'] if row['model_output_x'] == '' else row['model_output_x'], axis=1)"),
                         ]
                     ),
                 },
             ),
             metric_config=MetricConfig(SubstringExistsMatch),
             aggregator_configs=[
-                AggregatorConfig(
-                    CountAggregator,
+                # the first three reports aggregate the metrics per experiment repeat
+                # each repeat can be considered as an individual pass@1 score
+                AggregatorConfig(CountAggregator, 
                     {
-                        "column_names": ["SubstringExistsMatch_result"],
-                        "group_by": "data_repeat_id",
+                        "column_names": ["SubstringExistsMatch_result"], 
+                        "group_by": "data_repeat_id", 
                         "filename_base": "SubstringExistsMatch_SeparateRuns",
-                        "normalize": True,
-                    },
-                ),
-                AggregatorConfig(
-                    CountAggregator,
+                        "normalize": True
+                    }),
+                AggregatorConfig(CountAggregator, 
                     {
-                        "column_names": ["SubstringExistsMatch_result"],
-                        "group_by": ["data_repeat_id", "task"],
-                        "filename_base": "SubstringExistsMatch_GroupBy_task_SeparateRuns",
-                        "normalize": True,
-                    },
-                ),
-                AggregatorConfig(
-                    BiLevelCountAggregator,
+                        "column_names": ["SubstringExistsMatch_result"], 
+                        "group_by": ["data_repeat_id", "task"], 
+                        "filename_base": "SubstringExistsMatch_GroupBy_task_SeparateRuns", 
+                        "normalize": True
+                    }),
+                # the next three reports take the average and std for all repeats
+                # the resulting numbers are the average and std of N pass@1 scores, where N is number of repeats
+                AggregatorConfig(BiLevelCountAggregator, 
                     {
-                        "column_names": ["SubstringExistsMatch_result"],
-                        "first_groupby": "data_repeat_id",
+                        "column_names": ["SubstringExistsMatch_result"], 
+                        "first_groupby": "data_repeat_id", 
                         "filename_base": "SubstringExistsMatch_AllRuns",
-                        "normalize": True,
-                    },
-                ),
-                AggregatorConfig(
-                    BiLevelCountAggregator,
+                        "normalize": True
+                    }),
+                AggregatorConfig(BiLevelCountAggregator, 
                     {
-                        "column_names": ["SubstringExistsMatch_result"],
-                        "first_groupby": ["data_repeat_id", "task"],
+                        "column_names": ["SubstringExistsMatch_result"], 
+                        "first_groupby": ["data_repeat_id",    "task"], 
                         "second_groupby": "task",
-                        "filename_base": "SubstringExistsMatch_GroupBy_task_AllRuns",
-                        "normalize": True,
-                    },
-                ),
-                AggregatorConfig(
-                    BiLevelAggregator,
+                        "filename_base": "SubstringExistsMatch_GroupBy_task_AllRuns", 
+                        "normalize": True
+                    }),
+                # three similar reports for average completion usage
+                AggregatorConfig(BiLevelAggregator, 
                     {
-                        "column_names": ["usage_completion"],
-                        "first_groupby": "data_repeat_id",
+                        "column_names": ["usage_completion"], 
+                        "first_groupby": "data_repeat_id", 
                         "filename_base": "UsageCompletion_AllRuns",
-                        "agg_fn": "mean",
-                    },
-                ),
-                AggregatorConfig(
-                    BiLevelAggregator,
+                        "agg_fn": "mean"
+                    }),
+                AggregatorConfig(BiLevelAggregator, 
                     {
-                        "column_names": ["usage_completion"],
-                        "first_groupby": ["data_repeat_id", "task"],
+                        "column_names": ["usage_completion"], 
+                        "first_groupby": ["data_repeat_id", "task"], 
                         "second_groupby": "task",
-                        "filename_base": "UsageCompletion_GroupBy_task_AllRuns",
-                        "agg_fn": "mean",
-                    },
-                ),
+                        "filename_base": "UsageCompletion_GroupBy_task_AllRuns", 
+                        "agg_fn": "mean"
+                    }),
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
         )
@@ -295,15 +262,14 @@ class MAZE_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            CopyColumn(
+                        CopyColumn(
                                 column_name_src="SubstringExistsMatch_result",
                                 column_name_dst="SubstringExistsMatch_result_numeric",
                             ),
-                            ReplaceStringsTransform(
+                        ReplaceStringsTransform(
                                 columns=["SubstringExistsMatch_result_numeric"],
-                                mapping={"incorrect": "0", "correct": "1", "none": "NaN"},
-                                case=False,
-                            ),
+                                mapping={'incorrect': '0', 'correct': '1', 'none': 'NaN'},
+                                case=False)
                         ]
                     ),
                 },
@@ -312,42 +278,51 @@ class MAZE_PIPELINE(ExperimentConfig):
         )
 
         # Aggregate the results by best of n
+        # In this case, this is equivalent to taking the max on the numerical column of the metric.
         self.bon_evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
                     "path": os.path.join(self.posteval_data_post_processing_comp.output_dir, "transformed_data.jsonl"),
-                    "format": ".jsonl",
+                    "format": ".jsonl"
                 },
             ),
             aggregator_configs=[
+                # the first three reports aggregate results by data_point_id and take the best out of N
                 AggregatorConfig(
                     BiLevelAggregator,
                     {
-                        "column_names": ["SubstringExistsMatch_result_numeric"],
+                        "column_names": [
+                            "SubstringExistsMatch_result_numeric"
+                        ],
                         "first_groupby": "data_point_id",
                         "filename_base": "SubstringExistsMatch_BestOfN",
-                        "agg_fn": "max",
+                        "agg_fn": "max"
                     },
                 ),
                 AggregatorConfig(
                     BiLevelAggregator,
                     {
-                        "column_names": ["SubstringExistsMatch_result_numeric"],
-                        "first_groupby": "data_point_id",
+                        "column_names": [
+                            "SubstringExistsMatch_result_numeric"
+                        ],
+                        "first_groupby": "data_point_id", 
                         "second_groupby": "task",
                         "filename_base": "SubstringExistsMatch_BestOfN_GroupBy_task",
-                        "agg_fn": "max",
+                        "agg_fn": "max"
                     },
                 ),
+                # aggregates results by data_point_id and takes the sum of usage for completion tokens
                 AggregatorConfig(
                     BiLevelAggregator,
                     {
-                        "column_names": ["usage_completion"],
+                        "column_names": [
+                            "usage_completion"
+                        ],
                         "first_groupby": "data_point_id",
                         "filename_base": "UsageCompletion_BestOfN",
-                        "agg_fn": "sum",
+                         "agg_fn": "sum"
                     },
                 ),
             ],
@@ -360,27 +335,32 @@ class MAZE_PIPELINE(ExperimentConfig):
                 DataReader,
                 {
                     "path": os.path.join(self.posteval_data_post_processing_comp.output_dir, "transformed_data.jsonl"),
-                    "format": ".jsonl",
+                    "format": ".jsonl"
                 },
             ),
             aggregator_configs=[
+                # the first three reports aggregate results by data_point_id and take the best out of N
                 AggregatorConfig(
                     BiLevelAggregator,
                     {
-                        "column_names": ["SubstringExistsMatch_result_numeric"],
+                        "column_names": [
+                            "SubstringExistsMatch_result_numeric"
+                        ],
                         "first_groupby": "data_point_id",
                         "filename_base": "SubstringExistsMatch_WorstOfN",
-                        "agg_fn": "min",
+                        "agg_fn": "min"
                     },
                 ),
                 AggregatorConfig(
                     BiLevelAggregator,
                     {
-                        "column_names": ["SubstringExistsMatch_result_numeric"],
-                        "first_groupby": "data_point_id",
+                        "column_names": [
+                            "SubstringExistsMatch_result_numeric"
+                        ],
+                        "first_groupby": "data_point_id", 
                         "second_groupby": "task",
                         "filename_base": "SubstringExistsMatch_WorstOfN_GroupBy_task",
-                        "agg_fn": "min",
+                        "agg_fn": "min"
                     },
                 ),
             ],
@@ -404,7 +384,7 @@ class MAZE_PIPELINE(ExperimentConfig):
                                     "majority_vote": "model_output",
                                 }
                             ),
-                            RunPythonTransform("df = df[df['data_repeat_id'] == 'repeat_0']"),
+                            RunPythonTransform("df = df[df['data_repeat_id'] == 'repeat_0']")
                         ]
                     ),
                 },
@@ -424,23 +404,20 @@ class MAZE_PIPELINE(ExperimentConfig):
             ),
             metric_config=MetricConfig(SubstringExistsMatch),
             aggregator_configs=[
-                AggregatorConfig(
-                    CountAggregator,
+                # these three reports aggregate the metrics for the majority vote results
+                AggregatorConfig(CountAggregator, 
                     {
-                        "column_names": ["SubstringExistsMatch_result"],
+                        "column_names": ["SubstringExistsMatch_result"], 
                         "filename_base": "MajorityVote",
-                        "normalize": True,
-                    },
-                ),
-                AggregatorConfig(
-                    CountAggregator,
+                        "normalize": True
+                    }),
+                AggregatorConfig(CountAggregator, 
                     {
-                        "column_names": ["SubstringExistsMatch_result"],
-                        "group_by": ["task"],
-                        "filename_base": "MajorityVote_GroupBy_task",
-                        "normalize": True,
-                    },
-                ),
+                        "column_names": ["SubstringExistsMatch_result"], 
+                        "group_by": ["task"], 
+                        "filename_base": "MajorityVote_GroupBy_task", 
+                        "normalize": True
+                    }),
             ],
             output_dir=os.path.join(self.log_dir, "majorityvote_eval_report"),
         )
@@ -453,91 +430,55 @@ class MAZE_PIPELINE(ExperimentConfig):
                 self.preeval_data_post_processing_comp,
                 self.filter_empty_answer,
                 self.inference_llm_answer_extract,
-                self.data_join,
+                self.data_join,                
                 self.evalreporting_comp,
                 self.posteval_data_post_processing_comp,
                 self.bon_evalreporting_comp,
                 self.won_evalreporting_comp,
                 self.data_post_processing_mv,
-                self.mv_evalreporting_comp,
+                self.mv_evalreporting_comp
             ],
             self.log_dir,
         )
 
-
 class MAZE_COT_PIPELINE(MAZE_PIPELINE):
-    """Extends MAZE_PIPELINE to use a chain-of-thought (COT) prompt."""
+    """This class extends MAZE_PIPELINE to use a COT prompt."""
 
     def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
-        """Configures the pipeline to use a COT prompt.
-
-        Args:
-            model_config (ModelConfig): The model configuration.
-            resume_from (str, optional): Path to resume from. Defaults to None.
-
-        Returns:
-            PipelineConfig: The configured pipeline.
-        """
         config = super().configure_pipeline(model_config, resume_from)
-        self.data_processing_comp.prompt_template_path = os.path.join(
-            os.path.dirname(__file__),
-            "../../prompt_templates/vision_language_templates/cot.jinja",
-        )
+        self.data_processing_comp.prompt_template_path=os.path.join(
+                os.path.dirname(__file__),
+                "../../prompt_templates/vision_language_templates/cot.jinja",
+            )
         return config
 
 
 class MAZE_TEXTONLY_PIPELINE(MAZE_PIPELINE):
-    """Extends MAZE_PIPELINE to use text-only data."""
+    """This class extends MAZE_PIPELINE to use text only data."""
 
     def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
-        """Configures the pipeline to use text-only data.
-
-        Args:
-            model_config (ModelConfig): The model configuration.
-            resume_from (str, optional): Path to resume from. Defaults to None.
-
-        Returns:
-            PipelineConfig: The configured pipeline.
-        """
         config = super().configure_pipeline(model_config, resume_from)
-        self.data_processing_comp.data_reader_config.init_args["tasks"] = "maze_text_only"
+        self.data_processing_comp.data_reader_config.init_args["tasks"] = (
+            "maze_text_only"
+        )
         return config
 
-
 class MAZE_COT_TEXTONLY_PIPELINE(MAZE_COT_PIPELINE):
-    """Extends MAZE_COT_PIPELINE to use text-only data."""
+    """This class extends MAZE_COT_PIPELINE to use text only data."""
 
     def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
-        """Configures the pipeline to use a COT prompt on text-only data.
-
-        Args:
-            model_config (ModelConfig): The model configuration.
-            resume_from (str, optional): Path to resume from. Defaults to None.
-
-        Returns:
-            PipelineConfig: The configured pipeline.
-        """
         config = super().configure_pipeline(model_config, resume_from)
-        self.data_processing_comp.data_reader_config.init_args["tasks"] = "maze_text_only"
+        self.data_processing_comp.data_reader_config.init_args["tasks"] = (
+            "maze_text_only"
+        )
         return config
 
 
 class MAZE_REPORTING_PIPELINE(MAZE_PIPELINE):
-    """Defines an evaluation pipeline with only a metric report component
-    on the maze dataset.
-    """
+    """This method is used to define an eval pipeline with only a metric report component,
+    on the maze dataset."""
 
     def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
-        """Configures the pipeline for evaluation with only a metric report component.
-
-        Args:
-            model_config (ModelConfig): The model configuration.
-            resume_from (str, optional): Path to resume from, which takes the place
-                of the standard data path. Defaults to None.
-
-        Returns:
-            PipelineConfig: The configured pipeline.
-        """
         super().configure_pipeline(model_config, resume_from)
         self.preeval_data_post_processing_comp.data_reader_config.init_args["path"] = resume_from
         # Configure the pipeline
@@ -546,13 +487,13 @@ class MAZE_REPORTING_PIPELINE(MAZE_PIPELINE):
                 self.preeval_data_post_processing_comp,
                 self.filter_empty_answer,
                 self.inference_llm_answer_extract,
-                self.data_join,
+                self.data_join,                
                 self.evalreporting_comp,
                 self.posteval_data_post_processing_comp,
                 self.bon_evalreporting_comp,
                 self.won_evalreporting_comp,
                 self.data_post_processing_mv,
-                self.mv_evalreporting_comp,
+                self.mv_evalreporting_comp
             ],
             self.log_dir,
         )
