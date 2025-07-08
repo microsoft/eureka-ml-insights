@@ -68,13 +68,6 @@ class FileWriterTransform(DFTransformBase):
         Returns:
             pandas.DataFrame: The original DataFrame after writing the content to disk.
         """
-        # replace "/home/sayouse/git/eureka-ml-insights/" with "/home/sayouse/git/eureka-ml-insights-doc/" in the file paths
-        output_file_path = df[self.file_path_column].apply(
-            lambda x: x.replace("/home/sayouse/git/eureka-ml-insights/", "/home/sayouse/git/eureka-ml-insights-doc/")
-        )
-        # if the output file path does not exist, create the directory
-        output_file_path.apply(lambda x: os.makedirs(os.path.dirname(x), exist_ok=True))
-        # Implement the logic to write files to the specified column
         for index, row in df.iterrows():
             with open(row[self.file_path_column], "w") as f:
                 f.write(row[self.file_content_column])
@@ -101,6 +94,10 @@ class DOCSTR_PIPELINE(ExperimentConfig):
             PipelineConfig: The configured pipeline consisting of data processing,
             inference, and post-processing components.
         """
+
+        # input file should be a csv file with a column 'file_path' containing paths to Python files you want to add docstrings to.
+        input_file_path = kwargs.get("input_file_path", os.path.join(os.path.dirname(__file__), "../python_file_list.csv"))
+
         # Configure the data processing component.
         data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
@@ -108,11 +105,11 @@ class DOCSTR_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 DataReader,
                 {
-                    "path": "/home/sayouse/git/eureka-ml-insights/eureka_ml_insights/python_files_m.csv",
+                    "path": input_file_path,
                     "format": ".csv",
                     "header": 0,
                     "index_col": None,
-                    "transform": FileReaderTransform(),
+                    "transform": FileReaderTransform(file_path_column="file_path"),
                 },
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
