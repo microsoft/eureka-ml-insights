@@ -5,7 +5,7 @@ https://github.com/mathllm/MATH-V/tree/main/evaluation
 """
 
 from dataclasses import dataclass
-from latex2sympy2 import latex2sympy
+import latex2sympy
 import pandas as pd
 import re
 
