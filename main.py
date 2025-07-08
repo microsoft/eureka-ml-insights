@@ -2,6 +2,8 @@
 
 import argparse
 import logging
+import os
+import sys
 
 from eureka_ml_insights import user_configs as configs
 from eureka_ml_insights.configs import model_configs
@@ -9,9 +11,30 @@ from eureka_ml_insights.core import Pipeline
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
+
+def import_from_path(module_path, class_name):
+    """
+    Dynamically import a class from a module path.
+    """
+    sys.path.append(os.path.dirname(os.path.abspath(module_path)))
+    print(sys.path)
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("experiment_config", module_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    # Get the experiment config class from the module
+    if hasattr(module, class_name):
+        return getattr(module, class_name)
+        logging.info(f"Using experiment config class {class_name} from {module_path}.")
+    else:
+        raise ValueError(f"Experiment config class {class_name} not found in {module_path}.")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run the pipeline for the specified experiment config class name.")
     parser.add_argument("--exp_config", type=str, help="The name of the experiment config class to run.", required=True)
+    parser.add_argument("--exp_config_path", type=str, help="Path to the experiment config file.", default=None)
     parser.add_argument(
         "--model_config", type=str, nargs="?", help="The name of the model config to use.", default=None
     )
@@ -90,7 +113,11 @@ if __name__ == "__main__":
     if experiment_config_class in dir(configs):
         experiment_config_class = getattr(configs, experiment_config_class)
     else:
-        raise ValueError(f"Experiment config class {experiment_config_class} not found.")
+        # If the experiment_config_class is not found in the configs module, try to import it from args.exp_config_path.
+        if args.exp_config_path:
+            experiment_config_class = import_from_path(args.exp_config_path, args.exp_config)
+        else:
+            raise ValueError(f"Experiment config class {args.exp_config} not found.")
     pipeline_config = experiment_config_class(exp_logdir=args.exp_logdir, **init_args).pipeline_config
     logging.info(f"Saving experiment logs in {pipeline_config.log_dir}.")
     pipeline = Pipeline(pipeline_config.component_configs, pipeline_config.log_dir)
