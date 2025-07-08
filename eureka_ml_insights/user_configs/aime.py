@@ -48,8 +48,6 @@ from eureka_ml_insights.metrics.reports import (
 
 from .llm_extraction import LLM_EXTRACTION_SUBPIPELINE_MIXIN
 
-# from eureka_ml_insights.data_utils.transform import MajorityVoteTransform
-
 
 class AIME_PIPELINE(ExperimentConfig):
     """Config for running AIME benchmark on any model.
