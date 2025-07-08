@@ -1,3 +1,10 @@
+"""A set of classes and transformations for DataFrame modifications.
+
+This module includes a base class (DFTransformBase), along with a variety of transformations
+for renaming columns, running Python code, sampling data, repeating rows, adding columns, 
+and more.
+"""
+
 import ast
 import logging
 import re
@@ -8,13 +15,6 @@ from typing import Dict, List
 import numpy as np
 import pandas as pd
 import tiktoken
-
-"""This module provides classes and transformations for DataFrame modifications.
-
-It includes a base class DFTransformBase, along with a variety of transformations for 
-renaming columns, running Python code, sampling data, repeating rows, adding columns, 
-and more.
-"""
 
 from eureka_ml_insights.configs.config import ModelConfig
 from eureka_ml_insights.models import (
@@ -34,11 +34,17 @@ from eureka_ml_insights.models import (
 
 @dataclass
 class DFTransformBase:
-    """Base class for DataFrame transformations."""
+    """
+    Base class for DataFrame transformations.
+
+    This dataclass does not define any attributes. Subclasses must implement
+    the transform() method.
+    """
 
     @abstractmethod
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Transforms a pandas DataFrame.
+        """
+        Transforms a pandas DataFrame.
 
         Args:
             df (pd.DataFrame): The input DataFrame.
@@ -51,12 +57,18 @@ class DFTransformBase:
 
 @dataclass
 class SequenceTransform(DFTransformBase):
-    """Chains multiple DFTransformBase transformations in sequence."""
+    """
+    Chains multiple DFTransformBase transformations in sequence.
+
+    Attributes:
+        transforms (List[DFTransformBase]): The list of transformations to be applied in sequence.
+    """
 
     transforms: List[DFTransformBase]
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Applies each transformation in sequence to the given DataFrame.
+        """
+        Applies each transformation in sequence to the given DataFrame.
 
         Args:
             df (pd.DataFrame): The initial DataFrame to transform.
@@ -71,12 +83,18 @@ class SequenceTransform(DFTransformBase):
 
 @dataclass
 class ColumnRename(DFTransformBase):
-    """Renames columns in a DataFrame based on a provided mapping."""
+    """
+    Renames columns in a DataFrame based on a provided name mapping.
+
+    Attributes:
+        name_mapping (Dict[str, str]): The dictionary mapping old column names to new column names.
+    """
 
     name_mapping: Dict[str, str]
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Renames columns according to name_mapping.
+        """
+        Renames columns according to name_mapping.
 
         Args:
             df (pd.DataFrame): The input DataFrame whose columns will be renamed.
@@ -89,37 +107,35 @@ class ColumnRename(DFTransformBase):
 
 @dataclass
 class RunPythonTransform(DFTransformBase):
-    """Runs arbitrary Python code on the DataFrame.
+    """
+    Runs arbitrary Python code on the DataFrame.
 
-    Args:
+    This transform executes Python code in a controlled environment, allowing only
+    certain statements and imports for security reasons.
+
+    Attributes:
         python_code (str): The Python code to run on the DataFrame.
-        global_imports (List[str]): A list of modules to import in the global scope, if needed.
-            Local (to the python_code scope) imports can be included in the python_code. Such global
-            scope imports are needed when the python_code uses a lambda function, for example, since
-            imports in the python_code scope are not available to the lambda function.
-
-    Returns:
-        pd.DataFrame: The transformed DataFrame.
+        global_imports (list): A list of modules to import in the global scope, if needed.
     """
 
     python_code: str
     global_imports: list = field(default_factory=list)
 
     def __post_init__(self):
-        """Validates the introduced Python code to ensure only permitted operations are allowed."""
-        # To avoid disastrous consequences, we only allow operations on the data frame.
-        # Therefore, every statement in the python_code should be in the form of df['column_name'] = ... or df = ...
+        """
+        Validates that only permitted operations are allowed in python_code.
+        """
         self.allowed_statement_prefixes = ["df = ", "df[", "import "]
-        # Similarly, we only allow a limited set of imports. To add to this safe list, create a PR.
         self.allowed_imports = ["ast", "math", "numpy"]
         self.validate()
 
     def validate(self):
-        """Checks if the provided Python code has allowed statements and imports.
+        """
+        Checks if the provided Python code has allowed statements and imports.
 
         Raises:
-            ValueError: If any statement does not start with an allowed prefix or if trying to import 
-                a disallowed module.
+            ValueError: If any statement does not start with an allowed prefix or if
+                attempting to import a disallowed module.
         """
         statements = [s.strip() for s in self.python_code.split(";")]
         for statement in statements:
@@ -131,7 +147,8 @@ class RunPythonTransform(DFTransformBase):
                     raise ValueError(f"Importing {module_name} in RunPythonTransform is not allowed.")
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Executes the stored Python code on the input DataFrame.
+        """
+        Executes the stored Python code on the input DataFrame.
 
         Args:
             df (pd.DataFrame): The DataFrame on which to run the Python code.
@@ -152,14 +169,22 @@ class RunPythonTransform(DFTransformBase):
 
 @dataclass
 class SamplerTransform(DFTransformBase):
-    """Samples rows from the DataFrame, either randomly or by stratification."""
+    """
+    Samples rows from the DataFrame, either randomly or by stratification.
 
-    random_seed: int
+    Attributes:
+        random_seed (int): The random seed for reproducibility.
+        sample_count (int): The number of rows to sample.
+        stratify_by (List[str]): Optional columns to stratify upon when sampling.
+    """
+
+    random_seed: int 
     sample_count: int
     stratify_by: List[str] = None
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Samples rows from the given DataFrame.
+        """
+        Samples rows from the given DataFrame.
 
         Args:
             df (pd.DataFrame): The input DataFrame to sample from.
@@ -177,7 +202,8 @@ class SamplerTransform(DFTransformBase):
 
 @dataclass
 class MultiplyTransform(DFTransformBase):
-    """Repeats each row n times and adds a column to indicate the repeat number and data point ID.
+    """
+    Repeats each row n times and adds a column to indicate the repeat number and data point ID.
 
     Attributes:
         n_repeats (int): The number of times to repeat each row.
@@ -186,7 +212,8 @@ class MultiplyTransform(DFTransformBase):
     n_repeats: int
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Repeats each row in the DataFrame.
+        """
+        Repeats each row in the DataFrame.
 
         Args:
             df (pd.DataFrame): The input DataFrame.
@@ -205,12 +232,18 @@ class MultiplyTransform(DFTransformBase):
 
 @dataclass
 class AddColumn(DFTransformBase):
-    """Adds a new column to the DataFrame with empty strings."""
+    """
+    Adds a new column to the DataFrame with empty strings.
+
+    Attributes:
+        column_name (str): The name of the new column to add.
+    """
 
     column_name: str
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Adds the specified column to the input DataFrame, initializing it with empty strings.
+        """
+        Adds the specified column to the input DataFrame, initializing it with empty strings.
 
         Args:
             df (pd.DataFrame): The input DataFrame.
@@ -224,13 +257,20 @@ class AddColumn(DFTransformBase):
 
 @dataclass
 class AddColumnAndData(DFTransformBase):
-    """Adds a new column to the DataFrame and populates it with a provided value."""
+    """
+    Adds a new column to the DataFrame with a specified value.
+
+    Attributes:
+        column_name (str): The name of the new column to add.
+        data (str): The value used to populate the new column.
+    """
 
     column_name: str
     data: str
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Adds the specified column to the input DataFrame, initializing it with the provided value.
+        """
+        Adds the specified column to the input DataFrame, initializing it with the provided value.
 
         Args:
             df (pd.DataFrame): The input DataFrame.
@@ -244,13 +284,20 @@ class AddColumnAndData(DFTransformBase):
 
 @dataclass
 class CopyColumn(DFTransformBase):
-    """Copies data from a source column to a destination column."""
+    """
+    Copies data from a source column to a destination column.
+
+    Attributes:
+        column_name_src (str): The name of the source column.
+        column_name_dst (str): The name of the destination column.
+    """
 
     column_name_src: str
     column_name_dst: str
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Copies the data from column_name_src to column_name_dst.
+        """
+        Copies the data from the source column to the destination column.
 
         Args:
             df (pd.DataFrame): The input DataFrame.
@@ -264,16 +311,21 @@ class CopyColumn(DFTransformBase):
 
 @dataclass
 class MultiColumnTransform(DFTransformBase):
-    """Base class to apply a transformation function to specified columns.
+    """
+    Base class for applying a transformation function to specified columns.
 
     This class is meant to be subclassed, and the subclass should implement
     the _transform method.
+
+    Attributes:
+        columns (List[str] | str): The columns to which transformations will be applied.
     """
 
     columns: List[str] | str
 
-    def validate(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Checks that all columns to be transformed are present in the DataFrame.
+    def validate(self, df: pd.DataFrame):
+        """
+        Checks that all columns to be transformed are present in the DataFrame.
 
         Args:
             df (pd.DataFrame): The input DataFrame.
@@ -289,13 +341,14 @@ class MultiColumnTransform(DFTransformBase):
             raise ValueError(f"The following columns are not present in the data frame: {msg}")
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Applies the _transform method to each specified column.
+        """
+        Applies the _transform method to each specified column.
 
         Args:
-            df (pd.DataFrame): The DataFrame to be transformed.
+            df (pd.DataFrame): The DataFrame to transform.
 
         Returns:
-            pd.DataFrame: The DataFrame after applying the transformation.
+            pd.DataFrame: The transformed DataFrame.
         """
         if df.empty:
             logging.warn("The input dataframe is empty, no transformation was applied.")
@@ -306,34 +359,36 @@ class MultiColumnTransform(DFTransformBase):
         return df
 
     def _transform(self, value):
-        """Defines the transformation for a single cell value.
+        """
+        Defines the transformation for a single cell value.
 
         Args:
             value: The cell value to transform.
 
         Returns:
-            The transformed cell value.
+            Any: The transformed cell value.
         """
         raise NotImplementedError
 
 
 @dataclass
 class ShuffleColumnsTransform(MultiColumnTransform):
-    """Shuffles values across specified columns on a per-row basis.
+    """
+    Shuffles values across specified columns on a per-row basis.
 
-    This class is often used in use-cases like MCQ benchmarks where 
-    the answer choices need to be shuffled.
+    This transform is often used in MCQ-like tasks where answer choices
+    need to be shuffled.
 
     Attributes:
         columns (List[str]): The list of columns to shuffle.
         rng (np.random.Generator): The random number generator used for the shuffling.
     """
 
-    columns: List[str]
     rng: np.random.Generator = np.random.default_rng(0)
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Shuffles values across the specified columns on a per-row basis.
+        """
+        Shuffles values across the specified columns on a per-row basis.
 
         Args:
             df (pd.DataFrame): The DataFrame whose columns will be shuffled.
@@ -353,7 +408,8 @@ class ShuffleColumnsTransform(MultiColumnTransform):
 
 @dataclass
 class ColumnMatchMapTransform(DFTransformBase):
-    """Creates a new column indicating the column name that matches a key column's value in each row.
+    """
+    Creates a new column that indicates which column matches a key column's value in each row.
 
     Attributes:
         key_col (str): The column whose value we look to match across other columns.
@@ -366,13 +422,14 @@ class ColumnMatchMapTransform(DFTransformBase):
     columns: List[str]
 
     def _find_matching_column(self, row):
-        """Finds which column matches the key column's value in a given row.
+        """
+        Finds the name of the column matching the key column's value in a given row.
 
         Args:
-            row (pd.Series): A row of the DataFrame.
+            row (pd.Series): A row from the DataFrame.
 
         Returns:
-            str or None: The name of the matching column, or None if not found.
+            str or None: The name of the matching column, or None if none match.
         """
         for col in self.columns:
             if row[col] == row[self.key_col]:
@@ -380,7 +437,8 @@ class ColumnMatchMapTransform(DFTransformBase):
         return None
 
     def validate(self, df: pd.DataFrame):
-        """Checks that the key column and specified columns exist in the DataFrame.
+        """
+        Validates that the key column and specified columns exist in the DataFrame.
 
         Args:
             df (pd.DataFrame): The input DataFrame.
@@ -394,13 +452,14 @@ class ColumnMatchMapTransform(DFTransformBase):
             raise ValueError(f"The following columns are not present in the data frame: {msg}")
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Creates a column with the name of the column that matches the key column's value in each row.
+        """
+        Creates a new column indicating which column matches the key column's value for each row.
 
         Args:
             df (pd.DataFrame): The input DataFrame.
 
         Returns:
-            pd.DataFrame: A DataFrame with the new column indicating the matching column.
+            pd.DataFrame: A DataFrame with the new column holding the matching column name.
         """
         self.validate(df)
         df[self.new_col] = df.apply(self._find_matching_column, axis=1)
@@ -409,24 +468,25 @@ class ColumnMatchMapTransform(DFTransformBase):
 
 @dataclass
 class ImputeNA(MultiColumnTransform):
-    """Imputes missing values in selected columns with a specified value.
+    """
+    Imputes missing values in selected columns with a specified value.
 
     Attributes:
-        columns (List[str] | str): Column(s) to impute.
-        value (str): Value to use for imputation.
+        columns (List[str] | str): The column(s) to impute.
+        value (str): The value to use for imputation.
     """
 
-    columns: List[str] | str
     value: str
 
     def _transform(self, value):
-        """Replaces missing values with the specified value.
+        """
+        Replaces missing values with the specified value.
 
         Args:
-            value: The cell value to be checked for missingness.
+            value: The cell value to impute if missing.
 
         Returns:
-            The cell value or the replacement if it was missing.
+            Any: The original value or the imputed replacement if it was missing.
         """
         isna = pd.isna(value)
         if isinstance(isna, bool) and isna:
@@ -436,22 +496,23 @@ class ImputeNA(MultiColumnTransform):
 
 @dataclass
 class ReplaceStringsTransform(MultiColumnTransform):
-    """Replaces strings in selected columns according to a given mapping.
+    """
+    Replaces strings in selected columns according to a specified mapping.
 
-    Useful for ad hoc fixes like replacing '\\n' with '\n'.
+    Useful for ad hoc fixes such as replacing '\\n' with '\n'.
 
     Attributes:
-        columns (List[str] | str): The column(s) to apply the replacement.
-        mapping (Dict[str, str]): A dictionary where key is the old string and value is the new string.
-        case (bool): Whether the replacement should be case-sensitive.
+        columns (List[str] | str): The column(s) to which replacements are applied.
+        mapping (Dict[str, str]): A dictionary of old-to-new string replacements.
+        case (bool): Whether the replacements should be case-sensitive.
     """
 
-    columns: List[str] | str
     mapping: Dict[str, str]
     case: bool
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Replaces occurrences of keys in the specified columns with their mapped values.
+        """
+        Replaces occurrences of keys in the specified columns with their mapped values.
 
         Args:
             df (pd.DataFrame): The DataFrame to transform.
@@ -468,18 +529,19 @@ class ReplaceStringsTransform(MultiColumnTransform):
 
 @dataclass
 class MapStringsTransform(MultiColumnTransform):
-    """Maps values in selected columns to new values according to a given dictionary.
+    """
+    Maps values in selected columns to new values according to a specified dictionary.
 
     Attributes:
         columns (List[str] | str): The column(s) to apply the map.
-        mapping (Dict[str, str]): A dictionary where key is the old string and value is the new string.
+        mapping (Dict[str, str]): A dictionary mapping old strings to new strings.
     """
 
-    columns: List[str] | str
     mapping: Dict[str, str]
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Maps each value in the specified columns using the provided dictionary.
+        """
+        Maps each value in the specified columns using the provided dictionary.
 
         Args:
             df (pd.DataFrame): The DataFrame to transform.
@@ -495,24 +557,25 @@ class MapStringsTransform(MultiColumnTransform):
 
 @dataclass
 class PrependStringTransform(MultiColumnTransform):
-    """Prepends a string to values in selected columns.
+    """
+    Prepends a specified string to the values in selected columns.
 
     Attributes:
-        columns (List[str] | str): The columns to apply the transformation.
-        string (str): The string to prepend to each value.
+        columns (List[str] | str): The columns to transform.
+        string (str): The string to prepend.
     """
 
-    columns: List[str] | str
     string: str
 
     def _transform(self, value):
-        """Prepends the specified string to a given value.
+        """
+        Prepends the specified string to a given value.
 
         Args:
             value: The cell value to transform.
 
         Returns:
-            The cell value with the specified string prepended.
+            Any: The value with the string prepended.
         """
         if isinstance(value, list):
             value = [self.string + val for val in value]
@@ -523,22 +586,23 @@ class PrependStringTransform(MultiColumnTransform):
 
 @dataclass
 class RegexTransform(MultiColumnTransform):
-    """Extracts a regex match from values in selected columns.
+    """
+    Extracts a regex match from string values in selected columns.
 
     Attributes:
-        columns (List[str] | str): The columns to apply the transformation.
-        prompt_pattern (str): The regex pattern to search for.
+        columns (List[str] | str): The columns to transform.
+        prompt_pattern (str): The regex pattern to use for matching.
         ignore_case (bool): Whether to ignore case in the regex search.
-        occurrence (str): Either "last" or "first" to specify which occurrence to return.
+        occurrence (str): Which occurrence to return, either "last" or "first".
     """
 
-    columns: List[str] | str
     prompt_pattern: str
     ignore_case: bool = False
     occurrence: str = "last"
 
     def _transform(self, sentence):
-        """Finds and returns the specified occurrence of a regex match in a string.
+        """
+        Finds and returns the specified occurrence of a regex match in a string.
 
         Args:
             sentence (str): The string to search.
@@ -561,16 +625,16 @@ class RegexTransform(MultiColumnTransform):
 
 @dataclass
 class ASTEvalTransform(MultiColumnTransform):
-    """Parses strings in selected columns using ast.literal_eval.
+    """
+    Parses strings in selected columns using ast.literal_eval.
 
     Attributes:
         columns (List[str] | str): The columns to transform.
     """
 
-    columns: List[str] | str
-
     def _transform(self, string):
-        """Parses a string using ast.literal_eval.
+        """
+        Parses a string using ast.literal_eval.
 
         Args:
             string (str): The string to parse.
@@ -584,20 +648,20 @@ class ASTEvalTransform(MultiColumnTransform):
 
 @dataclass
 class TokenCounterTransform(MultiColumnTransform):
-    """Counts the number of tokens in the selected columns using tiktoken.
+    """
+    Counts the number of tokens in the selected columns using tiktoken.
 
     Attributes:
         columns (List[str] | str): The columns whose token counts will be computed.
     """
 
-    columns: List[str] | str
-
     def transform(self, df: pd.DataFrame, encoding="cl100k_base") -> pd.DataFrame:
-        """Counts tokens in each specified column using the specified tiktoken encoding.
+        """
+        Counts tokens in each specified column using tiktoken.
 
         Args:
             df (pd.DataFrame): The input DataFrame with textual data.
-            encoding (str): The tiktoken encoding to use. Defaults to "cl100k_base".
+            encoding (str, optional): The tiktoken encoding to use. Defaults to "cl100k_base".
 
         Returns:
             pd.DataFrame: DataFrame with additional columns named "<column>_token_count".
@@ -613,7 +677,8 @@ class TokenCounterTransform(MultiColumnTransform):
 
 @dataclass
 class MajorityVoteTransform:
-    """Applies a majority vote transformation to the specified model output column per id_col.
+    """
+    Applies a majority vote transformation on the specified model output column grouped by ID.
 
     Attributes:
         model_output_col (str): The column name for model outputs.
@@ -630,13 +695,15 @@ class MajorityVoteTransform:
     majority_label_col: str = "majority_label"
 
     def transform(self, df: pd.DataFrame, random_state: int = 0) -> pd.DataFrame:
-        """Calculates the majority vote of model outputs for each group identified by id_col.
+        """
+        Calculates the majority vote of model outputs for each group identified by 'id_col'.
 
         If the model output is NaN, it will be dropped before calculating the majority vote.
 
         Args:
             df (pd.DataFrame): The DataFrame containing model outputs and IDs.
-            random_state (int): Random seed for tie-breaking among the mode values.
+            random_state (int, optional): The random seed for tie-breaking among the mode values.
+                Defaults to 0.
 
         Returns:
             pd.DataFrame: The transformed DataFrame, including majority vote columns.
@@ -655,15 +722,17 @@ class MajorityVoteTransform:
     def majority_vote(
         group, model_output_col, model_label_col, majority_vote_col, majority_label_col, random_state: int = 0
     ):
-        """Calculates majority vote for each group and optionally the corresponding label.
+        """
+        Calculates the majority vote for each group and optionally its corresponding label.
 
         Args:
-            group (pd.DataFrame): The group data containing model outputs.
+            group (pd.DataFrame): The DataFrame group containing model outputs.
             model_output_col (str): The model output column name.
             model_label_col (str): The model label column name corresponding to outputs.
-            majority_vote_col (str): Column name for storing the majority vote result.
-            majority_label_col (str): Column name for storing the label of the majority vote output.
-            random_state (int): Random seed for tie-breaking among the mode values.
+            majority_vote_col (str): The column name for storing the majority vote result.
+            majority_label_col (str): The column name for storing the label of the majority vote output.
+            random_state (int, optional): The random seed for tie-breaking among the mode values.
+                Defaults to 0.
 
         Returns:
             pd.DataFrame: The group DataFrame with columns for the majority vote and optional label.
@@ -680,7 +749,8 @@ class MajorityVoteTransform:
 
 @dataclass
 class ExtractUsageTransform:
-    """Extracts token usage (completion tokens) for models and stores it in a new column.
+    """
+    Extracts token usage (completion tokens) for models and stores it in a new column.
 
     Attributes:
         model_config (ModelConfig): The model configuration used for the experiment.
@@ -695,13 +765,15 @@ class ExtractUsageTransform:
     n_tokens_column: str = "n_output_tokens"
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Extracts token usage from the DataFrame based on the model configuration.
+        """
+        Extracts token usage from the DataFrame based on the model configuration.
 
         Args:
             df (pd.DataFrame): The DataFrame containing inference results.
 
         Returns:
-            pd.DataFrame: The transformed DataFrame with completion token usage in usage_completion_output_col.
+            pd.DataFrame: The transformed DataFrame with completion token usage in
+            'usage_completion_output_col'.
         """
         usage_completion_read_col = None
         if self.model_config.class_name is GeminiModel:
@@ -734,15 +806,16 @@ class ExtractUsageTransform:
             df[self.usage_completion_output_col] = np.nan
         return df
 
-    def validate(self, df: pd.DataFrame, usage_completion_read_col: str) -> pd.DataFrame:
-        """Validates that necessary usage columns are present in the DataFrame.
+    def validate(self, df: pd.DataFrame, usage_completion_read_col: str):
+        """
+        Validates that necessary usage columns are present in the DataFrame.
 
         Args:
             df (pd.DataFrame): The input DataFrame to validate.
             usage_completion_read_col (str): The column name used for completion token usage.
 
         Raises:
-            ValueError: If usage_column or n_tokens_column are missing.
+            ValueError: If necessary usage columns are missing.
         """
         if usage_completion_read_col and self.usage_column not in df.columns:
             raise ValueError(f"The {self.usage_column} column is not present in the data frame.")
@@ -750,11 +823,12 @@ class ExtractUsageTransform:
             raise ValueError(f"The {self.n_tokens_column} column is not present in the data frame.")
 
     def _extract_usage(self, row, usage_completion_read_col):
-        """Extracts the completion token usage from a single row.
+        """
+        Extracts the completion token usage from a single row.
 
         Args:
-            row (pd.Series): A row of the DataFrame.
-            usage_completion_read_col (str): The column name to extract the token usage from.
+            row (pd.Series): A row from the DataFrame.
+            usage_completion_read_col (str): The column name used to extract the token usage.
 
         Returns:
             int or float: The extracted token count if present, otherwise NaN.
