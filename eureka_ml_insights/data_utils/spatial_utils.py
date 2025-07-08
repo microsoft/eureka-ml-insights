@@ -15,6 +15,7 @@ class LowerCaseNoPunctuationConvertNumbers(MultiColumnTransform):
     Attributes:
         columns (List[str]): The list of column names to transform.
     """
+
     columns: List[str]
 
     def punctuation_case_number_replace(self, text):
@@ -252,7 +253,7 @@ def extract_answer_from_text_map_and_maze(model_output_raw, options, is_valid, m
                     model_output_parsed_letter = options_dict[match_option]
 
     elif "answer is".lower() in model_output_raw.lower():
-        pattern_letter = r'answer is:*\s*\**([\w\d]+)[\s:.]*\**'
+        pattern_letter = r"answer is:*\s*\**([\w\d]+)[\s:.]*\**"
         matches = re.findall(pattern_letter, model_output_raw, re.IGNORECASE)
         if matches:
             match_option = matches[match_index].lower()
@@ -282,6 +283,7 @@ class ExtractAnswer(DFTransformBase):
         extracted_answer_column_name (str): The column name for the extracted answer.
         question_type_column_name (str): The column name for the question type.
     """
+
     answer_column_name: str
     extracted_answer_column_name: str
     question_type_column_name: str
@@ -297,7 +299,6 @@ class ExtractAnswer(DFTransformBase):
         Returns:
             str or None: The parsed answer, or None if it cannot be parsed.
         """
-        pass
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """Transforms the dataframe by parsing answers with the provided parse function.
@@ -322,6 +323,7 @@ class ExtractQuestionOptions(DFTransformBase):
         prompt_column_name (str): The column name containing the prompt text.
         extracted_options_column_name (str): The column name for the extracted options.
     """
+
     prompt_column_name: str
     extracted_options_column_name: str
 
@@ -338,9 +340,9 @@ class ExtractQuestionOptions(DFTransformBase):
         matches = [i for i, x in enumerate(prompt_lines) if "Available options:" in x]
 
         if "Yes" in prompt_lines[matches[0] + 1]:
-            options = prompt_lines[matches[0] + 1:matches[0] + 3]
+            options = prompt_lines[matches[0] + 1 : matches[0] + 3]
         else:
-            options = prompt_lines[matches[0] + 1:matches[0] + 5]
+            options = prompt_lines[matches[0] + 1 : matches[0] + 5]
 
         return options
 
@@ -367,6 +369,7 @@ class ExtractAnswerGrid(ExtractAnswer):
         question_type_column_name (str): The column name for the question type.
         mode (str): The mode of the extractor.
     """
+
     answer_column_name: str
     extracted_answer_column_name: str
     question_type_column_name: str
@@ -396,6 +399,7 @@ class ExtractAnswerSpatialMapAndMaze(DFTransformBase):
         extracted_options_column_name (str): The column name containing the extracted options.
         match_first (bool): Whether to match the first occurrence (True) or the last occurrence (False).
     """
+
     answer_column_name: str
     extracted_answer_column_name: str
     extracted_options_column_name: str
@@ -405,7 +409,7 @@ class ExtractAnswerSpatialMapAndMaze(DFTransformBase):
         """Transforms the dataframe by extracting answers from text map and maze.
 
         Args:
-            df (pd.DataFrame): The input dataframe that includes an answer column, 
+            df (pd.DataFrame): The input dataframe that includes an answer column,
                 extracted options column, and an "is_valid" column.
 
         Returns:
@@ -413,11 +417,8 @@ class ExtractAnswerSpatialMapAndMaze(DFTransformBase):
         """
         df[self.extracted_answer_column_name] = df.apply(
             lambda x: extract_answer_from_text_map_and_maze(
-                x[self.answer_column_name],
-                x[self.extracted_options_column_name],
-                x["is_valid"],
-                self.match_first
+                x[self.answer_column_name], x[self.extracted_options_column_name], x["is_valid"], self.match_first
             ),
-            axis=1
+            axis=1,
         )
         return df

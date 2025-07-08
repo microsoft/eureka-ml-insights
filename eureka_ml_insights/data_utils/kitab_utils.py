@@ -31,6 +31,7 @@ class KitabExtractBooks(DFTransformBase):
         model_output_column (str): The column name containing model output.
         model_books_column (str): The column name to store extracted book data.
     """
+
     model_output_column: str
     model_books_column: str
 
@@ -59,6 +60,7 @@ class KitabExtractBooksAddMarker(DFTransformBase):
         model_output_column (str): The column name containing model output.
         model_books_column (str): The column name to store extracted book data.
     """
+
     model_output_column: str
     model_books_column: str
 
@@ -88,6 +90,7 @@ class PrepareContext(DFTransformBase):
         all_books_context_column (str): The column name to store the prepared
             context data.
     """
+
     all_books_column: str
     all_books_context_column: str
 

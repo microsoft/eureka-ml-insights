@@ -3,11 +3,18 @@
 import os
 from typing import Any, Optional
 
-from eureka_ml_insights.core import (
-    DataProcessing,
-    Inference,
-    PromptProcessing,
+from eureka_ml_insights.configs import (
+    AggregatorConfig,
+    DataProcessingConfig,
+    DataSetConfig,
+    EvalReportingConfig,
+    ExperimentConfig,
+    InferenceConfig,
+    ModelConfig,
+    PipelineConfig,
+    PromptProcessingConfig,
 )
+from eureka_ml_insights.core import DataProcessing, Inference, PromptProcessing
 from eureka_ml_insights.core.eval_reporting import EvalReporting
 from eureka_ml_insights.data_utils import (
     ColumnRename,
@@ -19,19 +26,6 @@ from eureka_ml_insights.data_utils.data import DataReader
 from eureka_ml_insights.data_utils.dna_utils import DNAParseLabel
 from eureka_ml_insights.data_utils.transform import AddColumn
 from eureka_ml_insights.metrics.reports import CountAggregator
-
-from eureka_ml_insights.configs import (
-    AggregatorConfig,
-    DataProcessingConfig,
-    DataSetConfig,
-    EvalReportingConfig,
-    InferenceConfig,
-    ModelConfig,
-    PipelineConfig,
-    PromptProcessingConfig,
-)
-from eureka_ml_insights.configs import ExperimentConfig
-from eureka_ml_insights.configs.model_configs import OAI_GPT4_1106_PREVIEW_CONFIG
 
 
 class DNA_PIPELINE(ExperimentConfig):

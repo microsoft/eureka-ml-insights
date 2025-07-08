@@ -14,24 +14,6 @@ Pass the name of the class to the main.py script to run the pipeline.
 
 import os
 
-from eureka_ml_insights.configs.experiment_config import ExperimentConfig
-from eureka_ml_insights.core import EvalReporting, Inference, PromptProcessing
-from eureka_ml_insights.data_utils import (
-    HFDataReader,
-    MMDataLoader,
-    ColumnRename,
-    DataReader,
-    PrependStringTransform,
-    SequenceTransform,
-)
-from eureka_ml_insights.data_utils.spatial_utils import (
-    LowerCaseNoPunctuationConvertNumbers,
-)
-from eureka_ml_insights.metrics import (
-    CountAggregator,
-    ObjectRecognitionMetric,
-)
-
 from eureka_ml_insights.configs import (
     AggregatorConfig,
     DataSetConfig,
@@ -41,6 +23,19 @@ from eureka_ml_insights.configs import (
     PipelineConfig,
     PromptProcessingConfig,
 )
+from eureka_ml_insights.configs.experiment_config import ExperimentConfig
+from eureka_ml_insights.core import EvalReporting, Inference, PromptProcessing
+from eureka_ml_insights.data_utils import (
+    DataReader,
+    HFDataReader,
+    MMDataLoader,
+    SequenceTransform,
+)
+from eureka_ml_insights.data_utils.spatial_utils import (
+    LowerCaseNoPunctuationConvertNumbers,
+)
+from eureka_ml_insights.metrics import CountAggregator, ObjectRecognitionMetric
+
 from .common import LOCAL_DATA_PIPELINE
 
 
@@ -130,9 +125,7 @@ class OBJECT_RECOGNITION_SINGLE_PIPELINE(OBJECT_RECOGNITION_PAIRS_PIPELINE):
             PipelineConfig: A pipeline configuration instance.
         """
         config = super().configure_pipeline(model_config, resume_from)
-        self.data_processing_comp.data_reader_config.init_args["tasks"] = (
-            "object_recognition_single"
-        )
+        self.data_processing_comp.data_reader_config.init_args["tasks"] = "object_recognition_single"
         return config
 
 

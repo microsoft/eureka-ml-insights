@@ -51,7 +51,6 @@ class DataSetConfig(UtilityClassConfig):
         class_name (Any): The utility class to be used with this config.
         init_args (dict): Arguments to be passed to the utility class constructor.
     """
-    pass
 
 
 @dataclass(repr=False)
@@ -66,7 +65,6 @@ class ModelConfig(UtilityClassConfig):
         class_name (Any): The utility class to be used with this config.
         init_args (dict): Arguments to be passed to the utility class constructor.
     """
-    pass
 
 
 @dataclass(repr=False)
@@ -81,7 +79,6 @@ class MetricConfig(UtilityClassConfig):
         class_name (Any): The utility class to be used with this config.
         init_args (dict): Arguments to be passed to the utility class constructor.
     """
-    pass
 
 
 @dataclass(repr=False)
@@ -96,7 +93,6 @@ class AggregatorConfig(UtilityClassConfig):
         class_name (Any): The utility class to be used with this config.
         init_args (dict): Arguments to be passed to the utility class constructor.
     """
-    pass
 
 
 """Provides configuration classes for component classes.

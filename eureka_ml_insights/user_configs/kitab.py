@@ -5,6 +5,19 @@ All classes inherit from the base ExperimentConfig class and override the `confi
 
 import os
 from typing import Any
+
+from eureka_ml_insights.configs import (
+    AggregatorConfig,
+    DataProcessingConfig,
+    DataSetConfig,
+    EvalReportingConfig,
+    ExperimentConfig,
+    InferenceConfig,
+    MetricConfig,
+    ModelConfig,
+    PipelineConfig,
+    PromptProcessingConfig,
+)
 from eureka_ml_insights.core import (
     DataProcessing,
     EvalReporting,
@@ -13,14 +26,13 @@ from eureka_ml_insights.core import (
 )
 from eureka_ml_insights.data_utils import (
     AddColumn,
-    CopyColumn,
     ColumnRename,
+    CopyColumn,
     DataReader,
     HFDataReader,
     MMDataLoader,
-    SequenceTransform,
     RunPythonTransform,
-    SamplerTransform
+    SequenceTransform,
 )
 from eureka_ml_insights.data_utils.kitab_utils import (
     KitabExtractBooks,
@@ -29,19 +41,6 @@ from eureka_ml_insights.data_utils.kitab_utils import (
 )
 from eureka_ml_insights.metrics import AverageAggregator
 from eureka_ml_insights.metrics.kitab_metrics import KitabMetric
-
-from eureka_ml_insights.configs import(
-    AggregatorConfig,
-    DataProcessingConfig,
-    DataSetConfig,
-    EvalReportingConfig,
-    InferenceConfig,
-    MetricConfig,
-    ModelConfig,
-    PipelineConfig,
-    PromptProcessingConfig,
-)
-from eureka_ml_insights.configs import ExperimentConfig
 
 AZURE_LANG_SERVICE_CONFIG = {
     "url": "your/azure_lang_service_endpoint/url",
@@ -107,7 +106,7 @@ class KITAB_ONE_BOOK_CONSTRAINT_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
-            max_concurrent=10
+            max_concurrent=10,
         )
 
         self.data_post_processing = DataProcessingConfig(
@@ -197,10 +196,7 @@ class GPT35_KITAB_ONE_BOOK_CONSTRAINT_PIPELINE(KITAB_ONE_BOOK_CONSTRAINT_PIPELIN
         """
         config = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         self.data_post_processing.data_reader_config.init_args["transform"] = SequenceTransform(
-            [
-                AddColumn("model_books"), 
-                KitabExtractBooksAddMarker("model_output", "model_books")
-            ]
+            [AddColumn("model_books"), KitabExtractBooksAddMarker("model_output", "model_books")]
         )
         return config
 
@@ -225,10 +221,14 @@ class Phi_KITAB_ONE_BOOK_CONSTRAINT_PIPELINE(KITAB_ONE_BOOK_CONSTRAINT_PIPELINE)
         config = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         self.data_post_processing.data_reader_config.init_args["transform"] = SequenceTransform(
             [
-                AddColumn("model_books"), 
+                AddColumn("model_books"),
                 CopyColumn("model_output", "post_cot_model_output"),
-                RunPythonTransform("df['post_cot_model_output'] = df['post_cot_model_output'].apply(lambda x: x.split('{token}')[-1] if '{token}' in x else x)".format(token=thinking_token)),
-                KitabExtractBooksAddMarker("post_cot_model_output", "model_books")
+                RunPythonTransform(
+                    "df['post_cot_model_output'] = df['post_cot_model_output'].apply(lambda x: x.split('{token}')[-1] if '{token}' in x else x)".format(
+                        token=thinking_token
+                    )
+                ),
+                KitabExtractBooksAddMarker("post_cot_model_output", "model_books"),
             ]
         )
         return config
@@ -296,10 +296,14 @@ class Phi_KITAB_ONE_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT(KITAB_ONE_BOOK_CONSTRA
         config = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         self.data_post_processing.data_reader_config.init_args["transform"] = SequenceTransform(
             [
-                AddColumn("model_books"), 
+                AddColumn("model_books"),
                 CopyColumn("model_output", "post_cot_model_output"),
-                RunPythonTransform("df['post_cot_model_output'] = df['post_cot_model_output'].apply(lambda x: x.split('{token}')[-1] if '{token}' in x else x)".format(token=thinking_token)),
-                KitabExtractBooksAddMarker("post_cot_model_output", "model_books")
+                RunPythonTransform(
+                    "df['post_cot_model_output'] = df['post_cot_model_output'].apply(lambda x: x.split('{token}')[-1] if '{token}' in x else x)".format(
+                        token=thinking_token
+                    )
+                ),
+                KitabExtractBooksAddMarker("post_cot_model_output", "model_books"),
             ]
         )
         return config
@@ -379,10 +383,14 @@ class Phi_KITAB_TWO_BOOK_CONSTRAINT_PIPELINE(KITAB_TWO_BOOK_CONSTRAINT_PIPELINE)
         config = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         self.data_post_processing.data_reader_config.init_args["transform"] = SequenceTransform(
             [
-                AddColumn("model_books"), 
+                AddColumn("model_books"),
                 CopyColumn("model_output", "post_cot_model_output"),
-                RunPythonTransform("df['post_cot_model_output'] = df['post_cot_model_output'].apply(lambda x: x.split('{token}')[-1] if '{token}' in x else x)".format(token=thinking_token)),
-                KitabExtractBooksAddMarker("post_cot_model_output", "model_books")
+                RunPythonTransform(
+                    "df['post_cot_model_output'] = df['post_cot_model_output'].apply(lambda x: x.split('{token}')[-1] if '{token}' in x else x)".format(
+                        token=thinking_token
+                    )
+                ),
+                KitabExtractBooksAddMarker("post_cot_model_output", "model_books"),
             ]
         )
         return config
@@ -442,10 +450,14 @@ class Phi_KITAB_TWO_BOOK_CONSTRAINT_PIPELINE_WITH_CONTEXT(KITAB_TWO_BOOK_CONSTRA
         config = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         self.data_post_processing.data_reader_config.init_args["transform"] = SequenceTransform(
             [
-                AddColumn("model_books"), 
+                AddColumn("model_books"),
                 CopyColumn("model_output", "post_cot_model_output"),
-                RunPythonTransform("df['post_cot_model_output'] = df['post_cot_model_output'].apply(lambda x: x.split('{token}')[-1] if '{token}' in x else x)".format(token=thinking_token)),
-                KitabExtractBooksAddMarker("post_cot_model_output", "model_books")
+                RunPythonTransform(
+                    "df['post_cot_model_output'] = df['post_cot_model_output'].apply(lambda x: x.split('{token}')[-1] if '{token}' in x else x)".format(
+                        token=thinking_token
+                    )
+                ),
+                KitabExtractBooksAddMarker("post_cot_model_output", "model_books"),
             ]
         )
         return config

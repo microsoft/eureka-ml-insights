@@ -4,9 +4,8 @@ to handle local data paths for both data reading and inference components.
 
 import os
 
-from eureka_ml_insights.data_utils import DataReader, MMDataLoader
-
 from eureka_ml_insights.configs import DataSetConfig
+from eureka_ml_insights.data_utils import DataReader, MMDataLoader
 
 
 class LOCAL_DATA_PIPELINE:

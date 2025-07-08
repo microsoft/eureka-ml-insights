@@ -289,7 +289,7 @@ class SubstringExistsMatch(ClassicMetric):
         """
         if not is_valid:
             return "none"
-        
+
         # Make sure everything is strings.
         answer_text = str(answer_text)
         target_text = str(target_text)
@@ -359,6 +359,7 @@ class MetricBasedVerifier:
 
     This class stores the verification result in a column called "verification_result".
     """
+
     def __init__(self, metric_class, model_output_col: str = "model_output"):
         """Initializes MetricBasedVerifier.
 

@@ -26,7 +26,6 @@ from eureka_ml_insights.data_utils import (
     CopyColumn,
     DataReader,
     RunPythonTransform,
-    SamplerTransform,
     SequenceTransform,
 )
 from eureka_ml_insights.data_utils.aime_utils import AIMEExtractAnswer
@@ -86,9 +85,9 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
 
         n_iter = kwargs.get("n_iter", DEFAULT_N_ITER)
         # Uncomment if you want to sample a subset of the data for debugging
-        #self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
+        # self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
         #    SamplerTransform(sample_count=2, random_seed=42)
-        #)
+        # )
         component_configs = [self.data_processing_comp]
         for i in range(1, n_iter + 1):
             # Student inference component, reads prompts from the last prompt processing component

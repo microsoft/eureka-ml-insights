@@ -6,11 +6,22 @@ For more details, see: https://github.com/mathllm/MATH-V
 import os
 from typing import Any
 
+from eureka_ml_insights.configs import (
+    AggregatorConfig,
+    DataProcessingConfig,
+    DataSetConfig,
+    EvalReportingConfig,
+    ExperimentConfig,
+    InferenceConfig,
+    ModelConfig,
+    PipelineConfig,
+    PromptProcessingConfig,
+)
 from eureka_ml_insights.core import (
     DataProcessing,
     EvalReporting,
     Inference,
-    PromptProcessing
+    PromptProcessing,
 )
 from eureka_ml_insights.data_utils import (
     AddColumn,
@@ -19,30 +30,19 @@ from eureka_ml_insights.data_utils import (
     HFDataReader,
     MapStringsTransform,
     MMDataLoader,
-    SamplerTransform,
     SequenceTransform,
 )
-
-from eureka_ml_insights.configs import(
-    AggregatorConfig,
-    DataProcessingConfig,
-    DataSetConfig,
-    EvalReportingConfig,
-    InferenceConfig,
-    ModelConfig,
-    PipelineConfig,
-    PromptProcessingConfig,
+from eureka_ml_insights.data_utils.mathvision_utils import (
+    MathVisionOutputEvaluator,
 )
-
-from eureka_ml_insights.data_utils.mathvision_utils import MathVisionOutputEvaluator
 from eureka_ml_insights.metrics.reports import AverageAggregator
-from eureka_ml_insights.configs import ExperimentConfig
+
 
 class MATHVISION_PIPELINE(ExperimentConfig):
     """A pipeline configuration for MATHVISION experiments.
 
-    This class extends from ExperimentConfig and sets up the pipeline 
-    for data processing, inference, post-processing, and evaluation 
+    This class extends from ExperimentConfig and sets up the pipeline
+    for data processing, inference, post-processing, and evaluation
     in the MATHVISION scenario.
     """
 
@@ -73,10 +73,17 @@ class MATHVISION_PIPELINE(ExperimentConfig):
                         [
                             CopyColumn(column_name_src="options", column_name_dst="options_string"),
                             MapStringsTransform(
-                                columns='options_string',
-                                mapping=lambda x: "" if len(x)==0 else ("\n[Options]:\n" + '\n'.join([chr(ord('A') + i) + ". " + opt for i, opt in enumerate(x)]))
+                                columns="options_string",
+                                mapping=lambda x: (
+                                    ""
+                                    if len(x) == 0
+                                    else (
+                                        "\n[Options]:\n"
+                                        + "\n".join([chr(ord("A") + i) + ". " + opt for i, opt in enumerate(x)])
+                                    )
+                                ),
                             ),
-                            #SamplerTransform(sample_count=2, random_seed=1234),
+                            # SamplerTransform(sample_count=2, random_seed=1234),
                         ]
                     ),
                 },

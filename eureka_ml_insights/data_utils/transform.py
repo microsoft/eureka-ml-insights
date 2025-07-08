@@ -178,7 +178,7 @@ class SamplerTransform(DFTransformBase):
         stratify_by (List[str]): Optional columns to stratify upon when sampling.
     """
 
-    random_seed: int 
+    random_seed: int
     sample_count: int
     stratify_by: List[str] = None
 

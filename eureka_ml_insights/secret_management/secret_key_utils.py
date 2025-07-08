@@ -15,7 +15,9 @@ from azure.keyvault.secrets import SecretClient
 logging.basicConfig(level=logging.INFO, format="%(filename)s - %(funcName)s - %(message)s")
 
 
-def get_secret(key_name: str, local_keys_path: Optional[str] = None, key_vault_url: Optional[str] = None) -> Optional[str]:
+def get_secret(
+    key_name: str, local_keys_path: Optional[str] = None, key_vault_url: Optional[str] = None
+) -> Optional[str]:
     """
     Retrieves a key from Azure Key Vault or a local file cache.
 

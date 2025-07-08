@@ -37,7 +37,7 @@ delimiters = [
 class GPT4ToxiGenRegex(DFTransformBase):
     """Class GPT4ToxiGenRegex.
 
-    This class is for regex and label mapping for discriminative evaluation settings, where given 
+    This class is for regex and label mapping for discriminative evaluation settings, where given
     a statement, the model is asked to perform as a discriminator.
 
     Attributes:
@@ -73,7 +73,7 @@ class GPT4ToxiGenRegex(DFTransformBase):
 class GPT4ToxiGenRegexGenerative(DFTransformBase):
     """Class GPT4ToxiGenRegexGenerative.
 
-    This class is for regex and label mapping for generative evaluation settings, where the output 
+    This class is for regex and label mapping for generative evaluation settings, where the output
     is the actual score given by the model.
 
     Attributes:
@@ -116,7 +116,7 @@ def parse_output(s, delimiters, generative=False):
         generative (bool): If True, returns the raw score instead of the "neutral" or "toxic" label.
 
     Returns:
-        tuple: A tuple (str, bool). The first element is either the extracted score/label 
+        tuple: A tuple (str, bool). The first element is either the extracted score/label
         or a placeholder string indicating no score was found, and the second element
         is a boolean indicating whether a valid score was found.
     """
@@ -164,8 +164,8 @@ def label_category_map(s):
         s (str): Refers to various splits in the dataset (e.g., 'neutral_black_1k').
 
     Returns:
-        tuple: A tuple (str, str). The first element is the ground-truth label 
-        ("toxic" if the split starts with 'hate', otherwise "neutral"). The second 
+        tuple: A tuple (str, str). The first element is the ground-truth label
+        ("toxic" if the split starts with 'hate', otherwise "neutral"). The second
         element is the category label derived from the split string.
     """
     gt = s.split("_")[0]

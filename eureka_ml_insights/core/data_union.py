@@ -27,7 +27,7 @@ class DataUnion(DataProcessing):
             data_reader_config: DataReaderConfig object for reading the primary dataset.
             output_dir (str): Directory to save the output files of this component.
             other_data_reader_config: DataReaderConfig object for reading the secondary dataset.
-            output_data_columns (Optional[List[str]]): List of columns (subset of input columns) to keep 
+            output_data_columns (Optional[List[str]]): List of columns (subset of input columns) to keep
                 in the transformed data output file.
             dedupe_cols (Optional[List[str]]): List of columns to deduplicate the concatenated DataFrame.
         """

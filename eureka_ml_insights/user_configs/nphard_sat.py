@@ -58,7 +58,7 @@ evaluation, and reporting.
 class NPHARD_SAT_PIPELINE(ExperimentConfig):
     """Configuration for the NPHARD SAT pipeline.
 
-    Provides a method to configure the pipeline for NPHARD SAT experiments, 
+    Provides a method to configure the pipeline for NPHARD SAT experiments,
     including data processing, inference, evaluation, and reporting.
     """
 

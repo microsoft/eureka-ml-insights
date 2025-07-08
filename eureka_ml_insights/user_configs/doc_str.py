@@ -3,20 +3,24 @@ This module defines transformations for reading and writing file content
 and an experiment pipeline configuration for generating docstrings.
 """
 
-from eureka_ml_insights.data_utils import DFTransformBase, DataReader, MMDataLoader
-from eureka_ml_insights.configs import(
+import os
+from dataclasses import dataclass
+from typing import Any
+
+from eureka_ml_insights.configs import (
     DataSetConfig,
+    ExperimentConfig,
     InferenceConfig,
     ModelConfig,
     PipelineConfig,
     PromptProcessingConfig,
-    DataProcessingConfig,
 )
-from eureka_ml_insights.core import PromptProcessing, Inference, DataProcessing
-from eureka_ml_insights.configs import ExperimentConfig
-import os
-from dataclasses import dataclass
-from typing import Any
+from eureka_ml_insights.core import DataProcessing, Inference, PromptProcessing
+from eureka_ml_insights.data_utils import (
+    DataReader,
+    DFTransformBase,
+    MMDataLoader,
+)
 
 
 @dataclass
@@ -39,7 +43,7 @@ class FileReaderTransform(DFTransformBase):
             pandas.DataFrame: The DataFrame with a new column 'file_content'.
         """
         # Implement the logic to read files from the specified column
-        df['file_content'] = df[self.file_path_column].apply(lambda x: open(x).read())
+        df["file_content"] = df[self.file_path_column].apply(lambda x: open(x).read())
         return df
 
 
@@ -72,7 +76,7 @@ class FileWriterTransform(DFTransformBase):
         output_file_path.apply(lambda x: os.makedirs(os.path.dirname(x), exist_ok=True))
         # Implement the logic to write files to the specified column
         for index, row in df.iterrows():
-            with open(row[self.file_path_column], 'w') as f:
+            with open(row[self.file_path_column], "w") as f:
                 f.write(row[self.file_content_column])
         return df
 
@@ -100,17 +104,16 @@ class DOCSTR_PIPELINE(ExperimentConfig):
         # Configure the data processing component.
         data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
-            prompt_template_path=os.path.join(
-                os.path.dirname(__file__), "../prompt_templates/doc_str.jinja"
-            ),
-            data_reader_config=DataSetConfig(DataReader,
+            prompt_template_path=os.path.join(os.path.dirname(__file__), "../prompt_templates/doc_str.jinja"),
+            data_reader_config=DataSetConfig(
+                DataReader,
                 {
-                    "path":"/home/sayouse/git/eureka-ml-insights/eureka_ml_insights/python_files_m.csv",
-                    "format":".csv",
+                    "path": "/home/sayouse/git/eureka-ml-insights/eureka_ml_insights/python_files_m.csv",
+                    "format": ".csv",
                     "header": 0,
                     "index_col": None,
-                    "transform":FileReaderTransform(),
-                }
+                    "transform": FileReaderTransform(),
+                },
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
         )

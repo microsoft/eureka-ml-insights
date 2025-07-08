@@ -496,7 +496,6 @@ class Writer:
         Args:
             data: The data to be written.
         """
-        pass
 
 
 class TXTWriter(Writer):

@@ -8,13 +8,14 @@ from .transform import DFTransformBase
 """This module provides classes and functions that extract numeric answers from textual model 
 output for AIME questions."""
 
+
 @dataclass
 class AIMEExtractAnswer(DFTransformBase):
     """A data transformation class that extracts an AIME answer from the model's output.
 
     Attributes:
         model_output_column (str): The name of the column in the DataFrame containing the model output.
-        model_answer_column (str): The name of the column in the DataFrame where the extracted answer 
+        model_answer_column (str): The name of the column in the DataFrame where the extracted answer
             will be stored.
     """
 

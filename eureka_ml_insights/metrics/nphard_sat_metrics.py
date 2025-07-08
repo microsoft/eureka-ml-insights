@@ -11,8 +11,8 @@ from .metrics_base import Metric
 class NPHardSATMetric(Metric):
     """NPHardSATMetric class for evaluating solutions to SAT problems.
 
-    A prediction is considered correct if it is a valid SAT assignment that 
-    matches one of the optimal solutions, or if both the model output and ground 
+    A prediction is considered correct if it is a valid SAT assignment that
+    matches one of the optimal solutions, or if both the model output and ground
     truth indicate unsatisfiable.
     """
 
@@ -24,27 +24,27 @@ class NPHardSATMetric(Metric):
         """Determines whether a model-predicted assignment string is accepted as a correct SAT solution.
 
         Args:
-            optimal_assignment_list (List[str]): A list of canonical optimal assignments, 
-                each expressed as a comma-separated string of 0/1 literals, following the 
-                variable order specified in the prompt instructions (e.g. "1,0,1,1"). An 
-                empty list ([]) represents “unsatisfiable.” 
-            assignment_string (str): The model's prediction in the same 0/1 comma-separated 
+            optimal_assignment_list (List[str]): A list of canonical optimal assignments,
+                each expressed as a comma-separated string of 0/1 literals, following the
+                variable order specified in the prompt instructions (e.g. "1,0,1,1"). An
+                empty list ([]) represents “unsatisfiable.”
+            assignment_string (str): The model's prediction in the same 0/1 comma-separated
                 format. An empty string ("") means the model declares “unsatisfiable.”
 
         Normalization:
-            This function removes spaces and surrounding parentheses from every entry in 
-            optimal_assignment_list, then rejoins tokens with single commas. 
+            This function removes spaces and surrounding parentheses from every entry in
+            optimal_assignment_list, then rejoins tokens with single commas.
             For example, "(1, 0 ,1)" becomes "1,0,1".
 
         Acceptance Criteria:
-            1. Returns True if both sides claim unsatisfiable 
+            1. Returns True if both sides claim unsatisfiable
                (assignment_string == "" and optimal_assignment_list == []).
-            2. Returns True if the canonical assignment_string exactly matches one element 
+            2. Returns True if the canonical assignment_string exactly matches one element
                of the normalized optimal_assignment_list.
             Otherwise, returns False.
 
         Order Sensitivity:
-            Because matching is string-exact, variable order must match between 
+            Because matching is string-exact, variable order must match between
             prediction and ground truth.
 
         Returns:
@@ -66,14 +66,14 @@ class NPHardSATMetric(Metric):
         """Evaluates whether the model's output is a correct SAT assignment.
 
         Args:
-            x (dict): A dictionary containing the model's prediction and ground truth 
+            x (dict): A dictionary containing the model's prediction and ground truth
                 information. It should include:
                 - "is_valid" (bool): Whether the model's output is valid.
                 - "solution" (List[str]): The list of optimal solutions.
                 - "extracted_answer" (str): The model's predicted assignment string.
 
         Returns:
-            str: 
+            str:
                 - "none" if the prediction is invalid.
                 - "incorrect" if the prediction does not match an optimal solution.
                 - "correct" if the prediction matches an optimal solution.

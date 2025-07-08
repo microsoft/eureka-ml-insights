@@ -3,8 +3,10 @@ This module provides a metric class for checking the numerical match between
 two string representations of numeric values.
 """
 
-import numpy as np
 import logging
+
+import numpy as np
+
 from eureka_ml_insights.metrics.metrics_base import ClassicMetric
 
 

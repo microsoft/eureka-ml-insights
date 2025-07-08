@@ -4,10 +4,19 @@ This module defines a pipeline configuration class and its method for setting up
 data processing, inference, and evaluation reporting components for the MMMU dataset.
 """
 
-
 import os
 from typing import Any
 
+from eureka_ml_insights.configs import (
+    AggregatorConfig,
+    DataSetConfig,
+    EvalReportingConfig,
+    InferenceConfig,
+    MetricConfig,
+    ModelConfig,
+    PipelineConfig,
+    PromptProcessingConfig,
+)
 from eureka_ml_insights.configs.experiment_config import ExperimentConfig
 from eureka_ml_insights.core import EvalReporting, Inference, PromptProcessing
 from eureka_ml_insights.data_utils import (
@@ -27,17 +36,6 @@ from eureka_ml_insights.data_utils.mmmu_utils import (
 )
 from eureka_ml_insights.metrics import CountAggregator, MMMUMetric
 
-from eureka_ml_insights.configs import (
-    AggregatorConfig,
-    DataSetConfig,
-    EvalReportingConfig,
-    InferenceConfig,
-    MetricConfig,
-    ModelConfig,
-    PipelineConfig,
-    PromptProcessingConfig,
-)
-
 
 class MMMU_BASELINE_PIPELINE(ExperimentConfig):
     """Defines an ExperimentConfig pipeline for the MMMU dataset.
@@ -47,10 +45,7 @@ class MMMU_BASELINE_PIPELINE(ExperimentConfig):
     """
 
     def configure_pipeline(
-        self,
-        model_config: ModelConfig,
-        resume_from: str = None,
-        **kwargs: dict[str, Any]
+        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
         """Configures a pipeline consisting of data processing, inference, and evaluation/reporting.
 
@@ -132,7 +127,4 @@ class MMMU_BASELINE_PIPELINE(ExperimentConfig):
         )
 
         # Configure the pipeline
-        return PipelineConfig(
-            [self.data_processing_comp, self.inference_comp, self.evalreporting_comp],
-            self.log_dir
-        )
+        return PipelineConfig([self.data_processing_comp, self.inference_comp, self.evalreporting_comp], self.log_dir)

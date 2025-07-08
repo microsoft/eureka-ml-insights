@@ -4,10 +4,11 @@ Follows the evaluation script from:
 https://github.com/mathllm/MATH-V/tree/main/evaluation
 """
 
+import re
 from dataclasses import dataclass
+
 import latex2sympy
 import pandas as pd
-import re
 
 from .transform import DFTransformBase
 
@@ -58,7 +59,7 @@ def is_number(value):
         return True
     except ValueError:
         return False
-    
+
 
 def eval_tuple(s):
     """Evaluates mathematical expressions within tuples or lists represented as strings.
@@ -77,27 +78,29 @@ def eval_tuple(s):
         >>> eval_tuple("(2*3, 5+2)")
         '(6,7)'
     """
-    sl = s[1:-1].split(',')
+    sl = s[1:-1].split(",")
 
     try:
-        if s[0] == '(' and s[-1] == ')' and len(sl) > 1:
-            s = ','.join([
-                str(round(eval(str(latex2sympy(sub))), 2))
-                if 'infty' not in sub and sub not in ['a', '-a'] else sub
-                for sub in sl
-            ])
+        if s[0] == "(" and s[-1] == ")" and len(sl) > 1:
+            s = ",".join(
+                [
+                    str(round(eval(str(latex2sympy(sub))), 2)) if "infty" not in sub and sub not in ["a", "-a"] else sub
+                    for sub in sl
+                ]
+            )
             return f"({s})"
-        elif s[0] == '[' and s[-1] == ']' and len(sl) > 1:
-            s = ','.join([
-                str(round(eval(str(latex2sympy(sub))), 2))
-                if 'infty' not in sub and sub not in ['a', '-a'] else sub
-                for sub in sl
-            ])
+        elif s[0] == "[" and s[-1] == "]" and len(sl) > 1:
+            s = ",".join(
+                [
+                    str(round(eval(str(latex2sympy(sub))), 2)) if "infty" not in sub and sub not in ["a", "-a"] else sub
+                    for sub in sl
+                ]
+            )
             return f"[{s}]"
     except Exception:
         return s
     return s
-    
+
 
 def is_equal(asw: str, gt_asw: str) -> bool:
     """Determines whether two answer strings are equivalent.
@@ -114,13 +117,13 @@ def is_equal(asw: str, gt_asw: str) -> bool:
     """
     asw = asw.lower()
     gt_asw = gt_asw.lower()
-    
-    if asw.replace(' ', '') == '' or gt_asw.replace(' ', '') == '':
+
+    if asw.replace(" ", "") == "" or gt_asw.replace(" ", "") == "":
         return False
 
     if gt_asw.strip() == asw.strip():
         return True
-   
+
     asw = eval_tuple(asw)
     gt_asw = eval_tuple(gt_asw)
 
@@ -134,7 +137,7 @@ def is_equal(asw: str, gt_asw: str) -> bool:
             return False
     except:
         return False
-    
+
 
 def in_area(id: str, area: str) -> bool:
     """Checks if a given ID falls within a specified area.
@@ -159,10 +162,10 @@ def in_area(id: str, area: str) -> bool:
         False
     """
 
-    if area == 'all':
+    if area == "all":
         return True
-    
-    if f'/{area}/' in id or f'{area}_test.csv' in id:
+
+    if f"/{area}/" in id or f"{area}_test.csv" in id:
         return True
     else:
         return False
@@ -208,8 +211,8 @@ def find_formula(step):
             pair of '<<' and '>>'.
     """
     assert step.count("<<") == step.count(">>") == 1
-    left, right = step.find("<<")+2, step.find(">>")
-    return step[left: right]
+    left, right = step.find("<<") + 2, step.find(">>")
+    return step[left:right]
 
 
 def extract_answer(completion):
@@ -259,10 +262,10 @@ def delete_extra_zero(n):
 
     if isinstance(n, int):
         return str(n)
-    
+
     if isinstance(n, float):
-        n = str(n).rstrip('0')
-        n = int(n.rstrip('.')) if n.endswith('.') else float(n)
+        n = str(n).rstrip("0")
+        n = int(n.rstrip(".")) if n.endswith(".") else float(n)
         return str(n)
 
 
@@ -410,10 +413,10 @@ def _strip_string(string):
         string = string.split("=")[-1]
     if len(string.split("\\approx")) == 2:
         string = string.split("\\approx")[-1]
-    if 'sqrt' in string:
+    if "sqrt" in string:
         string = _fix_sqrt(string)
     string = string.replace(" ", "")
-    if 'sqrt' in string:
+    if "sqrt" in string:
         string = _fix_fracs(string)
     if string == "0.5":
         string = "\\frac{1}{2}"
@@ -434,25 +437,25 @@ def find_math_answer(s: str) -> str:
         str: The cleaned math answer.
     """
     s = s.lower()
-    if '{}' in s:
-        s = s.replace('{}', '')
+    if "{}" in s:
+        s = s.replace("{}", "")
 
     try:
-        pattern = re.compile('oxed{(.*)}', flags=re.S)
+        pattern = re.compile("oxed{(.*)}", flags=re.S)
         ans = pattern.findall(s)[-1]
     except:
         ans = s
 
-    if ans.find('}') != -1 and (ans.find('{') == -1 or ans.find('}') < ans.find('{')):
-        ans = ans.split('}')[0]
+    if ans.find("}") != -1 and (ans.find("{") == -1 or ans.find("}") < ans.find("{")):
+        ans = ans.split("}")[0]
 
-    ans = ans.split('=')[-1]
-    ans = ans.split('\\approx')[-1]
+    ans = ans.split("=")[-1]
+    ans = ans.split("\\approx")[-1]
 
-    ans = ans.replace(" ", "").replace("\\,", "").replace('∞', '\\infty')
+    ans = ans.replace(" ", "").replace("\\,", "").replace("∞", "\\infty")
     ans = ans.replace("+\infty", "\infty").replace("\\\\", "\\").replace("\n", "")
-    ans = ans.replace('\\text', '').replace('\\mbox', '').replace('bmatrix', 'pmatrix')
-    ans = ans.replace("\\left", "").replace('\\right', '').replace("^{\\circ}", "")
+    ans = ans.replace("\\text", "").replace("\\mbox", "").replace("bmatrix", "pmatrix")
+    ans = ans.replace("\\left", "").replace("\\right", "").replace("^{\\circ}", "")
     ans = ans.replace("^\\circ", "").replace("{m}^3", "").replace("m^3", "")
     ans = ans.replace("{units}", "").replace("units", "").replace("{km}", "").replace("km", "")
 
@@ -477,7 +480,7 @@ def evaluate(model_output, answer, options):
     """
     if not model_output or model_output == "":
         return False
-    
+
     gt_answer = answer if isinstance(answer, str) else str(answer)
     if len(options) > 0:
         gt_answer_value = options[ord(gt_answer) - ord("A")]
@@ -485,27 +488,46 @@ def evaluate(model_output, answer, options):
         gt_answer_value = ""
 
     model_output = model_output.strip()
-    for c in 'ABCDE':
-        if (model_output.endswith(f" {c}.") or model_output.endswith(f" ({c}).") or
-            model_output.startswith(f"{c}\n") or model_output.startswith(f"({c})\n") or
-            model_output.startswith(f"({c}) {c}\n")):
+    for c in "ABCDE":
+        if (
+            model_output.endswith(f" {c}.")
+            or model_output.endswith(f" ({c}).")
+            or model_output.startswith(f"{c}\n")
+            or model_output.startswith(f"({c})\n")
+            or model_output.startswith(f"({c}) {c}\n")
+        ):
             model_output = c
-    if is_number(model_output.split('is ')[-1].rstrip('.')):
-        model_output = model_output.split('is ')[-1].rstrip('.')
-    if 'oxed{' not in model_output:
-        for flag in ['the final answer is', 'the answer is', 'the correct answer is', 'the answer should be']:
+    if is_number(model_output.split("is ")[-1].rstrip(".")):
+        model_output = model_output.split("is ")[-1].rstrip(".")
+    if "oxed{" not in model_output:
+        for flag in ["the final answer is", "the answer is", "the correct answer is", "the answer should be"]:
             raw_model_output = model_output
             model_output = model_output.split(flag)[-1].strip()
             if flag in raw_model_output:
-                model_output = model_output.split('\n')[0].split('. ')[0]
-            flag = flag.replace('the', 'The')
+                model_output = model_output.split("\n")[0].split(". ")[0]
+            flag = flag.replace("the", "The")
             raw_model_output = model_output
             model_output = model_output.split(flag)[-1].strip()
             if flag in raw_model_output:
-                model_output = model_output.split('\n')[0].split('. ')[0]
-    elif model_output.count('oxed{') > 1:
-        model_output = '\\boxed{' + model_output.split('oxed{')[-1]
-            
-        model_output = find_math_answer(model_output).replace('(a)', 'a').replace('(b)', 'b').replace('(c)', 'c').replace('(d)', 'd').replace('(e)', 'e').replace('{a}', 'a').replace('{b}', 'b').replace('{c}', 'c').replace('{d}', 'd').replace('{e}', 'e').rstrip('.').lstrip(':').strip()
+                model_output = model_output.split("\n")[0].split(". ")[0]
+    elif model_output.count("oxed{") > 1:
+        model_output = "\\boxed{" + model_output.split("oxed{")[-1]
+
+        model_output = (
+            find_math_answer(model_output)
+            .replace("(a)", "a")
+            .replace("(b)", "b")
+            .replace("(c)", "c")
+            .replace("(d)", "d")
+            .replace("(e)", "e")
+            .replace("{a}", "a")
+            .replace("{b}", "b")
+            .replace("{c}", "c")
+            .replace("{d}", "d")
+            .replace("{e}", "e")
+            .rstrip(".")
+            .lstrip(":")
+            .strip()
+        )
 
     return is_equal(gt_answer, model_output) or is_equal(gt_answer_value, model_output)

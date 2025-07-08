@@ -10,16 +10,16 @@ specific times restrictions, and meeting priority.
 # All code in this file is directly copied from the original source repository.
 # https://github.com/microsoft/benchagents
 
-import ast
 import json
-import re
 import math
-import numpy as np
+import re
 from datetime import datetime, timedelta
 
+import numpy as np
 import pandas as pd
 
 from eureka_ml_insights.metrics.metrics_base import CompositeMetric
+
 
 def check_time_slot_format(solution):
     """Check if the provided solution string matches the required time slot format.
@@ -36,6 +36,7 @@ def check_time_slot_format(solution):
     pattern = r"^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday) ([0-9]|[01]\d|2[0-3]):[0-5]\d-([0-9]|[01]\d|2[0-3]):[0-5]\d$"
     return bool(re.match(pattern, solution))
 
+
 def generate_time_slots(start_time, end_time, granularity):
     """Generate time slots of a given granularity between start_time and end_time.
 
@@ -47,13 +48,14 @@ def generate_time_slots(start_time, end_time, granularity):
     Returns:
         list: A list of tuples representing start and end times for each slot.
     """
-    granularity=5
+    granularity = 5
     slots = []
     current_time = start_time
     while current_time + timedelta(minutes=granularity) <= end_time:
         slots.append((current_time, current_time + timedelta(minutes=granularity)))
         current_time += timedelta(minutes=granularity)
     return slots
+
 
 def parse_time_block(time_block):
     """Parse a string time block in the format 'HH:MM-HH:MM' into datetime objects.
@@ -64,10 +66,11 @@ def parse_time_block(time_block):
     Returns:
         tuple: A tuple of two datetime objects (start_time, end_time).
     """
-    start_str, end_str = time_block.split('-')
+    start_str, end_str = time_block.split("-")
     start_time = datetime.strptime(start_str, "%H:%M")
     end_time = datetime.strptime(end_str, "%H:%M")
     return start_time, end_time
+
 
 def filter_slots_by_duration(time_slots, duration):
     """Filter time slots by ensuring at least the specified duration from a starting slot.
@@ -89,6 +92,7 @@ def filter_slots_by_duration(time_slots, duration):
                 break
     return filtered_slots
 
+
 def filter_slots_by_constraints(time_slots, constraints, day):
     """Filter the given time slots by various constraints (no meetings before/after,
     no meetings on weekends, no meetings during specific times).
@@ -104,24 +108,25 @@ def filter_slots_by_constraints(time_slots, constraints, day):
     filtered_slots = []
     for slot in time_slots:
         start_time, end_time = slot
-        if constraints['no_meetings_before']:
-            nb = int(constraints['no_meetings_before'])
+        if constraints["no_meetings_before"]:
+            nb = int(constraints["no_meetings_before"])
             no_meetings_before = datetime.strptime(f"{nb}:00", "%H:%M")
             if start_time < no_meetings_before:
                 continue
-        if constraints['no_meetings_after']:
-            na = int(constraints['no_meetings_after'])
+        if constraints["no_meetings_after"]:
+            na = int(constraints["no_meetings_after"])
             no_meetings_after = datetime.strptime(f"{na}:00", "%H:%M")
             if end_time >= no_meetings_after:
                 continue
-        if constraints['no_meetings_on_weekends'] and day in ['Saturday', 'Sunday']:
+        if constraints["no_meetings_on_weekends"] and day in ["Saturday", "Sunday"]:
             continue
-        if constraints['no_meetings_during_specific_times']:
-            no_meetings_start, no_meetings_end = parse_time_block(constraints['no_meetings_during_specific_times'])
-            if (start_time < no_meetings_end and end_time > no_meetings_start):
+        if constraints["no_meetings_during_specific_times"]:
+            no_meetings_start, no_meetings_end = parse_time_block(constraints["no_meetings_during_specific_times"])
+            if start_time < no_meetings_end and end_time > no_meetings_start:
                 continue
         filtered_slots.append(slot)
     return filtered_slots
+
 
 class BACalendarMetric(CompositeMetric):
     """A composite metric for evaluating if a response meets certain constraints.
@@ -159,12 +164,12 @@ class BACalendarMetric(CompositeMetric):
             dict: A dictionary containing the outcomes of all programmatic checks.
         """
         result = {}
-        solution = instance['model_output']
-        solution = solution.strip('"').strip('`').strip('\n')
+        solution = instance["model_output"]
+        solution = solution.strip('"').strip("`").strip("\n")
         if check_time_slot_format(solution):
-            result['format_programmatic'] = 1
+            result["format_programmatic"] = 1
         else:
-            result['format_programmatic'] = 0
+            result["format_programmatic"] = 0
         result.update(self.check_availability_programmatic(instance, solution))
         result.update(self.check_meeting_duration_programmatic(instance, solution))
         result.update(self.check_buffer_time_programmatic(instance, solution))
@@ -177,10 +182,10 @@ class BACalendarMetric(CompositeMetric):
         for key, value in result.items():
             if value == 0:
                 all_correct = 0
-            if value is not None and value != 'NA' and pd.notna(value) and isinstance(value, int):
+            if value is not None and value != "NA" and pd.notna(value) and isinstance(value, int):
                 passed_constraints.append(value)
-        result['all_correct'] = all_correct
-        result['fraction_passed'] = np.mean(passed_constraints)
+        result["all_correct"] = all_correct
+        result["fraction_passed"] = np.mean(passed_constraints)
         result.update(self.compute_constrainedness_programmatic(instance))
         return result
 
@@ -210,16 +215,16 @@ class BACalendarMetric(CompositeMetric):
         Returns:
             dict: A dictionary with the availability check result (1 or 0, or None if N/A).
         """
-        if not instance['constraints'].get('availability', True):
-            return {'availability_programmatic_check': None}
-        
+        if not instance["constraints"].get("availability", True):
+            return {"availability_programmatic_check": None}
+
         if not self.is_formatted(solution):
-            return {'availability_programmatic_check': 0}
+            return {"availability_programmatic_check": 0}
 
         day, time_range = solution.split()
         start_time, end_time = parse_time_block(time_range)
         all_available = 1
-        availability = json.loads(instance['metadata']['availability'].replace("'", '"'))
+        availability = json.loads(instance["metadata"]["availability"].replace("'", '"'))
         for participant, schedule in availability.items():
             if day not in schedule:
                 all_available = 0
@@ -235,7 +240,7 @@ class BACalendarMetric(CompositeMetric):
                 all_available = 0
                 break
 
-        return {'availability_programmatic_check': all_available}
+        return {"availability_programmatic_check": all_available}
 
     def check_meeting_duration_programmatic(self, instance, solution):
         """Check if the proposed solution's meeting duration matches the expected duration.
@@ -247,18 +252,18 @@ class BACalendarMetric(CompositeMetric):
         Returns:
             dict: A dictionary with the meeting duration check result (1 or 0, or None if N/A).
         """
-        if not instance['constraints'].get('meeting_duration', True):
-            return {'meeting_duration_programmatic_check': None}
-        
+        if not instance["constraints"].get("meeting_duration", True):
+            return {"meeting_duration_programmatic_check": None}
+
         if not self.is_formatted(solution):
-            return {'meeting_duration_programmatic_check': 0}
+            return {"meeting_duration_programmatic_check": 0}
 
         _, time_range = solution.split()
         start_time, end_time = parse_time_block(time_range)
         meeting_duration = (end_time - start_time).total_seconds() / 60
-        expected_duration = instance['constraints']['meeting_duration']
+        expected_duration = instance["constraints"]["meeting_duration"]
 
-        return {'meeting_duration_programmatic_check': int(meeting_duration == expected_duration)}
+        return {"meeting_duration_programmatic_check": int(meeting_duration == expected_duration)}
 
     def check_buffer_time_programmatic(self, instance, solution):
         """Check if the solution respects the required buffer time before and after the meeting.
@@ -270,21 +275,21 @@ class BACalendarMetric(CompositeMetric):
         Returns:
             dict: A dictionary with the buffer time check result (1 or 0, or None if N/A).
         """
-        buffer_time = instance['constraints'].get('buffer_time_before_and_after_meeting', True)
+        buffer_time = instance["constraints"].get("buffer_time_before_and_after_meeting", True)
         if buffer_time is None or not buffer_time:
-            return {'buffer_time_programmatic_check': None}
-        
-        if not self.is_formatted(solution):
-            return {'buffer_time_programmatic_check': 0}
+            return {"buffer_time_programmatic_check": None}
 
-        buffer_time = instance['constraints']['buffer_time_before_and_after_meeting']
+        if not self.is_formatted(solution):
+            return {"buffer_time_programmatic_check": 0}
+
+        buffer_time = instance["constraints"]["buffer_time_before_and_after_meeting"]
         day, time_range = solution.split()
         start_time, end_time = parse_time_block(time_range)
         buffer_start_time = start_time - timedelta(minutes=buffer_time)
         buffer_end_time = end_time + timedelta(minutes=buffer_time)
         all_buffer_respected = 1
 
-        availability = json.loads(instance['metadata']['availability'].replace("'", '"'))
+        availability = json.loads(instance["metadata"]["availability"].replace("'", '"'))
         for participant, schedule in availability.items():
             if day not in schedule:
                 all_buffer_respected = 0
@@ -299,7 +304,7 @@ class BACalendarMetric(CompositeMetric):
             if not buffer_respected:
                 all_buffer_respected = 0
                 break
-        return {'buffer_time_programmatic_check': all_buffer_respected}
+        return {"buffer_time_programmatic_check": all_buffer_respected}
 
     def check_no_weekends_programmatic(self, instance, solution):
         """Check if the proposed solution does not fall on weekends, if that constraint is required.
@@ -311,16 +316,16 @@ class BACalendarMetric(CompositeMetric):
         Returns:
             dict: A dictionary with the weekend check result (1 or 0, or None if N/A).
         """
-        if not instance['constraints'].get('no_meetings_on_weekends', True):
-            return {'no_weekends_programmatic_check': None}
-        
+        if not instance["constraints"].get("no_meetings_on_weekends", True):
+            return {"no_weekends_programmatic_check": None}
+
         if not self.is_formatted(solution):
-            return {'no_weekends_programmatic_check': 0}
+            return {"no_weekends_programmatic_check": 0}
 
         day, _ = solution.split()
-        day_of_week = datetime.strptime(day, '%A').weekday()
+        day_of_week = datetime.strptime(day, "%A").weekday()
         no_weekends = day_of_week < 5
-        return {'no_weekends_programmatic_check': int(no_weekends)}
+        return {"no_weekends_programmatic_check": int(no_weekends)}
 
     def check_time_restrictions_programmatic(self, instance, solution):
         """Check if the proposed solution adheres to the no_meetings_before and no_meetings_after constraints.
@@ -332,30 +337,32 @@ class BACalendarMetric(CompositeMetric):
         Returns:
             dict: A dictionary indicating if the time restrictions are satisfied.
         """
-        if not instance['constraints'].get('no_meetings_before', True) and not instance['constraints'].get('no_meetings_after', True):
-            return {'time_restrictions_programmatic_check': None}
-        
+        if not instance["constraints"].get("no_meetings_before", True) and not instance["constraints"].get(
+            "no_meetings_after", True
+        ):
+            return {"time_restrictions_programmatic_check": None}
+
         if not self.is_formatted(solution):
-            return {'time_restrictions_programmatic_check': 0}
+            return {"time_restrictions_programmatic_check": 0}
 
         _, time_range = solution.split()
         start_time, end_time = parse_time_block(time_range)
 
-        no_meetings_before = instance['constraints'].get('no_meetings_before')
-        no_meetings_after = instance['constraints'].get('no_meetings_after')
+        no_meetings_before = instance["constraints"].get("no_meetings_before")
+        no_meetings_after = instance["constraints"].get("no_meetings_after")
 
         if no_meetings_before:
             nb = int(no_meetings_before)
             no_meetings_before = datetime.strptime(f"{nb}:00", "%H:%M")
             if start_time < no_meetings_before:
-                return {'time_restrictions_programmatic_check': 0}
+                return {"time_restrictions_programmatic_check": 0}
 
         if no_meetings_after:
             na = int(no_meetings_after)
-            no_meetings_after = datetime.strptime(f"{na}:00", '%H:%M')
+            no_meetings_after = datetime.strptime(f"{na}:00", "%H:%M")
             if end_time > no_meetings_after:
-                return {'time_restrictions_programmatic_check': 0}
-        return {'time_restrictions_programmatic_check': 1}
+                return {"time_restrictions_programmatic_check": 0}
+        return {"time_restrictions_programmatic_check": 1}
 
     def check_priority_programmatic(self, instance, solution):
         """Check if the proposed solution meets the high-priority meeting constraint, if enabled.
@@ -370,30 +377,32 @@ class BACalendarMetric(CompositeMetric):
         Returns:
             dict: A dictionary indicating if the proposed solution meets the priority constraints.
         """
-        if not instance['constraints'].get('high_priority_meeting', False):
-            return {'priority_programmatic_check': None}
-        
+        if not instance["constraints"].get("high_priority_meeting", False):
+            return {"priority_programmatic_check": None}
+
         if not self.is_formatted(solution):
-            return {'priority_programmatic_check': 0}
-        
-        metadata = instance['metadata']
+            return {"priority_programmatic_check": 0}
+
+        metadata = instance["metadata"]
         result = False
-        params = instance['params']
-        constraints = instance['constraints']
-        if constraints['buffer_time_before_and_after_meeting']:
-            buffer_time = constraints['buffer_time_before_and_after_meeting']
+        params = instance["params"]
+        constraints = instance["constraints"]
+        if constraints["buffer_time_before_and_after_meeting"]:
+            buffer_time = constraints["buffer_time_before_and_after_meeting"]
         else:
             buffer_time = 0
-        for day in params['days_of_week']:
+        for day in params["days_of_week"]:
             common_time_slots = None
-            availability = json.loads(metadata['availability'].replace("'", '"'))
+            availability = json.loads(metadata["availability"].replace("'", '"'))
             for participant, schedule in availability.items():
                 if day in schedule:
                     participant_time_slots = []
                     for time_slot in schedule[day]:
                         start_time, end_time = parse_time_block(time_slot)
-                        time_slots = generate_time_slots(start_time, end_time, params['granularity'])
-                        time_slots = filter_slots_by_duration(time_slots, constraints['meeting_duration'] + 2 * buffer_time)
+                        time_slots = generate_time_slots(start_time, end_time, params["granularity"])
+                        time_slots = filter_slots_by_duration(
+                            time_slots, constraints["meeting_duration"] + 2 * buffer_time
+                        )
                         time_slots = filter_slots_by_constraints(time_slots, constraints, day=day)
                         participant_time_slots.extend(time_slots)
                     if common_time_slots is None:
@@ -402,10 +411,10 @@ class BACalendarMetric(CompositeMetric):
                         common_time_slots = common_time_slots.intersection(participant_time_slots)
             if common_time_slots:
                 first_available_slot = sorted(list(common_time_slots))[0]
-                first_available_start = (first_available_slot[0]+timedelta(minutes=buffer_time)).strftime('%H:%M')
-                first_available_end = (first_available_slot[1]-timedelta(minutes=buffer_time)).strftime('%H:%M')
+                first_available_start = (first_available_slot[0] + timedelta(minutes=buffer_time)).strftime("%H:%M")
+                first_available_end = (first_available_slot[1] - timedelta(minutes=buffer_time)).strftime("%H:%M")
                 result = solution == f"{day} {first_available_start}-{first_available_end}"
-        return {'priority_programmatic_check': int(result)}
+        return {"priority_programmatic_check": int(result)}
 
     def check_specific_times_programmatic(self, instance, solution):
         """Check if the proposed solution avoids times when meetings are disallowed.
@@ -417,22 +426,22 @@ class BACalendarMetric(CompositeMetric):
         Returns:
             dict: A dictionary indicating if the specific times constraint is satisfied.
         """
-        if not instance['constraints'].get('no_meetings_during_specific_times', True):
-            return {'specific_times_programmatic_check': None}
-        
-        if not self.is_formatted(solution):
-            return {'specific_times_programmatic_check': 0}
+        if not instance["constraints"].get("no_meetings_during_specific_times", True):
+            return {"specific_times_programmatic_check": None}
 
-        restricted_times = instance['constraints']['no_meetings_during_specific_times']
+        if not self.is_formatted(solution):
+            return {"specific_times_programmatic_check": 0}
+
+        restricted_times = instance["constraints"]["no_meetings_during_specific_times"]
         restricted_start, restricted_end = parse_time_block(restricted_times)
         day, time_range = solution.split()
         start_time, end_time = parse_time_block(time_range)
 
-        if (start_time < restricted_end and end_time > restricted_start):
+        if start_time < restricted_end and end_time > restricted_start:
             result = 0
         else:
             result = 1
-        return {'specific_times_programmatic_check': result}
+        return {"specific_times_programmatic_check": result}
 
     def compute_constrainedness_programmatic(self, instance):
         """Compute the problem's constrainedness based on constraints and availability.
@@ -447,30 +456,32 @@ class BACalendarMetric(CompositeMetric):
         Returns:
             dict: A dictionary containing 'constrainedness' and 'constrainedness_bucket'.
         """
-        params = instance['params']
-        constraints = instance['constraints']
-        metadata = instance['metadata']
-        if not instance['constraints']['buffer_time_before_and_after_meeting']:
+        params = instance["params"]
+        constraints = instance["constraints"]
+        metadata = instance["metadata"]
+        if not instance["constraints"]["buffer_time_before_and_after_meeting"]:
             buffer_time_before_and_after_meeting = 0
         else:
-            buffer_time_before_and_after_meeting = instance['constraints']['buffer_time_before_and_after_meeting']
+            buffer_time_before_and_after_meeting = instance["constraints"]["buffer_time_before_and_after_meeting"]
         total_slots = 0
-        feasible_slots = 0       
-        for day in params['days_of_week']:
+        feasible_slots = 0
+        for day in params["days_of_week"]:
             common_time_slots = None
             union_time_slots = None
-            availability = json.loads(metadata['availability'].replace("'", '"'))
+            availability = json.loads(metadata["availability"].replace("'", '"'))
             for participant, schedule in availability.items():
                 if day in schedule:
                     participant_time_slots = []
                     participant_time_slots_unconstrained = []
                     for time_slot in schedule[day]:
                         start_time, end_time = parse_time_block(time_slot)
-                        time_slots = generate_time_slots(start_time, end_time, params['granularity'])
-                        time_slots = filter_slots_by_duration(time_slots, constraints['meeting_duration'])
+                        time_slots = generate_time_slots(start_time, end_time, params["granularity"])
+                        time_slots = filter_slots_by_duration(time_slots, constraints["meeting_duration"])
                         participant_time_slots_unconstrained.extend(time_slots)
-                        time_slots = generate_time_slots(start_time, end_time, params['granularity'])
-                        time_slots = filter_slots_by_duration(time_slots, constraints['meeting_duration'] + buffer_time_before_and_after_meeting*2)
+                        time_slots = generate_time_slots(start_time, end_time, params["granularity"])
+                        time_slots = filter_slots_by_duration(
+                            time_slots, constraints["meeting_duration"] + buffer_time_before_and_after_meeting * 2
+                        )
                         time_slots = filter_slots_by_constraints(time_slots, constraints, day=day)
                         participant_time_slots.extend(time_slots)
                     if common_time_slots is None:
@@ -495,4 +506,4 @@ class BACalendarMetric(CompositeMetric):
         # Bucket the constrainedness ratio into intervals of 0.2
         constrainedness_bucket = round(math.floor(constrainedness_ratio / 0.1) * 0.1, 4)
 
-        return {'constrainedness': constrainedness_ratio, 'constrainedness_bucket': constrainedness_bucket}
+        return {"constrainedness": constrainedness_ratio, "constrainedness_bucket": constrainedness_bucket}

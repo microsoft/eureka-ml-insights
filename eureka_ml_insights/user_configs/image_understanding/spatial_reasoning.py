@@ -1,15 +1,22 @@
 import os
 
+from eureka_ml_insights.configs import (
+    AggregatorConfig,
+    DataSetConfig,
+    EvalReportingConfig,
+    InferenceConfig,
+    MetricConfig,
+    PipelineConfig,
+    PromptProcessingConfig,
+)
 from eureka_ml_insights.configs.experiment_config import ExperimentConfig
 from eureka_ml_insights.core import EvalReporting, Inference, PromptProcessing
 from eureka_ml_insights.data_utils import (
     AddColumnAndData,
     ASTEvalTransform,
+    DataReader,
     HFDataReader,
     MMDataLoader,
-    ColumnRename,
-    DataReader,
-    PrependStringTransform,
     SequenceTransform,
 )
 from eureka_ml_insights.data_utils.spatial_utils import (
@@ -20,15 +27,6 @@ from eureka_ml_insights.metrics import (
     SpatialAndLayoutReasoningMetric,
 )
 
-from eureka_ml_insights.configs import (
-    AggregatorConfig,
-    DataSetConfig,
-    EvalReportingConfig,
-    InferenceConfig,
-    MetricConfig,
-    PipelineConfig,
-    PromptProcessingConfig,
-)
 from .common import LOCAL_DATA_PIPELINE
 
 """Example user-defined configuration classes for the spatial reasoning task.
@@ -136,9 +134,7 @@ class SPATIAL_REASONING_SINGLE_PIPELINE(SPATIAL_REASONING_PAIRS_PIPELINE):
             PipelineConfig: The updated pipeline configuration for the single object condition.
         """
         config = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
-        self.data_processing_comp.data_reader_config.init_args["tasks"] = (
-            "spatial_reasoning_lrtb_single"
-        )
+        self.data_processing_comp.data_reader_config.init_args["tasks"] = "spatial_reasoning_lrtb_single"
         self.evalreporting_comp.data_reader_config.init_args["transform"].transforms[
             0
         ].data = "['left', 'right', 'top', 'bottom']"

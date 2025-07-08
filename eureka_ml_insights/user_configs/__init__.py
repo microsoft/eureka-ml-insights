@@ -11,7 +11,6 @@ from .ba_calendar import (
     BA_Calendar_RunEvals_PIPELINE,
 )
 from .dna import DNA_PIPELINE
-from .doc_str import DOCSTR_PIPELINE
 from .drop import Drop_Experiment_Pipeline
 from .flenqa import FlenQA_Experiment_Pipeline
 from .geometer import GEOMETER_PIPELINE

@@ -8,21 +8,29 @@ Classes:
 import os
 from typing import Any
 
-from eureka_ml_insights.core import (
-    Inference,
-    PromptProcessing,
-)
-
+from eureka_ml_insights.core import Inference, PromptProcessing
 from eureka_ml_insights.core.data_processing import DataProcessing
 from eureka_ml_insights.core.eval_reporting import EvalReporting
-from eureka_ml_insights.data_utils.ba_calendar_utils import BA_Calendar_ExtractAnswer
 from eureka_ml_insights.data_utils.data import (
     DataLoader,
     DataReader,
     HFDataReader,
 )
-from eureka_ml_insights.data_utils.omni_math_utils import Omni_Math_ParseLabel, Omni_Math_ParseSolution
-from eureka_ml_insights.data_utils.transform import AddColumn, AddColumnAndData, ColumnRename, CopyColumn, ExtractUsageTransform, MajorityVoteTransform, MultiplyTransform, ReplaceStringsTransform, RunPythonTransform, SamplerTransform, SequenceTransform
+from eureka_ml_insights.data_utils.omni_math_utils import (
+    Omni_Math_ParseLabel,
+    Omni_Math_ParseSolution,
+)
+from eureka_ml_insights.data_utils.transform import (
+    AddColumn,
+    AddColumnAndData,
+    ColumnRename,
+    CopyColumn,
+    ExtractUsageTransform,
+    MajorityVoteTransform,
+    MultiplyTransform,
+    RunPythonTransform,
+    SequenceTransform,
+)
 from eureka_ml_insights.metrics.reports import (
     AverageAggregator,
     BiLevelAggregator,
@@ -35,9 +43,9 @@ from ..configs.config import (
     DataSetConfig,
     EvalReportingConfig,
     InferenceConfig,
+    ModelConfig,
     PipelineConfig,
     PromptProcessingConfig,
-    ModelConfig,
 )
 from ..configs.experiment_config import ExperimentConfig
 
@@ -49,7 +57,9 @@ class Omni_Math_PIPELINE(ExperimentConfig):
     processing, inference, evaluation, and reporting steps for benchmarking.
     """
 
-    def configure_pipeline(self, model_config=None, resume_from=None, eval_resume_from=None, eval_model_config=None, **kwargs) -> PipelineConfig:
+    def configure_pipeline(
+        self, model_config=None, resume_from=None, eval_resume_from=None, eval_model_config=None, **kwargs
+    ) -> PipelineConfig:
         """Configures the pipeline components for running a benchmark.
 
         Args:
@@ -66,16 +76,20 @@ class Omni_Math_PIPELINE(ExperimentConfig):
 
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
-            prompt_template_path=os.path.join(os.path.dirname(__file__), "../prompt_templates/omni_math_templates/omni_math_cot.jinja"),
+            prompt_template_path=os.path.join(
+                os.path.dirname(__file__), "../prompt_templates/omni_math_templates/omni_math_cot.jinja"
+            ),
             data_reader_config=DataSetConfig(
                 HFDataReader,
                 {
-                   "path": "KbsdJames/Omni-MATH",
-                   "split": "test",
-                   "transform": SequenceTransform([
-                    MultiplyTransform(n_repeats=1),
-                   ]),
-                }
+                    "path": "KbsdJames/Omni-MATH",
+                    "split": "test",
+                    "transform": SequenceTransform(
+                        [
+                            MultiplyTransform(n_repeats=1),
+                        ]
+                    ),
+                },
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
         )
@@ -86,9 +100,7 @@ class Omni_Math_PIPELINE(ExperimentConfig):
             model_config=model_config,
             data_loader_config=DataSetConfig(
                 DataLoader,
-                {
-                    "path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl")
-                },
+                {"path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl")},
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
@@ -98,16 +110,26 @@ class Omni_Math_PIPELINE(ExperimentConfig):
         # eval data preprocessing
         self.eval_data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
-            prompt_template_path=os.path.join(os.path.dirname(__file__), "../prompt_templates/omni_math_templates/omni_math_gpt_eval.jinja"),
+            prompt_template_path=os.path.join(
+                os.path.dirname(__file__), "../prompt_templates/omni_math_templates/omni_math_gpt_eval.jinja"
+            ),
             data_reader_config=DataSetConfig(
                 DataReader,
-                {"path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
-                 "transform": SequenceTransform([
-                    CopyColumn("model_output", "generated_solution"),
-                    ColumnRename(name_mapping={"n_output_tokens":"gen_solution_n_output_tokens",
-                                               "usage": "gen_solution_usage",
-                                               "is_valid": "gen_solution_is_valid"}),
-                 ])},
+                {
+                    "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
+                    "transform": SequenceTransform(
+                        [
+                            CopyColumn("model_output", "generated_solution"),
+                            ColumnRename(
+                                name_mapping={
+                                    "n_output_tokens": "gen_solution_n_output_tokens",
+                                    "usage": "gen_solution_usage",
+                                    "is_valid": "gen_solution_is_valid",
+                                }
+                            ),
+                        ]
+                    ),
+                },
             ),
             output_dir=os.path.join(self.log_dir, "eval_data_processing_output"),
         )
@@ -118,14 +140,13 @@ class Omni_Math_PIPELINE(ExperimentConfig):
             model_config=eval_model_config,
             data_loader_config=DataSetConfig(
                 DataLoader,
-                {"path": os.path.join(self.eval_data_processing_comp.output_dir, "transformed_data.jsonl")
-                },
+                {"path": os.path.join(self.eval_data_processing_comp.output_dir, "transformed_data.jsonl")},
             ),
             output_dir=os.path.join(self.log_dir, "eval_inference_result"),
             resume_from=eval_resume_from,
             max_concurrent=40,
         )
-        
+
         self.eval_inf_data_processing_comp = DataProcessingConfig(
             component_type=DataProcessing,
             data_reader_config=DataSetConfig(
@@ -135,7 +156,11 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            ExtractUsageTransform(model_config, usage_column="gen_solution_usage", n_tokens_column="gen_solution_n_output_tokens"),
+                            ExtractUsageTransform(
+                                model_config,
+                                usage_column="gen_solution_usage",
+                                n_tokens_column="gen_solution_n_output_tokens",
+                            ),
                             ColumnRename(
                                 name_mapping={
                                     "model_output": "raw_output",
@@ -174,59 +199,65 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                     },
                 ),
                 # the next three reports take the average and std for all repeats
-                AggregatorConfig(BiLevelAggregator, 
+                AggregatorConfig(
+                    BiLevelAggregator,
                     {
-                        "column_names": [
-                            "OmniMath_correctness"
-                        ], 
-                        "first_groupby": "data_repeat_id", 
+                        "column_names": ["OmniMath_correctness"],
+                        "first_groupby": "data_repeat_id",
                         "filename_base": "Correctness_Avg",
-                        "agg_fn": "mean"
-                    }),
-                AggregatorConfig(BiLevelAggregator, 
+                        "agg_fn": "mean",
+                    },
+                ),
+                AggregatorConfig(
+                    BiLevelAggregator,
                     {
-                        "column_names": [
-                            "OmniMath_correctness"
-                        ], 
-                        "first_groupby": ["data_repeat_id", "difficulty"], 
+                        "column_names": ["OmniMath_correctness"],
+                        "first_groupby": ["data_repeat_id", "difficulty"],
                         "second_groupby": "difficulty",
                         "filename_base": "Correctness_Avg_by_difficulty",
-                        "agg_fn": "mean"
-                    }), 
-                AggregatorConfig(BiLevelAggregator, 
+                        "agg_fn": "mean",
+                    },
+                ),
+                AggregatorConfig(
+                    BiLevelAggregator,
                     {
-                        "column_names": [
-                            "OmniMath_correctness"
-                        ], 
-                        "first_groupby": ["data_repeat_id", "source"], 
+                        "column_names": ["OmniMath_correctness"],
+                        "first_groupby": ["data_repeat_id", "source"],
                         "second_groupby": "source",
                         "filename_base": "Correctness_Avg_by_source",
-                        "agg_fn": "mean"
-                    }),                
+                        "agg_fn": "mean",
+                    },
+                ),
                 # reports for average completion usage
-                AggregatorConfig(BiLevelAggregator, 
+                AggregatorConfig(
+                    BiLevelAggregator,
                     {
-                        "column_names": ["usage_completion"], 
-                        "first_groupby": "data_point_id", 
+                        "column_names": ["usage_completion"],
+                        "first_groupby": "data_point_id",
                         "filename_base": "UsageCompletion",
-                        "agg_fn": "mean"
-                    }),
-                AggregatorConfig(BiLevelAggregator, 
+                        "agg_fn": "mean",
+                    },
+                ),
+                AggregatorConfig(
+                    BiLevelAggregator,
                     {
-                        "column_names": ["usage_completion"], 
+                        "column_names": ["usage_completion"],
                         "first_groupby": ["data_point_id", "difficulty"],
                         "second_groupby": "difficulty",
                         "filename_base": "UsageCompletion_by_difficulty",
-                        "agg_fn": "mean"
-                    }),
-                AggregatorConfig(BiLevelAggregator, 
+                        "agg_fn": "mean",
+                    },
+                ),
+                AggregatorConfig(
+                    BiLevelAggregator,
                     {
-                        "column_names": ["usage_completion"], 
+                        "column_names": ["usage_completion"],
                         "first_groupby": ["data_point_id", "source"],
                         "second_groupby": "source",
                         "filename_base": "UsageCompletion_by_difficulty_source",
-                        "agg_fn": "mean"
-                    }),
+                        "agg_fn": "mean",
+                    },
+                ),
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
         )
@@ -267,7 +298,6 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                         "agg_fn": "max",
                     },
                 ),
-                
                 AggregatorConfig(
                     BiLevelAggregator,
                     {
@@ -281,17 +311,14 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                         "agg_fn": "max",
                     },
                 ),
-                
                 # aggregates results by data_point_id and takes the sum of usage for completion tokens
                 AggregatorConfig(
                     BiLevelAggregator,
                     {
-                        "column_names": [
-                            "usage_completion"
-                        ],
+                        "column_names": ["usage_completion"],
                         "first_groupby": "data_point_id",
                         "filename_base": "UsageCompletion_BestOfN",
-                         "agg_fn": "sum"
+                        "agg_fn": "sum",
                     },
                 ),
             ],
@@ -366,11 +393,12 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                                 }
                             ),
                             AddColumn("model_output"),
-                            MajorityVoteTransform(model_output_col="model_output_onerun", model_label_column="OmniMath_correctness"),
+                            MajorityVoteTransform(
+                                model_output_col="model_output_onerun", model_label_column="OmniMath_correctness"
+                            ),
                             CopyColumn("majority_vote", "model_output"),
                             CopyColumn("majority_label", "OmniMath_correctness_majority_vote"),
                             AddColumnAndData("count", 1),
-
                         ]
                     ),
                 },
@@ -422,22 +450,26 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                         "group_by": "source",
                     },
                 ),
-                AggregatorConfig(CountAggregator, 
+                AggregatorConfig(
+                    CountAggregator,
                     {
                         "column_names": [
                             "count",
-                        ], 
-                        "group_by": "difficulty", 
+                        ],
+                        "group_by": "difficulty",
                         "filename_base": "NumExamples_by_difficulty",
-                    }),
-                AggregatorConfig(CountAggregator, 
+                    },
+                ),
+                AggregatorConfig(
+                    CountAggregator,
                     {
                         "column_names": [
                             "count",
-                        ], 
-                        "group_by": "source", 
+                        ],
+                        "group_by": "source",
                         "filename_base": "NumExamples_by_source",
-                    }),
+                    },
+                ),
             ],
             output_dir=os.path.join(self.log_dir, "majvote_eval_report"),
         )
@@ -452,9 +484,15 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            RunPythonTransform("df['highlevel_domain'] = df['domain'].apply(lambda x: list(set([y.split('->')[0] for y in x])))"),
-                            RunPythonTransform("df['sub_domain'] = df['domain'].apply(lambda x: list(set([y.split('->')[1] for y in x])))"),
-                            RunPythonTransform("df['sec_sub_domain'] = df['domain'].apply(lambda x: list(set([y.split('->')[-1] for y in x])))"),
+                            RunPythonTransform(
+                                "df['highlevel_domain'] = df['domain'].apply(lambda x: list(set([y.split('->')[0] for y in x])))"
+                            ),
+                            RunPythonTransform(
+                                "df['sub_domain'] = df['domain'].apply(lambda x: list(set([y.split('->')[1] for y in x])))"
+                            ),
+                            RunPythonTransform(
+                                "df['sec_sub_domain'] = df['domain'].apply(lambda x: list(set([y.split('->')[-1] for y in x])))"
+                            ),
                         ]
                     ),
                 },
@@ -462,7 +500,6 @@ class Omni_Math_PIPELINE(ExperimentConfig):
             output_dir=os.path.join(self.log_dir, "domain_eval_data_processing_output"),
         )
 
-        
         # Configure the evaluation and reporting component for domain level aggregation
         self.domain_evalreporting_comp = EvalReportingConfig(
             component_type=EvalReporting,
@@ -479,24 +516,26 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                 },
             ),
             aggregator_configs=[
-                AggregatorConfig(BiLevelAggregator, 
+                AggregatorConfig(
+                    BiLevelAggregator,
                     {
-                        "column_names": [
-                            "OmniMath_correctness"
-                        ], 
-                        "first_groupby": ["data_repeat_id", "highlevel_domain"], 
+                        "column_names": ["OmniMath_correctness"],
+                        "first_groupby": ["data_repeat_id", "highlevel_domain"],
                         "second_groupby": "highlevel_domain",
                         "filename_base": "Correctness_Avg_by_domain",
-                        "agg_fn": "mean"
-                    }), 
-                AggregatorConfig(BiLevelAggregator, 
+                        "agg_fn": "mean",
+                    },
+                ),
+                AggregatorConfig(
+                    BiLevelAggregator,
                     {
-                        "column_names": ["usage_completion"], 
+                        "column_names": ["usage_completion"],
                         "first_groupby": ["data_point_id", "highlevel_domain"],
                         "second_groupby": "highlevel_domain",
                         "filename_base": "UsageCompletion_by_highlevel_domain",
-                        "agg_fn": "mean"
-                    }),
+                        "agg_fn": "mean",
+                    },
+                ),
                 AggregatorConfig(
                     BiLevelAggregator,
                     {
@@ -523,7 +562,6 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                         "agg_fn": "min",
                     },
                 ),
-                
             ],
             output_dir=os.path.join(self.log_dir, "eval_report_by_domain"),
         )
@@ -554,14 +592,15 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                         "group_by": "highlevel_domain",
                     },
                 ),
-                AggregatorConfig(CountAggregator, 
+                AggregatorConfig(
+                    CountAggregator,
                     {
                         "column_names": [
                             "count",
-                        ], 
-                        "group_by": "highlevel_domain", 
+                        ],
+                        "group_by": "highlevel_domain",
                         "filename_base": "NumExamples_by_highlevel_domain",
-                    }
+                    },
                 ),
             ],
             output_dir=os.path.join(self.log_dir, "majvote_eval_report_by_domain"),
@@ -583,24 +622,26 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                 },
             ),
             aggregator_configs=[
-                AggregatorConfig(BiLevelAggregator, 
+                AggregatorConfig(
+                    BiLevelAggregator,
                     {
-                        "column_names": [
-                            "OmniMath_correctness"
-                        ], 
-                        "first_groupby": ["data_repeat_id", "sub_domain"], 
+                        "column_names": ["OmniMath_correctness"],
+                        "first_groupby": ["data_repeat_id", "sub_domain"],
                         "second_groupby": "sub_domain",
                         "filename_base": "Correctness_Avg_by_sub_domain",
-                        "agg_fn": "mean"
-                    }),
-                AggregatorConfig(BiLevelAggregator, 
+                        "agg_fn": "mean",
+                    },
+                ),
+                AggregatorConfig(
+                    BiLevelAggregator,
                     {
-                        "column_names": ["usage_completion"], 
+                        "column_names": ["usage_completion"],
                         "first_groupby": ["data_point_id", "sub_domain"],
                         "second_groupby": "sub_domain",
                         "filename_base": "UsageCompletion_by_sub_domain",
-                        "agg_fn": "mean"
-                    }),
+                        "agg_fn": "mean",
+                    },
+                ),
                 AggregatorConfig(
                     BiLevelAggregator,
                     {
@@ -626,7 +667,7 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                         "normalize": True,
                         "agg_fn": "min",
                     },
-                ),                
+                ),
             ],
             output_dir=os.path.join(self.log_dir, "eval_report_by_sub_domain"),
         )
@@ -657,14 +698,15 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                         "group_by": "sub_domain",
                     },
                 ),
-                AggregatorConfig(CountAggregator, 
+                AggregatorConfig(
+                    CountAggregator,
                     {
                         "column_names": [
                             "count",
-                        ], 
-                        "group_by": "sub_domain", 
+                        ],
+                        "group_by": "sub_domain",
                         "filename_base": "NumExamples_by_sub_domain",
-                    }
+                    },
                 ),
             ],
             output_dir=os.path.join(self.log_dir, "majvote_eval_report_by_sub_domain"),
@@ -686,24 +728,26 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                 },
             ),
             aggregator_configs=[
-                AggregatorConfig(BiLevelAggregator,
+                AggregatorConfig(
+                    BiLevelAggregator,
                     {
-                        "column_names": [
-                            "OmniMath_correctness"
-                        ],
+                        "column_names": ["OmniMath_correctness"],
                         "first_groupby": ["data_repeat_id", "sec_sub_domain"],
                         "second_groupby": "sec_sub_domain",
                         "filename_base": "Correctness_Avg_by_sec_sub_domain",
-                        "agg_fn": "mean"
-                    }),
-                AggregatorConfig(BiLevelAggregator,
+                        "agg_fn": "mean",
+                    },
+                ),
+                AggregatorConfig(
+                    BiLevelAggregator,
                     {
                         "column_names": ["usage_completion"],
                         "first_groupby": ["data_point_id", "sec_sub_domain"],
                         "second_groupby": "sec_sub_domain",
                         "filename_base": "UsageCompletion_by_sec_sub_domain",
-                        "agg_fn": "mean"
-                    }),
+                        "agg_fn": "mean",
+                    },
+                ),
                 AggregatorConfig(
                     BiLevelAggregator,
                     {
@@ -729,8 +773,7 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                         "normalize": True,
                         "agg_fn": "min",
                     },
-                )
-                
+                ),
             ],
             output_dir=os.path.join(self.log_dir, "eval_report_by_sec_sub_domain"),
         )
@@ -760,15 +803,16 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                         "filename_base": "Correctness_MajVote_by_sec_sub_domain",
                         "group_by": "sec_sub_domain",
                     },
-               ),
-                AggregatorConfig(CountAggregator,
+                ),
+                AggregatorConfig(
+                    CountAggregator,
                     {
                         "column_names": [
                             "count",
                         ],
                         "group_by": "sec_sub_domain",
                         "filename_base": "NumExamples_by_sec_sub_domain",
-                    }
+                    },
                 ),
             ],
             output_dir=os.path.join(self.log_dir, "majvote_eval_report_by_sec_sub_domain"),
@@ -807,7 +851,12 @@ class Omni_Math_Parallel_PIPELINE(Omni_Math_PIPELINE):
     """
 
     def configure_pipeline(
-            self, model_config: ModelConfig, resume_from: str = None, eval_resume_from: str = None, eval_model_config: ModelConfig = None, **kwargs: dict[str, Any]
+        self,
+        model_config: ModelConfig,
+        resume_from: str = None,
+        eval_resume_from: str = None,
+        eval_model_config: ModelConfig = None,
+        **kwargs: dict[str, Any]
     ) -> PipelineConfig:
         """Configures the pipeline to run Omni Math benchmarks multiple times in parallel.
 
@@ -824,7 +873,14 @@ class Omni_Math_Parallel_PIPELINE(Omni_Math_PIPELINE):
         Returns:
             PipelineConfig: The updated pipeline configuration object.
         """
-        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from, eval_resume_from=eval_resume_from, eval_model_config=eval_model_config)
+        pipeline = super().configure_pipeline(
+            model_config=model_config,
+            resume_from=resume_from,
+            eval_resume_from=eval_resume_from,
+            eval_model_config=eval_model_config,
+        )
         # data preprocessing
-        self.data_processing_comp.data_reader_config.init_args["transform"].transforms[-1] = MultiplyTransform(n_repeats=5)
+        self.data_processing_comp.data_reader_config.init_args["transform"].transforms[-1] = MultiplyTransform(
+            n_repeats=5
+        )
         return pipeline

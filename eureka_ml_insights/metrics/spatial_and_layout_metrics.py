@@ -17,7 +17,7 @@ from .metrics_base import ClassicMetric, DetectionMetric, MultipleChoiceMetric
 def download_nltk_resources():
     """Downloads the 'wordnet' corpus if it is not already installed.
 
-    This function attempts to locate the 'wordnet' corpus. If it is not found, 
+    This function attempts to locate the 'wordnet' corpus. If it is not found,
     it downloads the corpus using nltk.download.
     """
     try:
@@ -33,7 +33,7 @@ from nltk.corpus import wordnet
 class SpatialAndLayoutReasoningMetric(MultipleChoiceMetric):
     """SpatialAndLayoutReasoningMetric requires a correct prediction to be only one valid multiple choice answer.
 
-    This class inherits from MultipleChoiceMetric and checks whether only the correct option, among 
+    This class inherits from MultipleChoiceMetric and checks whether only the correct option, among
     all the target options, is present exactly once in the answer text.
     """
 
@@ -51,8 +51,8 @@ class SpatialAndLayoutReasoningMetric(MultipleChoiceMetric):
             is_valid (bool): Indicates if the sample is valid for evaluation.
 
         Returns:
-            str: Returns "correct" if exactly one option appears and it is the target_text, 
-            "incorrect" if exactly one option appears and it is not the target_text, 
+            str: Returns "correct" if exactly one option appears and it is the target_text,
+            "incorrect" if exactly one option appears and it is not the target_text,
             otherwise "none".
         """
         if not is_valid:
@@ -87,7 +87,7 @@ def wordnet_compare(word, compare_word, threshold=1):
             Defaults to 1.
 
     Returns:
-        bool: True if the maximum path similarity between any synsets of the two words 
+        bool: True if the maximum path similarity between any synsets of the two words
         is greater than or equal to the threshold, otherwise False.
     """
     syns1 = wordnet.synsets(word.replace(" ", "_"))
@@ -178,7 +178,7 @@ class ObjectRecognitionMetric(ClassicMetric):
 class CocoObjectDetectionMetric(DetectionMetric):
     """Implements parsing to prepare for COCO detection metrics.
 
-    The model output is parsed and formed into a COCO annotation, which is returned and stored as the 
+    The model output is parsed and formed into a COCO annotation, which is returned and stored as the
     metric output. The final statistics are computed in the CocoDetectionAggregator.
     """
 
@@ -186,7 +186,7 @@ class CocoObjectDetectionMetric(DetectionMetric):
         """Initializes the metric with the ground-truth COCO JSON data.
 
         Args:
-            target_coco_json_reader (JsonReader): Reader to load the ground truth JSON for 
+            target_coco_json_reader (JsonReader): Reader to load the ground truth JSON for
                 the detections (in COCO JSON format).
         """
         super().__init__()
@@ -261,6 +261,7 @@ class CocoObjectDetectionMetric(DetectionMetric):
             except Exception as e:
                 logging.error(f"Error parsing detection: {e} answer_text:{answer_text}")
                 import traceback
+
                 traceback.print_exc()
 
         return str(annotations)

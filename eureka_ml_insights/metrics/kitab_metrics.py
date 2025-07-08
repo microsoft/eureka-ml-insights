@@ -29,9 +29,9 @@ from azure.core.exceptions import (
 from azure.identity import DefaultAzureCredential
 from fuzzywuzzy import fuzz
 
+from eureka_ml_insights.data_utils import kitab_utils
 from eureka_ml_insights.metrics import CompositeMetric
 from eureka_ml_insights.secret_management import get_secret
-from eureka_ml_insights.data_utils import kitab_utils
 
 
 class KitabMetric(CompositeMetric):

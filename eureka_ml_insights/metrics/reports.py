@@ -254,10 +254,7 @@ class AverageSTDDevAggregator(NumericalAggregator):
         averages = {col: gb[col].mean().round(3).to_dict() for col in self.column_names}
         std_devs = {col: gb[col].std().round(3).to_dict() for col in self.column_names}
         self.aggregated_result = {
-            col: {
-                group: {"average": averages[col][group], "std_dev": std_devs[col][group]}
-                for group in averages[col]
-            }
+            col: {group: {"average": averages[col][group], "std_dev": std_devs[col][group]} for group in averages[col]}
             for col in self.column_names
         }
 
@@ -358,9 +355,7 @@ class BiLevelAggregator(AverageAggregator):
             {
                 col: "first"
                 for col in data.columns
-                if col not in self.column_names
-                and col != self.first_groupby
-                and col not in self.first_groupby
+                if col not in self.column_names and col != self.first_groupby and col not in self.first_groupby
             }
         )
 
@@ -420,9 +415,7 @@ class BiLevelCountAggregator(Aggregator):
             {
                 col: "first"
                 for col in data.columns
-                if col not in self.column_names
-                and col != self.first_groupby
-                and col not in self.first_groupby
+                if col not in self.column_names and col != self.first_groupby and col not in self.first_groupby
             }
         )
 
@@ -604,12 +597,16 @@ class Reporter:
             aggregator_configs (List[object], optional): A list of AggregatorConfig objects. Defaults to None.
             visualizer_configs (List[object], optional): A list of VisualizerConfig objects. Defaults to None.
         """
-        self.aggregators = [
-            config.class_name(**dict(output_dir=output_dir, **config.init_args)) for config in aggregator_configs
-        ] if aggregator_configs else []
-        self.visualizers = [
-            config.class_name(**dict(output_dir=output_dir, **config.init_args)) for config in visualizer_configs
-        ] if visualizer_configs else []
+        self.aggregators = (
+            [config.class_name(**dict(output_dir=output_dir, **config.init_args)) for config in aggregator_configs]
+            if aggregator_configs
+            else []
+        )
+        self.visualizers = (
+            [config.class_name(**dict(output_dir=output_dir, **config.init_args)) for config in visualizer_configs]
+            if visualizer_configs
+            else []
+        )
         self.output_dir = output_dir
 
     def generate_report(self, data):

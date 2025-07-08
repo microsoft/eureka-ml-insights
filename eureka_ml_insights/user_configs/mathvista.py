@@ -7,11 +7,18 @@ https://mathvista.github.io/.
 import os
 from typing import Any
 
-from eureka_ml_insights.core import (
-    EvalReporting,
-    Inference,
-    PromptProcessing
+from eureka_ml_insights.configs import (
+    AggregatorConfig,
+    DataSetConfig,
+    EvalReportingConfig,
+    ExperimentConfig,
+    InferenceConfig,
+    ModelConfig,
+    PipelineConfig,
+    PromptProcessingConfig,
 )
+from eureka_ml_insights.configs.model_configs import OAI_GPT4_1106_PREVIEW_CONFIG as PERSONAL_GPT4O
+from eureka_ml_insights.core import EvalReporting, Inference, PromptProcessing
 from eureka_ml_insights.data_utils import (
     ColumnRename,
     CopyColumn,
@@ -20,29 +27,15 @@ from eureka_ml_insights.data_utils import (
     ImputeNA,
     MapStringsTransform,
     MMDataLoader,
-    SamplerTransform,
     SequenceTransform,
 )
-
-from eureka_ml_insights.configs import(
-    AggregatorConfig,
-    DataSetConfig,
-    EvalReportingConfig,
-    InferenceConfig,
-    ModelConfig,
-    PipelineConfig,
-    PromptProcessingConfig,
-)
-
 from eureka_ml_insights.metrics.reports import AverageAggregator
-from eureka_ml_insights.configs import ExperimentConfig
-from eureka_ml_insights.configs.model_configs import OAI_GPT4_1106_PREVIEW_CONFIG as PERSONAL_GPT4O
 
 
 class MATHVISTA_PIPELINE(ExperimentConfig):
     """A pipeline configuration for the MathVista evaluation.
 
-    This class extends ExperimentConfig to define a pipeline that processes 
+    This class extends ExperimentConfig to define a pipeline that processes
     MathVista data, performs inference, and evaluates the results.
     """
 
@@ -74,7 +67,7 @@ class MATHVISTA_PIPELINE(ExperimentConfig):
                             # there is some info in the metadata field that serves as a nice aggregator
                             CopyColumn(column_name_src="metadata", column_name_dst="task"),
                             MapStringsTransform(columns="task", mapping=lambda d: d["task"]),
-                            #SamplerTransform(sample_count=32, random_seed=1234),
+                            # SamplerTransform(sample_count=32, random_seed=1234),
                             ImputeNA(columns=["choices", "precision", "unit"], value=""),
                         ]
                     ),
@@ -121,7 +114,10 @@ class MATHVISTA_PIPELINE(ExperimentConfig):
             model_config=PERSONAL_GPT4O,
             data_loader_config=DataSetConfig(
                 MMDataLoader,
-                {"path": os.path.join(self.eval_data_pre_processing.output_dir, "transformed_data.jsonl"), "load_images":False},
+                {
+                    "path": os.path.join(self.eval_data_pre_processing.output_dir, "transformed_data.jsonl"),
+                    "load_images": False,
+                },
             ),
             output_dir=os.path.join(self.log_dir, "eval_inference_result"),
         )
@@ -149,7 +145,10 @@ class MATHVISTA_PIPELINE(ExperimentConfig):
             model_config=PERSONAL_GPT4O,
             data_loader_config=DataSetConfig(
                 MMDataLoader,
-                {"path": os.path.join(self.eval_data_pre_processing_two.output_dir, "transformed_data.jsonl"), "load_images":False},
+                {
+                    "path": os.path.join(self.eval_data_pre_processing_two.output_dir, "transformed_data.jsonl"),
+                    "load_images": False,
+                },
             ),
             output_dir=os.path.join(self.log_dir, "eval_inference_result_two"),
         )

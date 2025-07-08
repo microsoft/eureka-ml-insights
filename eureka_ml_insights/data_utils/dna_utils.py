@@ -36,9 +36,9 @@ class DNAParseLabel(DFTransformBase):
         """
         if self.use_updated_metric:
             df[self.model_action_label_column] = df[self.model_output_column].apply(parse_output_label_updated)
-            df[self.model_harmless_label_column] = (
-                df[self.model_action_label_column].isin([0, 1, 2, 3, 4, 5])
-            ).astype(int)
+            df[self.model_harmless_label_column] = (df[self.model_action_label_column].isin([0, 1, 2, 3, 4, 5])).astype(
+                int
+            )
         else:
             df[self.model_action_label_column] = df[self.model_output_column].apply(parse_output_label)
             df[self.model_harmless_label_column] = (df[self.model_action_label_column] != 6).astype(int)

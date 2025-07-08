@@ -18,7 +18,7 @@ from dataclasses import dataclass
 import anthropic
 import requests
 import tiktoken
-from azure.identity import DefaultAzureCredential, get_bearer_token_provider, AzureCliCredential
+from azure.identity import AzureCliCredential, get_bearer_token_provider
 
 from eureka_ml_insights.secret_management import get_secret
 
@@ -679,9 +679,7 @@ class MistralServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointModel):
         if previous_messages:
             messages.extend(previous_messages)
         if query_images:
-            raise NotImplementedError(
-                "Images are not supported for MistralServerlessAzureRestEndpointModel endpoints."
-            )
+            raise NotImplementedError("Images are not supported for MistralServerlessAzureRestEndpointModel endpoints.")
         messages.append({"role": "user", "content": text_prompt})
         data = {
             "messages": messages,
@@ -760,7 +758,6 @@ class DeepseekR1ServerlessAzureRestEndpointModel(ServerlessAzureRestEndpointMode
         }
         body = str.encode(json.dumps(data))
         return urllib.request.Request(self.url, body, self.headers)
-    
 
 
 @dataclass
@@ -861,8 +858,7 @@ class OpenAICommonRequestResponseMixIn:
 
 
 class AzureOpenAIClientMixIn:
-    """Provide Azure OpenAI-specific client methods and error handling.
-    """
+    """Provide Azure OpenAI-specific client methods and error handling."""
 
     def get_client(self):
         """Retrieve the Azure OpenAI client.
@@ -903,8 +899,7 @@ class AzureOpenAIClientMixIn:
 
 
 class DirectOpenAIClientMixIn(KeyBasedAuthMixIn):
-    """Provide client retrieval and error handling for direct OpenAI usage.
-    """
+    """Provide client retrieval and error handling for direct OpenAI usage."""
 
     def get_client(self):
         """Retrieve the direct OpenAI client.
@@ -1006,8 +1001,7 @@ class DirectOpenAIModel(OpenAICommonRequestResponseMixIn, DirectOpenAIClientMixI
 
 
 class OpenAIOModelsRequestResponseMixIn:
-    """Define request creation and response handling for OpenAI O1 models.
-    """
+    """Define request creation and response handling for OpenAI O1 models."""
 
     def create_request(self, text_prompt, query_images=None, system_message=None, previous_messages=None):
         """Create a request dictionary for use with OpenAI O1 chat models.
@@ -1220,8 +1214,10 @@ class GeminiModel(EndpointModel, KeyBasedAuthMixIn):
         """
         super().__post_init__()
         if self.chat_mode:
-            logging.error("Chat mode is not implemented yet for Gemini models. Set chat_mode=False in your model config.")
-        
+            logging.error(
+                "Chat mode is not implemented yet for Gemini models. Set chat_mode=False in your model config."
+            )
+
         import google.generativeai as genai
         from google.generativeai.types import HarmBlockThreshold, HarmCategory
 
@@ -1368,7 +1364,7 @@ class TogetherModel(OpenAICommonRequestResponseMixIn, KeyBasedAuthMixIn, Endpoin
         chat_mode (bool): Whether the model operates in chat mode (from Model).
         system_message (str): A system message that can be used by the model (from Model).
         num_retries (int): The number of attempts to retry the request (from EndpointModel).
-        
+
     """
 
     timeout: int = 600
@@ -1428,6 +1424,7 @@ class TogetherModel(OpenAICommonRequestResponseMixIn, KeyBasedAuthMixIn, Endpoin
             bool: Always returns False, indicating the request can be retried.
         """
         return False
+
 
 @dataclass
 class HuggingFaceModel(Model):
@@ -1931,8 +1928,9 @@ class LLaVAModel(LLaVAHuggingFaceModel):
                 model_output (str): The generated text response.
                 response_time (float): The time taken for generation.
         """
-        import torch
         import time
+
+        import torch
         from llava.constants import IMAGE_TOKEN_INDEX
         from llava.mm_utils import process_images, tokenizer_image_token
 
@@ -1968,6 +1966,7 @@ class LLaVAModel(LLaVAHuggingFaceModel):
             "model_output": model_output,
             "response_time": response_time,
         }
+
 
 @dataclass
 class VLLMModel(Model):

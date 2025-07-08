@@ -53,11 +53,11 @@ class BA_Calendar_ExtractAnswer(DFTransformBase):
 
         if response is None:
             return ""
-        
+
         response = response.replace("**", "").replace("\n", "")
 
         match = re.findall(r"Final Answer:\s*(\w+ \d{2}:\d{2}-\d{2}:\d{2})", response)
-        
+
         if match:
             answer = match[len(match) - 1]
         elif "No common time slot available".lower() in response.lower():

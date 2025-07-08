@@ -1,7 +1,8 @@
 """This module provides classes and functions for JSON encoding of numpy data types."""
 
-import json
 import base64
+import json
+
 import numpy as np
 
 

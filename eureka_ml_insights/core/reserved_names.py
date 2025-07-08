@@ -8,5 +8,13 @@ in the data.
 INFERENCE_RESERVED_NAMES = ["model_output", "is_valid", "response_time", "n_output_tokens"]
 """list of str: Reserved column names used for inference outputs and status."""
 
-PROMPT_PROC_RESERVED_NAMES = ["prompt_hash", "prompt", "uid", "data_point_id", "data_repeat_id", "__hf_task", "__hf_split"]
+PROMPT_PROC_RESERVED_NAMES = [
+    "prompt_hash",
+    "prompt",
+    "uid",
+    "data_point_id",
+    "data_repeat_id",
+    "__hf_task",
+    "__hf_split",
+]
 """list of str: Reserved column names used for prompt processing."""

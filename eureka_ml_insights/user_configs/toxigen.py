@@ -11,6 +11,20 @@ processing, inference, and evaluation/reporting components.
 
 import os
 
+from eureka_ml_insights.configs import (
+    AggregatorConfig,
+    DataProcessingConfig,
+    DataSetConfig,
+    EvalReportingConfig,
+    ExperimentConfig,
+    InferenceConfig,
+    MetricConfig,
+    PipelineConfig,
+    PromptProcessingConfig,
+)
+from eureka_ml_insights.configs.model_configs import (
+    OAI_GPT4_1106_PREVIEW_CONFIG,
+)
 from eureka_ml_insights.core import (
     DataProcessing,
     EvalReporting,
@@ -35,19 +49,6 @@ from eureka_ml_insights.metrics import (
     CountAggregator,
     ExactMatch,
 )
-
-from eureka_ml_insights.configs import(
-    AggregatorConfig,
-    DataProcessingConfig,
-    DataSetConfig,
-    EvalReportingConfig,
-    InferenceConfig,
-    MetricConfig,
-    PipelineConfig,
-    PromptProcessingConfig,
-)
-from eureka_ml_insights.configs import ExperimentConfig
-from eureka_ml_insights.configs.model_configs import OAI_GPT4_1106_PREVIEW_CONFIG
 
 """Specifies the configuration for running the Toxigen discriminative benchmark.
 
