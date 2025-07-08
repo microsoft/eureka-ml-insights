@@ -1,0 +1,17 @@
+We asked a large language model the following question:
+
+BEGIN INITIAL QUESTION
+
+Question: {{initial_prompt}}
+
+END INITIAL QUESTION
+
+The model gave the following answer:
+
+BEGIN RAW MODEL ANSWER
+
+Raw Model answer: {{model_output_raw}}
+
+END RAW MODEL ANSWER
+
+Please extract the final answer from the raw model answer according to the specified format. Do not mention any other details; only extract the letter of the option corresponding to the final answer. If you are not able to find a final answer, output None.

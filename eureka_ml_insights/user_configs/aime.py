@@ -33,7 +33,7 @@ from eureka_ml_insights.data_utils import (
     SequenceTransform,
 )
 from eureka_ml_insights.data_utils.aime_utils import AIMEExtractAnswer
-from eureka_ml_insights.data_utils.data import DataLoader
+from eureka_ml_insights.data_utils.data import MMDataLoader
 from eureka_ml_insights.metrics.aime_metrics import NumericMatch
 from eureka_ml_insights.metrics.reports import (
     BiLevelAggregator,
@@ -86,8 +86,10 @@ class AIME_PIPELINE(ExperimentConfig):
             component_type=Inference,
             model_config=model_config,
             data_loader_config=DataSetConfig(
-                DataLoader,
-                {"path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl")},
+                MMDataLoader,
+                {
+                    "path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl"),
+                },    
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,

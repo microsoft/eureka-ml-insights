@@ -149,7 +149,7 @@ class LLM_EXTRACTION_SUBPIPELINE_MIXIN:
                     # consolidate new {extracted_answer_col} to replace the original {extracted_answer_col} whenever the latter is empty
                     # the initial if statement checks whether there has been a join beforehand
                     "transform": RunPythonTransform(
-                        f"df['{extracted_answer_col}'] = df.apply(lambda row: row['{extracted_answer_col}'] if '{extracted_answer_col}_x' not in row else row['{extracted_answer_col}_y'] if row['{extracted_answer_col}_x'] == '' else row['{extracted_answer_col}_x'], axis=1)"
+                        f"df['{extracted_answer_col}'] = df.apply(lambda row: row['{extracted_answer_col}'] if '{extracted_answer_col}_x' not in row else row['{extracted_answer_col}_y'] if row['{extracted_answer_col}_x'] == '{not_extracted_answer_value}' else row['{extracted_answer_col}_x'], axis=1)"
                     ),
                 },
             ),
