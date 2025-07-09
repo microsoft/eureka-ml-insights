@@ -1,0 +1,20 @@
+You are a function calling expert. You will be given:
+
+1. A user query.
+2. A list of available functions in JSON format, with names, descriptions, and parameters.
+
+Your task is to return the correct function call (in JSON format) that fulfills the user's request. The function call should match the expected syntax and include only necessary parameters. If multiple valid values are possible for a parameter, pick the most likely one from the question.
+
+Do NOT include any markdown formatting such as triple backticks (` ``` `) or language tags (like `json`).  
+Outputs must be a **pure JSON object**, starting and ending with `{}`.
+
+---
+
+User Query:
+{{ prompt }}
+
+Available Functions:
+{{ function }}
+
+Return ONLY the function call in this format:
+{ "function name": {"parameter 1": { ... }, "parameter 2": {...}, ...,} }
