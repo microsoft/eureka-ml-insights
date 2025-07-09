@@ -1,52 +1,54 @@
+"""This module provides the NPHardSATMetric class for evaluating solutions to the SAT problem.
+
+The NPHardSATMetric class inherits from Metric and determines whether a model-predicted
+assignment string is one of the optimal solutions, or whether both the prediction and 
+ground truth indicate the problem is unsatisfiable.
+"""
+
 from .metrics_base import Metric
 
 
 class NPHardSATMetric(Metric):
-    """
-    A metric class for evaluating solutions to the SAT.
-    A prediction is considered correct if it is a valid SAT assignment and matches one of the optimal solutions.
+    """NPHardSATMetric class for evaluating solutions to SAT problems.
+
+    A prediction is considered correct if it is a valid SAT assignment that
+    matches one of the optimal solutions, or if both the model output and ground
+    truth indicate unsatisfiable.
     """
 
     def __init__(self):
+        """Initializes the NPHardSATMetric class."""
         super().__init__()
 
     def is_assignment_optimal(self, optimal_assignment_list, assignment_string):
-        """
-        Decide whether the model-predicted assignment string is accepted as a correct
-        SAT solution.
+        """Determines whether a model-predicted assignment string is accepted as a correct SAT solution.
 
-        1. **Input formats**
-        • `optimal_assignment_list` – `List[str]`
-            A list of canonical optimal assignments, each expressed as a
-            comma-separated string of 0/1 literals, following the variable
-            order specified in the prompt instructions, e.g.
-            `"1,0,1,1"`.
-            – An **empty list (`[]`) represents “unsatisfiable.”**
-        • `assignment_string` – `str`
-            The model’s prediction in the *same* 0/1 comma-separated format.
-            – An empty string (`""`) means the model declares “unsatisfiable.”
+        Args:
+            optimal_assignment_list (List[str]): A list of canonical optimal assignments,
+                each expressed as a comma-separated string of 0/1 literals, following the
+                variable order specified in the prompt instructions (e.g. "1,0,1,1"). An
+                empty list ([]) represents “unsatisfiable.”
+            assignment_string (str): The model's prediction in the same 0/1 comma-separated
+                format. An empty string ("") means the model declares “unsatisfiable.”
 
-        2. **Normalisation performed**
-        The function removes spaces and surrounding parentheses from every entry
-        in `optimal_assignment_list`, then rejoins tokens with single commas,
-        e.g. `"(1, 0 ,1)" → "1,0,1"`.
+        Normalization:
+            This function removes spaces and surrounding parentheses from every entry in
+            optimal_assignment_list, then rejoins tokens with single commas.
+            For example, "(1, 0 ,1)" becomes "1,0,1".
 
-        3. **Acceptance criteria**
-        • Return **`True`** if
-            a. *Both* sides claim unsatisfiable
-                (`assignment_string == ""` **and** `optimal_assignment_list == []`), **or**
-            b. The canonical `assignment_string` exactly matches (string equality)
-                **one** element of the normalised `optimal_assignment_list`.
-        • Otherwise return **`False`**.
+        Acceptance Criteria:
+            1. Returns True if both sides claim unsatisfiable
+               (assignment_string == "" and optimal_assignment_list == []).
+            2. Returns True if the canonical assignment_string exactly matches one element
+               of the normalized optimal_assignment_list.
+            Otherwise, returns False.
 
-        4. **Order sensitivity**
-        Because matching is string-exact, **variable order must match** between
-        prediction and ground truth.
+        Order Sensitivity:
+            Because matching is string-exact, variable order must match between
+            prediction and ground truth.
 
-        Returns
-        -------
-        bool
-            `True` if the predicted assignment is accepted as correct, else `False`.
+        Returns:
+            bool: True if the predicted assignment is accepted as correct, otherwise False.
         """
         # If both the model output and the ground truth say the solution is unsatisfiable,
         # (assignment_string: "", ground truth: empty list), accept immediately.
@@ -61,8 +63,20 @@ class NPHardSATMetric(Metric):
         return assignment_string in optimal_assignment_list
 
     def __evaluate__(self, x):
-        """
-        Evaluates whether the model's output is a correct SAT assignment.
+        """Evaluates whether the model's output is a correct SAT assignment.
+
+        Args:
+            x (dict): A dictionary containing the model's prediction and ground truth
+                information. It should include:
+                - "is_valid" (bool): Whether the model's output is valid.
+                - "solution" (List[str]): The list of optimal solutions.
+                - "extracted_answer" (str): The model's predicted assignment string.
+
+        Returns:
+            str:
+                - "none" if the prediction is invalid.
+                - "incorrect" if the prediction does not match an optimal solution.
+                - "correct" if the prediction matches an optimal solution.
         """
         is_valid_curr = x["is_valid"]
 

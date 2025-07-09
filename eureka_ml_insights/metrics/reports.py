@@ -11,18 +11,22 @@ from eureka_ml_insights.data_utils import JsonReader
 
 
 class Aggregator:
-    """This class aggregates data and writes the results."""
+    """Aggregates data and writes the results."""
 
     def __init__(self, column_names, output_dir, group_by=None, ignore_non_numeric=False, filename_base=None, **kwargs):
         """
-        args:
-            column_names: list of column names to aggregate
-            output_dir: str. directory to save the report
-            group_by: str. or list of str. column(s) to group by before aggregating
-            ignore_non_numeric: bool. if True ignore non-numeric values for average aggregator
-            filename_base: str. optional base string to be used in the file name for the report. If not None, the report filename will concatenate the class name, datetime, and filename_base.
-        """
+        Initializes an Aggregator.
 
+        Args:
+            column_names (List[str]): A list of column names to aggregate.
+            output_dir (str): The directory to save the report.
+            group_by (Union[str, List[str]], optional): The column(s) to group by before aggregating. Defaults to None.
+            ignore_non_numeric (bool, optional): If True, ignores non-numeric values for the average aggregator.
+                Defaults to False.
+            filename_base (str, optional): An optional base string to be used in the file name for the report. If not
+                None, the report filename will concatenate the class name, datetime, and filename_base. Defaults to None.
+            **kwargs: Additional keyword arguments.
+        """
         self.column_names = column_names
         self.group_by = group_by
         self.output_dir = output_dir
@@ -31,12 +35,16 @@ class Aggregator:
         self.filename_base = filename_base
 
     def aggregate(self, data):
+        """
+        Aggregates the provided data.
+
+        Args:
+            data (pd.DataFrame): The input data to aggregate.
+        """
         if self.ignore_non_numeric:
             data = data[data["is_valid"]].copy()
-        # determine if a groupby is needed, and call the appropriate aggregation function
         self._validate_data(data)
         if self.group_by:
-            # if group_by is a list, create a new column that is concatenation of the str values
             if isinstance(self.group_by, list):
                 group_name = "_".join(self.group_by)
                 data[group_name] = data[self.group_by].astype(str).agg("_".join, axis=1)
@@ -46,12 +54,14 @@ class Aggregator:
             self._aggregate(data)
 
     def __str__(self):
+        """
+        Returns a string representation of the aggregator, used for naming output files.
+
+        Returns:
+            str: The string representation, including date/time and optionally column/group info.
+        """
         str_rep = self.__class__.__name__.lower()
-        # get time of day string down to miliseconds for unique name in case several of
-        # the same aggregator are used in the same report
         str_rep += "_" + datetime.datetime.now().strftime("%H%M%S%f")
-        # if filename_base is not provided during report creation, the report filename will concatenate the names of metric colums, as well as the "_grouped_by_" indicator if applicable.
-        # if filename_base is provided during report creation, the report filename will concatenate the class name, datetime, and filename_base.
         if self.filename_base is None:
             if self.column_names:
                 str_rep = str_rep + "_on_" + "_".join(self.column_names)
@@ -62,6 +72,12 @@ class Aggregator:
         return str_rep
 
     def write_results(self):
+        """
+        Writes the aggregated results to a JSON file.
+
+        Raises:
+            ValueError: If the data has not been aggregated yet.
+        """
         if self.aggregated_result is None:
             raise ValueError("The data has not been aggregated yet.")
 
@@ -70,7 +86,16 @@ class Aggregator:
             json.dump(self.aggregated_result, f)
 
     def _validate_data(self, data, **kwargs):
-        """Ensure that the input arguments are in the correct format."""
+        """
+        Ensures that the input arguments are in the correct format.
+
+        Args:
+            data (pd.DataFrame): The input data to validate.
+            **kwargs: Additional keyword arguments.
+
+        Raises:
+            ValueError: If column_names is not a list of strings, or if group_by is not a string or list of strings.
+        """
         if not isinstance(self.column_names, list) or not all(isinstance(col, str) for col in self.column_names):
             raise ValueError("column_names must be a list of strings.")
         if self.group_by:
@@ -79,55 +104,108 @@ class Aggregator:
                     raise ValueError("group_by must be a string or a list of strings")
 
     def _aggregate(self, data):
-        """Aggregate the data without grouping."""
+        """
+        Aggregates the data without grouping.
+
+        Args:
+            data (pd.DataFrame): The input data to aggregate.
+
+        Raises:
+            NotImplementedError: Must be implemented by subclasses.
+        """
         raise NotImplementedError
 
     def _aggregate_grouped(self, data):
-        """Aggregate the data with grouping."""
+        """
+        Aggregates the data with grouping.
+
+        Args:
+            data (pd.DataFrame): The input data to aggregate.
+
+        Raises:
+            NotImplementedError: Must be implemented by subclasses.
+        """
         raise NotImplementedError
 
 
 class NumericalAggregator(Aggregator):
-    """This class is a base class for aggregators that require the data to be numeric."""
+    """Base class for aggregators that require the data to be numeric."""
 
     def _validate_data(self, data):
+        """
+        Ensures that the data is numeric, in addition to the validations in the superclass.
+
+        Args:
+            data (pd.DataFrame): The input data to validate.
+
+        Raises:
+            ValueError: If the data fails any numeric check or if column_names/group_by are not valid.
+        """
         super()._validate_data(data)
-        """ Ensure that the data is numeric."""
         for col in self.column_names:
             data[col] = pd.to_numeric(data[col], errors="raise")
 
 
 class SumAggregator(NumericalAggregator):
-    """
-    This class aggregates data by summing the values."""
+    """Aggregates data by summing the values."""
 
     def _aggregate(self, data):
+        """
+        Aggregates data without grouping by computing sums for each specified column.
+
+        Args:
+            data (pd.DataFrame): The input data to aggregate.
+        """
         sums = {col: data[col].sum() for col in self.column_names}
         self.aggregated_result = sums
 
     def _aggregate_grouped(self, data):
+        """
+        Aggregates data with grouping by computing sums for each specified column.
+
+        Args:
+            data (pd.DataFrame): The input data to aggregate.
+        """
         gb = data.groupby(self.group_by)
         sums = {col: gb[col].sum().to_dict() for col in self.column_names}
         self.aggregated_result = sums
 
 
 class MaxAggregator(NumericalAggregator):
-    """
-    This class aggregates data by taking the max of the values."""
+    """Aggregates data by taking the maximum of the values."""
 
     def _aggregate(self, data):
+        """
+        Aggregates data without grouping by computing the maximum value for each specified column.
+
+        Args:
+            data (pd.DataFrame): The input data to aggregate.
+        """
         maxes = {col: data[col].max() for col in self.column_names}
         self.aggregated_result = maxes
 
     def _aggregate_grouped(self, data):
+        """
+        Aggregates data with grouping by computing the maximum value for each specified column.
+
+        Args:
+            data (pd.DataFrame): The input data to aggregate.
+        """
         gb = data.groupby(self.group_by)
         maxes = {col: gb[col].max().to_dict() for col in self.column_names}
         self.aggregated_result = maxes
 
 
 class AverageAggregator(NumericalAggregator):
+    """Aggregates data by computing the average of numeric columns."""
 
     def _aggregate(self, data):
+        """
+        Aggregates data without grouping by computing the mean (rounded to 3 decimals) for each specified column.
+
+        Args:
+            data (pd.DataFrame): The input data to aggregate.
+        """
         if len(data) == 0:
             averages = {col: 0 for col in self.column_names}
         else:
@@ -135,6 +213,12 @@ class AverageAggregator(NumericalAggregator):
         self.aggregated_result = averages
 
     def _aggregate_grouped(self, data):
+        """
+        Aggregates data with grouping by computing the mean (rounded to 3 decimals) for each specified column.
+
+        Args:
+            data (pd.DataFrame): The input data to aggregate.
+        """
         if len(data) == 0:
             averages = {col: 0 for col in self.column_names}
         else:
@@ -144,8 +228,15 @@ class AverageAggregator(NumericalAggregator):
 
 
 class AverageSTDDevAggregator(NumericalAggregator):
+    """Aggregates data by computing both the average and standard deviation for numeric columns."""
 
     def _aggregate(self, data):
+        """
+        Aggregates data without grouping by computing the mean and standard deviation of specified columns.
+
+        Args:
+            data (pd.DataFrame): The input data to aggregate.
+        """
         averages = {col: round(data[col].mean(), 3) for col in self.column_names}
         std_devs = {col: round(data[col].std(), 3) for col in self.column_names}
         self.aggregated_result = {
@@ -153,6 +244,12 @@ class AverageSTDDevAggregator(NumericalAggregator):
         }
 
     def _aggregate_grouped(self, data):
+        """
+        Aggregates data with grouping by computing the mean and standard deviation of specified columns.
+
+        Args:
+            data (pd.DataFrame): The input data to aggregate.
+        """
         gb = data.groupby(self.group_by)
         averages = {col: gb[col].mean().round(3).to_dict() for col in self.column_names}
         std_devs = {col: gb[col].std().round(3).to_dict() for col in self.column_names}
@@ -163,31 +260,52 @@ class AverageSTDDevAggregator(NumericalAggregator):
 
 
 class CountAggregator(Aggregator):
-    """Counts the number of occurences of values in the columns and optionally normalize the counts."""
+    """Counts the occurrences of values in columns and can optionally normalize the counts."""
 
     def __init__(self, column_names, output_dir, group_by=None, normalize=False, **kwargs):
         """
-        args:
-            column_names: list of column names to aggregate
-            output_dir: str. directory to save the report
-            group_by: str. or list of str. column(s) to group by before aggregating
-            normalize: bool. If True, normalize the counts to be between 0 and 1.
+        Initializes a CountAggregator.
+
+        Args:
+            column_names (List[str]): A list of column names to count.
+            output_dir (str): The directory to save the report.
+            group_by (Union[str, List[str]], optional): The column(s) to group by before aggregating. Defaults to None.
+            normalize (bool, optional): If True, normalizes the counts to be between 0 and 1. Defaults to False.
+            **kwargs: Additional keyword arguments.
         """
         super().__init__(column_names, output_dir, group_by, **kwargs)
         self.normalize = normalize
 
     def __str__(self):
+        """
+        Returns a string representation of the aggregator, used for naming output files.
+        If normalization is used, '_normalized' is appended to the name.
+
+        Returns:
+            str: The string representation, including date/time and optionally normalization info.
+        """
         str_rep = super().__str__()
         if self.normalize:
             str_rep += "_normalized"
         return str_rep
 
     def _aggregate(self, data):
+        """
+        Aggregates data without grouping by counting occurrences of values in each specified column.
+
+        Args:
+            data (pd.DataFrame): The input data to aggregate.
+        """
         counts = {col: data[col].value_counts(normalize=self.normalize).round(3).to_dict() for col in self.column_names}
         self.aggregated_result = counts
 
     def _aggregate_grouped(self, data):
-        # for each column, create a dictionary that contains the counts for each group
+        """
+        Aggregates data with grouping by counting occurrences of values in each specified column.
+
+        Args:
+            data (pd.DataFrame): The input data to aggregate.
+        """
         gb = data.groupby(self.group_by)
         col_counts = {
             col: gb[col].value_counts(normalize=self.normalize).unstack(level=0).round(3).to_dict()
@@ -198,44 +316,57 @@ class CountAggregator(Aggregator):
 
 class BiLevelAggregator(AverageAggregator):
     """
-    This class aggregates the data in two levels. It first groups the data by the first_groupby column and
-    aggregates the data by applying the agg_fn on the column_names. It It then groups the result by the
-    second_groupby column and aggregates again by taking the mean and standard deviation of
-    the column_names.
+    Aggregates the data in two levels. First, it groups the data by the first_groupby column(s) and applies an
+    aggregation function (agg_fn) on the specified columns. Then, if a second_groupby is specified, it groups
+    the result again and computes the mean and standard deviation.
     """
 
     def __init__(self, column_names, first_groupby, output_dir, second_groupby=None, agg_fn="mean", **kwargs):
+        """
+        Initializes a BiLevelAggregator.
+
+        Args:
+            column_names (List[str]): A list of column names to aggregate.
+            first_groupby (Union[str, List[str]]): The column(s) for the first level of grouping.
+            output_dir (str): The directory to save the report.
+            second_groupby (Union[str, List[str]], optional): The column(s) for the second level of grouping.
+                Defaults to None.
+            agg_fn (str, optional): The aggregation function to apply for the first grouping. Defaults to "mean".
+            **kwargs: Additional keyword arguments.
+        """
         super().__init__(column_names, output_dir, group_by=None, **kwargs)
         self.first_groupby = first_groupby
         self.second_groupby = second_groupby
         self.agg_fn = agg_fn
 
     def _aggregate(self, data):
-        # take the self.agg_fn aggregation of the column for each group in the first groupby,
-        # aggregate the rest of the columns by 'first'
+        """
+        Performs a two-level aggregation. First, it groups by the first_groupby column(s) and applies agg_fn to
+        the specified columns. Then, if second_groupby is provided, groups the intermediate result again and
+        computes mean and standard deviation. If second_groupby is not provided, only mean and standard deviation
+        of the first aggregation are computed.
+
+        Args:
+            data (pd.DataFrame): The input data to aggregate.
+        """
         gb = data.groupby(self.first_groupby)
-        agg_map = {col: self.agg_fn for col in self.column_names}  # aggregate the column_names by self.agg_fn
+        agg_map = {col: self.agg_fn for col in self.column_names}
         agg_map.update(
             {
                 col: "first"
                 for col in data.columns
-                if col not in self.column_names  # aggregate the un-interesting columns by 'first'
-                and col != self.first_groupby  # in case first_groupby is a single column
-                and col not in self.first_groupby
-            }  # in case there are multiple columns in the first_groupby
+                if col not in self.column_names and col != self.first_groupby and col not in self.first_groupby
+            }
         )
 
         first_result = gb.aggregate(agg_map).reset_index()
         if self.second_groupby:
-            # take the average and std of the first level aggregation for each group in the second groupby
             gb = first_result.groupby(self.second_groupby)
             agg_map = {col: ["mean", "std"] for col in self.column_names}
-            # flatten the multi-level column index
             second_result = gb.agg(agg_map).reset_index()
             second_result.columns = [f"{col}_{agg}" if agg else col for col, agg in second_result.columns]
             self.aggregated_result = second_result.to_dict(orient="records")
         else:
-            # take the average and std of the first level aggregation
             self.aggregated_result = []
             for col in self.column_names:
                 col_mean = first_result[col].mean()
@@ -245,13 +376,25 @@ class BiLevelAggregator(AverageAggregator):
 
 class BiLevelCountAggregator(Aggregator):
     """
-    This class aggregates the data in two levels. It first groups the data by the first_groupby column and
-    aggregates the data by applying value_counts to each of the column_names. It then groups the result by the
-    second_groupby column and aggregates it again by taking the mean and standard deviation of the counts over
-    the groups.
+    Aggregates the data in two levels. First, it groups the data by the first_groupby column(s) and
+    applies a value_counts aggregation to each of the specified columns. Then, if a second_groupby is given,
+    it groups the intermediate result again by the second_groupby column(s) and computes the mean and standard
+    deviation of the counts.
     """
 
     def __init__(self, column_names, first_groupby, output_dir, normalize=False, second_groupby=None, **kwargs):
+        """
+        Initializes a BiLevelCountAggregator.
+
+        Args:
+            column_names (List[str]): A list of column names to aggregate.
+            first_groupby (Union[str, List[str]]): The column(s) for the first level of grouping.
+            output_dir (str): The directory to save the report.
+            normalize (bool, optional): If True, normalizes the counts to be between 0 and 1. Defaults to False.
+            second_groupby (Union[str, List[str]], optional): The column(s) for the second level of grouping.
+                Defaults to None.
+            **kwargs: Additional keyword arguments.
+        """
         super().__init__(column_names, output_dir, group_by=first_groupby, **kwargs)
         self.first_groupby = first_groupby
         self.second_groupby = second_groupby
@@ -259,23 +402,25 @@ class BiLevelCountAggregator(Aggregator):
         self.agg_fn = lambda x: x.value_counts(normalize=self.normalize).to_dict()
 
     def _aggregate_grouped(self, data):
-        # Count values in the columns for each group in the first groupby,
-        # aggregate the rest of the columns by 'first'
+        """
+        Performs the two-level aggregation: first by the first_groupby, then optionally by the second_groupby.
+        Aggregates using value_counts for each column.
+
+        Args:
+            data (pd.DataFrame): The input data to aggregate.
+        """
         gb = data.groupby(self.first_groupby)
-        agg_map = {col: self.agg_fn for col in self.column_names}  # aggregate the column_names by self.agg_fn
+        agg_map = {col: self.agg_fn for col in self.column_names}
         agg_map.update(
             {
                 col: "first"
                 for col in data.columns
-                if col not in self.column_names  # aggregate the un-interesting columns by 'first'
-                and col != self.first_groupby  # in case first_groupby is a single column
-                and col not in self.first_groupby
-            }  # in case there are multiple columns in the first_groupby
+                if col not in self.column_names and col != self.first_groupby and col not in self.first_groupby
+            }
         )
 
         first_result = gb.aggregate(agg_map).reset_index()
 
-        # take the average and std of the first level aggregation for each group in the second groupby
         def agg_counts_by_avg_std(x):
             counts = {}
             for row in x:
@@ -296,34 +441,57 @@ class BiLevelCountAggregator(Aggregator):
 
 
 class TwoColumnSumAverageAggregator(NumericalAggregator):
-    """This class that aggregates data from two columns by summing the values in each column and
-    then dividing the sum of the numerator column by the sum of the denominator column.
+    """
+    Aggregates data from two columns by summing the values in each column and then
+    dividing the sum of the numerator column by the sum of the denominator column.
     """
 
     def __init__(self, numerator_column_name, denominator_column_name, output_dir, group_by=None, **kwargs):
         """
-        args:
-            - numerator_column_name (str): The name of the column containing the numerator values.
-            - denominator_column_name (str): The name of the column containing the denominator values.
-            - output_dir (str): The directory where the aggregated result will be stored.
-            - groupby (str, optional): The column name to group the data by. Defaults to None.
+        Initializes a TwoColumnSumAverageAggregator.
+
+        Args:
+            numerator_column_name (str): The name of the column containing the numerator values.
+            denominator_column_name (str): The name of the column containing the denominator values.
+            output_dir (str): The directory where the aggregated result will be stored.
+            group_by (Union[str, List[str]], optional): The column(s) to group the data by. Defaults to None.
+            **kwargs: Additional keyword arguments.
         """
         super().__init__([numerator_column_name, denominator_column_name], output_dir, group_by=group_by, **kwargs)
         self.numerator_column_name = numerator_column_name
         self.denominator_column_name = denominator_column_name
 
     def _aggregate(self, data):
+        """
+        Aggregates data without grouping by computing the sum of both columns and the
+        ratio of sum(numerator) to sum(denominator).
+
+        Args:
+            data (pd.DataFrame): The input data to aggregate.
+        """
         sums = {col: data[col].sum() for col in self.column_names}
         divided_result = sums[self.numerator_column_name] / sums[self.denominator_column_name]
         self.aggregated_result = {"ratio": divided_result}
 
     def _aggregate_grouped(self, data):
+        """
+        Aggregates data with grouping by computing the sum of both columns within each group
+        and the ratio of sum(numerator) to sum(denominator).
+
+        Args:
+            data (pd.DataFrame): The input data to aggregate.
+        """
         gb = data.groupby(self.group_by)
         divided_result = (gb[self.numerator_column_name].sum() / gb[self.denominator_column_name].sum()).to_dict()
         self.aggregated_result = {"ratio": divided_result}
 
 
 class ValueFilteredAggregator(Aggregator):
+    """
+    Aggregator that filters out a particular value from the specified columns before aggregating the data
+    using a provided aggregator class.
+    """
+
     def __init__(
         self,
         agg_class,
@@ -336,17 +504,20 @@ class ValueFilteredAggregator(Aggregator):
         **kwargs,
     ):
         """
-        Aggregator that filters out a particular value before aggregating the data.
-        args:
-            agg_class: Aggregator class to use for aggregation
-            value: value to filter out
-            column_names: column names to filter and aggregate
-            output_dir: str. directory to save the report
-            group_by: str. or list of str. column(s) to group by before aggregating
-            ignore_non_numeric: bool. if True ignore non-numeric values for average aggregator
-            filename_base: str. optional base string to be used in the file name for the report. If not None, the report filename will concatenate the class name, datetime, and filename_base.
-        """
+        Initializes a ValueFilteredAggregator.
 
+        Args:
+            agg_class (class): The aggregator class to use for aggregation.
+            value (Any): The value to filter out.
+            column_names (List[str]): The column names to filter and aggregate.
+            output_dir (str): The directory to save the report.
+            group_by (Union[str, List[str]], optional): The column(s) to group by before aggregating. Defaults to None.
+            ignore_non_numeric (bool, optional): If True, ignores non-numeric values for the average aggregator.
+                Defaults to False.
+            filename_base (str, optional): An optional base string to be used in the file name for the report. If not
+                None, the report filename will concatenate the class name, datetime, and filename_base. Defaults to None.
+            **kwargs: Additional keyword arguments.
+        """
         self.base_aggregator = agg_class(
             column_names, output_dir, group_by, ignore_non_numeric, filename_base, **kwargs
         )
@@ -359,9 +530,14 @@ class ValueFilteredAggregator(Aggregator):
         self.filename_base = filename_base
 
     def aggregate(self, data):
+        """
+        Filters out the specified value in each column before calling the base aggregator.
+
+        Args:
+            data (pd.DataFrame): The input data to aggregate.
+        """
         agg_results = {}
         for col in self.column_names:
-            # workaround to process one column at a time
             filtered_data = data[data[col] != self.value].copy()
             self.base_aggregator.column_names = [col]
             self.base_aggregator.aggregate(filtered_data)
@@ -370,14 +546,16 @@ class ValueFilteredAggregator(Aggregator):
 
 
 class CocoDetectionAggregator(Aggregator):
-    """This class uses the coco tools to calculated AP50 for the provided detections."""
+    """Uses the COCO tools to calculate AP50 for provided detections."""
 
     def __init__(self, column_names, output_dir, target_coco_json_reader: JsonReader):
         """
-        args:
-            column_names: Single column (pass as a list to conform with superclass), that indicates which column has the detection results
-            output_dir: str, directory to save the reports
-            target_coco_json_reader: JsonReader, reader to load the ground truth json for the detections (in coco json format)
+        Initializes a CocoDetectionAggregator.
+
+        Args:
+            column_names (List[str]): A single column name (in a list) containing detection results.
+            output_dir (str): The directory to save the reports.
+            target_coco_json_reader (JsonReader): A reader to load the ground-truth JSON for detections (in COCO format).
         """
         super().__init__(column_names, output_dir)
 
@@ -386,17 +564,19 @@ class CocoDetectionAggregator(Aggregator):
         self.coco.createIndex()
 
     def _aggregate(self, data):
+        """
+        Aggregates detections by computing the AP50 metric using the COCOeval library.
 
-        # pull the annotasions out of the data and form for the COCOeval library
+        Args:
+            data (pd.DataFrame): The input data containing detection annotations in the specified column.
+        """
         annotations = []
         for ann in data[self.column_names[0]].tolist():
             if ann != "none":
                 annotations += ast.literal_eval(ann)
 
-        # run the COCOeval library to get stats
         if annotations:
             cocovalPrediction = self.coco.loadRes(annotations)
-
             cocoEval = COCOeval(self.coco, cocovalPrediction, "bbox")
             cocoEval.evaluate()
             cocoEval.accumulate()
@@ -406,24 +586,36 @@ class CocoDetectionAggregator(Aggregator):
 
 
 class Reporter:
-    """This class applies various aggregations and visualizations to the data."""
+    """Applies various aggregations and visualizations to the data."""
 
     def __init__(self, output_dir, aggregator_configs=None, visualizer_configs=None):
         """
-        args:
-            output_dir: str. directory to save the reports
-            aggregator_configs: list of AggregatorConfig objects
-            visualizer_configs: list of VisualizerConfig objects
+        Initializes a Reporter.
+
+        Args:
+            output_dir (str): The directory to save the reports.
+            aggregator_configs (List[object], optional): A list of AggregatorConfig objects. Defaults to None.
+            visualizer_configs (List[object], optional): A list of VisualizerConfig objects. Defaults to None.
         """
-        self.aggregators = [
-            config.class_name(**dict(output_dir=output_dir, **config.init_args)) for config in aggregator_configs
-        ]
-        self.visualizers = [
-            config.class_name(**dict(output_dir=output_dir, **config.init_args)) for config in visualizer_configs
-        ]
+        self.aggregators = (
+            [config.class_name(**dict(output_dir=output_dir, **config.init_args)) for config in aggregator_configs]
+            if aggregator_configs
+            else []
+        )
+        self.visualizers = (
+            [config.class_name(**dict(output_dir=output_dir, **config.init_args)) for config in visualizer_configs]
+            if visualizer_configs
+            else []
+        )
         self.output_dir = output_dir
 
     def generate_report(self, data):
+        """
+        Generates a report by applying configured aggregators and visualizers to the data.
+
+        Args:
+            data (pd.DataFrame): The input data to generate a report for.
+        """
         for aggregator in self.aggregators:
             aggregator.aggregate(data)
             aggregator.write_results()

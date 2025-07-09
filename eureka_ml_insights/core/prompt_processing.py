@@ -1,3 +1,7 @@
+"""This module provides functionalities for prompt processing, including a function to compute an MD5 hash and
+a class that extends DataProcessing to handle prompt generation workflows.
+"""
+
 import logging
 import os
 from hashlib import md5
@@ -10,15 +14,30 @@ from .reserved_names import INFERENCE_RESERVED_NAMES
 
 
 def compute_hash(val: str) -> str:
-    """
-    Hashes the provided value using MD5.
+    """Compute the MD5 hash of a given string.
+
+    Args:
+        val (str): The value to be hashed.
+
+    Returns:
+        str: The MD5 hash of the given value.
     """
     return md5(val.encode("utf-8")).hexdigest()
 
 
 class PromptProcessing(DataProcessing):
+    """Handles the prompt generation workflow by extending DataProcessing."""
+
     @classmethod
     def from_config(cls, config):
+        """Create a PromptProcessing instance from a configuration object.
+
+        Args:
+            config: The configuration object.
+
+        Returns:
+            PromptProcessing: A new PromptProcessing instance.
+        """
         return cls(
             config.data_reader_config,
             config.output_dir,
@@ -35,14 +54,15 @@ class PromptProcessing(DataProcessing):
         prompt_template_path: Optional[str] = None,
         ignore_failure: bool = False,
     ) -> None:
-        """
-        args:
-            data_reader_config: DataReaderConfig
-            prompt_template_path: str path to the prompt template .jinja file.
-            output_dir: str directory to save the output files of this component.
-            output_data_columns: Optional[List[str]] list of columns (subset of input columns)
-                                      to keep in the transformed data output file.
-            ignore_failure: bool whether to ignore failure in prompt generation or not.
+        """Initialize the PromptProcessing object.
+
+        Args:
+            data_reader_config: DataReaderConfig object that specifies the data reading configuration.
+            output_dir (str): Directory to save the output files of this component.
+            output_data_columns (Optional[List[str]]): A list of columns (subset of input columns) to keep in
+                the transformed data output file.
+            prompt_template_path (Optional[str]): Path to the prompt template .jinja file.
+            ignore_failure (bool): Whether to ignore failure in prompt generation or not.
         """
         super().__init__(data_reader_config, output_dir, output_data_columns)
         self.ignore_failure = ignore_failure
@@ -53,6 +73,14 @@ class PromptProcessing(DataProcessing):
             self.prompt_data_processor = JinjaPromptTemplate(prompt_template_path)
 
     def run(self) -> None:
+        """Execute the prompt processing workflow.
+
+        Loads input data, optionally uses a Jinja template to create prompts, and writes
+        output data with generated prompts and their hashes to the output directory.
+
+        Raises:
+            Exception: If an error occurs during prompt creation and ignore_failure is False.
+        """
         # data reader loads data into a pandas dataframe and applies any transformations
         input_df = self.data_reader.load_dataset()
         logging.info(f"input has: {len(input_df)} rows, and the columns are: {input_df.columns}.")
