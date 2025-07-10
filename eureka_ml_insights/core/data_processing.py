@@ -95,6 +95,8 @@ class DataProcessing(Component):
         if self.output_data_columns is None:
             self.output_data_columns = df.columns
         self.output_data_columns = list(self.output_data_columns)
+        # if the data was multiplied, keep the columns that are needed to identify datapoint and replicates
+        # (just in case the user forgot to specify these columns in output_data_columns)
         cols_to_keep = set(INFERENCE_RESERVED_NAMES + PROMPT_PROC_RESERVED_NAMES)
         self.output_data_columns.extend([col for col in cols_to_keep if col in df.columns])
         self.output_data_columns = list(set(self.output_data_columns))
@@ -108,6 +110,7 @@ class DataProcessing(Component):
         """
         input_df = self.data_reader.load_dataset()
         logging.info(f"input has: {len(input_df)} rows, and the columns are: {input_df.columns}.")
+        # if input_df is not empty, select the desired columns
         if not input_df.empty:
             input_df = self.get_desired_columns(input_df)
         self.write_output(input_df)
