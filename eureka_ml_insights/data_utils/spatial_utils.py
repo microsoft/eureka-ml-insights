@@ -10,23 +10,9 @@ from .transform import DFTransformBase, MultiColumnTransform
 
 @dataclass
 class LowerCaseNoPunctuationConvertNumbers(MultiColumnTransform):
-    """A multi-column transform that converts text to lower case, removes punctuation, and replaces textual numbers with numeric digits.
-
-    Attributes:
-        columns (List[str]): The list of column names to transform.
-    """
-
     columns: List[str]
 
     def punctuation_case_number_replace(self, text):
-        """Replaces punctuation, lowers case, and converts textual numbers to digits.
-
-        Args:
-            text (str): The text to transform.
-
-        Returns:
-            str: The transformed text, or None if the input is None.
-        """
         if text:
             text = re.sub(r"[^\w\s\']", "", text).replace('"', "").replace("'", "").lower().strip()
             # replace words for numbers with numbers, a common occurance in LLM outputs
@@ -50,14 +36,6 @@ class LowerCaseNoPunctuationConvertNumbers(MultiColumnTransform):
         return text
 
     def _transform(self, text):
-        """Applies the punctuation_case_number_replace method to the given text or list of texts.
-
-        Args:
-            text (str or list): The input text or list of texts to transform.
-
-        Returns:
-            str or list: The transformed text or list of texts.
-        """
         if isinstance(text, list):
             return list(map(self.punctuation_case_number_replace, text))
         else:
@@ -65,16 +43,9 @@ class LowerCaseNoPunctuationConvertNumbers(MultiColumnTransform):
 
 
 def remove_redundancy(text):
-    """Removes redundancy from the text.
-
+    """
     The code is from: https://github.com/alvinmingwisc/spatial_reason_vlm/tree/main/eval,
     and included with minimal modifications.
-
-    Args:
-        text (str): The text to remove redundancy from.
-
-    Returns:
-        str: The text with redundancy removed.
     """
     text = text.replace("**", "")
     text = text.replace(".", "")
@@ -82,34 +53,35 @@ def remove_redundancy(text):
 
 
 def extract_before_is(input_string):
-    """Extracts the part of the string before the first occurrence of 'is'.
-
+    """
+    This function extracts the part of the string before the first occurrence of 'is'.
     The code is from: https://github.com/alvinmingwisc/spatial_reason_vlm/tree/main/eval,
     and included with minimal modifications.
 
-    Args:
-        input_string (str): The string to process.
-
-    Returns:
-        str: A new string containing the part before 'is'.
+    :param input_string: The string to process.
+    :return: A new string containing the part before 'is'.
     """
+    # Split the string at the first occurrence of 'is'
     parts = input_string.split(" is", 1)
+    # Return the first part
     return parts[0].strip()
 
 
 def extract_answer_from_text_grid(text, question_type):
-    """Extracts the answer from the text based on specific patterns, and as a fallback, extracts the first number if no patterns match.
-
+    """
+    Extracts the answer from the text based on specific patterns,
+    and as a fallback, extracts the first number if no patterns match.
     The code is from: https://github.com/alvinmingwisc/spatial_reason_vlm/tree/main/eval,
     and included with minimal modifications.
 
     Args:
-        text (str): The text containing the model's answer.
-        question_type (str): The text containing the question type.
+    - text (str): The text containing the model's answer.
+    - question_type (str): The text containing the question type.
 
     Returns:
-        str or None: The extracted answer, or None if no answer could be extracted.
+    - str or None: The extracted answer, or None if no answer could be extracted.
     """
+    # Mapping of textual numbers to their numeric equivalents
     number_mapping = {
         "zero": 0,
         "no": 0,
@@ -127,6 +99,7 @@ def extract_answer_from_text_grid(text, question_type):
     animals = ["giraffe", "cat", "dog", "elephant", "rabbit"]
     animal_pattern = rf"\b({'|'.join(animals)})\b"
 
+    # First rule: check for the pattern "A. x", "B. x", "C. x", or "D. x" where x is the answer
     if not text:
         return None
     match = re.search(r"\b[A-D]\.\s*(\w+)", text)
@@ -136,11 +109,16 @@ def extract_answer_from_text_grid(text, question_type):
     question_id = int(re.search("[0-9]", re.search("Q[0-9]", question_type).group()).group())
 
     if question_id >= 2:  # Assuming Q4 and Q5 require binary answers
+        # Check for animals
         match = re.search(animal_pattern, text, re.IGNORECASE)
         if match:
             return match.group(1)
         return None
     else:
+        # check answer with numbers
+        # Create a list to store all found numbers along with their positions
+
+        # specific for claude
         specific_phrases = [
             (r"\bthere are\s*(\d+)\s*blocks\b", 1),
             (r"\bthere appear to be\s*(\d+)\s*blocks\b", 1),
@@ -152,39 +130,47 @@ def extract_answer_from_text_grid(text, question_type):
         if match:
             return match.group(group_index)
 
+        # If no specific phrases found, proceed with other checks
         found_numbers = []
 
+        # Check for textual numbers and their positions
         for text_num, num in number_mapping.items():
             for match in re.finditer(rf"\b{text_num}\b", text, re.IGNORECASE):
                 found_numbers.append((match.start(), num))
 
-        text = re.sub(r"^\n\n\d+\.\s", "", text)
+        # Check for digit sequences and their positions, specifically ignoring list markers at the start
+        # Exclude numbers following "\n\n" and directly followed by ". "
+        text = re.sub(r"^\n\n\d+\.\s", "", text)  # Remove the leading list marker if it exists
 
         for match in re.finditer(r"\d+", text):
             found_numbers.append((match.start(), int(match.group(0))))
 
+        # Sort found numbers by their positions (smallest position first)
         if found_numbers:
             found_numbers.sort(key=lambda x: x[0])
+            # Return the number associated with the earliest position
             return str(found_numbers[0][1])
 
-    return None
+    return None  # Return None if no numbers are found
 
 
 def extract_answer_from_text_map_and_maze(model_output_raw, options, is_valid, match_first=False):
-    """Extracts the answer from the text based on known model output patterns.
-
-    The code is from: https://github.com/alvinmingwisc/spatial_reason_vlm/tree/main/eval,
-    and included with minimal modifications.
+    """
+    Extracts the answer from the text based on known model output patterns.
+    Searches for both a letter and whole word answer and returns both as they are not
+    always consistent.
 
     Args:
-        model_output_raw (str): The text containing the model's answer.
-        options (str): The list of options.
-        is_valid (bool): Whether the input is valid.
-        match_first (bool, optional): If True, the first match is used for answer extraction when multiple matches are found. Defaults to False.
+    - model_output_raw (str): The text containing the model's answer.
+    - options (str): The list of options.
+    - match_first (bool): If True, the first match is used for answer extraction when multiple matches are found.
 
     Returns:
-        str or None: The extracted answers, or an empty string if no answer could be extracted.
+    - str or None: The extracted answers, or empty strings if no answer could be extracted.
     """
+
+    # replace common subsitutions in model outputs
+
     model_output_parsed_letter = ""
     model_output_parsed = ""
 
@@ -196,12 +182,12 @@ def extract_answer_from_text_map_and_maze(model_output_raw, options, is_valid, m
     else:
         match_index = -1
 
-    model_output_raw = re.sub(r"\bno objects\b", "0 objects", model_output_raw, re.IGNORECASE)
-    model_output_raw = re.sub(r"\bnot\b", "no", model_output_raw, re.IGNORECASE)
-    model_output_raw = re.sub(r"\bshould be\b", "is", model_output_raw, re.IGNORECASE)
+    model_output_raw =  re.sub(r"\bno objects\b", "0 objects", model_output_raw, re.IGNORECASE)
+    model_output_raw =  re.sub(r"\bnot\b", "no", model_output_raw, re.IGNORECASE)
+    model_output_raw =  re.sub(r"\bshould be\b", "is", model_output_raw, re.IGNORECASE)
 
     number_mapping = {
-        "zero": 0,
+        "zero": 0,           
         "one": 1,
         "two": 2,
         "three": 3,
@@ -214,13 +200,15 @@ def extract_answer_from_text_map_and_maze(model_output_raw, options, is_valid, m
     }
 
     for k, v in number_mapping.items():
-        model_output_raw = re.sub(rf"\b{k}\b", str(v), model_output_raw, re.IGNORECASE)
+        model_output_raw =  re.sub(rf"\b{k}\b", str(v), model_output_raw, re.IGNORECASE)
 
-    options_dict = {x.split(".")[0].strip().lower(): x.split(".")[1].strip().lower() for x in options}
+    # get dict of options from options string
+    options_dict = {x.split(".")[0].strip().lower():x.split(".")[1].strip().lower() for x in options}
+
 
     model_output_parsed_letter = ""
     model_output_parsed = ""
-
+            
     answers = [v for k, v in options_dict.items()]
     answers_pattern = rf"\b({'|'.join(answers)})\b"
 
@@ -238,22 +226,24 @@ def extract_answer_from_text_map_and_maze(model_output_raw, options, is_valid, m
         matches = re.findall(pattern_phrase, model_output_raw, re.IGNORECASE)
         if matches:
             model_output_answer_line = matches[match_index]
-
+        
             answers_match = re.findall(answers_pattern, model_output_answer_line, re.IGNORECASE)
-
+    
             if answers_match:
-                model_output_parsed = answers_match[match_index]
+                model_output_parsed =  answers_match[match_index]
             else:
                 letters = [k for k, v in options_dict.items()]
                 letters_pattern = rf"\b({'|'.join(letters)})\b"
                 letters_pattern_match = re.findall(letters_pattern, model_output_answer_line, re.IGNORECASE)
 
                 if letters_pattern_match:
-                    match_option = letters_pattern_match[match_index].lower()
+                    match_option =  letters_pattern_match[match_index].lower()
                     model_output_parsed_letter = options_dict[match_option]
 
     elif "answer is".lower() in model_output_raw.lower():
-        pattern_letter = r"answer is:*\s*\**([\w\d]+)[\s:.]*\**"
+        pattern_letter = r'answer is:*\s*\**([\w\d]+)[\s:.]*\**'
+    
+        # first look for a single letter answer
         matches = re.findall(pattern_letter, model_output_raw, re.IGNORECASE)
         if matches:
             match_option = matches[match_index].lower()
@@ -262,27 +252,23 @@ def extract_answer_from_text_map_and_maze(model_output_raw, options, is_valid, m
             else:
                 model_output_parsed_letter = match_option
 
-    model_output_answer_line = model_output_raw.splitlines()[0]
+    # next look if any of the options names are present in the first line
+
+    model_output_answer_line = model_output_raw.splitlines()[0]        
 
     answers = [v for k, v in options_dict.items()]
     answers_pattern = rf"\b({'|'.join(answers)})\b"
     answers_match = re.findall(answers_pattern, model_output_answer_line, re.IGNORECASE)
-
+    
     if answers_match:
-        model_output_parsed = answers_match[match_index]
+        model_output_parsed =  answers_match[match_index]
 
     return " or ".join(filter(None, [model_output_parsed, model_output_parsed_letter]))
 
 
 @dataclass
 class ExtractAnswer(DFTransformBase):
-    """Base class for an answer extractor that is conditioned on the question type.
-
-    Attributes:
-        answer_column_name (str): The column name containing the answer text.
-        extracted_answer_column_name (str): The column name for the extracted answer.
-        question_type_column_name (str): The column name for the question type.
-    """
+    """This class is a base class for an answer extractor that is conditioned on the question type."""
 
     answer_column_name: str
     extracted_answer_column_name: str
@@ -290,85 +276,50 @@ class ExtractAnswer(DFTransformBase):
 
     @abstractmethod
     def _parse_answer_function(self, answer_text, question_type):
-        """Parses an answer from textual input based on the question type.
-
-        Args:
-            answer_text (str): The answer text to parse.
-            question_type (str): The question type.
-
-        Returns:
-            str or None: The parsed answer, or None if it cannot be parsed.
-        """
+        pass
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Transforms the dataframe by parsing answers with the provided parse function.
-
-        Args:
-            df (pd.DataFrame): The input dataframe containing the columns for answers.
-
-        Returns:
-            pd.DataFrame: A new dataframe with the extracted answers.
-        """
         df[self.extracted_answer_column_name] = df.apply(
             lambda x: self._parse_answer_function(x[self.answer_column_name], x[self.question_type_column_name]), axis=1
         )
         return df
 
-
 @dataclass
 class ExtractQuestionOptions(DFTransformBase):
-    """Extracts the list of options from a prompt.
-
-    Attributes:
-        prompt_column_name (str): The column name containing the prompt text.
-        extracted_options_column_name (str): The column name for the extracted options.
-    """
+    """This class is for extracting the option list from a prompt."""
 
     prompt_column_name: str
     extracted_options_column_name: str
 
     def _extract_options_from_text_map(self, prompt):
-        """Extracts the multiple-choice options list from the text.
+        """
+        Extracts the multiple-choice options list from the text.
 
         Args:
-            prompt (str): The text containing the prompt.
+        - text (str): The text containing the prompt.
 
         Returns:
-            list or None: The extracted list of options, or None if not found.
+        - str or None: The extracted list of options.
         """
+
+        # get list of options from prompt
         prompt_lines = prompt.splitlines()
         matches = [i for i, x in enumerate(prompt_lines) if "Available options:" in x]
 
-        if "Yes" in prompt_lines[matches[0] + 1]:
-            options = prompt_lines[matches[0] + 1 : matches[0] + 3]
+        if "Yes" in prompt_lines[matches[0]+1]:
+            options = prompt_lines[matches[0]+1:matches[0]+3]
         else:
-            options = prompt_lines[matches[0] + 1 : matches[0] + 5]
+            options = prompt_lines[matches[0]+1:matches[0]+5]
 
         return options
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Transforms the dataframe by extracting options from the prompt column.
-
-        Args:
-            df (pd.DataFrame): The input dataframe with the prompt column.
-
-        Returns:
-            pd.DataFrame: A new dataframe with the extracted options.
-        """
         df[self.extracted_options_column_name] = df[self.prompt_column_name].apply(self._extract_options_from_text_map)
         return df
 
-
 @dataclass
 class ExtractAnswerGrid(ExtractAnswer):
-    """Answer extractor for the GRID benchmark.
-
-    Attributes:
-        answer_column_name (str): The column name containing the answer text.
-        extracted_answer_column_name (str): The column name for the extracted answer.
-        question_type_column_name (str): The column name for the question type.
-        mode (str): The mode of the extractor.
-    """
+    """This class is an answer extractor for the GRID benchmark."""
 
     answer_column_name: str
     extracted_answer_column_name: str
@@ -377,48 +328,20 @@ class ExtractAnswerGrid(ExtractAnswer):
 
     @abstractmethod
     def _parse_answer_function(self, answer_text, question_type):
-        """Parses an answer from textual input for the GRID benchmark.
-
-        Args:
-            answer_text (str): The answer text to parse.
-            question_type (str): The question type.
-
-        Returns:
-            str or None: The parsed answer for the GRID benchmark.
-        """
         return extract_answer_from_text_grid(answer_text, question_type)
 
 
 @dataclass
 class ExtractAnswerSpatialMapAndMaze(DFTransformBase):
-    """Answer extractor for the SPATIAL_MAP and MAZE benchmark.
-
-    Attributes:
-        answer_column_name (str): The column name containing the answer text.
-        extracted_answer_column_name (str): The column name for the extracted answer.
-        extracted_options_column_name (str): The column name containing the extracted options.
-        match_first (bool): Whether to match the first occurrence (True) or the last occurrence (False).
-    """
+    """This class is an answer extractor for the SPATIAL_MAP and MAZE benchmark."""
 
     answer_column_name: str
     extracted_answer_column_name: str
     extracted_options_column_name: str
-    match_first: bool = False
+    match_first: bool = False    
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Transforms the dataframe by extracting answers from text map and maze.
-
-        Args:
-            df (pd.DataFrame): The input dataframe that includes an answer column,
-                extracted options column, and an "is_valid" column.
-
-        Returns:
-            pd.DataFrame: A new dataframe with the extracted answers.
-        """
         df[self.extracted_answer_column_name] = df.apply(
-            lambda x: extract_answer_from_text_map_and_maze(
-                x[self.answer_column_name], x[self.extracted_options_column_name], x["is_valid"], self.match_first
-            ),
-            axis=1,
+            lambda x: extract_answer_from_text_map_and_maze(x[self.answer_column_name], x[self.extracted_options_column_name], x["is_valid"], self.match_first), axis=1
         )
         return df

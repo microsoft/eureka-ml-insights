@@ -1,8 +1,3 @@
-"""Module for data union functionality.
-
-This module provides a DataUnion class which concatenates two datasets using pandas concat functionality.
-"""
-
 from typing import List, Optional
 
 import pandas as pd
@@ -11,7 +6,7 @@ from .data_processing import DataProcessing
 
 
 class DataUnion(DataProcessing):
-    """Concatenates two datasets using pandas concat functionality."""
+    """This component is used to concatenate two datasets using pandas concat functionality."""
 
     def __init__(
         self,
@@ -21,15 +16,14 @@ class DataUnion(DataProcessing):
         output_data_columns: Optional[List[str]] = None,
         dedupe_cols: Optional[List[str]] = None,
     ) -> None:
-        """Initializes DataUnion.
-
-        Args:
-            data_reader_config: DataReaderConfig object for reading the primary dataset.
-            output_dir (str): Directory to save the output files of this component.
-            other_data_reader_config: DataReaderConfig object for reading the secondary dataset.
-            output_data_columns (Optional[List[str]]): List of columns (subset of input columns) to keep
-                in the transformed data output file.
-            dedupe_cols (Optional[List[str]]): List of columns to deduplicate the concatenated DataFrame.
+        """
+        args:
+            data_reader_config: DataReaderConfig
+            output_dir: str directory to save the output files of this component.
+            other_data_reader_config: DataReaderConfig
+            output_data_columns: Optional[List[str]] list of columns (subset of input columns)
+                                      to keep in the transformed data output file.
+            dedupe_cols: Optional[List[str]] list of columns to deduplicate the concatenated data frame.
         """
         super().__init__(data_reader_config, output_dir, output_data_columns)
         self.other_data_reader = other_data_reader_config.class_name(**other_data_reader_config.init_args)
@@ -37,14 +31,6 @@ class DataUnion(DataProcessing):
 
     @classmethod
     def from_config(cls, config):
-        """Creates a DataUnion instance from a configuration object.
-
-        Args:
-            config: Configuration object containing initialization parameters.
-
-        Returns:
-            DataUnion: The newly created DataUnion instance.
-        """
         return cls(
             config.data_reader_config,
             config.output_dir,
@@ -54,15 +40,6 @@ class DataUnion(DataProcessing):
         )
 
     def run(self):
-        """Concatenates two DataFrames, optionally deduplicates them, and writes the result.
-
-        This method:
-         - Loads two datasets using the configured data readers.
-         - Concatenates them with pandas.concat.
-         - Optionally drops duplicates based on dedupe_cols.
-         - Filters columns to output_data_columns if provided.
-         - Writes the final DataFrame to the specified output directory.
-        """
         df = self.data_reader.load_dataset()
         other_df = self.other_data_reader.load_dataset()
         if len(df.columns) > 0 and len(other_df.columns) > 0:

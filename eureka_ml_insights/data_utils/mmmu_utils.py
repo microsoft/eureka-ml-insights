@@ -1,5 +1,3 @@
-"""This module defines MMMU categories, tasks, and a class that transforms DataFrames to include MMMU prompts."""
-
 from dataclasses import dataclass
 
 import pandas as pd
@@ -42,28 +40,17 @@ MMMUAll = [task for cat in MMMUCategories.values() for task in cat]
 
 @dataclass
 class CreateMMMUPrompts(DFTransformBase):
-    """Creates prompts in the MMMU format for multiple-choice and open-ended questions.
-
-    The original code is located at:
-    https://github.com/MMMU-Benchmark/MMMU/tree/main/eval/utils
-
-    Small modifications have been made to work in this framework.
+    """
+    Create prompts in the MMMU format for mutiple-choice and open-ended questions
+    The original code is located in https://github.com/MMMU-Benchmark/MMMU/tree/main/eval/utils and has
+    small modifications to work in this framework.
     """
 
     def __init__(self):
-        """Initializes the CreateMMMUPrompts class with formats for multiple-choice and short answers."""
         self.multi_choice_example_format = "{}\n{}\nAnswer with the option's letter from the given choices directly."
         self.short_ans_example_format = "{}\nAnswer the question using a single word or phrase."
 
     def _create_prompt(self, sample):
-        """Creates a prompt string from a single sample.
-
-        Args:
-            sample (dict): A dictionary containing at least the keys 'question_type', 'question', and 'options'.
-
-        Returns:
-            str: The constructed prompt string based on the sample's question type.
-        """
         question = sample["question"]
         options = sample["options"]
         example = ""
@@ -84,14 +71,6 @@ class CreateMMMUPrompts(DFTransformBase):
         return prompt
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Transforms a DataFrame by creating MMMU prompts for each row.
-
-        Args:
-            df (pd.DataFrame): The input DataFrame. The DataFrame must have columns
-                'question_type', 'question', and 'options', among others.
-
-        Returns:
-            pd.DataFrame: The transformed DataFrame containing a new 'prompt' column.
-        """
         df["prompt"] = df.apply(self._create_prompt, axis=1)
+
         return df
