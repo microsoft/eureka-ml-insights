@@ -223,7 +223,7 @@ class Inference(Component):
         """
         # create the output file. This will guarantee that an empty inference_result.jsonl file is created even if no inference is run.
         with self.appender as appender:
-            pass 
+            pass
         if self.resume_from:
             self.pre_inf_results_df, self.last_uid = self.fetch_previous_inference_results()
         with self.data_loader as loader, ThreadPoolExecutor(max_workers=self.max_concurrent) as executor:
@@ -267,7 +267,7 @@ class Inference(Component):
         if self.requests_per_minute and self.max_concurrent == 1:
             while len(self.request_times) >= self.requests_per_minute:
                 if time.time() - self.request_times[0] > self.period:
-                     # remove the oldest request time if it is older than the rate limit period
+                    # remove the oldest request time if it is older than the rate limit period
                     self.request_times.popleft()
                 else:
                     # rate limit is reached, wait for a second
