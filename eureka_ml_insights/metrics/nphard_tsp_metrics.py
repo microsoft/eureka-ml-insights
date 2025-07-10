@@ -4,27 +4,25 @@ from .metrics_base import Metric
 
 
 class NPHardTSPMetric(Metric):
-    """A metric class for evaluating solutions to the Traveling Salesman Problem (TSP).
-
-    A prediction is considered correct if it is a valid TSP tour and matches one of the
-    optimal solutions.
+    """
+    A metric class for evaluating solutions to the Traveling Salesman Problem (TSP).
+    A prediction is considered correct if it is a valid TSP tour and matches one of the optimal solutions.
     """
 
     def __init__(self):
         super().__init__()
 
     def is_valid_tsp_path(self, path, cities, distance_matrix=None):
-        """Validates a TSP path and, if valid, evaluates its length.
+        """
+        Validates a TSP path and if valid, evaluates its length.
 
-        Args:
+        Parameters:
             path (list of int): The TSP path, a list of city indices.
             cities (list of int): The list of all cities.
-            distance_matrix (list of lists, optional): Matrix representing distances
-                between cities.
+            distance_matrix (list of lists, optional): Matrix representing distances between cities.
 
         Returns:
-            tuple(bool, float): A tuple containing a boolean indicating whether the
-            path is valid and a float for its total length if valid. Length is None if invalid.
+            tuple: (bool, float): Whether the path is valid and its length (if valid). Length is None if invalid.
         """
         # Ensure the path is not empty and has the correct number of cities
         if not path or len(path) != len(cities) + 1:
@@ -59,15 +57,7 @@ class NPHardTSPMetric(Metric):
         return True, path_length
 
     def is_tour_present(self, optimal_tour_curr, tour_string):
-        """Checks if a given TSP tour is present in a list of optimal tours.
 
-        Args:
-            optimal_tour_curr (str): A string representation of one or more optimal tours.
-            tour_string (str): The predicted TSP tour, represented as a comma-separated string of city indices.
-
-        Returns:
-            bool: True if the predicted tour is present among the optimal tours, False otherwise.
-        """
         optimal_tour_list = eval(optimal_tour_curr.strip("."))
         optimal_tour_strings = [",".join(map(str, tour + (tour[0],))) for tour in optimal_tour_list]
 
@@ -75,14 +65,8 @@ class NPHardTSPMetric(Metric):
         return tour_string in optimal_tour_strings
 
     def __evaluate__(self, x):
-        """Evaluates whether the model's output is a correct TSP tour.
-
-        Args:
-            x (dict): A dictionary containing keys "is_valid", "optimal_tour", "weight_matrix",
-                "ground_truth", and "model_output" corresponding to the TSP instance and model's output.
-
-        Returns:
-            str: One of "none", "incorrect", or "correct" based on the validity and correctness of the TSP tour.
+        """
+        Evaluates whether the model's output is a correct TSP tour.
         """
         is_valid_curr = x["is_valid"]
 
