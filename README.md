@@ -3,18 +3,18 @@
   <a href='https://arxiv.org/abs/2409.10566'><img src=https://img.shields.io/badge/arXiv-2409.10566-b31b1b.svg></a>
   <a href='https://arxiv.org/pdf/2504.00294'><img src=https://img.shields.io/badge/arXiv-2504.00294-b31b1b.svg></a>
   <a href='https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/tree/main'><img src=https://huggingface.co/front/assets/huggingface_logo-noborder.svg width="16">Eureka Evaluation Logs</a>
-  <a href='https://microsoft.github.io/eureka-ml-insights'><img src=readme_docs/figures/github.png width="16">Project Website</a>
+  <a href='https://microsoft.github.io/eureka-ml-insights'><img src=docs/figures/github.png width="16">Project Website</a>
 </p>
 
 This repository contains the code for the Eureka ML Insights framework. The framework is designed to help researchers and practitioners run reproducible evaluations of generative models using a variety of benchmarks and metrics efficiently. The framework allows the user to define custom pipelines for data processing, inference, and evaluation, and provides a set of pre-defined evaluation pipelines for key benchmarks.
 
 ## 📰 News
 
-- **[2025/5/20]**: <img src=https://huggingface.co/front/assets/huggingface_logo-noborder.svg width="16"> We have uploaded logs from all experiment reported in our papers on [HuggingFace](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/tree/main). 
-- **[2025/4/29]**: <img src=readme_docs/figures/msr_blog.png width="16"> New blog post out [Eureka Inference-Time Scaling Insights: Where We Stand and What Lies Ahead](https://www.microsoft.com/en-us/research/articles/eureka-inference-time-scaling-insights-where-we-stand-and-what-lies-ahead/)
-- **[2025/3/31]**: <img src=readme_docs/figures/arxiv_logo.svg width="16"> We have a new technical report out [Inference-Time Scaling for Complex Tasks: Where We Stand and What Lies Ahead](https://arxiv.org/abs/2504.00294)
-- **[2024/9/17]**: <img src=readme_docs/figures/msr_blog.png width="16"> New blog post out [Eureka: Evaluating and understanding progress in AI](https://aka.ms/eureka-ml-insights-blog)
-- **[2024/9/17]**: <img src=readme_docs/figures/arxiv_logo.svg width="16"> New technical report out [Eureka: Evaluating and Understanding Large Foundation Models](https://arxiv.org/abs/2409.10566)
+- **[2025/5/20]**: We have uploaded logs from all experiment reported in our papers on [HuggingFace](https://huggingface.co/datasets/microsoft/Eureka-Bench-Logs/tree/main). 
+- **[2025/4/29]**: New blog post out [Eureka Inference-Time Scaling Insights: Where We Stand and What Lies Ahead](https://www.microsoft.com/en-us/research/articles/eureka-inference-time-scaling-insights-where-we-stand-and-what-lies-ahead/)
+- **[2025/3/31]**: ✨ We have a new paper out [Inference-Time Scaling for Complex Tasks: Where We Stand and What Lies Ahead](https://arxiv.org/abs/2504.00294)
+- **[2024/9/17]**: New blog post out [Eureka: Evaluating and understanding progress in AI](https://aka.ms/eureka-ml-insights-blog)
+- **[2024/9/17]**: ✨ New paper out [Eureka: Evaluating and Understanding Large Foundation Models](https://arxiv.org/abs/2409.10566)
 ## Table of Contents
 - [Eureka ML Insights Framework](#eureka-ml-insights-framework)
   - [📰 News](#-news)
@@ -98,7 +98,7 @@ The results of the experiment will be saved in a directory under `logs/FlenQA_Ex
 For other available experiment pipelines and model configurations, see the `eureka_ml_insights/user_configs` and `eureka_ml_insights/configs` directories, respectively. In [model_configs.py](eureka_ml_insights/configs/model_configs.py) you can configure the model classes to use your API keys, Key Vault urls, endpoints, and other model-specific configurations.
 
 ## 🗺️ Overview of Experiment Pipelines
-![Components](./readme_docs/figures/transparent_uml.png)
+![Components](./docs/figures/transparent_uml.png)
 Experiment pipelines define the sequence of components that are run to process data, run inference, and evaluate the model outputs. You can find examples of experiment pipeline configurations in the `user_configs` directory. To create a new experiment configuration, you need to define a class that inherits from `ExperimentConfig` and implements the `configure_pipeline` method. In the `configure_pipeline` method you define the Pipeline config (arrangement of Components) for your Experiment. Once your class is ready, add it to `user_configs/__init__.py` import list.
 
 
