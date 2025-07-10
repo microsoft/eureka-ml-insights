@@ -4,11 +4,11 @@ import os
 from hashlib import md5
 from typing import List, Optional
 
+from eureka_ml_insights.configs.config import DataProcessingConfig, DataSetConfig
 from eureka_ml_insights.data_utils import NumpyEncoder
 
 """
-This module defines a data processing pipeline component, a utility function for computing MD5 hashes,
-and integrates reserved name handling for data outputs.
+This module defines a data processing pipeline component and integrates reserved name handling for data outputs.
 """
 
 from .pipeline import Component
@@ -17,28 +17,15 @@ from .reserved_names import (
     PROMPT_PROC_RESERVED_NAMES,
 )
 
-
-def compute_hash(val: str) -> str:
-    """Compute the MD5 hash of a given string.
-
-    Args:
-        val (str): The string to be hashed.
-
-    Returns:
-        str: The MD5 hash of the input string.
-    """
-    return md5(val.encode("utf-8")).hexdigest()
-
-
 class DataProcessing(Component):
     """Implements data reading, transformation, and output writing for a pipeline component."""
 
     @classmethod
-    def from_config(cls, config):
+    def from_config(cls, config: DataProcessingConfig):
         """Create a DataProcessing instance from a configuration object.
 
         Args:
-            config: A configuration object with data_reader_config,
+            config: A DataProcessingConfig object with data_reader_config,
                 output_dir, and output_data_columns.
 
         Returns:
@@ -52,14 +39,14 @@ class DataProcessing(Component):
 
     def __init__(
         self,
-        data_reader_config,
+        data_reader_config: DataSetConfig,
         output_dir: str,
         output_data_columns: Optional[List[str]] = None,
     ) -> None:
         """Initialize the DataProcessing component.
 
         Args:
-            data_reader_config (DataReaderConfig): The configuration for reading data.
+            data_reader_config (DataSetConfig): The configuration for reading the input data.
             output_dir (str): Directory to save the output files of this component.
             output_data_columns (Optional[List[str]], optional): A list of columns (subset of input columns)
                 to keep in the transformed data output file. The columns reserved for the Eureka framework
@@ -70,7 +57,7 @@ class DataProcessing(Component):
         self.output_data_columns = output_data_columns
 
     def write_output(self, df):
-        """Write the transformed DataFrame to a JSONL file.
+        """Write the transformed DataFrame to a JSONL file in the component's output directory.
 
         Args:
             df (pandas.DataFrame): The DataFrame containing the data to write.

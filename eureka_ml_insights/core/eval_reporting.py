@@ -1,10 +1,9 @@
-# report component has data reader, list of metrics, list of visualizers, and list of writers
-"""This module provides functionality to read data, compute metrics, visualize results, and write reports
-through the EvalReporting class and its supporting components."""
+"""This module provides functionality to read model output data, compute metrics and aggregate reports."""
 
 import json
 import os
 
+from eureka_ml_insights.configs.config import EvalReportingConfig, DataSetConfig
 from eureka_ml_insights.data_utils import NumpyEncoder
 from eureka_ml_insights.metrics import Reporter
 
@@ -21,12 +20,12 @@ class EvalReporting(Component):
     """
 
     def __init__(
-        self, data_reader_config, output_dir, metric_config=None, aggregator_configs=None, visualizer_configs=None
+        self, data_reader_config: DataSetConfig, output_dir: str, metric_config=None, aggregator_configs=None, visualizer_configs=None
     ):
         """Initializes an EvalReporting instance.
 
         Args:
-            data_reader_config (object): Configuration for the data reader, including class and initialization arguments.
+            data_reader_config (DataSetConfig): Configuration for the data reader, including class and initialization arguments.
             output_dir (str): Directory where output files will be written.
             metric_config (object, optional): Configuration for the metric calculator.
             aggregator_configs (list, optional): A list of aggregator configurations.
@@ -44,7 +43,7 @@ class EvalReporting(Component):
         """Creates an EvalReporting instance from a configuration object.
 
         Args:
-            config (object): An object containing all necessary configuration for EvalReporting.
+            config (EvalReportingConfig): An object containing all necessary configuration parameters for EvalReporting.
 
         Returns:
             EvalReporting: An initialized instance of EvalReporting.
@@ -61,7 +60,7 @@ class EvalReporting(Component):
         """Executes the reporting pipeline.
 
         Loads the dataset, evaluates it with the metric (if provided), writes the metric
-        results to a file (if metric_config is specified), and then generates a report.
+        results to a file (if metric_config is specified), and then generates reports summarizing/aggregating the results.
         """
         df = self.data_reader.load_dataset()
         metric_result = df

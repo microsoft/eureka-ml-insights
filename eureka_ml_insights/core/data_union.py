@@ -7,6 +7,8 @@ from typing import List, Optional
 
 import pandas as pd
 
+from eureka_ml_insights.configs.config import DataUnionConfig, DataSetConfig
+
 from .data_processing import DataProcessing
 
 
@@ -15,21 +17,21 @@ class DataUnion(DataProcessing):
 
     def __init__(
         self,
-        data_reader_config,
+        data_reader_config: DataSetConfig,
         output_dir: str,
-        other_data_reader_config,
+        other_data_reader_config: DataSetConfig,
         output_data_columns: Optional[List[str]] = None,
         dedupe_cols: Optional[List[str]] = None,
     ) -> None:
         """Initializes DataUnion.
 
         Args:
-            data_reader_config: DataReaderConfig object for reading the primary dataset.
+            data_reader_config: DataSetConfig object for reading the primary dataset.
             output_dir (str): Directory to save the output files of this component.
-            other_data_reader_config: DataReaderConfig object for reading the secondary dataset.
+            other_data_reader_config: DataSetConfig object for reading the secondary dataset.
             output_data_columns (Optional[List[str]]): List of columns (subset of input columns) to keep
                 in the transformed data output file.
-            dedupe_cols (Optional[List[str]]): List of columns to deduplicate the concatenated DataFrame.
+            dedupe_cols (Optional[List[str]]): List of columns to use in deduplicating the concatenated DataFrame.
         """
         super().__init__(data_reader_config, output_dir, output_data_columns)
         self.other_data_reader = other_data_reader_config.class_name(**other_data_reader_config.init_args)
@@ -37,10 +39,10 @@ class DataUnion(DataProcessing):
 
     @classmethod
     def from_config(cls, config):
-        """Creates a DataUnion instance from a configuration object.
+        """Creates a DataUnion instance from a DataUnionConfig object.
 
         Args:
-            config: Configuration object containing initialization parameters.
+            config(DataUnionConfig): Configuration object containing initialization parameters.
 
         Returns:
             DataUnion: The newly created DataUnion instance.

@@ -9,6 +9,8 @@ from typing import List, Optional
 
 import pandas as pd
 
+from eureka_ml_insights.configs.config import DataJoinConfig, DataSetConfig
+
 from .data_processing import DataProcessing
 
 
@@ -17,18 +19,18 @@ class DataJoin(DataProcessing):
 
     def __init__(
         self,
-        data_reader_config,
+        data_reader_config: DataSetConfig,
         output_dir: str,
-        other_data_reader_config,
+        other_data_reader_config: DataSetConfig,
         pandas_merge_args: dict,
         output_data_columns: Optional[List[str]] = None,
     ) -> None:
         """Initializes the DataJoin component.
 
         Args:
-            data_reader_config: Configuration object for reading the first dataset.
+            data_reader_config: DataSetConfig object for reading the first dataset.
             output_dir (str): Directory to save the output files of this component.
-            other_data_reader_config: Configuration object for reading the second dataset.
+            other_data_reader_config: DataSetConfig object for reading the second dataset.
             pandas_merge_args (dict): Arguments passed to pandas merge function.
             output_data_columns (List[str], optional): List of columns (subset of input columns)
                 to keep in the transformed data output file.
@@ -42,11 +44,11 @@ class DataJoin(DataProcessing):
             raise ValueError(f"Invalid join type '{join_type}'. Expected one of: {', '.join(allowed_join_types)}.")
 
     @classmethod
-    def from_config(cls, config):
+    def from_config(cls, config: DataJoinConfig):
         """Creates a DataJoin instance from a configuration object.
 
         Args:
-            config: A configuration object containing all required initialization attributes.
+            config: A DataJoinConfig object containing all required initialization attributes.
 
         Returns:
             DataJoin: An instance of the DataJoin class.
