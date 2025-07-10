@@ -9,10 +9,15 @@ import threading
 import time
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Optional
 
 from tqdm import tqdm
 
-from eureka_ml_insights.configs.config import DataSetConfig, ModelConfig
+from eureka_ml_insights.configs.config import (
+    DataSetConfig,
+    InferenceConfig,
+    ModelConfig,
+)
 from eureka_ml_insights.data_utils.data import DataReader, JsonLinesWriter
 from eureka_ml_insights.models.models import Model
 
@@ -29,12 +34,12 @@ class Inference(Component):
         self,
         model_config: ModelConfig,
         data_config: DataSetConfig,
-        output_dir,
-        resume_from=None,
-        new_columns=None,
-        requests_per_minute=None,
-        max_concurrent=1,
-        chat_mode=False,
+        output_dir: str,
+        resume_from: Optional[str] = None,
+        new_columns: Optional[list] = None,
+        requests_per_minute: Optional[int] = None,
+        max_concurrent: int = 1,
+        chat_mode: bool = False,
     ):
         """Initializes the Inference component.
 
@@ -43,10 +48,10 @@ class Inference(Component):
             data_config (DataSetConfig): Object specifying the data loader class and initialization arguments.
             output_dir (str): Directory to save the inference results.
             resume_from (Optional[str]): Path to a file containing previous inference results to resume from.
-            new_columns (Optional[list]): List of new columns to match the current inference response when resuming from old results.
+            new_columns (Optional[list]): List of new columns to add to previous results to match the current inference response when resuming from old results.
             requests_per_minute (Optional[int]): Number of inference requests per minute for rate limiting. If None, no rate limiting is applied.
-            max_concurrent (int): Maximum number of concurrent inferences. Defaults to 1.
-            chat_mode (bool): If True, runs in chat mode with a maintained history of messages in the "previous_messages" column.
+            max_concurrent (Optional[int]): Maximum number of concurrent inferences. Defaults to 1.
+            chat_mode (Optional[bool]): If True, runs in chat mode with a maintained history of messages in the "previous_messages" column.
 
         Raises:
             FileNotFoundError: If the provided resume_from file is not found.
@@ -76,13 +81,11 @@ class Inference(Component):
         self.writer_lock = threading.Lock()
 
     @classmethod
-    def from_config(cls, config):
-        """Creates an Inference instance from a provided configuration object.
+    def from_config(cls, config: InferenceConfig):
+        """Creates an Inference instance from a provided InferenceConfig object.
 
         Args:
-            config: A configuration object containing attributes:
-                model_config, data_loader_config, output_dir, resume_from,
-                new_columns, requests_per_minute, max_concurrent, and chat_mode.
+            config: An InferenceConfig object.
 
         Returns:
             Inference: An instance of the Inference class.
@@ -100,7 +103,7 @@ class Inference(Component):
 
     def fetch_previous_inference_results(self):
         """Loads the contents from the resume_from file and validates alignment with the current
-        model configuration.
+        model response using a sample inference call.
 
         Returns:
             Tuple[pd.DataFrame, int]: A tuple containing:
@@ -168,8 +171,8 @@ class Inference(Component):
         if "model_output" not in response_dict or "is_valid" not in response_dict:
             raise ValueError("Response dictionary must contain 'model_output' and 'is_valid' keys.")
 
-    def retrieve_exisiting_result(self, data, pre_inf_results_df):
-        """Retrieves a valid previous inference result for a given data record.
+    def retrieve_existing_result(self, data, pre_inf_results_df):
+        """Retrieves a valid previous inference result for a given data record if it exists.
 
         Args:
             data (dict): The data record to be inferenced.
@@ -260,7 +263,7 @@ class Inference(Component):
         if self.chat_mode and data.get("is_valid", True) is False:
             return None
         if self.resume_from and (data["uid"] <= self.last_uid):
-            prev_result = self.retrieve_exisiting_result(data, self.pre_inf_results_df)
+            prev_result = self.retrieve_existing_result(data, self.pre_inf_results_df)
             if prev_result:
                 return prev_result
         # Rate limiter -- only for sequential inference

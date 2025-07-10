@@ -3,7 +3,7 @@
 import json
 import os
 
-from eureka_ml_insights.configs.config import EvalReportingConfig, DataSetConfig
+from eureka_ml_insights.configs.config import DataSetConfig
 from eureka_ml_insights.data_utils import NumpyEncoder
 from eureka_ml_insights.metrics import Reporter
 
@@ -20,7 +20,12 @@ class EvalReporting(Component):
     """
 
     def __init__(
-        self, data_reader_config: DataSetConfig, output_dir: str, metric_config=None, aggregator_configs=None, visualizer_configs=None
+        self,
+        data_reader_config: DataSetConfig,
+        output_dir: str,
+        metric_config=None,
+        aggregator_configs=None,
+        visualizer_configs=None,
     ):
         """Initializes an EvalReporting instance.
 

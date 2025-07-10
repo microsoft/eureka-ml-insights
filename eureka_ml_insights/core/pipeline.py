@@ -18,10 +18,6 @@ class Component(ABC):
 
     This class provides the basic interface for all components in the pipeline,
     ensuring they define a 'run' method and can be instantiated from a config.
-
-    Args:
-        output_dir (PathLike): The directory where the component's output should be stored.
-        **_ (Dict[str, Any]): Additional keyword arguments.
     """
 
     def __init__(self, output_dir: PathLike, **_: Dict[str, Any]):
@@ -67,12 +63,7 @@ class Component(ABC):
 
 
 class Pipeline:
-    """A pipeline that executes a list of components in sequence.
-
-    Args:
-        component_configs (List[ComponentConfig]): A list of component configurations.
-        log_dir (str): The directory for pipeline logs.
-    """
+    """A pipeline that executes a list of components in sequence."""
 
     def __init__(self, component_configs: List[ComponentConfig], log_dir: str):
         """Initializes the pipeline with the given component configurations and log directory.

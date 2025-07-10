@@ -7,7 +7,7 @@ from typing import List, Optional
 
 import pandas as pd
 
-from eureka_ml_insights.configs.config import DataUnionConfig, DataSetConfig
+from eureka_ml_insights.configs.config import DataSetConfig, DataUnionConfig
 
 from .data_processing import DataProcessing
 
@@ -38,7 +38,7 @@ class DataUnion(DataProcessing):
         self.dedupe_cols = dedupe_cols
 
     @classmethod
-    def from_config(cls, config):
+    def from_config(cls, config: DataUnionConfig):
         """Creates a DataUnion instance from a DataUnionConfig object.
 
         Args:

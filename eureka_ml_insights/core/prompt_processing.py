@@ -7,6 +7,10 @@ import os
 from hashlib import md5
 from typing import List, Optional
 
+from eureka_ml_insights.configs.config import (
+    DataSetConfig,
+    PromptProcessingConfig,
+)
 from eureka_ml_insights.data_utils import JinjaPromptTemplate
 
 from .data_processing import DataProcessing
@@ -29,11 +33,11 @@ class PromptProcessing(DataProcessing):
     """Handles the prompt generation workflow by extending DataProcessing."""
 
     @classmethod
-    def from_config(cls, config):
-        """Create a PromptProcessing instance from a configuration object.
+    def from_config(cls, config: PromptProcessingConfig):
+        """Create a PromptProcessing instance from a PromptProcessingConfig object.
 
         Args:
-            config: The configuration object.
+            config: A PromptProcessingConfig object.
 
         Returns:
             PromptProcessing: A new PromptProcessing instance.
@@ -48,7 +52,7 @@ class PromptProcessing(DataProcessing):
 
     def __init__(
         self,
-        data_reader_config,
+        data_reader_config: DataSetConfig,
         output_dir: str,
         output_data_columns: Optional[List[str]] = None,
         prompt_template_path: Optional[str] = None,
@@ -57,12 +61,14 @@ class PromptProcessing(DataProcessing):
         """Initialize the PromptProcessing object.
 
         Args:
-            data_reader_config: DataReaderConfig object that specifies the data reading configuration.
+            data_reader_config: DataSetConfig object that specifies the data reader configuration.
             output_dir (str): Directory to save the output files of this component.
             output_data_columns (Optional[List[str]]): A list of columns (subset of input columns) to keep in
                 the transformed data output file.
-            prompt_template_path (Optional[str]): Path to the prompt template .jinja file.
-            ignore_failure (bool): Whether to ignore failure in prompt generation or not.
+            prompt_template_path (Optional[str]): Path to the prompt template .jinja file. If not provided,
+                the "prompt" column in the input data will be used as the prompt. If provided, it will be used to
+                generate prompts based on the input data and populate the "prompt" column.
+            ignore_failure (bool): Whether to ignore failures in prompt generation and move on to the next row.
         """
         super().__init__(data_reader_config, output_dir, output_data_columns)
         self.ignore_failure = ignore_failure
@@ -75,8 +81,8 @@ class PromptProcessing(DataProcessing):
     def run(self) -> None:
         """Execute the prompt processing workflow.
 
-        Loads input data, optionally uses a Jinja template to create prompts, and writes
-        output data with generated prompts and their hashes to the output directory.
+        Loads input data, optionally uses a Jinja template to create prompts, removes columns from the input data that are reserved for
+        the inference component, and writes the processed data to a JSONL file in the component's output directory.
 
         Raises:
             Exception: If an error occurs during prompt creation and ignore_failure is False.
