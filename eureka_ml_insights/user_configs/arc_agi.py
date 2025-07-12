@@ -135,7 +135,7 @@ class ARC_AGI_v1_PIPELINE(ExperimentConfig):
                         "column_names": [
                             "ExactMatch_result",
                         ],
-                        "filename_base": "OverallMetrics_Separate_Runs_Grouped_by_Split",
+                        "filename_base": "OverallMetrics_Grouped_by_Split",
                         "normalize": True,
                         "group_by": "split",
                     },
@@ -147,7 +147,7 @@ class ARC_AGI_v1_PIPELINE(ExperimentConfig):
                             "ExactMatch_result",
                         ],
                         "normalize": True,
-                        "filename_base": "OverallMetrics_Separate_Runs_Total",
+                        "filename_base": "OverallMetrics_Total",
                     }),
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
