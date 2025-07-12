@@ -135,7 +135,7 @@ class ARC_AGI_v1_PIPELINE(ExperimentConfig):
                         "column_names": [
                             "ExactMatch_result",
                         ],
-                        "filename_base": "OverallMetrics_Separate_Runs_Grouped",
+                        "filename_base": "OverallMetrics_Separate_Runs_Grouped_by_Split",
                         "normalize": True,
                         "group_by": "split",
                     },
