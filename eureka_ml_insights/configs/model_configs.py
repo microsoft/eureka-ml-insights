@@ -176,7 +176,7 @@ OAI_GPT4O_2024_11_20_AUZRE_CONFIG = ModelConfig(
     AzureOpenAIModel,
     {
         "model_name": "gpt-4o",
-        "url": "https://eurekaevals.openai.azure.com/",
+        "url": "https://model-endpoint.azure.com",
         "api_version": "2025-01-01-preview",
     },
 )
