@@ -544,3 +544,39 @@ class ExtractUsageTransform:
         if not pd.isna(row[self.usage_column]) and usage_completion_read_col in row[self.usage_column]:
             return row[self.usage_column][usage_completion_read_col]
         return np.nan
+
+
+@dataclass
+class CleanCOTAnswer(DFTransformBase):
+    """
+    Transform to strip out anything before and including the </think> tag in the model response
+    """
+
+    model_output_column: str
+    model_answer_column: str
+
+    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        df[self.model_answer_column] = df[self.model_output_column].apply(self.parse_output_answer)
+        return df
+
+    @staticmethod
+    def parse_output_answer(response):
+        """
+        Replace None responses with an empty string
+        Parameters:
+            response (str): Possibly None Response string
+        Returns: 
+            answer (str): Response string with None replaced by blank string
+        """
+        if response is None:
+            return ""
+        
+        start_index = response.find("</think>")
+        if start_index == -1:
+            return response
+        
+        start_index = start_index + len("</think>")
+        
+        response = response[start_index:]
+
+        return response
