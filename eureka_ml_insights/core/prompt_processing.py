@@ -1,8 +1,16 @@
+"""This module provides functionalities for prompt processing, including a function to compute an MD5 hash and
+a class that extends DataProcessing to handle prompt generation workflows.
+"""
+
 import logging
 import os
 from hashlib import md5
 from typing import List, Optional
 
+from eureka_ml_insights.configs.config import (
+    DataSetConfig,
+    PromptProcessingConfig,
+)
 from eureka_ml_insights.data_utils import JinjaPromptTemplate
 
 from .data_processing import DataProcessing
@@ -10,15 +18,30 @@ from .reserved_names import INFERENCE_RESERVED_NAMES
 
 
 def compute_hash(val: str) -> str:
-    """
-    Hashes the provided value using MD5.
+    """Compute the MD5 hash of a given string.
+
+    Args:
+        val (str): The value to be hashed.
+
+    Returns:
+        str: The MD5 hash of the given value.
     """
     return md5(val.encode("utf-8")).hexdigest()
 
 
 class PromptProcessing(DataProcessing):
+    """Handles the prompt generation workflow by extending DataProcessing."""
+
     @classmethod
-    def from_config(cls, config):
+    def from_config(cls, config: PromptProcessingConfig):
+        """Create a PromptProcessing instance from a PromptProcessingConfig object.
+
+        Args:
+            config: A PromptProcessingConfig object.
+
+        Returns:
+            PromptProcessing: A new PromptProcessing instance.
+        """
         return cls(
             config.data_reader_config,
             config.output_dir,
@@ -29,20 +52,23 @@ class PromptProcessing(DataProcessing):
 
     def __init__(
         self,
-        data_reader_config,
+        data_reader_config: DataSetConfig,
         output_dir: str,
         output_data_columns: Optional[List[str]] = None,
         prompt_template_path: Optional[str] = None,
         ignore_failure: bool = False,
     ) -> None:
-        """
-        args:
-            data_reader_config: DataReaderConfig
-            prompt_template_path: str path to the prompt template .jinja file.
-            output_dir: str directory to save the output files of this component.
-            output_data_columns: Optional[List[str]] list of columns (subset of input columns)
-                                      to keep in the transformed data output file.
-            ignore_failure: bool whether to ignore failure in prompt generation or not.
+        """Initialize the PromptProcessing object.
+
+        Args:
+            data_reader_config: DataSetConfig object that specifies the data reader configuration.
+            output_dir (str): Directory to save the output files of this component.
+            output_data_columns (Optional[List[str]]): A list of columns (subset of input columns) to keep in
+                the transformed data output file.
+            prompt_template_path (Optional[str]): Path to the prompt template .jinja file. If not provided,
+                the "prompt" column in the input data will be used as the prompt. If provided, it will be used to
+                generate prompts based on the input data and populate the "prompt" column.
+            ignore_failure (bool): Whether to ignore failures in prompt generation and move on to the next row.
         """
         super().__init__(data_reader_config, output_dir, output_data_columns)
         self.ignore_failure = ignore_failure
@@ -53,6 +79,14 @@ class PromptProcessing(DataProcessing):
             self.prompt_data_processor = JinjaPromptTemplate(prompt_template_path)
 
     def run(self) -> None:
+        """Execute the prompt processing workflow.
+
+        Loads input data, optionally uses a Jinja template to create prompts, removes columns from the input data that are reserved for
+        the inference component, and writes the processed data to a JSONL file in the component's output directory.
+
+        Raises:
+            Exception: If an error occurs during prompt creation and ignore_failure is False.
+        """
         # data reader loads data into a pandas dataframe and applies any transformations
         input_df = self.data_reader.load_dataset()
         logging.info(f"input has: {len(input_df)} rows, and the columns are: {input_df.columns}.")
