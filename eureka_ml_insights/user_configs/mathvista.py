@@ -19,6 +19,7 @@ from eureka_ml_insights.data_utils import (
     MMDataLoader,
     SamplerTransform,
     SequenceTransform,
+    SelectTransform,
 )
 
 from eureka_ml_insights.configs import(
@@ -54,6 +55,7 @@ class MATHVISTA_PIPELINE(ExperimentConfig):
                     "tasks": ["default"],
                     "transform": SequenceTransform(
                         [
+                            #SelectTransform(indices=list(range(0,1000,10))),  # Select every 10th sample for a smaller subset
                             CopyColumn(column_name_src="query", column_name_dst="prompt"),
                             # there is some info in the metadata field that serves as a nice aggregator
                             CopyColumn(column_name_src="metadata", column_name_dst="task"),

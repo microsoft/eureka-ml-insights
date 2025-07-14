@@ -113,6 +113,12 @@ class SamplerTransform(DFTransformBase):
         else:
             return df.sample(n=self.sample_count, random_state=self.random_seed)
 
+@dataclass
+class SelectTransform(DFTransformBase):
+    indices: List[int] = None
+
+    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        return df.iloc[self.indices]
 
 @dataclass
 class MultiplyTransform(DFTransformBase):

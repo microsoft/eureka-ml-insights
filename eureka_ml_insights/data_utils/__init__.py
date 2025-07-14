@@ -40,7 +40,8 @@ from .transform import (
     ShuffleColumnsTransform,
     MajorityVoteTransform,
     TokenCounterTransform,
-    ExtractUsageTransform
+    ExtractUsageTransform,
+    SelectTransform
 )
 
 __all__ = [
@@ -82,4 +83,5 @@ __all__ = [
     NumpyEncoder,
     ExtractUsageTransform,
     ExtractBoundingBox,
+    SelectTransform,
 ]
