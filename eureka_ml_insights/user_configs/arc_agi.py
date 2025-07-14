@@ -90,6 +90,9 @@ class ARC_AGI_v1_PIPELINE(ExperimentConfig):
         )
 
         # Configure the data post processing component.
+        # We keep this component empty so that there is a place to insert a post-processing transform
+        # to strip out the chain of thought from models that insert chains of thought using
+        # <think> and </think> tags.
         self.data_post_processing = DataProcessingConfig(
             component_type=DataProcessing,
             data_reader_config=DataSetConfig(
@@ -235,6 +238,9 @@ class COT_ARC_AGI_v1_PIPELINE(ARC_AGI_v1_PIPELINE):
 
     def configure_pipeline(self, model_config=None, resume_from=None, **kwargs):
         config = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
+
+        # Here we modify the existing post processing component by inserting a post-processing
+        # transform to strip out the chain of thought inserted between <think> and </think> tags.
         self.data_post_processing.data_reader_config.init_args["transform"] = SequenceTransform(
             [
                 ColumnRename(
