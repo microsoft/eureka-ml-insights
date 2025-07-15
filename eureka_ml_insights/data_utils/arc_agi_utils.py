@@ -1,4 +1,3 @@
-import re
 from dataclasses import dataclass
 
 import pandas as pd
@@ -21,8 +20,8 @@ class ARCAGI_ExtractAnswer(DFTransformBase):
         Parse the input string to extract answer of a given ARCAGI question.
         Parameters:
             response (str): Input string containing answer X in the form of "<output>final answer string</output>".
-        Returns: 
-            answer (str): The final answer string with leading and training spaces stripped.
+        Returns:
+            answer (str): The final answer string with leading and trailing spaces stripped.
         """
         answer = ""
 

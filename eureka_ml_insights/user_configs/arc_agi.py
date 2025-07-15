@@ -4,38 +4,27 @@ from typing import Any
 from eureka_ml_insights.core import Inference, PromptProcessing
 from eureka_ml_insights.core.data_processing import DataProcessing
 from eureka_ml_insights.core.eval_reporting import EvalReporting
-from eureka_ml_insights.data_utils.arc_agi_utils import (
-    ARCAGI_ExtractAnswer
-)
+from eureka_ml_insights.data_utils.arc_agi_utils import ARCAGI_ExtractAnswer
 from eureka_ml_insights.data_utils.data import (
     DataLoader,
     DataReader,
     HFDataReader,
 )
-from eureka_ml_insights.metrics.metrics_base import ExactMatch
-from eureka_ml_insights.metrics.reports import (
-    CountAggregator,
-    AverageAggregator,
-    BiLevelCountAggregator,
-    BiLevelAggregator,
-    CountAggregator
-)
-
 from eureka_ml_insights.data_utils.transform import (
     AddColumn,
-    AddColumnAndData,
     CleanCOTAnswer,
     ColumnRename,
     CopyColumn,
     ExtractUsageTransform,
-    MajorityVoteTransform,
     MultiplyTransform,
     ReplaceStringsTransform,
-    RunPythonTransform,
-    SamplerTransform,
     SequenceTransform,
 )
-from eureka_ml_insights.metrics.ba_calendar_metrics import BACalendarMetric
+from eureka_ml_insights.metrics.metrics_base import ExactMatch
+from eureka_ml_insights.metrics.reports import (
+    BiLevelAggregator,
+    CountAggregator,
+)
 
 from ..configs.config import (
     AggregatorConfig,
@@ -64,14 +53,14 @@ class ARC_AGI_v1_PIPELINE(ExperimentConfig):
             data_reader_config=DataSetConfig(
                 HFDataReader,
                 {
-                   "path": "pxferna/ARC-AGI-v1",
-                   "split": "test",
+                    "path": "pxferna/ARC-AGI-v1",
+                    "split": "test",
                     "transform": SequenceTransform(
                         [
                             MultiplyTransform(n_repeats=1),
                         ]
                     ),
-                }
+                },
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
         )
@@ -100,9 +89,7 @@ class ARC_AGI_v1_PIPELINE(ExperimentConfig):
                 {
                     "path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
                     "format": ".jsonl",
-                    "transform": SequenceTransform(
-                        []
-                    ),
+                    "transform": SequenceTransform([]),
                 },
             ),
             output_dir=os.path.join(self.log_dir, "data_post_processing_output"),
@@ -144,14 +131,15 @@ class ARC_AGI_v1_PIPELINE(ExperimentConfig):
                     },
                 ),
                 AggregatorConfig(
-                    CountAggregator, 
+                    CountAggregator,
                     {
                         "column_names": [
                             "ExactMatch_result",
                         ],
                         "normalize": True,
                         "filename_base": "OverallMetrics_Total",
-                    }),
+                    },
+                ),
             ],
             output_dir=os.path.join(self.log_dir, "eval_report"),
         )
@@ -165,14 +153,15 @@ class ARC_AGI_v1_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                        CopyColumn(
+                            CopyColumn(
                                 column_name_src="ExactMatch_result",
                                 column_name_dst="ExactMatch_result_numeric",
                             ),
-                        ReplaceStringsTransform(
+                            ReplaceStringsTransform(
                                 columns=["ExactMatch_result_numeric"],
-                                mapping={'incorrect': '0', 'correct': '1', 'none': 'NaN'},
-                                case=False)
+                                mapping={"incorrect": "0", "correct": "1", "none": "NaN"},
+                                case=False,
+                            ),
                         ]
                     ),
                 },
@@ -186,30 +175,29 @@ class ARC_AGI_v1_PIPELINE(ExperimentConfig):
                 DataReader,
                 {
                     "path": os.path.join(self.posteval_data_post_processing_comp.output_dir, "transformed_data.jsonl"),
-                    "format": ".jsonl"
+                    "format": ".jsonl",
                 },
             ),
             aggregator_configs=[
                 AggregatorConfig(
-                    BiLevelAggregator, 
+                    BiLevelAggregator,
                     {
                         "column_names": [
                             "ExactMatch_result_numeric",
                         ],
                         "first_groupby": "data_point_id",
                         "filename_base": "ExactMatch_Total_BestOfN",
-                        "agg_fn": "max"
-                    }),
+                        "agg_fn": "max",
+                    },
+                ),
                 AggregatorConfig(
                     BiLevelAggregator,
                     {
-                        "column_names": [
-                            "ExactMatch_result_numeric"
-                        ],
+                        "column_names": ["ExactMatch_result_numeric"],
                         "first_groupby": "data_point_id",
                         "second_groupby": "split",
                         "filename_base": "ExactMatch_Grouped_by_Split_BestOfN",
-                        "agg_fn": "max"
+                        "agg_fn": "max",
                     },
                 ),
             ],
@@ -301,7 +289,7 @@ class ARC_AGI_v1_PIPELINE_5050_SUBSET(ARC_AGI_v1_PIPELINE):
                         MultiplyTransform(n_repeats=1),
                     ]
                 ),
-            }
+            },
         )
 
         return config

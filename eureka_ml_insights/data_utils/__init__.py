@@ -23,7 +23,6 @@ from .transform import (
     AddColumn,
     AddColumnAndData,
     ASTEvalTransform,
-    CleanCOTAnswer,
     ColumnMatchMapTransform,
     ColumnRename,
     CopyColumn,
