@@ -402,7 +402,7 @@ dependencies:
       - pyarrow==19.0.0
       - pyasn1==0.6.1
       - pyasn1-modules==0.4.1
-      - pyautogen==0.7.0
+      - ag2==0.7.0
       - pycocotools==2.0.8
       - pycountry==24.6.1
       - pycparser==2.22
