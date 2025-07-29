@@ -4,6 +4,9 @@ import json
 import ast
 import logging
 
+from bfcl_eval.eval_checker.multi_turn_eval.multi_turn_checker import (
+    multi_turn_checker)
+
 class DictMatch(ClassicMetric):
     """This metric class checks if two dictionary strings represent the same dictionary."""
 
@@ -73,6 +76,100 @@ class DictMatch(ClassicMetric):
         )
         return data
 
+class BFCLMultiturnMatch(ClassicMetric):
+    """This metric class checks if two dictionary strings represent the same dictionary."""
+
+    def __init__(self, model_output_col: str = "model_output",
+                 ground_truth_col: str = "ground_truth", 
+                 initial_config_col:str = "initial_config",
+                 involved_classes_col: str = "involved_classes",
+                 test_entry_id_col: str = "id",
+                 ):
+        super().__init__()
+        self.model_output_col = model_output_col
+        self.ground_truth_col = ground_truth_col
+        self.initial_config_col = initial_config_col
+        self.involved_classes_col = involved_classes_col
+        self.test_entry_id_col = test_entry_id_col
+
+    def __evaluate__(self, answer_text, target_text,initial_config,involved_classes,test_entry_id):
+        test_entry = {"initial_config":eval(initial_config),
+                        "involved_classes":eval(involved_classes),
+                        "id":test_entry_id,
+        }
+        print(type(answer_text),answer_text)
+        multi_turn_model_result_list_decoded = answer_text # eval(answer_text)
+        test_entry = test_entry
+        test_category = "" 
+        model_name = ""
+        multi_turn_ground_truth_list = eval(target_text)
+        
+        print(multi_turn_model_result_list_decoded)
+        print(multi_turn_ground_truth_list)
+        print(test_entry)
+        print(test_category)
+        print(model_name)
+
+        accuracy_checker_result = multi_turn_checker(
+            multi_turn_model_result_list_decoded,
+            multi_turn_ground_truth_list,
+            test_entry,
+            test_category,
+            model_name,
+        )
+        return str(accuracy_checker_result['valid'])
+        if not is_valid:
+            return "none"
+            
+        try:
+            answer_dict = self._parse_to_dict(answer_text)
+            target_dict = self._parse_to_dict(target_text)
+            func_dict = self._parse_to_dict(func)
+            result = ast_checker(
+            func_description=[func_dict], 
+            model_output=[answer_dict], 
+            possible_answer=[target_dict], 
+            language=language, 
+            test_category=[test_category], 
+            model_name="hello"
+            )
+            return str(result['valid'])
+        
+        except ValueError as e:
+            logging.error(f"Failed to parse one of the inputs as a dict.")
+            logging.error(f"target_text:'{target_text}', answer_text:'{answer_text}', error: {str(e)}")
+            return "none"
+
+        if answer_dict == target_dict:
+            return "correct"
+        else:
+            return "incorrect"
+
+    def _parse_to_dict(self, s):
+        """Try to parse a string to a Python dict using JSON or Python literal syntax."""
+        try:
+            return json.loads(s)
+        except json.JSONDecodeError:
+            try:
+                result = ast.literal_eval(s)
+                if isinstance(result, dict):
+                    return result
+            except Exception:
+                pass
+        raise ValueError(f"Invalid dictionary string: {s}")
+
+    def evaluate(self, data):
+        self.validate_data(data)
+        data[self.__class__.__name__ + "_result"] = data.apply(
+            lambda x: self.__evaluate__(x[self.model_output_col], 
+                                        x[self.ground_truth_col], 
+                                        x[self.initial_config_col],
+                                        x[self.involved_classes_col],
+                                        x[self.test_entry_id_col],
+                                        ), axis=1
+        )
+        return data
+    
 import re
 
 MODEL_CONFIG_MAPPING = {"hello":"hello"}

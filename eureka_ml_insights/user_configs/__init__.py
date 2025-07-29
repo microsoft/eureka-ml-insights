@@ -11,6 +11,7 @@ from .ba_calendar import (
     BA_Calendar_RunEvals_PIPELINE,
 )
 from .bfcl import BFCL_PIPELINE
+from .bfcl_multiturn import BFCL_MULTITURN_PIPELINE
 from .dna import DNA_PIPELINE
 from .drop import Drop_Experiment_Pipeline
 from .flenqa import FlenQA_Experiment_Pipeline

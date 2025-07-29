@@ -38,6 +38,7 @@ from .transform import (
     SequenceTransform,
     ShuffleColumnsTransform,
     MajorityVoteTransform,
+    MajorityVoteListTransform,
     TokenCounterTransform,
     ExtractUsageTransform
 )

@@ -461,6 +461,61 @@ class MajorityVoteTransform:
             group[majority_label_col] = group.loc[group[model_output_col] == majority_value, model_label_col].iloc[0]
         return group
 
+import pandas as pd
+from dataclasses import dataclass
+
+@dataclass
+class MajorityVoteListTransform:
+    """
+    Applies a majority vote over list-valued model outputs per id_col.
+    Converts lists to tuples for comparison, then restores the original list form.
+    """
+
+    model_output_col: str = "model_output"
+    model_label_column: str = None
+    id_col: str = "data_point_id"
+    majority_vote_col: str = "majority_vote"
+    majority_label_col: str = "majority_label"
+
+    def transform(self, df: pd.DataFrame, random_state: int = 0) -> pd.DataFrame:
+        """
+        Transforms the dataframe by calculating the majority vote of list-valued model_output_col per id_col.
+        """
+        result_df = df.groupby(self.id_col).apply(
+            self.majority_vote,
+            self.model_output_col,
+            self.model_label_column,
+            self.majority_vote_col,
+            self.majority_label_col,
+            random_state=random_state,
+        ).reset_index(drop=True)
+        return result_df
+
+    @staticmethod
+    def majority_vote(
+        group, model_output_col, model_label_col, majority_vote_col, majority_label_col, random_state: int = 0
+    ):
+        """
+        Perform majority voting where values in model_output_col are lists.
+        """
+        x = group[model_output_col].dropna().apply(tuple)  # Convert lists to tuples for hashing
+        mode_series = x.mode()
+
+        if not mode_series.empty:
+            majority_tuple = mode_series.sample(n=1, random_state=random_state).iloc[0]
+            majority_value = list(majority_tuple)  # Convert back to list
+        else:
+            majority_value = pd.NA
+
+        group[majority_vote_col] = [majority_value] * len(group)
+
+        if model_label_col and majority_value is not pd.NA:
+            match_row = group[group[model_output_col].apply(lambda y: list(y) == majority_value)]
+            if not match_row.empty:
+                group[majority_label_col] = match_row[model_label_col].iloc[0]
+
+        return group
+
 
 @dataclass
 class ExtractUsageTransform:
