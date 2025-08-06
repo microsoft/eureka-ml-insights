@@ -109,6 +109,7 @@ class MATHVISTA_PIPELINE(ExperimentConfig):
                 MMDataLoader,
                 {"path": os.path.join(self.eval_data_pre_processing.output_dir, "transformed_data.jsonl"), "load_images":False},
             ),
+            max_concurrent=500,
             output_dir=os.path.join(self.log_dir, "eval_inference_result"),
         )
 
@@ -137,6 +138,7 @@ class MATHVISTA_PIPELINE(ExperimentConfig):
                 MMDataLoader,
                 {"path": os.path.join(self.eval_data_pre_processing_two.output_dir, "transformed_data.jsonl"), "load_images":False},
             ),
+            max_concurrent=500,
             output_dir=os.path.join(self.log_dir, "eval_inference_result_two"),
         )
 

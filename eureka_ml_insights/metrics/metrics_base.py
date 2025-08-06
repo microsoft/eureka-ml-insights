@@ -194,10 +194,11 @@ class MetricBasedVerifier:
 class BboxMetric(Metric):
     """This class is a base class for metrics that require ground truths and predictions."""
 
-    def __init__(self, model_output_col: str = "model_output", normalized: bool = False):
+    def __init__(self, model_output_col: str = "model_output", normalized: bool = False, xywh: bool = True):
         super().__init__()
         self.model_output_col = model_output_col
         self.normalized = normalized
+        self.xywh = xywh
 
     def validate_data(self, data):
         """This method checks if the data has the required fields."""
@@ -212,8 +213,11 @@ class BboxMetric(Metric):
         if not is_valid or not bbox_answer:
             return "none"
         
-        bbox = [bbox[0], bbox[1], bbox[0] + bbox[2], bbox[1] + bbox[3]]
-        #bbox_answer = ast.literal_eval(bbox_answer)
+        if self.xywh:
+            bbox = [bbox[0], bbox[1], bbox[0] + bbox[2], bbox[1] + bbox[3]]
+        else:
+            bbox = [bbox[0], bbox[1], bbox[2], bbox[3]]
+
         click_point = [(bbox_answer[0] + bbox_answer[2]) / 2, (bbox_answer[1] + bbox_answer[3]) / 2]
 
         # Check if the predicted point falls in the ground truth box
