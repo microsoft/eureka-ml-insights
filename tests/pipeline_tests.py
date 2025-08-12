@@ -24,6 +24,10 @@ from eureka_ml_insights.data_utils.transform import (
 from eureka_ml_insights.user_configs import (
     AIME_PIPELINE,
     AIME_SEQ_PIPELINE,
+    ARC_AGI_v1_PIPELINE,
+    ARC_AGI_v1_PIPELINE_5Run,
+    COT_ARC_AGI_v1_PIPELINE,
+    COT_ARC_AGI_v1_PIPELINE_5Run,
     DNA_PIPELINE,
     GEOMETER_PIPELINE,
     GSM8K_PIPELINE,
@@ -400,6 +404,38 @@ class TEST_NPHARD_TSP_PIPELINE(NPHARD_TSP_PIPELINE_MULTIPLE_RUNS):
         return config
 
 
+class TEST_ARC_AGI_v1_PIPELINE(ARC_AGI_v1_PIPELINE):
+    # Test config the BA Calendar benchmark with TestModel and TestDataLoader
+    def configure_pipeline(self):
+        config = super().configure_pipeline(model_config=ModelConfig(GenericTestModel, {}))
+        self.data_processing_comp.data_reader_config.class_name = TestHFDataReader
+        return config
+
+
+class TEST_ARC_AGI_v1_PIPELINE_5Run(ARC_AGI_v1_PIPELINE_5Run):
+    # Test config the BA Calendar benchmark with TestModel and TestDataLoader
+    def configure_pipeline(self):
+        config = super().configure_pipeline(model_config=ModelConfig(GenericTestModel, {}))
+        self.data_processing_comp.data_reader_config.class_name = TestHFDataReader
+        return config
+
+
+class TEST_COT_ARC_AGI_v1_PIPELINE(COT_ARC_AGI_v1_PIPELINE):
+    # Test config the BA Calendar benchmark with TestModel and TestDataLoader
+    def configure_pipeline(self):
+        config = super().configure_pipeline(model_config=ModelConfig(GenericTestModel, {}))
+        self.data_processing_comp.data_reader_config.class_name = TestHFDataReader
+        return config
+
+
+class TEST_COT_ARC_AGI_v1_PIPELINE_5Run(COT_ARC_AGI_v1_PIPELINE_5Run):
+    # Test config the BA Calendar benchmark with TestModel and TestDataLoader
+    def configure_pipeline(self):
+        config = super().configure_pipeline(model_config=ModelConfig(GenericTestModel, {}))
+        self.data_processing_comp.data_reader_config.class_name = TestHFDataReader
+        return config
+
+
 class PipelineTest:
     def setUp(self) -> None:
         self.conf = self.get_config()
@@ -659,6 +695,110 @@ class GSM8K_PipelineTest(PipelineTest, unittest.TestCase):
 class GSMSYMBOLIC_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_GSMSYMBOLIC_PIPELINE().pipeline_config
+
+
+class ARC_AGI_v1_PipelineTest(PipelineTest, unittest.TestCase):
+    def get_config(self):
+        self.test_pipeline = TEST_ARC_AGI_v1_PIPELINE()
+        self.config = self.test_pipeline.pipeline_config
+        return self.config
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.eval_configs = [
+            self.test_pipeline.evalreporting_comp,
+            self.test_pipeline.best_of_n_evalreporting_comp
+        ]
+
+    def test_outputs_exist(self) -> None:
+        logging.info("Running test_outputs_exist test in PipelineTest")
+        self.assertTrue(any("transformed_data.jsonl" in str(file) for file in self.files))
+        if self.data_reader_config.prompt_template_path:
+            self.assertTrue(any("processed_prompts.jsonl" in str(file) for file in self.files))
+        self.assertTrue(any("inference_result.jsonl" in str(file) for file in self.files))
+        if self.eval_config.metric_config is not None:
+            self.assertTrue(any("metric_results.jsonl" in str(file) for file in self.files))
+        n_aggregators = len([config for eval_config in self.eval_configs for config in eval_config.aggregator_configs])
+        n_aggregator_files = len([file for file in self.files if "aggregator" in str(file)])
+        self.assertEqual(n_aggregators, n_aggregator_files)
+
+
+class ARC_AGI_v1_Pipeline_5RunTest(PipelineTest, unittest.TestCase):
+    def get_config(self):
+        self.test_pipeline = TEST_ARC_AGI_v1_PIPELINE_5Run()
+        self.config = self.test_pipeline.pipeline_config
+        return self.config
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.eval_configs = [
+            self.test_pipeline.evalreporting_comp,
+            self.test_pipeline.best_of_n_evalreporting_comp
+        ]
+
+    def test_outputs_exist(self) -> None:
+        logging.info("Running test_outputs_exist test in PipelineTest")
+        self.assertTrue(any("transformed_data.jsonl" in str(file) for file in self.files))
+        if self.data_reader_config.prompt_template_path:
+            self.assertTrue(any("processed_prompts.jsonl" in str(file) for file in self.files))
+        self.assertTrue(any("inference_result.jsonl" in str(file) for file in self.files))
+        if self.eval_config.metric_config is not None:
+            self.assertTrue(any("metric_results.jsonl" in str(file) for file in self.files))
+        n_aggregators = len([config for eval_config in self.eval_configs for config in eval_config.aggregator_configs])
+        n_aggregator_files = len([file for file in self.files if "aggregator" in str(file)])
+        self.assertEqual(n_aggregators, n_aggregator_files)
+
+
+class COT_ARC_AGI_v1_PIPELINETest(PipelineTest, unittest.TestCase):
+    def get_config(self):
+        self.test_pipeline = TEST_COT_ARC_AGI_v1_PIPELINE()
+        self.config = self.test_pipeline.pipeline_config
+        return self.config
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.eval_configs = [
+            self.test_pipeline.evalreporting_comp,
+            self.test_pipeline.best_of_n_evalreporting_comp
+        ]
+
+    def test_outputs_exist(self) -> None:
+        logging.info("Running test_outputs_exist test in PipelineTest")
+        self.assertTrue(any("transformed_data.jsonl" in str(file) for file in self.files))
+        if self.data_reader_config.prompt_template_path:
+            self.assertTrue(any("processed_prompts.jsonl" in str(file) for file in self.files))
+        self.assertTrue(any("inference_result.jsonl" in str(file) for file in self.files))
+        if self.eval_config.metric_config is not None:
+            self.assertTrue(any("metric_results.jsonl" in str(file) for file in self.files))
+        n_aggregators = len([config for eval_config in self.eval_configs for config in eval_config.aggregator_configs])
+        n_aggregator_files = len([file for file in self.files if "aggregator" in str(file)])
+        self.assertEqual(n_aggregators, n_aggregator_files)
+
+
+class COT_ARC_AGI_v1_PIPELINE_5RunTest(PipelineTest, unittest.TestCase):
+    def get_config(self):
+        self.test_pipeline = TEST_COT_ARC_AGI_v1_PIPELINE_5Run()
+        self.config = self.test_pipeline.pipeline_config
+        return self.config
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.eval_configs = [
+            self.test_pipeline.evalreporting_comp,
+            self.test_pipeline.best_of_n_evalreporting_comp
+        ]
+
+    def test_outputs_exist(self) -> None:
+        logging.info("Running test_outputs_exist test in PipelineTest")
+        self.assertTrue(any("transformed_data.jsonl" in str(file) for file in self.files))
+        if self.data_reader_config.prompt_template_path:
+            self.assertTrue(any("processed_prompts.jsonl" in str(file) for file in self.files))
+        self.assertTrue(any("inference_result.jsonl" in str(file) for file in self.files))
+        if self.eval_config.metric_config is not None:
+            self.assertTrue(any("metric_results.jsonl" in str(file) for file in self.files))
+        n_aggregators = len([config for eval_config in self.eval_configs for config in eval_config.aggregator_configs])
+        n_aggregator_files = len([file for file in self.files if "aggregator" in str(file)])
+        self.assertEqual(n_aggregators, n_aggregator_files)
 
 
 if __name__ == "__main__":
