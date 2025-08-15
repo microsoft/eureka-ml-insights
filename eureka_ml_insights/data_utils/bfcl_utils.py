@@ -47,13 +47,17 @@ class BFCLExtractAnswer(DFTransformBase):
 class BFCLMultiturnExtractAnswer(DFTransformBase):
     model_output_column: str
     model_answer_column: str
+    num_iter: int
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         df[self.model_answer_column] = df[self.model_output_column].apply(self.parse_output_answer)
+        df[self.model_answer_column] = df[self.model_output_column].apply(
+            lambda x: self.parse_output_answer(x, num_iter=self.num_iter)
+            )
         return df
 
     @staticmethod
-    def parse_output_answer(response):
+    def parse_output_answer(response,num_iter=3):
         """
         Parse the input string to extract answer of a given AIME question.
         Allows and ignores optional <think>...</think> blocks in the response.
@@ -61,7 +65,10 @@ class BFCLMultiturnExtractAnswer(DFTransformBase):
         Parameters:
             response (str): Input string containing answer X in the form of "Final Answer: X".
         Returns:
-            numerical_value (float or str): A numeric value or JSON string representing the model's answer.
+            The output is a list[list[list[str]]]
+            The first index is the turn;
+            The second index is the step;
+            The third index is the list of func calls extracted from the message.
         """
         print(type(response))
         print(repr(response))
@@ -69,7 +76,10 @@ class BFCLMultiturnExtractAnswer(DFTransformBase):
         #all_messages = json.loads(response)
         all_messages = response
 
-        return extract_nested_function_calls(all_messages)
+        extracted_answers = extract_nested_function_calls(all_messages)
+        formated_answers = format_function_calls(extracted_answers,num_iter=num_iter)
+        return formated_answers
+
         # Remove <think>...</think> blocks
         response_cleaned = re.sub(r"<think>.*?</think>", "", response, flags=re.DOTALL).strip()
 
@@ -116,6 +126,16 @@ def extract_nested_function_calls(messages: List[Dict[str, str]]) -> List[List[L
 
     return result
 
+
+def format_function_calls(extracted_answer: List[List[List[str]]], num_iter=3 ) -> List[List[List[str]]]:
+    """Group every x items into one list without adding an extra nesting level."""
+    grouped = []
+    for i in range(0, len(extracted_answer), num_iter):
+        chunk = []
+        for sublist in extracted_answer[i:i+num_iter]:
+            chunk.extend(sublist)  # append elements directly instead of nesting
+        grouped.append(chunk)
+    return grouped
 
 def extract_clean_function_calls(messages: List[dict]) -> List[str]:
     """

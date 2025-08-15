@@ -40,7 +40,7 @@ class JinjaPromptTemplate:
         for key in values.keys():
             if values[key] is None or str(values[key]) == "nan":
                 values[key] = ""
-            else:
-                values[key] = str(values[key])
+            #else:
+            #    values[key] = str(values[key])
 
         return self.template.render(values)
