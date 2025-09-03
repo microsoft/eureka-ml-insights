@@ -211,6 +211,19 @@ CLAUDE_SECRET_KEY_PARAMS = {
     "key_vault_url": None,
 }
 
+CLAUDE_3_7_SONNET_THINKING_CONFIG = ModelConfig(
+    ClaudeReasoningModel,
+    {
+        "secret_key_params": CLAUDE_SECRET_KEY_PARAMS,
+        "model_name": "claude-3-7-sonnet-20250219",
+        "thinking_enabled": True,
+        "thinking_budget": 30720,
+        "max_tokens": 32768, # This number should always be higher than the thinking budget
+        "temperature": 1.0, # As of 03/08/2025, thinking only works with temperature 1.0
+        "timeout": 600, # We set a timeout of 10 minutes for thinking
+    },
+)
+
 CLAUDE_3_OPUS_CONFIG = ModelConfig(
     ClaudeModel,
     {
@@ -227,27 +240,24 @@ CLAUDE_3_5_SONNET_CONFIG = ModelConfig(
     },
 )
 
-CLAUDE_3_7_SONNET_THINKING_CONFIG = ModelConfig(
-    ClaudeReasoningModel,
+CLAUDE_3_7_SONNET_CONFIG = ModelConfig(
+    ClaudeModel,
     {
         "secret_key_params": CLAUDE_SECRET_KEY_PARAMS,
         "model_name": "claude-3-7-sonnet-20250219",
-        "thinking_enabled": True,
-        "thinking_budget": 30720,
-        "max_tokens": 32768, # This number should always be higher than the thinking budget
-        "temperature": 1.0, # As of 03/08/2025, thinking only works with temperature 1.0
-        "timeout": 600, # We set a timeout of 10 minutes for thinking
     },
 )
+
 
 CLAUDE_3_5_SONNET_20241022_CONFIG = ModelConfig(
     ClaudeModel,
     {
         "secret_key_params": CLAUDE_SECRET_KEY_PARAMS,
         "model_name": "claude-3-5-sonnet-20241022",
+		"temperature": 1.0,
+        "max_tokens": 4096
     },
 )
-
 # LLAVA models
 LLAVAHF_V16_34B_CONFIG = ModelConfig(
     LLaVAHuggingFaceModel,
@@ -357,4 +367,25 @@ DEEPSEEK_R1_CONFIG = ModelConfig(
         # the timeout parameter is passed to urllib.request.urlopen(request, timeout=self.timeout) in ServerlessAzureRestEndpointModel
         "timeout": 600,
     },
+)
+
+VLLM_DEEPSEEK_CONFIG = ModelConfig(
+    # Use this config if you have already deployed the model
+    # and pass the service ports, num_servers, and model_name as commandline args
+    LocalVLLMModel,
+    {
+        "temperature": 0.6,
+        "max_tokens": 30000,
+    }
+)
+
+VLLM_QWEN3_CONFIG = ModelConfig(
+    # Use this config if you have already deployed the model
+    # and pass the service ports, num_servers, and model_name as commandline args
+    LocalVLLMModel,
+    {
+        "temperature": 0.6,
+        "top_p": 0.95,
+        "max_tokens": 32768,
+    }
 )

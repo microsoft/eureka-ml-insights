@@ -40,6 +40,9 @@ class JinjaPromptTemplate:
         for key in values.keys():
             if values[key] is None or str(values[key]) == "nan":
                 values[key] = ""
+            elif isinstance(values[key], list):
+                # Convert list to list of strings
+                values[key] = [str(item) for item in values[key]]
             else:
                 values[key] = str(values[key])
 
