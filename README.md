@@ -23,14 +23,16 @@ This repository contains the code for the Eureka ML Insights framework. The fram
   - [Installation](#installation)
     - [📦 Installing with pip + editable for development](#-installing-with-pip--editable-for-development)
     - [📦 Generate wheel package to share with others](#-generate-wheel-package-to-share-with-others)
-    - [🐍Installing with Conda](#installing-with-conda)
+    - [🐍 Installing with Conda](#installing-with-conda)
+    - [🦙 (Optional) Installing Llama.cpp local runtime](#optional-installing-llamacpp-local-runtime)
   - [🚀 Quick start](#-quick-start)
   - [🗺️ Overview of Experiment Pipelines](#️-overview-of-experiment-pipelines)
     - [⚒️ Utility Classes Used in Components](#️-utility-classes-used-in-components)
     - [🪛 Configuring the Data Processing Component](#-configuring-the-data-processing-component)
     - [🪛 Configuring the Prompt Processing Component](#-configuring-the-prompt-processing-component)
-    - [🪛 Configuring the Inference Component](#-configuring-the-inference-component)
-    - [🪛 Configuring the Evaluation Reporting Component](#-configuring-the-evaluation-reporting-component)
+  - [🪛 Configuring the Inference Component](#-configuring-the-inference-component)
+  - [🪛 Configuring the Evaluation Reporting Component](#-configuring-the-evaluation-reporting-component)
+    - [Optional: Llama.cpp local runtime](#optional-llamacpp-local-runtime)
 - [✋ How to contribute:](#-how-to-contribute)
 - [✒️ Citation](#️-citation)
 - [Responsible AI Considerations](#responsible-ai-considerations)
@@ -75,7 +77,7 @@ To get started, clone this repository to your local machine and navigate to the 
 5. Fetch from dir dist/ the .whl
 6. This file can be installed via `pip install eureka_ml_insights.whl`
 
-### 🐍Installing with Conda
+### 🐍 Installing with Conda
 1. Make sure you have [Conda](https://docs.anaconda.com/free/miniconda/) installed on your system.
 2. Open a terminal and create a new Conda environment using the `environment.yml` file:\
     ```conda env create --name myenv --file environment.yml```
@@ -84,6 +86,14 @@ To get started, clone this repository to your local machine and navigate to the 
 4. [Optional] Install GPU packages if you have a GPU machine and want to self-host models:\
     ```conda env update --file environment_gpu.yml```
 Installation tested for Unix/Linux, but it is currently not supported on Windows.
+
+### 🦙 (Optional) Installing Llama.cpp local runtime
+The framework supports local inference using Llama.cpp via the `LlamaCppModel` class. This requires the `llama-cpp-python` package, which can be installed with different options depending on your hardware and preferences.
+
+- For a CPU installation, you can use `pip install eureka-ml-insights[llamacpp]` command with our package, which includes `llama-cpp-python` as an extra requirement.
+- For a CUDA installation, you can either use prebuilt wheels for specific CUDA versions or build from source:
+  - For a CUDA-specific wheel, use: `pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu121`. Replace `cu121` with your CUDA version (e.g., `cu122`, `cu124`).
+  - For a CUDA-source build, set the `CMAKE_ARGS` environment variable when installing the package: `CMAKE_ARGS="-DGGML_CUDA=on" pip install llama-cpp-python`.
 
 ## 🚀 Quick start
 To reproduce the results of a pre-defined experiment pipeline, you can run the following command:

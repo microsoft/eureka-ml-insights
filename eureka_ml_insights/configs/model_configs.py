@@ -9,6 +9,7 @@ from eureka_ml_insights.models import (
     DirectOpenAIModel,
     DirectOpenAIOModel,
     GeminiModel,
+    LlamaCppModel,
     LlamaServerlessAzureRestEndpointModel,
     LLaVAHuggingFaceModel,
     LLaVAModel,
@@ -356,5 +357,20 @@ DEEPSEEK_R1_CONFIG = ModelConfig(
         "max_tokens": 32768,
         # the timeout parameter is passed to urllib.request.urlopen(request, timeout=self.timeout) in ServerlessAzureRestEndpointModel
         "timeout": 600,
+    },
+)
+
+# Llama.cpp local model (optional dependency; see extras "llamacpp")
+LLAMACPP_LOCAL_CONFIG = ModelConfig(
+    LlamaCppModel,
+    {
+        "model_path": "path/to/model.gguf",
+        "n_ctx": 8192,
+        "temperature": 0.7,
+        "top_p": 0.95,
+        "top_k": 40,
+        "repeat_penalty": 1.1,
+        "max_tokens": 1024,
+        "chat_mode": False,
     },
 )
