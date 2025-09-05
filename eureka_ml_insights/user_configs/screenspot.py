@@ -139,6 +139,50 @@ class SCREENSPOT_UNNORMALIZED_REPORTING_PIPELINE(SCREENSPOT_UNNORMALIZED_PIPELIN
         self.evalreporting_comp.data_reader_config.init_args["path"] = resume_from
         return PipelineConfig([self.evalreporting_comp], self.log_dir)    
 
+class SCREENSPOTV2_NORMALIZED_PIPELINE(SCREENSPOT_NORMALIZED_PIPELINE):
+    """
+    This defines an ExperimentConfig pipeline for the SCREENSPOTV2 dataset using normalized coordinates.
+    There is no model_config by default and the model config must be passed in via command line.
+    """
+
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any] ) -> PipelineConfig:
+        config = super().configure_pipeline(model_config, resume_from)
+        self.data_processing_comp.data_reader_config.init_args["path"] = "/mnt/phimmwestus3_datasets/EVAL/ScreenSpot/screenspot_all_v2.jsonl"
+        self.inference_comp.data_loader_config.init_args["mm_data_path_prefix"] = "/mnt/phimmwestus3_datasets/EVAL/ScreenSpot/images_v2"
+        self.evalreporting_comp.metric_config = MetricConfig(BboxMetric, {"normalized": True})
+        return config
+
+class SCREENSPOTV2_UNNORMALIZED_PIPELINE(SCREENSPOT_UNNORMALIZED_PIPELINE):
+    """
+    This defines an ExperimentConfig pipeline for the SCREENSPOTV2 dataset using unnormalized coordinates.
+    There is no model_config by default and the model config must be passed in via command line.
+    """
+
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any] ) -> PipelineConfig:
+        config = super().configure_pipeline(model_config, resume_from)
+        self.data_processing_comp.data_reader_config.init_args["path"] = "/mnt/phimmwestus3_datasets/EVAL/ScreenSpot/screenspot_all_v2.jsonl"
+        self.inference_comp.data_loader_config.init_args["mm_data_path_prefix"] = "/mnt/phimmwestus3_datasets/EVAL/ScreenSpot/images_v2"
+        self.evalreporting_comp.metric_config = MetricConfig(BboxMetric, {"normalized": False})
+        return config
+
+class SCREENSPOTV2_NORMALIZED_REPORTING_PIPELINE(SCREENSPOTV2_NORMALIZED_PIPELINE):
+    """This method is used to define an eval pipeline with only a metric report component,
+    on the ScreenSpotV2 dataset."""
+
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any] ) -> PipelineConfig:
+        super().configure_pipeline(model_config, resume_from)
+        self.evalreporting_comp.data_reader_config.init_args["path"] = resume_from
+        return PipelineConfig([self.evalreporting_comp], self.log_dir)
+
+class SCREENSPOTV2_UNNORMALIZED_REPORTING_PIPELINE(SCREENSPOTV2_UNNORMALIZED_PIPELINE):
+    """This method is used to define an eval pipeline with only a metric report component,
+    on the ScreenSpotV2 dataset."""
+
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any] ) -> PipelineConfig:
+        super().configure_pipeline(model_config, resume_from)
+        self.evalreporting_comp.data_reader_config.init_args["path"] = resume_from
+        return PipelineConfig([self.evalreporting_comp], self.log_dir)    
+
 class SCREENSPOT_PRO_NORMALIZED_PIPELINE(SCREENSPOT_NORMALIZED_PIPELINE):
     """
     This defines an ExperimentConfig pipeline for the SCREENSPOT_PRO dataset using normalized coordinates.
