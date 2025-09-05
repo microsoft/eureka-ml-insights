@@ -1800,7 +1800,7 @@ class LlamaCppModel(Model):
         try:
             from llama_cpp import Llama
         except ImportError:
-            raise ImportError("llama-cpp-python is not installed. Install with 'pip install eureka-ml-insights[llamacpp]' or 'pip install llama-cpp-python>=0.3.16'.")
+            raise ImportError("'llama-cpp-python' is not installed.")
 
         init_kwargs = {"model_path": self.model_path, "n_ctx": self.n_ctx, "verbose": self.verbose}
         if self.n_threads is not None:
@@ -1814,10 +1814,10 @@ class LlamaCppModel(Model):
 
         self._llm = Llama(**init_kwargs)
 
-    def model_template_fn(self, text_prompt: str, system_message: str = None) -> str:
+    def model_template_fn(self, text_prompt, system_message=None):
         return (system_message + " \n" if system_message else "") + text_prompt
 
-    def _create_chat_messages(self, text_prompt: str, system_message: str = None, previous_messages: list = None) -> list:
+    def _create_chat_messages(self, text_prompt, system_message=None, previous_messages=None):
         messages = []
         if system_message:
             messages.append({"role": "system", "content": system_message})
@@ -1826,7 +1826,7 @@ class LlamaCppModel(Model):
         messages.append({"role": "user", "content": text_prompt})
         return messages
 
-    def _infer_chat(self, messages: list):
+    def _infer_chat(self, messages):
         # Guard inference with a lock for basic thread-safety per instance
         with self._lock:
             result = self._llm.create_chat_completion(
@@ -1844,7 +1844,7 @@ class LlamaCppModel(Model):
         except Exception:
             return result.get("choices", [{}])[0].get("text")
 
-    def _infer_completion(self, prompt: str):
+    def _infer_completion(self, prompt):
         with self._lock:
             result = self._llm.create_completion(
                 prompt=prompt,

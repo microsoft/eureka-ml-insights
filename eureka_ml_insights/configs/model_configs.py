@@ -360,7 +360,7 @@ DEEPSEEK_R1_CONFIG = ModelConfig(
     },
 )
 
-# Llama.cpp local model (optional dependency; see extras "llamacpp")
+# Local Llama.cpp model
 LLAMACPP_LOCAL_CONFIG = ModelConfig(
     LlamaCppModel,
     {
@@ -372,5 +372,6 @@ LLAMACPP_LOCAL_CONFIG = ModelConfig(
         "repeat_penalty": 1.1,
         "max_tokens": 1024,
         "chat_mode": False,
+        "verbose": False,
     },
 )
