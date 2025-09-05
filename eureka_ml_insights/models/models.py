@@ -1788,6 +1788,7 @@ class LlamaCppModel(Model):
     stop: list = None
     apply_model_template: bool = True
     chat_mode: bool = False
+    verbose: bool = False
 
     _llm: Any = None
     _lock: threading.Lock = threading.Lock()
@@ -1801,7 +1802,7 @@ class LlamaCppModel(Model):
         except ImportError:
             raise ImportError("llama-cpp-python is not installed. Install with 'pip install eureka-ml-insights[llamacpp]' or 'pip install llama-cpp-python>=0.3.16'.")
 
-        init_kwargs = {"model_path": self.model_path, "n_ctx": self.n_ctx}
+        init_kwargs = {"model_path": self.model_path, "n_ctx": self.n_ctx, "verbose": self.verbose}
         if self.n_threads is not None:
             init_kwargs["n_threads"] = self.n_threads
         if self.n_batch is not None:
