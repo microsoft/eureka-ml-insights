@@ -4,7 +4,7 @@ import os
 import re
 from abc import ABC, abstractmethod
 from io import BytesIO
-from typing import List, Optional
+from typing import List, Dict, Optional, Union
 
 import jsonlines
 import pandas as pd
@@ -13,6 +13,7 @@ from azure.storage.blob import BlobClient, ContainerClient
 from datasets import load_dataset, load_from_disk
 from PIL import Image
 from tqdm import tqdm
+import numpy as np
 
 from eureka_ml_insights.secret_management import get_secret
 
@@ -538,7 +539,7 @@ class HFDataReader(DataReader):
         self.cache_dir = cache_dir
         self.load_data_from_disk = load_data_from_disk
 
-    def _save_base64_to_image_file(self, image_base64: dict, cache_path: str) -> str:
+    def _save_base64_to_image_file(self, images_base64: Union[dict, List[Dict[str, str]]], cache_path: str) -> str:
         """
         Saves a base64 encoded image to a local cache path and returns the path to be stored.
         args:
@@ -547,24 +548,34 @@ class HFDataReader(DataReader):
         returns:
             file_path: str, full path to saved image.
         """
-        file_path = ""
+        file_paths = []
 
-        if image_base64:
-            # create path to save image
-            file_path = os.path.join(cache_path, image_base64["path"])
+        if images_base64 is not None:
+            if not isinstance(images_base64, list) and not isinstance(images_base64, np.ndarray):
+                images_base64 = [images_base64]
+            elif isinstance(images_base64, np.ndarray):
+                images_base64 = images_base64.tolist()
 
-            # only do this if the image doesn't already exist
-            if not os.path.exists(file_path):
-                # base64 string to binary image data
-                buffered = BytesIO(image_base64["bytes"])
-                query_image = Image.open(buffered).convert("RGB")
+            for image_base64 in images_base64:
+                # create path to save image
+                file_path = os.path.join(cache_path, image_base64["path"])
+                file_paths.append(file_path)
 
-                # save image and make the dir path if needed (need for paths with nested new dirs)
-                dir_path = os.path.dirname(file_path)
-                os.makedirs(dir_path, exist_ok=True)
-                query_image.save(file_path)
+                # only do this if the image doesn't already exist
+                if not os.path.exists(file_path):
+                    # base64 string to binary image data
+                    buffered = BytesIO(image_base64["bytes"])
+                    query_image = Image.open(buffered).convert("RGB")
 
-        return file_path
+                    # save image and make the dir path if needed (need for paths with nested new dirs)
+                    dir_path = os.path.dirname(file_path)
+                    os.makedirs(dir_path, exist_ok=True)
+                    query_image.save(file_path)
+
+        if len(file_paths) == 1:
+            file_paths = file_paths[0]
+
+        return file_paths
 
     def _save_images(self, df: pd.DataFrame, cache_path: str, image_columns) -> pd.DataFrame:
         """
@@ -602,7 +613,10 @@ class HFDataReader(DataReader):
             image_columns = [
                 col
                 for col in hf_dataset.features
-                if hasattr(hf_dataset.features[col], "dtype") and hf_dataset.features[col].dtype == "PIL.Image.Image"
+                if (
+                    (hasattr(hf_dataset.features[col], "dtype") and hf_dataset.features[col].dtype == "PIL.Image.Image") or
+                    (hasattr(hf_dataset.features[col], "feature") and hasattr(hf_dataset.features[col].feature, "dtype") and hf_dataset.features[col].feature.dtype == "PIL.Image.Image")
+                )
             ]
 
             if image_columns:

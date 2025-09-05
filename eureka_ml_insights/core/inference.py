@@ -222,7 +222,7 @@ class Inference(Component):
                         self._append_threadsafe(prev_result)
                 else:
                     num_imgs = len(model_args[1]) if (len(model_args) > 1 and model_args[1] is not None and isinstance(model_args[1], list)) else 0
-                    prompt_length = self.model.get_prompt_length(model_args[0], images_exist = (num_imgs > 0)) if eq_prompts else -1
+                    prompt_length = self.model.get_prompt_length(model_args[0], num_images=num_imgs) if eq_prompts else -1
                     key = (num_imgs, prompt_length)
                     if key not in batches:
                         batches[key] = [[]]
