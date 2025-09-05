@@ -90,7 +90,7 @@ Installation tested for Unix/Linux, but it is currently not supported on Windows
 ### 🦙 (Optional) Installing Llama.cpp local runtime
 The framework supports local inference using Llama.cpp via the `LlamaCppModel` class. This requires the `llama-cpp-python` package, which can be installed with different options depending on your hardware and preferences.
 
-- For a CPU installation, you can use `pip install eureka-ml-insights[llamacpp]` command with our package, which includes `llama-cpp-python` as an extra requirement.
+- For a CPU installation, you can use `pip install -e .[llamacpp]` command with our package, which includes `llama-cpp-python` as an extra requirement.
 - For a CUDA installation, you can either use prebuilt wheels for specific CUDA versions or build from source:
   - For a CUDA-specific wheel, use: `pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu121`. Replace `cu121` with your CUDA version (e.g., `cu122`, `cu124`).
   - For a CUDA-source build, set the `CMAKE_ARGS` environment variable when installing the package: `CMAKE_ARGS="-DGGML_CUDA=on" pip install llama-cpp-python`.
