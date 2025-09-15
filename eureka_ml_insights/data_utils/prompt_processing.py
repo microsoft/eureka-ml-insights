@@ -27,23 +27,15 @@ class JinjaPromptTemplate:
         ast = self.env.parse(template)
         return jinja2.meta.find_undeclared_variables(ast)
 
-    def create(self, values: Dict[str, Any]) -> str:
+    def create(self, template_values: Dict[str, Any]) -> str:
         """
-        Instantiates the template by filling all placeholders with provided values.  Returns the filled template. Raises
+        Instantiates the template by filling all placeholders with provided template_values.  Returns the filled template. Raises
         exception when some placeholder value was not provided.
         """
         for placeholder in self.placeholders:
-            if placeholder not in values:
-                raise ValueError(f"Place holder {placeholder} is not among values")
-
-        # cleanup all values
-        for key in values.keys():
-            if values[key] is None or str(values[key]) == "nan":
-                values[key] = ""
-            elif isinstance(values[key], list):
-                # Convert list to list of strings
-                values[key] = [str(item) for item in values[key]]
-            else:
-                values[key] = str(values[key])
-
-        return self.template.render(values)
+            if placeholder not in template_values:
+                raise ValueError(f"Place holder {placeholder} is not among template_values")
+        for key in template_values.keys():
+            if template_values[key] is None or str(template_values[key]) == "nan":
+                template_values[key] = ""
+        return self.template.render(template_values)
