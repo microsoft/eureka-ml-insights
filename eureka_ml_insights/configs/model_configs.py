@@ -25,10 +25,41 @@ from eureka_ml_insights.models.models import AzureOpenAIModel
 
 from .config import ModelConfig
 
+AIF_NT_DEEPSEEK_R1_CONFIG = ModelConfig(
+    DeepseekR1ServerlessAzureRestEndpointModel,
+    {
+        "url": "https://DeepSeek-R1-aif-nt.eastus.models.ai.azure.com/v1/chat/completions",
+        "secret_key_params": {
+            "key_name": "aif-nt-deepseek-r1",
+            "local_keys_path": "keys/aifeval-vault-azure-net.json",
+            "key_vault_url": "https://aifeval.vault.azure.net",
+        },
+        "max_tokens": 32768,
+        "timeout": 1200
+    },
+)
+
 # For models that require secret keys, you can store the keys in a json file and provide the path to the file
 # in the secret_key_params dictionary. OR you can provide the key name and key vault URL to fetch the key from Azure Key Vault.
 # You don't need to provide both the key_vault_url and local_keys_path. You can provide one of them based on your setup.
+GATEWAY_SECRET_KEY_PARAMS = {
+    "key_name": "gateway",
+    "local_keys_path": "/home/sayouse/git/eureka-ml-insights/bingbong/aifeval-vault-azure-net.json",
+    "key_vault_url": None,
+}
 
+GATEWAY_GPT_4O_CONFIG = ModelConfig(
+    DirectOpenAIModel,
+    {
+        "base_url": "https://gateway.phyagi.net/api/",
+        "model_name": "gpt-4o",
+        "secret_key_params": GATEWAY_SECRET_KEY_PARAMS,
+#        "extra_body":{"tier": "impact", "cache_ttl": 0},
+        "temperature": 0,
+        "max_tokens": 16000,
+        "top_p": 0.95,
+    },
+)
 
 # Test model
 TEST_MODEL_CONFIG = ModelConfig(TestModel, {})
@@ -77,8 +108,8 @@ TOGETHER_DEEPSEEK_R1_Distill_Llama_70B_CONFIG = ModelConfig(
 
 # OpenAI models
 OPENAI_SECRET_KEY_PARAMS = {
-    "key_name": "your_openai_secret_key_name",
-    "local_keys_path": "keys/keys.json",
+    "key_name": "openai",
+    "local_keys_path": "/home/sayouse/git/eureka-ml-insights/bingbong/aifeval-vault-azure-net.json",
     "key_vault_url": None,
 }
 
@@ -248,8 +279,8 @@ CLAUDE_3_7_SONNET_CONFIG = ModelConfig(
     },
 )
 
-
-CLAUDE_3_5_SONNET_20241022_CONFIG = ModelConfig(
+# The config below uses temperature 1.0 to enable more diverse outputs
+CLAUDE_3_5_SONNET_20241022_TEMP1_CONFIG = ModelConfig(
     ClaudeModel,
     {
         "secret_key_params": CLAUDE_SECRET_KEY_PARAMS,
@@ -258,7 +289,17 @@ CLAUDE_3_5_SONNET_20241022_CONFIG = ModelConfig(
         "max_tokens": 4096
     },
 )
-# LLAVA models
+
+CLAUDE_3_5_SONNET_20241022_CONFIG = ModelConfig(
+    ClaudeModel,
+    {
+        "secret_key_params": CLAUDE_SECRET_KEY_PARAMS,
+        "model_name": "claude-3-5-sonnet-20241022",
+        "max_tokens": 4096
+    },
+)
+
+#  LLAVA models
 LLAVAHF_V16_34B_CONFIG = ModelConfig(
     LLaVAHuggingFaceModel,
     {"model_name": "llava-hf/llava-v1.6-34b-hf", "use_flash_attn": True},
