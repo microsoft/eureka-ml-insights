@@ -202,6 +202,7 @@ class DetectionTestModel:
         self.name = "detection_output_generator"
 
         self.obj_list = ["apple", "banana", "orange", "grape", "kiwi", "melon", "strawberry"]
+        random.seed(42)
 
     def generate(self, text_prompt, *args, **kwargs):
 

@@ -54,7 +54,7 @@ class MAZE_PIPELINE(ExperimentConfig):
     """This method is used to define an eval pipeline with inference and metric report components,
     on the spatial reasoning dataset."""
 
-    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None, **kwargs) -> PipelineConfig:
         # Configure the data processing component.
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
@@ -64,7 +64,7 @@ class MAZE_PIPELINE(ExperimentConfig):
                     "path": "microsoft/VISION_LANGUAGE",
                     "split": "val_g10",
                     "tasks": "maze",
-                    "transform": MultiplyTransform(n_repeats=5),
+                    "transform": MultiplyTransform(n_repeats=int(kwargs.get("n_repeats", 1))),
                 },
             ),
             prompt_template_path=os.path.join(
@@ -86,7 +86,7 @@ class MAZE_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
-            max_concurrent=10,
+            max_concurrent=int(kwargs.get("max_concurrent", 1)),
         )
 
         self.preeval_data_post_processing_comp = DataProcessingConfig(
@@ -444,8 +444,8 @@ class MAZE_PIPELINE(ExperimentConfig):
 class MAZE_COT_PIPELINE(MAZE_PIPELINE):
     """This class extends MAZE_PIPELINE to use a COT prompt."""
 
-    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
-        config = super().configure_pipeline(model_config, resume_from)
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None, **kwargs) -> PipelineConfig:
+        config = super().configure_pipeline(model_config, resume_from, **kwargs)
         self.data_processing_comp.prompt_template_path=os.path.join(
                 os.path.dirname(__file__),
                 "../../prompt_templates/vision_language_templates/cot.jinja",
@@ -466,8 +466,8 @@ class MAZE_TEXTONLY_PIPELINE(MAZE_PIPELINE):
 class MAZE_COT_TEXTONLY_PIPELINE(MAZE_COT_PIPELINE):
     """This class extends MAZE_COT_PIPELINE to use text only data."""
 
-    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
-        config = super().configure_pipeline(model_config, resume_from)
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None, **kwargs) -> PipelineConfig:
+        config = super().configure_pipeline(model_config, resume_from, **kwargs)
         self.data_processing_comp.data_reader_config.init_args["tasks"] = (
             "maze_text_only"
         )

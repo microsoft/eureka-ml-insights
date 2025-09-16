@@ -196,7 +196,7 @@ class MultiColumnTransform(DFTransformBase):
             return df
         self.validate(df)
         for column in self.columns:
-            df[column] = df[column].apply(self._transform)
+            df.loc[:, column] = df.loc[:, column].apply(self._transform)
         return df
 
 

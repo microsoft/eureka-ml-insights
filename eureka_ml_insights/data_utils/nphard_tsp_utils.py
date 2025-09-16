@@ -43,6 +43,8 @@ def extract_path(final_answer):
 
 def parse_path_from_model_output(model_output_string):
     """Parses the model output to extract a tsp path."""
+    if model_output_string is None:
+        return "0,0,0,0"
     try:
         final_answer = extract_final_answer(model_output_string)
         tour_string = extract_path(final_answer) if final_answer else None
