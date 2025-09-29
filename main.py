@@ -6,7 +6,10 @@ import os
 import sys
 
 from eureka_ml_insights import user_configs as configs
-from eureka_ml_insights.configs import model_configs
+from eureka_ml_insights.configs.model_configs import (
+    OAI_GPT4O_2024_11_20_CONFIG,
+)
+from eureka_ml_insights.configs import model_configs as model_configs
 from eureka_ml_insights.core import Pipeline
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -106,6 +109,9 @@ if __name__ == "__main__":
             init_args["eval_model_config"] = getattr(model_configs, args.eval_model_config)
         except AttributeError:
             raise ValueError(f"Model config class {args.eval_model_config} not found.")
+    else:
+        logging.warning("No eval_model_config provided. Using OAI_GPT4O_2024_11_20_CONFIG for eval related LLM calls if needed.")
+        init_args["eval_model_config"] = OAI_GPT4O_2024_11_20_CONFIG
 
     if args.resume_from:
         init_args["resume_from"] = args.resume_from

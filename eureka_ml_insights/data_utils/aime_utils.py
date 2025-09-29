@@ -26,6 +26,12 @@ class AIMEExtractAnswer(DFTransformBase):
         """
         numerical_value = None
 
+        if response is None:
+            return None
+
+        if isinstance(response, float):
+            return response
+
         # Try to find an answer in the "Final Answer: X" format
         match = re.search(r"Final Answer:\s*([\$]?-?[\d,]+(?:\.\d+)?%?)", response)
         # If not found, try to find an answer in the "Final Answer: [X]" format
