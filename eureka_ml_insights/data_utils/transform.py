@@ -348,6 +348,8 @@ class RegexTransform(MultiColumnTransform):
     occurrence: str = "last"
 
     def _transform(self, sentence):
+        if sentence is None:
+            return None
         if self.ignore_case:
             results = re.findall(self.prompt_pattern, sentence, flags=re.IGNORECASE)
         else:

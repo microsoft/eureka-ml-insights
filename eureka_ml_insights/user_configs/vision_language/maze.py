@@ -35,7 +35,6 @@ from eureka_ml_insights.configs import (
     PromptProcessingConfig,
     DataJoinConfig,    
 )
-from eureka_ml_insights.configs.model_configs import OAI_GPT4O_2024_11_20_CONFIG
 
 """This file contains example user defined configuration classes for the maze task.
 In order to define a new configuration, a new class must be created that directly or indirectly
@@ -141,13 +140,13 @@ class MAZE_PIPELINE(ExperimentConfig):
 
         self.inference_llm_answer_extract = InferenceConfig(
             component_type=Inference,
-            model_config=OAI_GPT4O_2024_11_20_CONFIG,
+            model_config=kwargs.get("eval_model_config", None),
             data_loader_config=DataSetConfig(
                 DataLoader,
                 {"path": os.path.join(self.filter_empty_answer.output_dir, "transformed_data.jsonl")},
             ),
             output_dir=os.path.join(self.log_dir, "llm_answer_extract_inference_result"),
-            max_concurrent=1
+            max_concurrent=64,
         )        
 
         self.data_join = DataJoinConfig(
@@ -456,8 +455,8 @@ class MAZE_COT_PIPELINE(MAZE_PIPELINE):
 class MAZE_TEXTONLY_PIPELINE(MAZE_PIPELINE):
     """This class extends MAZE_PIPELINE to use text only data."""
 
-    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
-        config = super().configure_pipeline(model_config, resume_from)
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None, **kwargs) -> PipelineConfig:
+        config = super().configure_pipeline(model_config, resume_from, **kwargs)
         self.data_processing_comp.data_reader_config.init_args["tasks"] = (
             "maze_text_only"
         )
@@ -478,8 +477,8 @@ class MAZE_REPORTING_PIPELINE(MAZE_PIPELINE):
     """This method is used to define an eval pipeline with only a metric report component,
     on the maze dataset."""
 
-    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
-        super().configure_pipeline(model_config, resume_from)
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None, **kwargs) -> PipelineConfig:
+        super().configure_pipeline(model_config, resume_from, **kwargs)
         self.preeval_data_post_processing_comp.data_reader_config.init_args["path"] = resume_from
         # Configure the pipeline
         return PipelineConfig(

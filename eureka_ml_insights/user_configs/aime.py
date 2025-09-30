@@ -13,9 +13,6 @@ from eureka_ml_insights.configs import (
     PipelineConfig,
     PromptProcessingConfig,
 )
-from eureka_ml_insights.configs.model_configs import (
-    OAI_GPT4O_2024_11_20_CONFIG,
-)
 from eureka_ml_insights.core import DataProcessing, Inference, PromptProcessing
 from eureka_ml_insights.core.eval_reporting import EvalReporting
 from eureka_ml_insights.data_utils import (
@@ -52,8 +49,9 @@ class AIME_PIPELINE(ExperimentConfig):
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
-        self.n_repeats = int(kwargs.get('n_repeat', 1))  # Default value is 1
+        self.n_repeats = int(kwargs.get('n_repeats', 1))  # Default value is 1
         self.max_concurrent = int(kwargs.get('max_concurrent', 1))  # Default value is 1
+        eval_model_config = kwargs.get('eval_model_config', None)
         # data preprocessing
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
@@ -441,7 +439,8 @@ class AIME_HYBRIDEXTRACT_PIPELINE(AIME_PIPELINE):
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from,**kwargs)
-        self.llm_extractor_max_concurrent = int(kwargs.get('llm_extractor_max_concurrent', 10))  # Default value is 1
+        self.llm_extractor_max_concurrent = int(kwargs.get('llm_extractor_max_concurrent', 8))  # Default value is 1
+        eval_model_config = kwargs.get('eval_model_config', None)
         answer_col = "extracted_answer"
         llm_extraction_subpipeline_conf = LLM_EXTRACTION_SUBPIPELINE_MIXIN()
         self.llm_extraction_subpipeline = llm_extraction_subpipeline_conf.configure_subpipeline(
@@ -451,7 +450,7 @@ class AIME_HYBRIDEXTRACT_PIPELINE(AIME_PIPELINE):
                 os.path.dirname(__file__),
                 "../prompt_templates/aime_templates/extract_aime_answer.jinja",
             ),
-            llm_extractor_model_config=OAI_GPT4O_2024_11_20_CONFIG,
+            llm_extractor_model_config=eval_model_config,
             log_dir=self.log_dir,
             llm_extractor_max_concurrent=self.llm_extractor_max_concurrent,
             llm_extractor_answer_transforms=[
