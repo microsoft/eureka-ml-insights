@@ -51,9 +51,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "--resume_from", type=str, help="The path to the inference_result.jsonl to resume from.", default=None
     )
+    parser.add_argument("--offline_model", action="store_true", help="Use an offline model for inference.")
+    parser.add_argument("--offline_file_path", type=str, help="The path to the offline file to use.", default=None)
     parser.add_argument("--local_vllm", action="store_true", help="Deploy/use local vllm for inference.")
     parser.add_argument("--ports", type=str, nargs="*", help="Ports where vllm model is already hosted.", default=None)
     parser.add_argument("--num_servers", type=int, help="Number of servers to deploy.", default=None)
+    parser.add_argument("--only_data_processing", action="store_true", help="Only run data processing.", default=None)
     init_args = {}
 
     # catch any unknown arguments
@@ -99,6 +102,19 @@ if __name__ == "__main__":
                 LocalVLLMModel, {"model_name": args.model_name, "ports": args.ports, "num_servers": args.num_servers}
             )
 
+    if args.offline_model:
+        from eureka_ml_insights.configs.config import ModelConfig
+        from eureka_ml_insights.models import OfflineFileModel
+
+        if args.model_name is None or args.offline_file_path is None:
+            raise ValueError(
+                "Commandline argument --model_name and --offline_file_path are required when using --offline_model."
+            )
+
+        init_args["model_config"] = ModelConfig(
+            OfflineFileModel, {"model_name": args.model_name, "file_path": args.offline_file_path}
+        )
+
     elif args.model_config:
         try:
             init_args["model_config"] = getattr(model_configs, args.model_config)
@@ -126,6 +142,13 @@ if __name__ == "__main__":
             raise ValueError(f"Experiment config class {args.exp_config} not found.")
     pipeline_config = experiment_config_class(exp_logdir=args.exp_logdir, **init_args).pipeline_config
     logging.info(f"Saving experiment logs in {pipeline_config.log_dir}.")
+
+    if args.only_data_processing:
+        from eureka_ml_insights.configs import PipelineConfig
+
+        pipeline_config = PipelineConfig([pipeline_config.component_configs[0]], pipeline_config.log_dir)
+        logging.info("Running only first (data processing) component of the pipeline. Please verify with pipeline")
+
     pipeline = Pipeline(pipeline_config.component_configs, pipeline_config.log_dir)
     pipeline.run()
 
