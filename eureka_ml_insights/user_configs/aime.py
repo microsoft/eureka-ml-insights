@@ -64,7 +64,7 @@ class AIME_PIPELINE(ExperimentConfig):
                     "transform": SequenceTransform(
                         [
                             
-                            SamplerTransform(sample_count=3, random_seed=1234),
+                            # SamplerTransform(sample_count=3, random_seed=1234),
                             MultiplyTransform(n_repeats=self.n_repeats),
                             ColumnRename(
                                 name_mapping={
