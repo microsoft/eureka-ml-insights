@@ -92,7 +92,8 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
             model_config=model_config,
             data_loader_config=DataSetConfig(
                 MMDataLoader,
-                {"path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl")},
+                {"path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl"),
+                 "misc_columns": ["data_point_id","data_repeat_id"]},
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,

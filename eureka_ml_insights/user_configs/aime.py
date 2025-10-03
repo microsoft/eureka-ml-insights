@@ -64,7 +64,7 @@ class AIME_PIPELINE(ExperimentConfig):
                     "transform": SequenceTransform(
                         [
                             
-                            # SamplerTransform(sample_count=3, random_seed=1234),
+                            SamplerTransform(sample_count=3, random_seed=1234),
                             MultiplyTransform(n_repeats=self.n_repeats),
                             ColumnRename(
                                 name_mapping={
@@ -90,6 +90,7 @@ class AIME_PIPELINE(ExperimentConfig):
                 MMDataLoader,
                 {
                     "path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl"),
+                    "misc_columns": ["data_point_id","data_repeat_id"]
                 },    
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
