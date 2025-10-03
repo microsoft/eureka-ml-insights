@@ -28,8 +28,8 @@ def import_from_path(module_path, class_name):
     spec.loader.exec_module(module)
     # Get the experiment config class from the module
     if hasattr(module, class_name):
-        return getattr(module, class_name)
         logging.info(f"Using experiment config class {class_name} from {module_path}.")
+        return getattr(module, class_name)
     else:
         raise ValueError(f"Experiment config class {class_name} not found in {module_path}.")
 
