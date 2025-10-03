@@ -212,6 +212,7 @@ class OfflineFileModel(Model):
         missing_columns = required_columns - set(self.df_results.columns)
         if missing_columns:
             raise ValueError(f"Error: Missing required columns in file_path: {missing_columns}")
+        logging.info(f"Loaded {len(self.df_results)} records from {self.file_path} for model {self.model_name}.")
         return None
 
     def generate(self, query_text, *args, **kwargs):

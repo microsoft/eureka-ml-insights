@@ -125,7 +125,10 @@ class MMDataLoader(DataLoader):
         model_kwargs = {}
         if self.misc_columns:
             for column in self.misc_columns:
-                model_kwargs[column] = row[column]
+                if column not in row:
+                    log.warning(f"Misc column {column} not found in data row. Continuing without it.")
+                else:
+                    model_kwargs[column] = row[column]
         return row, model_args, model_kwargs
 
     def _search_for_image_columns(self, data_row) -> list:
