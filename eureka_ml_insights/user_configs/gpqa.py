@@ -473,6 +473,6 @@ class GPQA_PIPELINE_5Run(GPQA_Experiment_Pipeline):
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         # data preprocessing
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
-            MultiplyTransform(n_repeats=5)
+            MultiplyTransform(n_repeats=kwargs.get("n_repeats", 5))
         )
         return pipeline
