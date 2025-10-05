@@ -38,9 +38,10 @@ class DataReaderBase(ABC):
 class DataLoader:
     """Dataloaders are used to feed data to models in inference time from LOCAL data sources."""
 
-    def __init__(self, path, total_lines=None):
+    def __init__(self, path, total_lines=None, misc_columns=None):
         self.path = path
         self.total_lines = total_lines
+        self.misc_columns = misc_columns
 
     def __enter__(self):
         self.reader = jsonlines.open(self.path, "r", loads=json.loads)
@@ -64,6 +65,12 @@ class DataLoader:
         query_text = row["prompt"]
         model_args = (query_text,)
         model_kwargs = {}
+        if self.misc_columns:
+            for column in self.misc_columns:
+                if column not in row:
+                    log.warning(f"Misc column {column} not found in data row. Continuing without it.")
+                else:
+                    model_kwargs[column] = row[column]
         return row, model_args, model_kwargs
 
     def get_sample_model_input(self):
