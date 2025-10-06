@@ -75,7 +75,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                             ColumnMatchMapTransform(
                                 new_col="ground_truth", key_col="Correct Answer", columns=["A", "B", "C", "D"]
                             ),
-                            MultiplyTransform(n_repeats=1),
+                            MultiplyTransform(n_repeats=int(kwargs.get("n_repeats", 1))),
                         ]
                     ),
                 },
@@ -92,7 +92,8 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
             model_config=model_config,
             data_loader_config=DataSetConfig(
                 MMDataLoader,
-                {"path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl")},
+                {"path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl"),
+                 "misc_columns": ["data_point_id","data_repeat_id"]},
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
@@ -473,6 +474,6 @@ class GPQA_PIPELINE_5Run(GPQA_Experiment_Pipeline):
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         # data preprocessing
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
-            MultiplyTransform(n_repeats=5)
+            MultiplyTransform(n_repeats=int(kwargs.get("n_repeats", 5)))
         )
         return pipeline

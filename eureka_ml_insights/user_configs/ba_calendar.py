@@ -66,7 +66,7 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
                    "transform": SequenceTransform([
                        ColumnRename(name_mapping={"task_prompt": "prompt"}),
                        #SamplerTransform(random_seed=5, sample_count=10),
-                       MultiplyTransform(n_repeats=1),
+                       MultiplyTransform(n_repeats=int(kwargs.get("n_repeats", 1))),
                    ]),
                 }
             ),
@@ -79,11 +79,12 @@ class BA_Calendar_PIPELINE(ExperimentConfig):
             model_config=model_config,
             data_loader_config=DataSetConfig(
                 DataLoader,
-                {"path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl")},
+                {"path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl"),
+                 "misc_columns": ["data_point_id","data_repeat_id"]},
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
-            max_concurrent=1,
+            max_concurrent=int(kwargs.get("max_concurrent", 10))
         )
 
         if resume_logdir:
@@ -425,7 +426,7 @@ class BA_Calendar_Parallel_PIPELINE(BA_Calendar_PIPELINE):
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         # data preprocessing
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms[-1] = MultiplyTransform(
-            n_repeats=5
+            n_repeats=int(kwargs.get("n_repeats", 5))
         )
         return pipeline
 

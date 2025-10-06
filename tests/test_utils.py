@@ -280,18 +280,18 @@ class EarlyStoppableIterable:
 
 
 class TestDataLoader(EarlyStoppableIterable, DataLoader):
-    def __init__(self, path, n_iter):
-        super().__init__(path=path)
+    def __init__(self, path, n_iter, misc_columns=None):
+        super().__init__(path=path, misc_columns=misc_columns)
         self.n_iter = n_iter
 
 
 class TestMMDataLoader(EarlyStoppableIterable, MMDataLoader):
-    def __init__(self, path, n_iter, image_column_names=None):
-        super().__init__(path, image_column_names=image_column_names)
+    def __init__(self, path, n_iter, image_column_names=None, misc_columns=None):
+        super().__init__(path, image_column_names=image_column_names, misc_columns=misc_columns)
         self.n_iter = n_iter
 
 
 class TestAzureMMDataLoader(EarlyStoppableIterable, AzureMMDataLoader):
-    def __init__(self, path, n_iter, account_url, blob_container, image_column_names=None):
-        super().__init__(path, account_url, blob_container, image_column_names=image_column_names)
+    def __init__(self, path, n_iter, account_url, blob_container, image_column_names=None, misc_columns=None):
+        super().__init__(path, account_url, blob_container, image_column_names=image_column_names, misc_columns=misc_columns)
         self.n_iter = n_iter
