@@ -49,8 +49,7 @@ class IFEval_PIPELINE(ExperimentConfig):
                 {
                     "path": "google/IFEval",
                     "split": "train",
-                    "transform": SequenceTransform([MultiplyTransform(n_repeats=1),
-                                                    MultiplyTransform(n_repeats=int(kwargs.get("n_repeats", 1)))]),
+                    "transform": SequenceTransform([MultiplyTransform(n_repeats=int(kwargs.get("n_repeats", 1)))]),
                 },
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
