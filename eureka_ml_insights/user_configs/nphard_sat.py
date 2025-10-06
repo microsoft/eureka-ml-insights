@@ -415,12 +415,12 @@ class NPHARD_SAT_PIPELINE_MULTIPLE_RUNS(NPHARD_SAT_PIPELINE):
     """This class specifies the config for running SAT benchmark n repeated times"""
 
     def configure_pipeline(
-        self, model_config: ModelConfig, resume_from: str = None, n_repeats: int = 1, **kwargs: dict[str, Any]
+        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         # data preprocessing
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
-            MultiplyTransform(n_repeats=int(n_repeats))
+            MultiplyTransform(n_repeats=int(kwargs.get("n_repeats", 1)))
         )
         return pipeline
 
@@ -443,7 +443,7 @@ class NPHARD_SAT_HYBRIDEXTRACT_PIPELINE(NPHARD_SAT_PIPELINE_MULTIPLE_RUNS):
                 os.path.dirname(__file__),
                 "../prompt_templates/nphard_sat_templates/extract_sat_answer.jinja",
             ),
-            llm_extractor_model_config=OAI_GPT4O_2024_11_20_CONFIG,
+            llm_extractor_model_config=kwargs.get("eval_model_config", OAI_GPT4O_2024_11_20_CONFIG),
             log_dir=self.log_dir,
             llm_extractor_max_concurrent=self.llm_extractor_max_concurrent,
             llm_extractor_answer_transforms=[
