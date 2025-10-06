@@ -53,7 +53,7 @@ from .llm_extraction import LLM_EXTRACTION_SUBPIPELINE_MIXIN
 
 class NPHARD_SAT_PIPELINE(ExperimentConfig):
     def configure_pipeline(
-        self, model_config: ModelConfig, resume_from: str = None, n_repeats: int = 1, **kwargs: dict[str, Any]
+        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
         # Configure the data processing component.
         self.data_processing_comp = PromptProcessingConfig(
@@ -88,7 +88,7 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
-            max_concurrent=kwargs.get("max_concurrent", 10),
+            max_concurrent=int(kwargs.get("max_concurrent", 10)),
         )
 
         # post process the response to extract the answer

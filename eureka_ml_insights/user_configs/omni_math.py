@@ -49,7 +49,7 @@ class Omni_Math_PIPELINE(ExperimentConfig):
                    "path": "KbsdJames/Omni-MATH",
                    "split": "test",
                    "transform": SequenceTransform([
-                    MultiplyTransform(n_repeats=kwargs.get("n_repeats", 1)),
+                    MultiplyTransform(n_repeats=int(kwargs.get("n_repeats", 1))),
                    ]),
                 }
             ),
@@ -69,7 +69,7 @@ class Omni_Math_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
-            max_concurrent=kwargs.get("max_concurrent", 10),
+            max_concurrent=int(kwargs.get("max_concurrent", 10)),
         )
 
         # eval data preprocessing
@@ -784,5 +784,5 @@ class Omni_Math_Parallel_PIPELINE(Omni_Math_PIPELINE):
     ) -> PipelineConfig:
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from, eval_resume_from=eval_resume_from, eval_model_config=eval_model_config)
         # data preprocessing
-        self.data_processing_comp.data_reader_config.init_args["transform"].transforms[-1] = MultiplyTransform(n_repeats=kwargs.get("n_repeats", 5))
+        self.data_processing_comp.data_reader_config.init_args["transform"].transforms[-1] = MultiplyTransform(n_repeats=int(kwargs.get("n_repeats", 5)))
         return pipeline

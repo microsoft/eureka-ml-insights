@@ -65,7 +65,7 @@ class IFEval_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
-            max_concurrent=kwargs.get("max_concurrent", 10),
+            max_concurrent=int(kwargs.get("max_concurrent", 10)),
         )
 
         # Configure the evaluation and reporting component for evaluation and dataset level aggregation
@@ -209,7 +209,7 @@ class IFEval_Parallel_PIPELINE(IFEval_PIPELINE):
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         # data preprocessing
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms[-1] = MultiplyTransform(
-            n_repeats=kwargs.get("n_repeats", 5)
+            n_repeats=int(kwargs.get("n_repeats", 5))
         )
         return pipeline
 
