@@ -30,9 +30,9 @@ from eureka_ml_insights.data_utils import (
     SequenceTransform,
     SamplerTransform
 )
-from eureka_ml_insights.data_utils.aime_utils import AIMEExtractAnswer
+from eureka_ml_insights.data_utils.numeric_answer_utils import NumericExtractAnswer
 from eureka_ml_insights.data_utils.data import MMDataLoader
-from eureka_ml_insights.metrics.aime_metrics import NumericMatch
+from eureka_ml_insights.metrics.numeric_answer_metrics import NumericMatch
 from eureka_ml_insights.metrics.reports import (
     BiLevelAggregator,
     BiLevelCountAggregator,
@@ -106,7 +106,7 @@ class AIME_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            AIMEExtractAnswer("model_output","extracted_answer"),
+                            NumericExtractAnswer("model_output","extracted_answer"),
                             ImputeNA(columns="extracted_answer", value=""),
                         ]
                     ),
@@ -457,7 +457,7 @@ class AIME_HYBRIDEXTRACT_PIPELINE(AIME_PIPELINE):
             log_dir=self.log_dir,
             llm_extractor_max_concurrent=self.llm_extractor_max_concurrent,
             llm_extractor_answer_transforms=[
-                AIMEExtractAnswer(answer_col,answer_col),
+                NumericExtractAnswer(answer_col,answer_col),
             ],
         )
 

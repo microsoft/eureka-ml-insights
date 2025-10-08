@@ -30,9 +30,9 @@ from eureka_ml_insights.data_utils import (
     SequenceTransform,
     SamplerTransform
 )
-from eureka_ml_insights.data_utils.aime_utils import AIMEExtractAnswer
+from eureka_ml_insights.data_utils.numeric_answer_utils import NumericExtractAnswer
 from eureka_ml_insights.data_utils.data import MMDataLoader
-from eureka_ml_insights.metrics.aime_metrics import NumericMatch
+from eureka_ml_insights.metrics.numeric_answer_metrics import NumericMatch
 from eureka_ml_insights.metrics.reports import (
     BiLevelAggregator,
     BiLevelCountAggregator,
@@ -40,8 +40,6 @@ from eureka_ml_insights.metrics.reports import (
 )
 
 from .llm_extraction import LLM_EXTRACTION_SUBPIPELINE_MIXIN
-
-# from eureka_ml_insights.data_utils.transform import MajorityVoteTransform
 
 
 class EULER_PIPELINE(ExperimentConfig):
@@ -57,13 +55,14 @@ class EULER_PIPELINE(ExperimentConfig):
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
             data_reader_config=DataSetConfig(
-                DataReader,
+                HFDataReader,
                 {
-                    "path": "eureka_ml_insights/user_configs/euler_test.jsonl",
+                    "path": "microsoft/euler",
+                    "split": "train",
                     "transform": SequenceTransform(
                         [
                             
-                            SamplerTransform(sample_count=3, random_seed=1234),
+                            # SamplerTransform(sample_count=3, random_seed=1234),
                             MultiplyTransform(n_repeats=self.n_repeats),
                             ColumnRename(
                                 name_mapping={
@@ -89,20 +88,13 @@ class EULER_PIPELINE(ExperimentConfig):
                 MMDataLoader,
                 {
                     "path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl"),
-                    # "misc_columns": ["data_point_id","data_repeat_id"]
                 },    
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
             max_concurrent=self.max_concurrent,
         )
-        print(str(model_config.class_name))
-        print(model_config)
-        print(str(model_config.class_name) == "<class 'eureka_ml_insights.models.models.OfflineFileModel'>")
-        # exit()
-        if str(model_config.class_name) == "<class 'eureka_ml_insights.models.models.OfflineFileModel'>":
-            self.inference_comp.data_loader_config.init_args["misc_columns"] = ["data_point_id","data_repeat_id"]
-        # post process the response to extract the answer
+
         self.answer_extraction_processing = DataProcessingConfig(
             component_type=DataProcessing,
             data_reader_config=DataSetConfig(
@@ -112,7 +104,7 @@ class EULER_PIPELINE(ExperimentConfig):
                     "format": ".jsonl",
                     "transform": SequenceTransform(
                         [
-                            AIMEExtractAnswer("model_output","extracted_answer"),
+                            NumericExtractAnswer("model_output","extracted_answer"),
                             ImputeNA(columns="extracted_answer", value=""),
                         ]
                     ),
@@ -158,28 +150,6 @@ class EULER_PIPELINE(ExperimentConfig):
                         "normalize": True,
                     },
                 ),
-                # AggregatorConfig(
-                #     CountAggregator,
-                #     {
-                #         "column_names": [
-                #             "NumericMatch_result",
-                #         ],
-                #         "group_by": "Year",
-                #         "filename_base": "NumericMatch_GroupBy",
-                #     },
-                # ),
-                # AggregatorConfig(
-                #     BiLevelCountAggregator,
-                #     {
-                #         "column_names": [
-                #             "NumericMatch_result",
-                #         ],
-                #         "first_groupby": "ID",
-                #         "second_groupby": "Part",
-                #         "filename_base": "NumericMatch_GroupBy_Part",
-                #         "normalize": True,
-                #     },
-                # ),
                 AggregatorConfig(
                     BiLevelAggregator,
                     {
@@ -240,30 +210,6 @@ class EULER_PIPELINE(ExperimentConfig):
                         "normalize": True,
                     },
                 ),
-                # AggregatorConfig(
-                #     BiLevelCountAggregator,
-                #     {
-                #         "column_names": [
-                #             "NumericMatch_result",
-                #         ],
-                #         "first_groupby": "data_repeat_id",
-                #         "second_groupby": "Year",
-                #         "filename_base": "MajorityVote_byyear",
-                #         "normalize": True,
-                #     },
-                # ),
-                # AggregatorConfig(
-                #     BiLevelCountAggregator,
-                #     {
-                #         "column_names": [
-                #             "NumericMatch_result",
-                #         ],
-                #         "first_groupby": "data_repeat_id",
-                #         "second_groupby": "Part",
-                #         "filename_base": "MajorityVote_bypart",
-                #         "normalize": True,
-                #     },
-                # ),
                 AggregatorConfig(
                     BiLevelAggregator,
                     {
@@ -324,28 +270,6 @@ class EULER_PIPELINE(ExperimentConfig):
                         "agg_fn": "max",
                     },
                 ),
-                # AggregatorConfig(
-                #     BiLevelAggregator,
-                #     {
-                #         "column_names": ["NumericMatch_result_numeric"],
-                #         "first_groupby": "data_point_id",
-                #         "second_groupby": "Year",
-                #         "filename_base": "NumericMatch_BestOfN_GroupBy_Year",
-                #         "agg_fn": "max",
-                #     },
-                # ),
-                # AggregatorConfig(
-                #     BiLevelCountAggregator,
-                #     {
-                #         "column_names": [
-                #             "NumericMatch_result",
-                #         ],
-                #         "first_groupby": "data_point_id",
-                #         "second_groupby": "Part",
-                #         "filename_base": "NumericMatch_BestOfN_GroupBy_Part",
-                #         "normalize": True,
-                #     },
-                # ),
                 AggregatorConfig(
                     BiLevelAggregator,
                     {
@@ -379,28 +303,6 @@ class EULER_PIPELINE(ExperimentConfig):
                         "agg_fn": "min",
                     },
                 ),
-                # AggregatorConfig(
-                #     BiLevelAggregator,
-                #     {
-                #         "column_names": ["NumericMatch_result_numeric"],
-                #         "first_groupby": "data_point_id",
-                #         "second_groupby": "Year",
-                #         "filename_base": "NumericMatch_WorstOfN_GroupBy_Year",
-                #         "agg_fn": "min",
-                #     },
-                # ),
-                # AggregatorConfig(
-                #     BiLevelCountAggregator,
-                #     {
-                #         "column_names": [
-                #             "NumericMatch_result",
-                #         ],
-                #         "first_groupby": "data_point_id",
-                #         "second_groupby": "Part",
-                #         "filename_base": "NumericMatch_WorstOfN_GroupBy_Part",
-                #         "normalize": True,
-                #     },
-                # ),
                 AggregatorConfig(
                     BiLevelAggregator,
                     {
@@ -453,7 +355,7 @@ class EULER_HYBRIDEXTRACT_PIPELINE(EULER_PIPELINE):
             log_dir=self.log_dir,
             llm_extractor_max_concurrent=self.llm_extractor_max_concurrent,
             llm_extractor_answer_transforms=[
-                AIMEExtractAnswer(answer_col,answer_col),
+                NumericExtractAnswer(answer_col,answer_col),
             ],
         )
 
