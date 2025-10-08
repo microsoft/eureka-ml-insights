@@ -360,10 +360,12 @@ DEEPSEEK_R1_CONFIG = ModelConfig(
     },
 )
 
-# Local Llama.cpp model
-LLAMACPP_LOCAL_CONFIG = ModelConfig(
+# Local Llama.cpp models
+# Adapt to your local model paths and desired hyperparameters
+EXAMPLE_LLAMACPP_LOCAL_CONFIG = ModelConfig(
     LlamaCppModel,
     {
+        "model_name": None,
         "model_path": "path/to/model.gguf",
         "n_ctx": 8192,
         "temperature": 0.7,

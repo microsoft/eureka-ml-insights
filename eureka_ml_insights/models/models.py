@@ -1773,6 +1773,7 @@ class TestModel(Model):
 class LlamaCppModel(Model):
     """This class is used to interact with a local llama.cpp GGUF model via llama-cpp-python."""
 
+    model_name: str = None
     model_path: str = None
 
     n_ctx: int = 4096
