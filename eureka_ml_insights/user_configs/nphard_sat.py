@@ -53,7 +53,7 @@ from .llm_extraction import LLM_EXTRACTION_SUBPIPELINE_MIXIN
 
 class NPHARD_SAT_PIPELINE(ExperimentConfig):
     def configure_pipeline(
-        self, model_config: ModelConfig, resume_from: str = None, n_repeats: int = 1, **kwargs: dict[str, Any]
+        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
         # Configure the data processing component.
         self.data_processing_comp = PromptProcessingConfig(
@@ -66,6 +66,7 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
                     "transform": SequenceTransform(
                         [
                             ColumnRename(name_mapping={"query_text": "prompt", "target_text": "ground_truth"}),
+                            MultiplyTransform(n_repeats=int(kwargs.get("n_repeats", 1)))
                         ]
                     ),
                 },
@@ -82,11 +83,12 @@ class NPHARD_SAT_PIPELINE(ExperimentConfig):
             model_config=model_config,
             data_loader_config=DataSetConfig(
                 MMDataLoader,
-                {"path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl")},
+                {"path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl"),
+                 "misc_columns": ["data_point_id","data_repeat_id"]},
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
-            max_concurrent=5,
+            max_concurrent=int(kwargs.get("max_concurrent", 10)),
         )
 
         # post process the response to extract the answer
@@ -413,12 +415,12 @@ class NPHARD_SAT_PIPELINE_MULTIPLE_RUNS(NPHARD_SAT_PIPELINE):
     """This class specifies the config for running SAT benchmark n repeated times"""
 
     def configure_pipeline(
-        self, model_config: ModelConfig, resume_from: str = None, n_repeats: int = 1, **kwargs: dict[str, Any]
+        self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
         # data preprocessing
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
-            MultiplyTransform(n_repeats=int(n_repeats))
+            MultiplyTransform(n_repeats=int(kwargs.get("n_repeats", 1)))
         )
         return pipeline
 
@@ -441,7 +443,7 @@ class NPHARD_SAT_HYBRIDEXTRACT_PIPELINE(NPHARD_SAT_PIPELINE_MULTIPLE_RUNS):
                 os.path.dirname(__file__),
                 "../prompt_templates/nphard_sat_templates/extract_sat_answer.jinja",
             ),
-            llm_extractor_model_config=OAI_GPT4O_2024_11_20_CONFIG,
+            llm_extractor_model_config=kwargs.get("eval_model_config", OAI_GPT4O_2024_11_20_CONFIG),
             log_dir=self.log_dir,
             llm_extractor_max_concurrent=self.llm_extractor_max_concurrent,
             llm_extractor_answer_transforms=[

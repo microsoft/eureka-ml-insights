@@ -86,6 +86,7 @@ from .vision_language.maze import (
     MAZE_PIPELINE,
     MAZE_REPORTING_PIPELINE,
     MAZE_TEXTONLY_PIPELINE,
+    MAZE_COT_TEXTONLY_PIPELINE,
 )
 from .vision_language.spatial_grid import (
     SPATIAL_GRID_PIPELINE,

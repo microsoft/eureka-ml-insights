@@ -4,5 +4,7 @@
 <question>{{ prompt }}</question>
 
 <studentanswer and past teacher hints>
-previous_messages[1:]
+{% for item in previous_messages[1:] %}
+    {{ item }}
+{% endfor %}
 </studentanswer and past teacher hints>"

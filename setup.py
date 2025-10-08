@@ -28,7 +28,7 @@ setup(
         'numpy==1.26.4',
         'tqdm>=4.65.0',
         'jinja2>=3.1.3',
-        'transformers>=4.40.2',
+        'transformers>=4.51.3',
         'immutabledict>=4.2.0',
         'langdetect>=1.0.9',
         'nltk>=3.9.1',
@@ -40,7 +40,7 @@ setup(
         'bitsandbytes>=0.42.0',
         'accelerate>=0.21.0',
         'pycocotools>=2.0.8',
-        'vllm>=0.8.0',
+        'vllm>=0.8.5',
         'latex2sympy2>=1.9.1',
     ],
     extras_require={
