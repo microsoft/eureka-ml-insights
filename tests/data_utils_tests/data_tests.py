@@ -165,8 +165,8 @@ class TestMMDataLoader(unittest.TestCase):
 
     def test_mm_loader(self):
         with self.data_loader:
-            for _, model_args, model_kwargs in self.data_loader:
-                self.assertTrue(isinstance(model_args[1][0], Image.Image))
+            for _, model_inputs, model_args, model_kwargs in self.data_loader:
+                self.assertTrue(isinstance(model_inputs["query_images"][0], Image.Image))
 
 
 class TestShuffleColumns(unittest.TestCase):

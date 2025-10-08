@@ -9,6 +9,7 @@ from eureka_ml_insights.models import (
     DirectOpenAIModel,
     DirectOpenAIOModel,
     GeminiModel,
+    LlamaCppModel,
     LlamaServerlessAzureRestEndpointModel,
     LLaVAHuggingFaceModel,
     LLaVAModel,
@@ -387,7 +388,7 @@ VLLM_DEEPSEEK_CONFIG = ModelConfig(
     {
         "temperature": 0.6,
         "max_tokens": 30000,
-    }
+    },
 )
 
 VLLM_QWEN3_CONFIG = ModelConfig(
@@ -398,5 +399,23 @@ VLLM_QWEN3_CONFIG = ModelConfig(
         "temperature": 0.6,
         "top_p": 0.95,
         "max_tokens": 32768,
-    }
+    },
+)
+
+# Local Llama.cpp models
+# Adapt to your local model paths and desired hyperparameters
+EXAMPLE_LLAMACPP_LOCAL_CONFIG = ModelConfig(
+    LlamaCppModel,
+    {
+        "model_name": None,
+        "model_path": "path/to/model.gguf",
+        "n_ctx": 8192,
+        "temperature": 0.7,
+        "top_p": 0.95,
+        "top_k": 40,
+        "repeat_penalty": 1.1,
+        "max_tokens": 1024,
+        "chat_mode": False,
+        "verbose": False,
+    },
 )
