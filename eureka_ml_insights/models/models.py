@@ -32,7 +32,7 @@ class Model(ABC):
     system_message: str = None
 
     @abstractmethod
-    def generate(self, text_prompt, *args, **kwargs):
+    def generate(self, data, *args, **kwargs):
         raise NotImplementedError
 
     def count_tokens(self, model_output: str = None, is_valid: bool = False):
@@ -120,7 +120,7 @@ class EndpointModel(Model):
         previous_messages.append({"role": "assistant", "content": model_output})
         return previous_messages
 
-    def generate(self, query_text, *args, **kwargs):
+    def generate(self, data, *args, **kwargs):
         """
         Calls the endpoint to generate the model response.
         args:
@@ -131,6 +131,8 @@ class EndpointModel(Model):
             response_dict (dict): a dictionary containing the model_output, is_valid, response_time, and n_output_tokens,
                                   and any other relevant information returned by the model.
         """
+        query_text = data.get("prompt", None)
+        query_images = data.get("query_images", None)
         response_dict = {}
         if hasattr(self, "system_message") and self.system_message:
             if "system_message" in kwargs:
@@ -138,7 +140,7 @@ class EndpointModel(Model):
                     "System message is passed via the dataloader but will be overridden by the model class system message."
                 )
             kwargs["system_message"] = self.system_message
-        request = self.create_request(query_text, *args, **kwargs)
+        request = self.create_request(query_text, query_images, *args, **kwargs)
         attempts = 0
         model_output = None
         is_valid = False
@@ -215,7 +217,7 @@ class OfflineFileModel(Model):
         logging.info(f"Loaded {len(self.df_results)} records from {self.file_path} for model {self.model_name}.")
         return None
 
-    def generate(self, query_text, *args, **kwargs):
+    def generate(self, data, *args, **kwargs):
         """
         Reads the file from file_path to retrieve the model response.
         args:
@@ -225,26 +227,9 @@ class OfflineFileModel(Model):
             response_dict (dict): a dictionary containing the model_output, is_valid, response_time, and n_output_tokens,
                                   and any other relevant information returned by the model.
         """
+        query_text = data.get("prompt", None)
+        query_images = data.get("query_images", None)
         response_dict = {}
-        if hasattr(self, "system_message") and self.system_message:
-            if "system_message" in kwargs:
-                logging.warning(
-                    "Warning: System message is passed via the dataloader but will not be used because the inference results are precomputed offline in file_path."
-                )
-            kwargs["system_message"] = self.system_message
-
-        if hasattr(self, "query_images") and self.system_message:
-            if "query_images" in kwargs:
-                logging.warning(
-                    "Warning: Images are not yet supported for this model class."
-                )
-            kwargs["query_images"] = self.query_images
-
-        if hasattr(self, "chat_mode") and self.chat_mode:
-            if "chat_mode" in kwargs:
-                logging.warning(
-                    "Warning: Chat mode is not supported for this model class."
-                )
 
         model_output = None
         is_valid = False
@@ -252,7 +237,7 @@ class OfflineFileModel(Model):
         n_output_tokens = None
 
         try:
-            model_response = self.get_response(query_text, kwargs.get("data_repeat_id", None))
+            model_response = self.get_response(query_text, data.get("data_repeat_id", None))
             model_output = model_response["model_output"]
             is_valid = model_response["is_valid"]
         except Exception as e:
@@ -1053,7 +1038,8 @@ class HuggingFaceModel(Model):
             "response_time": response_time,
         }
 
-    def generate(self, text_prompt, query_images=None, system_message=None):
+    def generate(self, data, system_message=None):
+        text_prompt = data.get("prompt", None)
         response_dict = {}
 
         if text_prompt:
@@ -1193,7 +1179,9 @@ class LLaVAHuggingFaceModel(HuggingFaceModel):
             "response_time": response_time,
         }
 
-    def generate(self, text_prompt, query_images=None, system_message=None):
+    def generate(self, data, system_message=None):
+        text_prompt = data.get("prompt", None)
+        query_images = data.get("query_images", None)
 
         if query_images and len(query_images) > 1:
             logging.error(f"Not implemented for more than 1 image. {len(query_images)} images are in the prompt")
@@ -1360,7 +1348,10 @@ class VLLMModel(Model):
             "response_time": response_time,
         }
 
-    def generate(self, text_prompt, query_images=None, system_message=None):
+    def generate(self, data, system_message=None):
+        text_prompt = data.get("prompt", None)
+        query_images = data.get("query_images", None)
+
         response_dict = {}
         model_output = None
         response_time = None
@@ -1761,7 +1752,7 @@ class ClaudeReasoningModel(ClaudeModel):
 class TestModel(Model):
     # This class is used for testing purposes only. It only waits for a specified time and returns a response.
 
-    def generate(self, text_prompt, **kwargs):
+    def generate(self, data, *args, **kwargs):
         output = "This is a test response."
         is_valid = True
         return {
