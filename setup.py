@@ -43,6 +43,11 @@ setup(
         'vllm>=0.8.5',
         'latex2sympy2>=1.9.1',
     ],
+    extras_require={
+        'llamacpp': [
+            'llama-cpp-python>=0.3.16',
+        ],
+    },
     classifiers=[
         # Full list at https://pypi.org/classifiers/
         'Programming Language :: Python :: 3',

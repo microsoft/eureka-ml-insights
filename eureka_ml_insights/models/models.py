@@ -9,6 +9,7 @@ import time
 import urllib.request
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from typing import Any
 
 import anthropic
 import requests
@@ -1761,3 +1762,130 @@ class TestModel(Model):
             "response_time": 0.1,
             "n_output_tokens": self.count_tokens(output, is_valid),
         }
+
+
+@dataclass
+class LlamaCppModel(Model):
+    """This class is used to interact with a local llama.cpp GGUF model via llama-cpp-python."""
+
+    model_name: str = None
+    model_path: str = None
+
+    n_ctx: int = 4096
+    n_threads: int = None
+    n_batch: int = 512
+    n_gpu_layers: int = 0
+    seed: int = None
+    max_tokens: int = 2000
+    temperature: float = 0.7
+    top_p: float = 0.95
+    top_k: int = 40
+    repeat_penalty: float = 1.1
+    stop: list = None
+    apply_model_template: bool = True
+    chat_mode: bool = False
+    verbose: bool = False
+
+    _llm: Any = None
+    _lock: threading.Lock = threading.Lock()
+
+    def __post_init__(self):
+        if not self.model_path:
+            raise ValueError("LlamaCppModel requires 'model_path' to a .gguf file.")
+        
+        try:
+            from llama_cpp import Llama
+        except ImportError:
+            raise ImportError("'llama-cpp-python' is not installed.")
+
+        init_kwargs = {"model_path": self.model_path, "n_ctx": self.n_ctx, "verbose": self.verbose}
+        if self.n_threads is not None:
+            init_kwargs["n_threads"] = self.n_threads
+        if self.n_batch is not None:
+            init_kwargs["n_batch"] = self.n_batch
+        if self.n_gpu_layers is not None:
+            init_kwargs["n_gpu_layers"] = self.n_gpu_layers
+        if self.seed is not None:
+            init_kwargs["seed"] = self.seed
+
+        self._llm = Llama(**init_kwargs)
+
+    def model_template_fn(self, text_prompt, system_message=None):
+        return (system_message + " \n" if system_message else "") + text_prompt
+
+    def _create_chat_messages(self, text_prompt, system_message=None, previous_messages=None):
+        messages = []
+        if system_message:
+            messages.append({"role": "system", "content": system_message})
+        if previous_messages:
+            messages.extend(previous_messages)
+        messages.append({"role": "user", "content": text_prompt})
+        return messages
+
+    def _infer_chat(self, messages):
+        # Guard inference with a lock for basic thread-safety per instance
+        with self._lock:
+            result = self._llm.create_chat_completion(
+                messages=messages,
+                temperature=self.temperature,
+                top_p=self.top_p,
+                max_tokens=self.max_tokens,
+                stop=self.stop,
+                repeat_penalty=self.repeat_penalty,
+                top_k=self.top_k,
+            )
+
+        try:
+            return result["choices"][0]["message"]["content"]
+        except Exception:
+            return result.get("choices", [{}])[0].get("text")
+
+    def _infer_completion(self, prompt):
+        with self._lock:
+            result = self._llm.create_completion(
+                prompt=prompt,
+                temperature=self.temperature,
+                top_p=self.top_p,
+                max_tokens=self.max_tokens,
+                stop=self.stop,
+                repeat_penalty=self.repeat_penalty,
+                top_k=self.top_k,
+            )
+
+        return result["choices"][0]["text"]
+
+    def generate(self, text_prompt, query_images=None, system_message=None, previous_messages=None, **kwargs):
+        if query_images:
+            raise NotImplementedError("Images are not supported for LlamaCppModel.")
+
+        response_dict = {}
+        model_output = None
+        is_valid = False
+
+        try:
+            start_time = time.time()
+
+            if self.chat_mode or previous_messages is not None or system_message is not None:
+                messages = self._create_chat_messages(text_prompt, system_message, previous_messages)
+                model_output = self._infer_chat(messages)
+            else:
+                prompt = self.model_template_fn(text_prompt, system_message)
+                model_output = self._infer_completion(prompt)
+
+            end_time = time.time()
+            response_time = end_time - start_time
+
+            is_valid = model_output is not None
+            response_dict.update({"model_output": model_output, "response_time": response_time})
+
+        except Exception as e:
+            logging.warning(e)
+            is_valid = False
+
+        response_dict.update(
+            {
+                "is_valid": is_valid,
+                "n_output_tokens": self.count_tokens(response_dict.get("model_output"), is_valid),
+            }
+        )
+        return response_dict
