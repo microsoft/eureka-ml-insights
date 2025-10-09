@@ -351,7 +351,7 @@ class EULER_HYBRIDEXTRACT_PIPELINE(EULER_PIPELINE):
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from,**kwargs)
-        self.llm_extractor_max_concurrent = int(kwargs.get('llm_extractor_max_concurrent', 8))  # Default value is 1
+        self.llm_extractor_max_concurrent = int(kwargs.get('llm_extractor_max_concurrent', 8))  # Default value is 8
         eval_model_config = kwargs.get('eval_model_config', None)
         answer_col = "extracted_answer"
         llm_extraction_subpipeline_conf = LLM_EXTRACTION_SUBPIPELINE_MIXIN()
