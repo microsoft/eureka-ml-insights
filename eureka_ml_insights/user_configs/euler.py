@@ -140,6 +140,17 @@ class EULER_PIPELINE(ExperimentConfig):
             metric_config=metric_config,
             aggregator_configs=[
                 AggregatorConfig(
+                    CountAggregator,
+                    {
+                        "column_names": [
+                            "NumericMatch_result",
+                        ],
+                        "group_by": "data_repeat_id",
+                        "filename_base": "NumericMatch_Separate_Runs",
+                        "normalize": True,
+                    },
+                ),
+                AggregatorConfig(
                     BiLevelCountAggregator,
                     {
                         "column_names": [

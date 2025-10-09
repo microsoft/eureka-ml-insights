@@ -34,6 +34,7 @@ from eureka_ml_insights.data_utils.numeric_answer_utils import NumericExtractAns
 from eureka_ml_insights.data_utils.data import MMDataLoader
 from eureka_ml_insights.metrics.numeric_answer_metrics import NumericMatch
 from eureka_ml_insights.metrics.reports import (
+    AverageAggregator,
     BiLevelAggregator,
     BiLevelCountAggregator,
     CountAggregator,
@@ -141,6 +142,17 @@ class AIME_PIPELINE(ExperimentConfig):
             ),
             metric_config=metric_config,
             aggregator_configs=[
+                AggregatorConfig(
+                    CountAggregator,
+                    {
+                        "column_names": [
+                            "NumericMatch_result",
+                        ],
+                        "group_by": "data_repeat_id",
+                        "filename_base": "NumericMatch_Separate_Runs",
+                        "normalize": True,
+                    },
+                ),
                 AggregatorConfig(
                     BiLevelCountAggregator,
                     {
