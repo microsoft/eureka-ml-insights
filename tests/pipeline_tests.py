@@ -25,6 +25,7 @@ from eureka_ml_insights.user_configs import (
     AIME_PIPELINE,
     AIME_SEQ_PIPELINE,
     DNA_PIPELINE,
+    EULER_PIPELINE,
     GEOMETER_PIPELINE,
     GSM8K_PIPELINE,
     GSMSYMBOLIC_PIPELINE,
@@ -342,6 +343,17 @@ class TEST_DROP_PIPELINE(Drop_Experiment_Pipeline):
             "path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl"),
             "n_iter": N_ITER,
         }
+        return config
+
+
+class TEST_EULER_PIPELINE(EULER_PIPELINE):
+    # Test config the AIME benchmark with GenericTestModel and TestMMDataLoader
+    def configure_pipeline(self):
+        config = super().configure_pipeline(
+            model_config=ModelConfig(GenericTestModel, {})
+        )  # use a small subset of AIME
+        self.inference_comp.data_loader_config.class_name = TestMMDataLoader
+        self.inference_comp.data_loader_config.init_args["n_iter"] = N_ITER
         return config
 
 

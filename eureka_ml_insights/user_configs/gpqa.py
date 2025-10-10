@@ -40,6 +40,7 @@ from eureka_ml_insights.data_utils import (
     RunPythonTransform,
     SequenceTransform,
     ShuffleColumnsTransform,
+    SamplerTransform,
 )
 from eureka_ml_insights.metrics import (
     BiLevelAggregator,
@@ -66,6 +67,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                     "split": "train",
                     "transform": SequenceTransform(
                         [
+                            # SamplerTransform(sample_count=50, random_seed=1),
                             CopyColumn(column_name_src="Correct Answer", column_name_dst="A"),
                             CopyColumn(column_name_src="Incorrect Answer 1", column_name_dst="B"),
                             CopyColumn(column_name_src="Incorrect Answer 2", column_name_dst="C"),
@@ -92,8 +94,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
             model_config=model_config,
             data_loader_config=DataSetConfig(
                 MMDataLoader,
-                {"path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl"),
-                 "misc_columns": ["data_point_id","data_repeat_id"]},
+                {"path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl")},
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
@@ -471,7 +472,7 @@ class GPQA_PIPELINE_5Run(GPQA_Experiment_Pipeline):
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
-        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
+        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from, **kwargs)
         # data preprocessing
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
             MultiplyTransform(n_repeats=int(kwargs.get("n_repeats", 5)))
