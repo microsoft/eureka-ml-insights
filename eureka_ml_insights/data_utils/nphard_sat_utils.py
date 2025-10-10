@@ -50,7 +50,7 @@ def extract_solution(final_answer: str) -> Optional[str]:
     # Try to turn the raw string into a Python object.
     try:
         parsed = ast.literal_eval(final_answer)
-    except ValueError as err:
+    except (ValueError, SyntaxError) as err:
         logging.info(f"extract_solution: literal_eval failed: {err}")
         return None
 
@@ -109,7 +109,9 @@ def parse_assignment_from_model_output(model_output: str) -> str:
         solution is found.
     """
     # Pull out the “final answer” block the model produced.
-
+    if model_output is None or not isinstance(model_output, str) or not model_output.strip():
+        logging.info("Model output is None or empty or not a string.")
+        return "-1"
     final_answer: Optional[str] = extract_final_answer(model_output)
 
     if not final_answer:
