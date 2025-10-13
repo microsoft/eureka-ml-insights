@@ -63,8 +63,7 @@ class Omni_Math_PIPELINE(ExperimentConfig):
             data_loader_config=DataSetConfig(
                 DataLoader,
                 {
-                    "path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl"),
-                    "misc_columns": ["data_point_id","data_repeat_id"]
+                    "path": os.path.join(self.data_processing_comp.output_dir, "transformed_data.jsonl")
                 },
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
