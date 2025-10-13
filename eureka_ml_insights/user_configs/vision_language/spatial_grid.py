@@ -1,4 +1,5 @@
 import os
+from typing import Any
 
 from eureka_ml_insights.configs.experiment_config import ExperimentConfig
 from eureka_ml_insights.core import EvalReporting, Inference, PromptProcessing
@@ -11,6 +12,7 @@ from eureka_ml_insights.data_utils import (
     ExtractAnswerGrid,
     PrependStringTransform,
     SequenceTransform,
+    MultiplyTransform,
 )
 from eureka_ml_insights.metrics import CaseInsensitiveMatch, CountAggregator
 from eureka_ml_insights.configs import (
@@ -41,7 +43,7 @@ class SPATIAL_GRID_PIPELINE(ExperimentConfig):
     """This method is used to define an eval pipeline with inference and metric report components,
     on the grid counting dataset."""
 
-    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]) -> PipelineConfig:
         # Configure the data processing component.
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
@@ -51,6 +53,8 @@ class SPATIAL_GRID_PIPELINE(ExperimentConfig):
                     "path": "microsoft/VISION_LANGUAGE",
                     "split": "val",
                     "tasks": "spatial_grid",
+                    "transform": MultiplyTransform(n_repeats=int(kwargs.get("n_repeats", 1))),
+
                 },
             ),
             output_dir=os.path.join(self.log_dir, "data_processing_output"),
@@ -113,8 +117,8 @@ class SPATIAL_GRID_PIPELINE(ExperimentConfig):
 class SPATIAL_GRID_TEXTONLY_PIPELINE(SPATIAL_GRID_PIPELINE):
     """This class extends SPATIAL_GRID_PIPELINE to use text only data."""
 
-    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
-        config = super().configure_pipeline(model_config, resume_from)
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]) -> PipelineConfig:
+        config = super().configure_pipeline(model_config, resume_from, **kwargs)
         self.data_processing_comp.data_reader_config.init_args["tasks"] = (
             "spatial_grid_text_only"
         )
@@ -125,7 +129,7 @@ class SPATIAL_GRID_REPORTING_PIPELINE(SPATIAL_GRID_PIPELINE):
     """This method is used to define an eval pipeline with only a metric report component,
     on the grid counting dataset."""
 
-    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
-        super().configure_pipeline(model_config, resume_from)
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]) -> PipelineConfig:
+        super().configure_pipeline(model_config, resume_from, **kwargs)
         self.evalreporting_comp.data_reader_config.init_args["path"] = resume_from
         return PipelineConfig([self.evalreporting_comp], self.log_dir)

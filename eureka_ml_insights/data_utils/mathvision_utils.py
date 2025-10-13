@@ -1,7 +1,6 @@
 """Evaluates output of models for Math-V dataset; following https://github.com/mathllm/MATH-V/tree/main/evaluation"""
 
 from dataclasses import dataclass
-from latex2sympy2 import latex2sympy
 import pandas as pd
 import re
 
@@ -47,6 +46,8 @@ def eval_tuple(s):
     Note:
         This function relies on the latex2sympy function which is assumed to be defined elsewhere in the code.
     """
+    from latex2sympy2_extended import latex2sympy
+
     # Split the string by commas to get individual elements
     sl = s[1:-1].split(',')
     
@@ -89,7 +90,8 @@ def is_equal(asw: str, gt_asw: str) -> bool:
         bool: True if the answers are equivalent, otherwise False.
 
     """
-
+    from latex2sympy2_extended import latex2sympy
+    
     # return gt_asw == asw
 
     # Check for empty strings after removing spaces and return False if any of them is empty.

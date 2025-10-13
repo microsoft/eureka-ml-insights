@@ -1,4 +1,5 @@
 import os
+from typing import Any
 
 from eureka_ml_insights.configs.experiment_config import ExperimentConfig
 from eureka_ml_insights.core import EvalReporting, Inference, PromptProcessing, DataProcessing, DataJoin
@@ -20,6 +21,7 @@ from eureka_ml_insights.data_utils import (
     MultiplyTransform,
     SequenceTransform,
     RegexTransform,
+    SamplerTransform
 )
 from eureka_ml_insights.metrics import SubstringExistsMatch, BiLevelAggregator, BiLevelCountAggregator, CountAggregator
 
@@ -54,7 +56,7 @@ class SPATIAL_MAP_PIPELINE(ExperimentConfig):
     """This method is used to define an eval pipeline with inference and metric report components,
     on the spatial map dataset."""
 
-    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]) -> PipelineConfig:
         # Configure the data processing component.
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
@@ -64,7 +66,10 @@ class SPATIAL_MAP_PIPELINE(ExperimentConfig):
                     "path": "microsoft/VISION_LANGUAGE",
                     "split": "val_noinstruction",
                     "tasks": "spatial_map",
-                    "transform": MultiplyTransform(n_repeats=5),
+                    "transform": SequenceTransform([
+                        # SamplerTransform(sample_count=10, random_seed=1),
+                        MultiplyTransform(n_repeats=int(kwargs.get("n_repeats", 1))),
+                    ]),
                 },
             ),
             prompt_template_path=os.path.join(
@@ -86,7 +91,7 @@ class SPATIAL_MAP_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
-            max_concurrent=10,
+            max_concurrent=int(kwargs.get("max_concurrent", 10)),
         )
 
         self.preeval_data_post_processing_comp = DataProcessingConfig(
@@ -141,13 +146,13 @@ class SPATIAL_MAP_PIPELINE(ExperimentConfig):
 
         self.inference_llm_answer_extract = InferenceConfig(
             component_type=Inference,
-            model_config=OAI_GPT4O_2024_11_20_CONFIG,
+            model_config=kwargs.get("eval_model_config", OAI_GPT4O_2024_11_20_CONFIG),
             data_loader_config=DataSetConfig(
                 DataLoader,
                 {"path": os.path.join(self.filter_empty_answer.output_dir, "transformed_data.jsonl")},
             ),
             output_dir=os.path.join(self.log_dir, "llm_answer_extract_inference_result"),
-            max_concurrent=1
+            max_concurrent=10
         )        
 
         self.data_join = DataJoinConfig(
@@ -443,8 +448,8 @@ class SPATIAL_MAP_PIPELINE(ExperimentConfig):
 class SPATIAL_MAP_COT_PIPELINE(SPATIAL_MAP_PIPELINE):
     """This class extends SPATIAL_MAP_PIPELINE to use a COT prompt."""
 
-    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
-        config = super().configure_pipeline(model_config, resume_from)
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]) -> PipelineConfig:
+        config = super().configure_pipeline(model_config, resume_from, **kwargs)
         self.data_processing_comp.prompt_template_path=os.path.join(
                 os.path.dirname(__file__),
                 "../../prompt_templates/vision_language_templates/cot.jinja",
@@ -454,8 +459,8 @@ class SPATIAL_MAP_COT_PIPELINE(SPATIAL_MAP_PIPELINE):
 class SPATIAL_MAP_TEXTONLY_PIPELINE(SPATIAL_MAP_PIPELINE):
     """This class extends SPATIAL_MAP_PIPELINE to use text only data."""
 
-    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
-        config = super().configure_pipeline(model_config, resume_from)
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]) -> PipelineConfig:
+        config = super().configure_pipeline(model_config, resume_from, **kwargs)
         self.data_processing_comp.data_reader_config.init_args["tasks"] = (
             "spatial_map_text_only"
         )
@@ -464,8 +469,8 @@ class SPATIAL_MAP_TEXTONLY_PIPELINE(SPATIAL_MAP_PIPELINE):
 class SPATIAL_MAP_COT_TEXTONLY_PIPELINE(SPATIAL_MAP_COT_PIPELINE):
     """This class extends SPATIAL_MAP_PIPELINE to use text only data."""
 
-    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
-        config = super().configure_pipeline(model_config, resume_from)
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]) -> PipelineConfig:
+        config = super().configure_pipeline(model_config, resume_from, **kwargs)
         self.data_processing_comp.data_reader_config.init_args["tasks"] = (
             "spatial_map_text_only"
         )
@@ -476,8 +481,8 @@ class SPATIAL_MAP_REPORTING_PIPELINE(SPATIAL_MAP_PIPELINE):
     """This method is used to define an eval pipeline with only a metric report component,
     on the spatial map dataset."""
 
-    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
-        super().configure_pipeline(model_config, resume_from)
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]) -> PipelineConfig:
+        super().configure_pipeline(model_config, resume_from, **kwargs)
         self.preeval_data_post_processing_comp.data_reader_config.init_args["path"] = resume_from
         # Configure the pipeline
         return PipelineConfig(

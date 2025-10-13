@@ -1,4 +1,5 @@
 import os
+from typing import Any
 
 from eureka_ml_insights.configs.experiment_config import ExperimentConfig
 from eureka_ml_insights.core import EvalReporting, Inference, PromptProcessing
@@ -11,6 +12,7 @@ from eureka_ml_insights.data_utils import (
     DataReader,
     PrependStringTransform,
     SequenceTransform,
+    SamplerTransform
 )
 from eureka_ml_insights.data_utils.spatial_utils import (
     LowerCaseNoPunctuationConvertNumbers,
@@ -50,7 +52,7 @@ class SPATIAL_REASONING_PAIRS_PIPELINE(ExperimentConfig):
     There is no model_config by default and the model config must be passed in via command lime.
     """
 
-    def configure_pipeline(self, model_config, resume_from=None):
+    def configure_pipeline(self, model_config, resume_from=None, **kwargs: dict[str, Any]):
         # Configure the data processing component.
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
