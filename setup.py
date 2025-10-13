@@ -22,10 +22,10 @@ setup(
         'datasets>=3.2.0',
         'fuzzywuzzy>=0.18.0',
         'jsonlines>=2.0.0',
-        'pandas>=2.2.1',
         'pillow>=10.0.1',
         'torch>=2.6.0',
-        'numpy==1.26.4',
+        'numpy>=2.2',
+        'pandas>=2.2.1',
         'tqdm>=4.65.0',
         'jinja2>=3.1.3',
         'transformers>=4.51.3',
@@ -38,10 +38,10 @@ setup(
         'google-generativeai>=0.7.0',
         'openai>=1.35.5',
         'bitsandbytes>=0.42.0',
+        'pycocotools>=2.0.10',
+        'vllm==0.8.5',
         'accelerate>=0.21.0',
-        'pycocotools>=2.0.8',
-        'vllm>=0.8.5',
-        'latex2sympy2>=1.9.1',
+        # 'latex2sympy2_extended[antlr4_13_2]', # optional for mathvision
     ],
     extras_require={
         'llamacpp': [

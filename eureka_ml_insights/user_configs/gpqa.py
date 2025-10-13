@@ -1,3 +1,4 @@
+import logging
 import os
 
 """This file contains user defined configuration classes for the GPQA dataset."""
@@ -474,7 +475,10 @@ class GPQA_PIPELINE_5Run(GPQA_Experiment_Pipeline):
     ) -> PipelineConfig:
         pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from, **kwargs)
         # data preprocessing
-        self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
-            MultiplyTransform(n_repeats=int(kwargs.get("n_repeats", 5)))
-        )
+        if "n_repeats" in kwargs and int(kwargs["n_repeats"]) != 5:
+            logging.warning(
+                f"n_repeats is set to {kwargs['n_repeats']} in kwargs, but will be overridden to 5 for GPQA_PIPELINE_5Run."
+            )
+        self.data_processing_comp.data_reader_config.init_args["transform"].transforms[-1] = MultiplyTransform(n_repeats=5)
+
         return pipeline

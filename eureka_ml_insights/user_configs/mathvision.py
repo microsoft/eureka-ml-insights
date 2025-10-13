@@ -103,7 +103,7 @@ class MATHVISION_PIPELINE(ExperimentConfig):
         # Eval Inference component round 1 (answer extraction).
         self.eval_inference_comp = InferenceConfig(
             component_type=Inference,
-            model_config=PERSONAL_GPT4O,
+            model_config=kwargs.get("eval_model_config", PERSONAL_GPT4O),
             data_loader_config=DataSetConfig(
                 MMDataLoader,
                 {"path": os.path.join(self.eval_data_pre_processing.output_dir, "transformed_data.jsonl"), "load_images":False},
@@ -131,7 +131,7 @@ class MATHVISION_PIPELINE(ExperimentConfig):
         # Eval Inference component round 2 (LLM scoring)
         self.eval_inference_comp_two = InferenceConfig(
             component_type=Inference,
-            model_config=PERSONAL_GPT4O,
+            model_config=kwargs.get("eval_model_config", PERSONAL_GPT4O),
             data_loader_config=DataSetConfig(
                 MMDataLoader,
                 {"path": os.path.join(self.eval_data_pre_processing_two.output_dir, "transformed_data.jsonl"), "load_images":False},
