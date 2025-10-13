@@ -7,7 +7,7 @@ from .transform import DFTransformBase
 
 
 @dataclass
-class AIMEExtractAnswer(DFTransformBase):
+class NumericExtractAnswer(DFTransformBase):
     model_output_column: str
     model_answer_column: str
 

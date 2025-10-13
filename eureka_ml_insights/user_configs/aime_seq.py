@@ -25,7 +25,7 @@ from eureka_ml_insights.data_utils import (
     SamplerTransform,
     SequenceTransform,
 )
-from eureka_ml_insights.data_utils.aime_utils import AIMEExtractAnswer
+from eureka_ml_insights.data_utils.numeric_answer_utils import NumericExtractAnswer
 from eureka_ml_insights.data_utils.data import MMDataLoader
 from eureka_ml_insights.metrics.metrics_base import (
     ExactMatch,
@@ -99,7 +99,7 @@ class AIME_SEQ_PIPELINE(AIME_PIPELINE):
                         "transform": SequenceTransform(
                             [
                                 # extract and verify the student answer
-                                AIMEExtractAnswer(f"model_output", f"extracted_answer"),
+                                NumericExtractAnswer(f"model_output", f"extracted_answer"),
                                 MetricBasedVerifier(ExactMatch, f"extracted_answer"),
                                 AddColumnAndData("attempt_id", i),
                                 CopyColumn(column_name_src="model_output", column_name_dst=f"student_output"),
