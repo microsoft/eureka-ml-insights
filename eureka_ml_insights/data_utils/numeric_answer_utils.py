@@ -7,7 +7,7 @@ from .transform import DFTransformBase
 
 
 @dataclass
-class AIMEExtractAnswer(DFTransformBase):
+class NumericExtractAnswer(DFTransformBase):
     model_output_column: str
     model_answer_column: str
 
@@ -25,6 +25,12 @@ class AIMEExtractAnswer(DFTransformBase):
             numerical_value (float): A numeric value representing the model's answer.
         """
         numerical_value = None
+
+        if response is None:
+            return None
+
+        if isinstance(response, float):
+            return response
 
         # Try to find an answer in the "Final Answer: X" format
         match = re.search(r"Final Answer:\s*([\$]?-?[\d,]+(?:\.\d+)?%?)", response)

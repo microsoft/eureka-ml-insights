@@ -38,9 +38,10 @@ class DataReaderBase(ABC):
 class DataLoader:
     """Dataloaders are used to feed data to models in inference time from LOCAL data sources."""
 
-    def __init__(self, path, total_lines=None):
+    def __init__(self, path, total_lines=None, misc_columns=None):
         self.path = path
         self.total_lines = total_lines
+        self.misc_columns = misc_columns
 
     def __enter__(self):
         self.reader = jsonlines.open(self.path, "r", loads=json.loads)
@@ -61,10 +62,16 @@ class DataLoader:
             yield self.prepare_model_input(data)
 
     def prepare_model_input(self, row):
-        query_text = row["prompt"]
-        model_args = (query_text,)
+        model_inputs = row.copy()
+        model_args = ()
         model_kwargs = {}
-        return row, model_args, model_kwargs
+        if self.misc_columns:
+            for column in self.misc_columns:
+                if column not in row:
+                    log.warning(f"Misc column {column} not found in data row. Continuing without it.")
+                else:
+                    model_kwargs[column] = row[column]
+        return row, model_inputs, model_args, model_kwargs
 
     def get_sample_model_input(self):
         """Get a sample data row and model_args from the jsonlines reader."""
@@ -105,8 +112,8 @@ class MMDataLoader(DataLoader):
 
     def prepare_model_input(self, row):
         # Given a row from the jsonl file, prepare the data for the model.
-        query_text = row["prompt"]
-        model_args = (query_text,)
+        model_inputs = row.copy()
+        model_args = ()
 
         # if images are present load them
         if self.load_images:
@@ -121,12 +128,16 @@ class MMDataLoader(DataLoader):
             if image_column_names:
                 images = self._gather_image_file_names(row, image_column_names)
                 query_images = self._load_images(images)
-                model_args = (query_text, query_images)
+                model_inputs["query_images"] = query_images
+
         model_kwargs = {}
         if self.misc_columns:
             for column in self.misc_columns:
-                model_kwargs[column] = row[column]
-        return row, model_args, model_kwargs
+                if column not in row:
+                    log.warning(f"Misc column {column} not found in data row. Continuing without it.")
+                else:
+                    model_kwargs[column] = row[column]
+        return row, model_inputs, model_args, model_kwargs
 
     def _search_for_image_columns(self, data_row) -> list:
         """

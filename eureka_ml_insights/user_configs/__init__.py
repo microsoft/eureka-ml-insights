@@ -12,6 +12,7 @@ from .ba_calendar import (
 )
 from .dna import DNA_PIPELINE
 from .drop import Drop_Experiment_Pipeline
+from .euler import EULER_HYBRIDEXTRACT_PIPELINE, EULER_PIPELINE
 from .flenqa import FlenQA_Experiment_Pipeline
 from .flickr30k import FLICKR30K_PIPELINE
 from .geometer import GEOMETER_PIPELINE
@@ -86,6 +87,7 @@ from .vision_language.maze import (
     MAZE_PIPELINE,
     MAZE_REPORTING_PIPELINE,
     MAZE_TEXTONLY_PIPELINE,
+    MAZE_COT_TEXTONLY_PIPELINE,
 )
 from .vision_language.spatial_grid import (
     SPATIAL_GRID_PIPELINE,
@@ -161,6 +163,8 @@ __all__ = [
     AIME2025_PIPELINE,
     AIME_HYBRIDEXTRACT_PIPELINE,
     AIME2025_HYBRIDEXTRACT_PIPELINE,
+    EULER_PIPELINE,
+    EULER_HYBRIDEXTRACT_PIPELINE,
     Omni_Math_PIPELINE,
     Omni_Math_Parallel_PIPELINE,
     NPHARD_TSP_PIPELINE,

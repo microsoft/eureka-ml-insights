@@ -6,7 +6,7 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from eureka_ml_insights.data_utils.aime_utils import AIMEExtractAnswer
+from eureka_ml_insights.data_utils.numeric_answer_utils import NumericExtractAnswer
 
 log = logging.getLogger("AIME_ExtractAnswer_tests")
 
@@ -21,7 +21,7 @@ class TestAIMEAnswerExtract(unittest.TestCase):
         )
 
     def test_answerextraction(self):
-        transform = AIMEExtractAnswer("C", "D")
+        transform = NumericExtractAnswer("C", "D")
         transform.transform(self.df)
         # Check values, accounting for NaN
         expected_values = [1.0, 3.0, 0.0, 0.06, 5.0, -1.0, float("nan"), 10.0, float("nan")]

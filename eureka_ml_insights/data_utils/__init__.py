@@ -1,4 +1,4 @@
-from .aime_utils import AIMEExtractAnswer
+from .numeric_answer_utils import NumericExtractAnswer
 from .data import (
     AzureDataReader,
     AzureJsonReader,
@@ -43,7 +43,7 @@ from .transform import (
 )
 
 __all__ = [
-    AIMEExtractAnswer,
+    NumericExtractAnswer,
     JsonLinesWriter,
     JsonReader,
     HFJsonReader,

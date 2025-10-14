@@ -128,7 +128,7 @@ class Inference(Component):
 
         # validate the resume_from contents both stand-alone and against the current model response keys
         with self.data_loader as loader:
-            _, sample_model_input, sample_model_kwargs = loader.get_sample_model_input()
+            _, sample_model_input, sample_model_args, sample_model_kwargs = loader.get_sample_model_input()
             sample_data_keys = loader.reader.read().keys()
 
             # verify that "model_output" and "is_valid" columns are present
@@ -136,7 +136,7 @@ class Inference(Component):
                 raise ValueError("Columns 'model_output' and 'is_valid' are required in the resume_from file.")
 
             # perform a sample inference call to get the model output keys and validate the resume_from contents
-            sample_response_dict = self.model.generate(*sample_model_input, **sample_model_kwargs)
+            sample_response_dict = self.model.generate(sample_model_input, *sample_model_args, **sample_model_kwargs)
             if not sample_response_dict["is_valid"]:
                 raise ValueError(
                     "Sample inference call for resume_from returned invalid results, please check the model configuration."
@@ -259,7 +259,7 @@ class Inference(Component):
             dict or None: The updated data record with inference results, or None if inference was
             skipped or the record is invalid.
         """
-        data, model_args, model_kwargs = record
+        data, model_inputs, model_args, model_kwargs = record
         if self.chat_mode and data.get("is_valid", True) is False:
             return None
         if self.resume_from and (data["uid"] <= self.last_uid):
@@ -277,7 +277,7 @@ class Inference(Component):
                     time.sleep(1)
             self.request_times.append(time.time())
 
-        response_dict = self.model.generate(*model_args, **model_kwargs)
+        response_dict = self.model.generate(model_inputs, *model_args, **model_kwargs)
         self.validate_response_dict(response_dict)
         data.update(response_dict)
         return data

@@ -196,7 +196,7 @@ class MultiColumnTransform(DFTransformBase):
             return df
         self.validate(df)
         for column in self.columns:
-            df[column] = df[column].apply(self._transform)
+            df.loc[:, column] = df.loc[:, column].apply(self._transform)
         return df
 
 
@@ -348,6 +348,8 @@ class RegexTransform(MultiColumnTransform):
     occurrence: str = "last"
 
     def _transform(self, sentence):
+        if sentence is None:
+            return None
         if self.ignore_case:
             results = re.findall(self.prompt_pattern, sentence, flags=re.IGNORECASE)
         else:

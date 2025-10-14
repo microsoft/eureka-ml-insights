@@ -35,7 +35,6 @@ from eureka_ml_insights.configs import (
     PromptProcessingConfig,
     DataJoinConfig,    
 )
-from eureka_ml_insights.configs.model_configs import OAI_GPT4O_2024_11_20_CONFIG
 
 """This file contains example user defined configuration classes for the maze task.
 In order to define a new configuration, a new class must be created that directly or indirectly
@@ -54,7 +53,7 @@ class MAZE_PIPELINE(ExperimentConfig):
     """This method is used to define an eval pipeline with inference and metric report components,
     on the spatial reasoning dataset."""
 
-    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None, **kwargs) -> PipelineConfig:
         # Configure the data processing component.
         self.data_processing_comp = PromptProcessingConfig(
             component_type=PromptProcessing,
@@ -64,7 +63,7 @@ class MAZE_PIPELINE(ExperimentConfig):
                     "path": "microsoft/VISION_LANGUAGE",
                     "split": "val_g10",
                     "tasks": "maze",
-                    "transform": MultiplyTransform(n_repeats=5),
+                    "transform": MultiplyTransform(n_repeats=int(kwargs.get("n_repeats", 1))),
                 },
             ),
             prompt_template_path=os.path.join(
@@ -86,7 +85,7 @@ class MAZE_PIPELINE(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
-            max_concurrent=10,
+            max_concurrent=int(kwargs.get("max_concurrent", 1)),
         )
 
         self.preeval_data_post_processing_comp = DataProcessingConfig(
@@ -141,13 +140,13 @@ class MAZE_PIPELINE(ExperimentConfig):
 
         self.inference_llm_answer_extract = InferenceConfig(
             component_type=Inference,
-            model_config=OAI_GPT4O_2024_11_20_CONFIG,
+            model_config=kwargs.get("eval_model_config", None),
             data_loader_config=DataSetConfig(
                 DataLoader,
                 {"path": os.path.join(self.filter_empty_answer.output_dir, "transformed_data.jsonl")},
             ),
             output_dir=os.path.join(self.log_dir, "llm_answer_extract_inference_result"),
-            max_concurrent=1
+            max_concurrent=64,
         )        
 
         self.data_join = DataJoinConfig(
@@ -444,8 +443,8 @@ class MAZE_PIPELINE(ExperimentConfig):
 class MAZE_COT_PIPELINE(MAZE_PIPELINE):
     """This class extends MAZE_PIPELINE to use a COT prompt."""
 
-    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
-        config = super().configure_pipeline(model_config, resume_from)
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None, **kwargs) -> PipelineConfig:
+        config = super().configure_pipeline(model_config, resume_from, **kwargs)
         self.data_processing_comp.prompt_template_path=os.path.join(
                 os.path.dirname(__file__),
                 "../../prompt_templates/vision_language_templates/cot.jinja",
@@ -456,8 +455,8 @@ class MAZE_COT_PIPELINE(MAZE_PIPELINE):
 class MAZE_TEXTONLY_PIPELINE(MAZE_PIPELINE):
     """This class extends MAZE_PIPELINE to use text only data."""
 
-    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
-        config = super().configure_pipeline(model_config, resume_from)
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None, **kwargs) -> PipelineConfig:
+        config = super().configure_pipeline(model_config, resume_from, **kwargs)
         self.data_processing_comp.data_reader_config.init_args["tasks"] = (
             "maze_text_only"
         )
@@ -466,8 +465,8 @@ class MAZE_TEXTONLY_PIPELINE(MAZE_PIPELINE):
 class MAZE_COT_TEXTONLY_PIPELINE(MAZE_COT_PIPELINE):
     """This class extends MAZE_COT_PIPELINE to use text only data."""
 
-    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
-        config = super().configure_pipeline(model_config, resume_from)
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None, **kwargs) -> PipelineConfig:
+        config = super().configure_pipeline(model_config, resume_from, **kwargs)
         self.data_processing_comp.data_reader_config.init_args["tasks"] = (
             "maze_text_only"
         )
@@ -478,8 +477,8 @@ class MAZE_REPORTING_PIPELINE(MAZE_PIPELINE):
     """This method is used to define an eval pipeline with only a metric report component,
     on the maze dataset."""
 
-    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None) -> PipelineConfig:
-        super().configure_pipeline(model_config, resume_from)
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None, **kwargs) -> PipelineConfig:
+        super().configure_pipeline(model_config, resume_from, **kwargs)
         self.preeval_data_post_processing_comp.data_reader_config.init_args["path"] = resume_from
         # Configure the pipeline
         return PipelineConfig(

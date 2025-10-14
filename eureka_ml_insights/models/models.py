@@ -9,14 +9,18 @@ import time
 import urllib.request
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from typing import Any
 
 import anthropic
 import requests
 import tiktoken
-from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+from azure.identity import AzureCliCredential, DefaultAzureCredential, get_bearer_token_provider
 
 from eureka_ml_insights.secret_management import get_secret
 
+
+credential = DefaultAzureCredential()
+# credential = AzureCliCredential() # use AzureCliCredential for Managed Identity
 
 @dataclass
 class Model(ABC):
@@ -29,7 +33,7 @@ class Model(ABC):
     system_message: str = None
 
     @abstractmethod
-    def generate(self, text_prompt, *args, **kwargs):
+    def generate(self, data, *args, **kwargs):
         raise NotImplementedError
 
     def count_tokens(self, model_output: str = None, is_valid: bool = False):
@@ -117,7 +121,7 @@ class EndpointModel(Model):
         previous_messages.append({"role": "assistant", "content": model_output})
         return previous_messages
 
-    def generate(self, query_text, *args, **kwargs):
+    def generate(self, data, *args, **kwargs):
         """
         Calls the endpoint to generate the model response.
         args:
@@ -128,6 +132,8 @@ class EndpointModel(Model):
             response_dict (dict): a dictionary containing the model_output, is_valid, response_time, and n_output_tokens,
                                   and any other relevant information returned by the model.
         """
+        query_text = data.get("prompt", None)
+        query_images = data.get("query_images", None)
         response_dict = {}
         if hasattr(self, "system_message") and self.system_message:
             if "system_message" in kwargs:
@@ -135,7 +141,7 @@ class EndpointModel(Model):
                     "System message is passed via the dataloader but will be overridden by the model class system message."
                 )
             kwargs["system_message"] = self.system_message
-        request = self.create_request(query_text, *args, **kwargs)
+        request = self.create_request(query_text, query_images, *args, **kwargs)
         attempts = 0
         model_output = None
         is_valid = False
@@ -209,9 +215,10 @@ class OfflineFileModel(Model):
         missing_columns = required_columns - set(self.df_results.columns)
         if missing_columns:
             raise ValueError(f"Error: Missing required columns in file_path: {missing_columns}")
+        logging.info(f"Loaded {len(self.df_results)} records from {self.file_path} for model {self.model_name}.")
         return None
 
-    def generate(self, query_text, *args, **kwargs):
+    def generate(self, data, *args, **kwargs):
         """
         Reads the file from file_path to retrieve the model response.
         args:
@@ -221,26 +228,9 @@ class OfflineFileModel(Model):
             response_dict (dict): a dictionary containing the model_output, is_valid, response_time, and n_output_tokens,
                                   and any other relevant information returned by the model.
         """
+        query_text = data.get("prompt", None)
+        query_images = data.get("query_images", None)
         response_dict = {}
-        if hasattr(self, "system_message") and self.system_message:
-            if "system_message" in kwargs:
-                logging.warning(
-                    "Warning: System message is passed via the dataloader but will not be used because the inference results are precomputed offline in file_path."
-                )
-            kwargs["system_message"] = self.system_message
-
-        if hasattr(self, "query_images") and self.system_message:
-            if "query_images" in kwargs:
-                logging.warning(
-                    "Warning: Images are not yet supported for this model class."
-                )
-            kwargs["query_images"] = self.query_images
-
-        if hasattr(self, "chat_mode") and self.chat_mode:
-            if "chat_mode" in kwargs:
-                logging.warning(
-                    "Warning: Chat mode is not supported for this model class."
-                )
 
         model_output = None
         is_valid = False
@@ -248,7 +238,7 @@ class OfflineFileModel(Model):
         n_output_tokens = None
 
         try:
-            model_response = self.get_response(query_text, kwargs.get("data_repeat_id", None))
+            model_response = self.get_response(query_text, data.get("data_repeat_id", None))
             model_output = model_response["model_output"]
             is_valid = model_response["is_valid"]
         except Exception as e:
@@ -374,7 +364,7 @@ class ServerlessAzureRestEndpointModel(EndpointModel, KeyBasedAuthMixIn):
                 "extra-parameters": "pass-through",
             }
         except ValueError:
-            self.bearer_token_provider = get_bearer_token_provider(DefaultAzureCredential(), self.auth_scope)
+            self.bearer_token_provider = get_bearer_token_provider(credential, self.auth_scope)
             self.headers = {
                 "Content-Type": "application/json",
                 "Authorization": ("Bearer " + self.bearer_token_provider()),
@@ -606,7 +596,7 @@ class AzureOpenAIClientMixIn:
     def get_client(self):
         from openai import AzureOpenAI
 
-        token_provider = get_bearer_token_provider(DefaultAzureCredential(), self.auth_scope)
+        token_provider = get_bearer_token_provider(credential, self.auth_scope)
         return AzureOpenAI(
             azure_endpoint=self.url,
             api_version=self.api_version,
@@ -1049,7 +1039,8 @@ class HuggingFaceModel(Model):
             "response_time": response_time,
         }
 
-    def generate(self, text_prompt, query_images=None, system_message=None):
+    def generate(self, data, system_message=None):
+        text_prompt = data.get("prompt", None)
         response_dict = {}
 
         if text_prompt:
@@ -1189,7 +1180,9 @@ class LLaVAHuggingFaceModel(HuggingFaceModel):
             "response_time": response_time,
         }
 
-    def generate(self, text_prompt, query_images=None, system_message=None):
+    def generate(self, data, system_message=None):
+        text_prompt = data.get("prompt", None)
+        query_images = data.get("query_images", None)
 
         if query_images and len(query_images) > 1:
             logging.error(f"Not implemented for more than 1 image. {len(query_images)} images are in the prompt")
@@ -1356,7 +1349,10 @@ class VLLMModel(Model):
             "response_time": response_time,
         }
 
-    def generate(self, text_prompt, query_images=None, system_message=None):
+    def generate(self, data, system_message=None):
+        text_prompt = data.get("prompt", None)
+        query_images = data.get("query_images", None)
+
         response_dict = {}
         model_output = None
         response_time = None
@@ -1757,7 +1753,7 @@ class ClaudeReasoningModel(ClaudeModel):
 class TestModel(Model):
     # This class is used for testing purposes only. It only waits for a specified time and returns a response.
 
-    def generate(self, text_prompt, **kwargs):
+    def generate(self, data, *args, **kwargs):
         output = "This is a test response."
         is_valid = True
         return {
@@ -1766,3 +1762,130 @@ class TestModel(Model):
             "response_time": 0.1,
             "n_output_tokens": self.count_tokens(output, is_valid),
         }
+
+
+@dataclass
+class LlamaCppModel(Model):
+    """This class is used to interact with a local llama.cpp GGUF model via llama-cpp-python."""
+
+    model_name: str = None
+    model_path: str = None
+
+    n_ctx: int = 4096
+    n_threads: int = None
+    n_batch: int = 512
+    n_gpu_layers: int = 0
+    seed: int = None
+    max_tokens: int = 2000
+    temperature: float = 0.7
+    top_p: float = 0.95
+    top_k: int = 40
+    repeat_penalty: float = 1.1
+    stop: list = None
+    apply_model_template: bool = True
+    chat_mode: bool = False
+    verbose: bool = False
+
+    _llm: Any = None
+    _lock: threading.Lock = threading.Lock()
+
+    def __post_init__(self):
+        if not self.model_path:
+            raise ValueError("LlamaCppModel requires 'model_path' to a .gguf file.")
+        
+        try:
+            from llama_cpp import Llama
+        except ImportError:
+            raise ImportError("'llama-cpp-python' is not installed.")
+
+        init_kwargs = {"model_path": self.model_path, "n_ctx": self.n_ctx, "verbose": self.verbose}
+        if self.n_threads is not None:
+            init_kwargs["n_threads"] = self.n_threads
+        if self.n_batch is not None:
+            init_kwargs["n_batch"] = self.n_batch
+        if self.n_gpu_layers is not None:
+            init_kwargs["n_gpu_layers"] = self.n_gpu_layers
+        if self.seed is not None:
+            init_kwargs["seed"] = self.seed
+
+        self._llm = Llama(**init_kwargs)
+
+    def model_template_fn(self, text_prompt, system_message=None):
+        return (system_message + " \n" if system_message else "") + text_prompt
+
+    def _create_chat_messages(self, text_prompt, system_message=None, previous_messages=None):
+        messages = []
+        if system_message:
+            messages.append({"role": "system", "content": system_message})
+        if previous_messages:
+            messages.extend(previous_messages)
+        messages.append({"role": "user", "content": text_prompt})
+        return messages
+
+    def _infer_chat(self, messages):
+        # Guard inference with a lock for basic thread-safety per instance
+        with self._lock:
+            result = self._llm.create_chat_completion(
+                messages=messages,
+                temperature=self.temperature,
+                top_p=self.top_p,
+                max_tokens=self.max_tokens,
+                stop=self.stop,
+                repeat_penalty=self.repeat_penalty,
+                top_k=self.top_k,
+            )
+
+        try:
+            return result["choices"][0]["message"]["content"]
+        except Exception:
+            return result.get("choices", [{}])[0].get("text")
+
+    def _infer_completion(self, prompt):
+        with self._lock:
+            result = self._llm.create_completion(
+                prompt=prompt,
+                temperature=self.temperature,
+                top_p=self.top_p,
+                max_tokens=self.max_tokens,
+                stop=self.stop,
+                repeat_penalty=self.repeat_penalty,
+                top_k=self.top_k,
+            )
+
+        return result["choices"][0]["text"]
+
+    def generate(self, text_prompt, query_images=None, system_message=None, previous_messages=None, **kwargs):
+        if query_images:
+            raise NotImplementedError("Images are not supported for LlamaCppModel.")
+
+        response_dict = {}
+        model_output = None
+        is_valid = False
+
+        try:
+            start_time = time.time()
+
+            if self.chat_mode or previous_messages is not None or system_message is not None:
+                messages = self._create_chat_messages(text_prompt, system_message, previous_messages)
+                model_output = self._infer_chat(messages)
+            else:
+                prompt = self.model_template_fn(text_prompt, system_message)
+                model_output = self._infer_completion(prompt)
+
+            end_time = time.time()
+            response_time = end_time - start_time
+
+            is_valid = model_output is not None
+            response_dict.update({"model_output": model_output, "response_time": response_time})
+
+        except Exception as e:
+            logging.warning(e)
+            is_valid = False
+
+        response_dict.update(
+            {
+                "is_valid": is_valid,
+                "n_output_tokens": self.count_tokens(response_dict.get("model_output"), is_valid),
+            }
+        )
+        return response_dict

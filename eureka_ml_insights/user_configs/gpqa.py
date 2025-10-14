@@ -18,9 +18,6 @@ from eureka_ml_insights.configs import (
     PipelineConfig,
     PromptProcessingConfig,
 )
-from eureka_ml_insights.configs.model_configs import (
-    OAI_GPT4O_2024_11_20_CONFIG,
-)
 from eureka_ml_insights.core import (
     DataProcessing,
     EvalReporting,
@@ -43,6 +40,7 @@ from eureka_ml_insights.data_utils import (
     RunPythonTransform,
     SequenceTransform,
     ShuffleColumnsTransform,
+    SamplerTransform,
 )
 from eureka_ml_insights.metrics import (
     BiLevelAggregator,
@@ -69,6 +67,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                     "split": "train",
                     "transform": SequenceTransform(
                         [
+                            # SamplerTransform(sample_count=50, random_seed=1),
                             CopyColumn(column_name_src="Correct Answer", column_name_dst="A"),
                             CopyColumn(column_name_src="Incorrect Answer 1", column_name_dst="B"),
                             CopyColumn(column_name_src="Incorrect Answer 2", column_name_dst="C"),
@@ -78,7 +77,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                             ColumnMatchMapTransform(
                                 new_col="ground_truth", key_col="Correct Answer", columns=["A", "B", "C", "D"]
                             ),
-                            MultiplyTransform(n_repeats=1),
+                            MultiplyTransform(n_repeats=int(kwargs.get("n_repeats", 1))),
                         ]
                     ),
                 },
@@ -99,7 +98,7 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
             ),
             output_dir=os.path.join(self.log_dir, "inference_result"),
             resume_from=resume_from,
-            max_concurrent=1,
+            max_concurrent=32,
         )
         self.preeval_data_post_processing_comp = DataProcessingConfig(
             component_type=DataProcessing,
@@ -141,9 +140,9 @@ class GPQA_Experiment_Pipeline(ExperimentConfig):
                 os.path.dirname(__file__),
                 "../prompt_templates/gpqa_templates/extract_gpqa_answer.jinja",
             ),
-            llm_extractor_model_config=OAI_GPT4O_2024_11_20_CONFIG,
+            llm_extractor_model_config=kwargs.get('eval_model_config', None),
             log_dir=self.log_dir,
-            llm_extractor_max_concurrent=1,
+            llm_extractor_max_concurrent=32,
             llm_extractor_answer_transforms=[
                 RegexTransform(
                     columns="model_output",
@@ -473,9 +472,9 @@ class GPQA_PIPELINE_5Run(GPQA_Experiment_Pipeline):
     def configure_pipeline(
         self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any]
     ) -> PipelineConfig:
-        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from)
+        pipeline = super().configure_pipeline(model_config=model_config, resume_from=resume_from, **kwargs)
         # data preprocessing
         self.data_processing_comp.data_reader_config.init_args["transform"].transforms.append(
-            MultiplyTransform(n_repeats=5)
+            MultiplyTransform(n_repeats=int(kwargs.get("n_repeats", 5)))
         )
         return pipeline

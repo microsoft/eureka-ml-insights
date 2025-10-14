@@ -14,7 +14,7 @@ class TestModel:
     def __init__(self, model_name="generic_test_model"):
         self.name = model_name
 
-    def generate(self, text_prompt, *args, **kwargs):
+    def generate(self, data, *args, **kwargs):
         time.sleep(0.1)
         return {"model_output": "model output", "is_valid": True, "response_time": 0, "n_output_tokens": 0}
 
@@ -46,7 +46,7 @@ class SpatialReasoningTestModel:
     def __init__(self):
         self.name = "random_generator"
 
-    def generate(self, text_prompt, *args, **kwargs):
+    def generate(self, data, *args, **kwargs):
         return {
             "model_output": random.choice(["left", "right", "above", "below"]),
             "is_valid": random.choice([True, False]),
@@ -60,7 +60,7 @@ class MultipleChoiceTestModel:
     def __init__(self):
         self.name = "random_generator"
 
-    def generate(self, text_prompt, query_images=None):
+    def generate(self, data, *args, **kwargs):
         return {
             "model_output": random.choice(["Final Answer: A", "Final Answer: B", "Final Answer: C", "Final Answer: D"]),
             "is_valid": random.choice([True, False]),
@@ -75,7 +75,7 @@ class HoloAssistTestModel:
     def __init__(self):
         self.name = "random_generator"
 
-    def generate(self, text_prompt, *args, **kwargs):
+    def generate(self, data, *args, **kwargs):
         return {
             "model_output": random.choice(["printer", "gopro", "nintendo switch", "dslr"]),
             "is_valid": random.choice([True, False]),
@@ -86,7 +86,7 @@ class GeometricReasoningTestModel:
     def __init__(self):
         self.name = "random_generator"
 
-    def generate(self, text_prompt, *args, **kwargs):
+    def generate(self, data, *args, **kwargs):
         return {"model_output": random.choice(["(13, 66)", "(66, 13)"]), "is_valid": random.choice([True, False])}
 
 
@@ -94,7 +94,7 @@ class KitabTestModel:
     def __init__(self):
         self.name = "random_generator"
 
-    def generate(self, text_prompt, *args, **kwargs):
+    def generate(self, data, *args, **kwargs):
         model_output = "The author has written several books and is famous for winning international book prizes. "
         potential_outputs = []
         potential_outputs.append(
@@ -124,7 +124,7 @@ class GenericTestModel:
     def __init__(self, model_name="generic_test_model"):
         self.name = model_name
 
-    def generate(self, text_prompt, *args, **kwargs):
+    def generate(self, data, *args, **kwargs):
         return {"model_output": "Generic model output", "is_valid": random.choice([True, False]), "n_output_tokens": 3}
 
 
@@ -132,7 +132,7 @@ class DNAEvaluationInferenceTestModel:
     def __init__(self):
         self.name = "eval_inf_label_generator"
 
-    def generate(self, text_prompt):
+    def generate(self, data, *args, **kwargs):
         label = random.choice(["1", "2", "3", "4", "5", "6"])
         return {
             "model_output": "The Assistant's Response falls under class {0}. \n\n<answer>{0}</answer>".format(label),
@@ -144,7 +144,7 @@ class ToxiGenTestModel:
     def __init__(self):
         self.name = "random_generator"
 
-    def generate(self, text_prompt, *args, **kwargs):
+    def generate(self, data, *args, **kwargs):
         label = random.choice(["1", "2", "3", "4", "5"])
         # return "###Final score: " + label, random.choice([True, False])
         potential_outputs = []
@@ -189,7 +189,7 @@ class TSPTestModel:
     def __init__(self, model_name="generic_test_model"):
         self.name = model_name
 
-    def generate(self, text_prompt, *args, **kwargs):
+    def generate(self, data, *args, **kwargs):
         return {
             "model_output": "<final_answer>{'Path': '0->1->3->2->0', 'TotalDistance': '85'}</final_answer>",
             "is_valid": random.choice([True]),
@@ -202,8 +202,9 @@ class DetectionTestModel:
         self.name = "detection_output_generator"
 
         self.obj_list = ["apple", "banana", "orange", "grape", "kiwi", "melon", "strawberry"]
+        random.seed(42)
 
-    def generate(self, text_prompt, *args, **kwargs):
+    def generate(self, data, *args, **kwargs):
 
         model_output = ""
         for i in range(0, random.randint(1, 4)):
@@ -268,29 +269,29 @@ class TestKitabMetric(CompositeMetric):
 class EarlyStoppableIterable:
     def __iter__(self):
         count = 0
-        for data, model_args, model_kwargs in super().__iter__():
+        for data, model_inputs, model_args, model_kwargs in super().__iter__():
             if count == self.n_iter:
                 break
             count += 1
-            yield data, model_args, model_kwargs
+            yield data, model_inputs, model_args, model_kwargs
 
     def __len__(self):
         return self.n_iter
 
 
 class TestDataLoader(EarlyStoppableIterable, DataLoader):
-    def __init__(self, path, n_iter):
-        super().__init__(path=path)
+    def __init__(self, path, n_iter, misc_columns=None):
+        super().__init__(path=path, misc_columns=misc_columns)
         self.n_iter = n_iter
 
 
 class TestMMDataLoader(EarlyStoppableIterable, MMDataLoader):
-    def __init__(self, path, n_iter, image_column_names=None):
-        super().__init__(path, image_column_names=image_column_names)
+    def __init__(self, path, n_iter, image_column_names=None, misc_columns=None):
+        super().__init__(path, image_column_names=image_column_names, misc_columns=misc_columns)
         self.n_iter = n_iter
 
 
 class TestAzureMMDataLoader(EarlyStoppableIterable, AzureMMDataLoader):
-    def __init__(self, path, n_iter, account_url, blob_container, image_column_names=None):
-        super().__init__(path, account_url, blob_container, image_column_names=image_column_names)
+    def __init__(self, path, n_iter, account_url, blob_container, image_column_names=None, misc_columns=None):
+        super().__init__(path, account_url, blob_container, image_column_names=image_column_names, misc_columns=misc_columns)
         self.n_iter = n_iter
