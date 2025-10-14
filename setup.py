@@ -1,15 +1,14 @@
-from setuptools import setup, find_packages
-
+from setuptools import find_packages, setup
 
 setup(
-    name='eureka_ml_insights',
-    version='0.1.0',
-    author='Microsoft Research',
-    author_email='eureka-ml-insights@microsoft.com',
-    description='Eureka ML Insights Framework',
-    long_description=open('README.md', encoding="utf-8").read(),
-    long_description_content_type='text/markdown',
-    url='https://github.com/microsoft/eureka-ml-insights',
+    name="eureka_ml_insights",
+    version="0.1.0",
+    author="Microsoft Research",
+    author_email="eureka-ml-insights@microsoft.com",
+    description="Eureka ML Insights Framework",
+    long_description=open("README.md", encoding="utf-8").read(),
+    long_description_content_type="text/markdown",
+    url="https://github.com/microsoft/eureka-ml-insights",
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
@@ -42,6 +41,7 @@ setup(
         'pycocotools>=2.0.8',
         'vllm>=0.8.5',
         'latex2sympy2>=1.9.1',
+        "bfcl-eval>=2025.10.13",
     ],
     extras_require={
         'llamacpp': [
@@ -50,9 +50,9 @@ setup(
     },
     classifiers=[
         # Full list at https://pypi.org/classifiers/
-        'Programming Language :: Python :: 3',
-        'License :: Apache License 2.0',
-        'Operating System :: OS Independent',
+        "Programming Language :: Python :: 3",
+        "License :: Apache License 2.0",
+        "Operating System :: OS Independent",
     ],
-    python_requires='>=3.8',
+    python_requires=">=3.8",
 )
