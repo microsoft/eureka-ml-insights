@@ -31,11 +31,13 @@ from .spatial_and_layout_metrics import (
     ObjectRecognitionMetric,
     SpatialAndLayoutReasoningMetric,
 )
+from .simpleqa_metrics import SimpleQA_Metric
 
 __all__ = [
     Metric,
     ClassicMetric,
     CompositeMetric,
+    SimpleQA_Metric,
     SpatialAndLayoutReasoningMetric,
     ObjectRecognitionMetric,
     CocoObjectDetectionMetric,
