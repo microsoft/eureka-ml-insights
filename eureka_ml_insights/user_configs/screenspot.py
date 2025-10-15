@@ -195,6 +195,19 @@ class SCREENSPOT_PRO_NORMALIZED_PIPELINE(SCREENSPOT_NORMALIZED_PIPELINE):
         self.inference_comp.data_loader_config.init_args["mm_data_path_prefix"] = "/mnt/phimmwestus3_datasets/EVAL/ScreenSpot-Pro/images"
         self.evalreporting_comp.metric_config = MetricConfig(BboxMetric, {"normalized": True, "xywh": False})
         return config
+ 
+class SCREENSPOT_PRO_CROPPED_NORMALIZED_PIPELINE(SCREENSPOT_NORMALIZED_PIPELINE):
+    """
+    This defines an ExperimentConfig pipeline for the SCREENSPOT_PRO dataset using normalized coordinates.
+    There is no model_config by default and the model config must be passed in via command line.
+    """
+
+    def configure_pipeline(self, model_config: ModelConfig, resume_from: str = None, **kwargs: dict[str, Any] ) -> PipelineConfig:
+        config = super().configure_pipeline(model_config, resume_from)
+        self.data_processing_comp.data_reader_config.init_args["path"] = "/mnt/phimmwestus3_datasets/EVAL/ScreenSpot-Pro/screenspot_pro_all_cropped.jsonl"
+        self.inference_comp.data_loader_config.init_args["mm_data_path_prefix"] = "/mnt/phimmwestus3_datasets/EVAL/ScreenSpot-Pro/images_cropped"
+        self.evalreporting_comp.metric_config = MetricConfig(BboxMetric, {"normalized": True, "xywh": False})
+        return config 
     
 class SCREENSPOT_PRO_UNNORMALIZED_PIPELINE(SCREENSPOT_UNNORMALIZED_PIPELINE):
     """

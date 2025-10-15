@@ -74,3 +74,76 @@ class CreateMMMUPrompts(DFTransformBase):
         df["prompt"] = df.apply(self._create_prompt, axis=1)
 
         return df
+
+@dataclass
+class CreateMUIRBENCHPrompts(DFTransformBase):
+    """
+    Create prompts in the MUIRBENCH format for mutiple-choice and open-ended questions
+    The original code is located in https://github.com/muirbench/MuirBench/tree/main/eval/utils and has
+    small modifications to work in this framework.
+    """
+
+    def _create_prompt(self, sample, use_hint=True):
+        question = sample['question']
+        choices = sample['options']
+
+        # Question
+        question_text = f"Question: {question}"
+        
+        # Choices
+        texts = ["Choices:"]
+        for i, choice in enumerate(choices):
+            texts.append(f"({chr(ord('A')+i)}) {choice}")
+        choices_text = "\n".join(texts)
+
+        # Hint
+        if use_hint:
+            hint_text = f"Hint: Please provide the correct option letter, such as A, B, C, D, directly."
+        else:
+            hint_text = ""
+
+        # Answer Prefix
+        prompt = "Answer:"
+        
+        # Full Prompt
+        elements = [question_text, choices_text, hint_text, prompt]
+        query = "\n".join([e for e in elements if e != ""])
+        query = query.strip()
+
+        return query
+
+    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        df["prompt"] = df.apply(self._create_prompt, axis=1)
+
+        return df    
+
+tasks_exist = ['person_reid', 'multiple_image_captioning', 'spot_the_similarity', 'face_retrieval', 'sketch2image_retrieval', 'handwritten_retrieval', 'spot_the_diff', 'image2image_retrieval', 'vehicle_retrieval', 'text2image_retrieval',
+'general_action_recognition', 'video_captioning', 'next_img_prediction', 'temporal_ordering', 'meme_vedio_understanding', 'action_quality_assessment', 'temporal_localization', 'mevis',
+'ravens_progressive_matrices', 'threed_indoor_recognition', 'point_tracking', 'threed_cad_recognition', 'single_object_tracking']
+
+@dataclass
+class CreateMMIUPrompts(DFTransformBase):
+    """
+    Create prompts in the MMUI format for mutiple-choice and open-ended questions
+    The original code is located in https://github.com/OpenGVLab/MMIU/blob/main and has
+    small modifications to work in this framework.
+    """
+
+    def _create_prompt(self, sample, use_hint=True):
+        question = sample['question']
+        options = sample['options']
+        context = sample["context"]
+                    
+        if sample['task'] in tasks_exist:
+            question = question + '\n' + context
+        else:
+            question = context + '\n' + question
+
+        question = question + '\nPlease answer the option directly like A,B,C,D...'
+
+        return question
+
+    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        df["prompt"] = df.apply(self._create_prompt, axis=1)
+
+        return df            
