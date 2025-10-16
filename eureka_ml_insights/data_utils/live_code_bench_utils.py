@@ -20,7 +20,7 @@ class CodeExtractionTransform(transform.DFTransformBase):
         return df
 
     @staticmethod
-    def extract_code(response):
+    def extract_code(response: str | None) -> str | None:
         if response is None:
             return None
 
@@ -32,5 +32,5 @@ class CodeExtractionTransform(transform.DFTransformBase):
         if match:
             return match.group(1).strip()
 
-        # If not found, return the whole response as a fallback
-        return response.strip()
+        # If not found, return the empty string
+        return ""
