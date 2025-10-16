@@ -11,6 +11,7 @@ Typical usage example (from the project's root directory):
 import pathlib
 
 from eureka_ml_insights import configs, core, data_utils
+from eureka_ml_insights.data_utils import live_code_bench_utils
 from typing import Any
 
 
@@ -47,7 +48,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     "release_version": self._HF_LCB_RELEASE_VERSION,
                     "transform": data_utils.SequenceTransform([
                         data_utils.SamplerTransform(
-                            sample_count=10,
+                            sample_count=3,
                             random_seed=42
                         ),
                     ])
@@ -70,10 +71,32 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
             output_dir=str(pathlib.Path(self.log_dir) / "responses")
         )
 
+        self._code_extractor = configs.DataProcessingConfig(
+            component_type=core.DataProcessing,
+            data_reader_config=configs.DataSetConfig(
+                class_name=data_utils.DataReader,
+                init_args={
+                    "path": str(
+                        pathlib.Path(self._response_generator.output_dir) /
+                        "inference_result.jsonl"
+                    ),
+                    "format": ".jsonl",
+                    "transform": data_utils.SequenceTransform([
+                        live_code_bench_utils.CodeExtractionTransform(
+                            model_output_column="model_output",
+                            code_column="extracted_code"
+                        ),
+                    ])
+                }
+            ),
+            output_dir=str(pathlib.Path(self.log_dir) / "extracted_code")
+        )
+
         return configs.PipelineConfig(
             component_configs=[
                 self._prompt_creator,
                 self._response_generator,
+                self._code_extractor,
             ],
             log_dir=self.log_dir,
         )
