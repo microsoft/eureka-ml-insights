@@ -11,7 +11,11 @@ Typical usage example (from the project's root directory):
 import pathlib
 
 from eureka_ml_insights import configs, core, data_utils
+from eureka_ml_insights.configs import config
+from eureka_ml_insights.core import eval_reporting
+from eureka_ml_insights.metrics import reports
 from eureka_ml_insights.data_utils import live_code_bench_utils
+from eureka_ml_insights.metrics import live_code_bench_metrics
 from typing import Any
 
 
@@ -59,7 +63,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                         ),
                     ])
                 }),
-            output_dir=str(pathlib.Path(self.log_dir) / "prompts")
+            output_dir=str(pathlib.Path(self.log_dir) / "prompts"),
         )
 
         self._response_generation = configs.InferenceConfig(
@@ -74,7 +78,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     ),
                 }
             ),
-            output_dir=str(pathlib.Path(self.log_dir) / "responses")
+            output_dir=str(pathlib.Path(self.log_dir) / "responses"),
         )
 
         self._code_extraction = configs.DataProcessingConfig(
@@ -98,11 +102,38 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
             output_dir=str(pathlib.Path(self.log_dir) / "extracted_code")
         )
 
+        self._grade_code = configs.EvalReportingConfig(
+            component_type=eval_reporting.EvalReporting,
+            data_reader_config=configs.DataSetConfig(
+                class_name=data_utils.DataReader,
+                init_args={
+                    "path": str(
+                        pathlib.Path(self._code_extraction.output_dir) /
+                        "transformed_data.jsonl"
+                    ),
+                    "format": ".jsonl",
+                }
+            ),
+            metric_config=config.MetricConfig(
+                class_name=live_code_bench_metrics.CodeAllTestCasesPassedMetric,
+            ),
+            aggregator_configs=[
+                config.AggregatorConfig(
+                    class_name=reports.AverageAggregator,
+                    init_args={
+                        "column_names": ["CodeAllTestCasesPassedMetric_result"],
+                    }
+                ),
+            ],
+            output_dir=str(pathlib.Path(self.log_dir) / "eval_report"),
+        )
+
         return configs.PipelineConfig(
             component_configs=[
                 self._prompt_creation,
                 self._response_generation,
                 self._code_extraction,
+                self._grade_code,
             ],
             log_dir=self.log_dir,
         )
