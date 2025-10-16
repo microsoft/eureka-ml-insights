@@ -527,6 +527,7 @@ class HFDataReader(DataReader):
         transform: Optional[DFTransformBase] = None,
         cache_dir: str = None,
         load_data_from_disk: bool = False,
+        trust_remote_code: bool = False,
         **kwargs,
     ):
         """
@@ -545,6 +546,8 @@ class HFDataReader(DataReader):
         self.tasks = tasks
         self.cache_dir = cache_dir
         self.load_data_from_disk = load_data_from_disk
+        self.trust_remote_code = trust_remote_code
+        self.release_version = kwargs.get("release_version", None)
 
     def _save_base64_to_image_file(self, image_base64: dict, cache_path: str) -> str:
         """
@@ -641,7 +644,12 @@ class HFDataReader(DataReader):
                 dataset_dict = load_from_disk(self.path)
                 hf_dataset = [dataset_dict[split] for split in self.split]
             else:
-                hf_dataset = load_dataset(self.path, cache_dir=self.cache_dir, split=self.split)
+                hf_dataset = load_dataset(
+                    self.path,
+                    cache_dir=self.cache_dir,
+                    split=self.split,
+                    version_tag=self.release_version,
+                    trust_remote_code=self.trust_remote_code)
             for i, data_split in enumerate(hf_dataset):
                 task_df = self._hf_to_dataframe(data_split)
                 task_df["__hf_split"] = self.split[i]
@@ -652,7 +660,13 @@ class HFDataReader(DataReader):
                     dataset_dict = load_from_disk(self.path)
                     hf_dataset = [dataset_dict[task][split] for split in self.split]
                 else:
-                    hf_dataset = load_dataset(self.path, task, cache_dir=self.cache_dir, split=self.split)
+                    hf_dataset = load_dataset(
+                        self.path,
+                        task,
+                        cache_dir=self.cache_dir,
+                        split=self.split,
+                        version_tag=self.release_version,
+                        trust_remote_code=self.trust_remote_code)
                 for i, data_split in enumerate(hf_dataset):
                     task_df = self._hf_to_dataframe(data_split)
                     task_df["__hf_task"] = task

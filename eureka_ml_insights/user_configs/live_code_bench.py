@@ -19,12 +19,14 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
 
     _HF_LCB_DATASET_NAME: str = "livecodebench/code_generation_lite"
     _HF_LCB_DATASET_SPLIT: str = "test"
+    _HF_LCB_RELEASE_VERSION: str = "release_v5"
     _PROMPT_TEMPLATE_PATH: pathlib.Path = (
         pathlib.Path(__file__).parent /
         "../prompt_templates/live_code_bench_templates/codegen.jinja"
     ).resolve()
 
     def configure_pipeline(self,
+                           model_config: configs.ModelConfig | None = None,
                            **kwargs: dict[str, Any]) -> configs.PipelineConfig:
         """Configures the steps of the pipeline.
         
@@ -34,7 +36,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
         Returns:
             A PipelineConfig object defining the pipeline steps.
         """
-        self._prompt_creation = configs.PromptProcessingConfig(
+        self._prompt_creator = configs.PromptProcessingConfig(
             component_type=core.PromptProcessing,
             prompt_template_path=str(self._PROMPT_TEMPLATE_PATH),
             data_reader_config=configs.DataSetConfig(
@@ -42,6 +44,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                 init_args={
                     "path": self._HF_LCB_DATASET_NAME,
                     "split": self._HF_LCB_DATASET_SPLIT,
+                    "release_version": self._HF_LCB_RELEASE_VERSION,
                     "transform": data_utils.SequenceTransform([
                         data_utils.SamplerTransform(
                             sample_count=10,
@@ -52,9 +55,25 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
             output_dir=str(pathlib.Path(self.log_dir) / "prompts")
         )
 
+        self._response_generator = configs.InferenceConfig(
+            component_type=core.Inference,
+            model_config=model_config,
+            data_loader_config=configs.DataSetConfig(
+                class_name=data_utils.DataLoader,
+                init_args={
+                    "path": str(
+                        pathlib.Path(self._prompt_creator.output_dir) /
+                        "transformed_data.jsonl"
+                    ),
+                }
+            ),
+            output_dir=str(pathlib.Path(self.log_dir) / "responses")
+        )
+
         return configs.PipelineConfig(
             component_configs=[
-                self._prompt_creation,
+                self._prompt_creator,
+                self._response_generator,
             ],
             log_dir=self.log_dir,
         )
