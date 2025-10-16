@@ -51,6 +51,12 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                             sample_count=3,
                             random_seed=42
                         ),
+                        live_code_bench_utils.DecodeTestCasesTransform(
+                            encoded_test_cases_column_name="private_test_cases",
+                            decoded_test_cases_column_name=(
+                                "decoded_private_test_cases"
+                            )
+                        ),
                     ])
                 }),
             output_dir=str(pathlib.Path(self.log_dir) / "prompts")
