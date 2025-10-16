@@ -38,7 +38,7 @@ class TestResult:
     error_message: str = ""
 
 
-def _parse_test_cases(test_cases_json: str) -> list[TestCase]:
+def parse_test_cases(test_cases_json: str) -> list[TestCase]:
     """Parses a JSON string of test cases into a list of TestCase objects.
     
     Args:
@@ -102,7 +102,7 @@ def _normalize_for_comparison(val: Any) -> Any:
     return val
 
 
-def _evaluate_function(
+def evaluate_function(
         function: Callable[..., Any],
         test_case: TestCase,
         timeout: datetime.timedelta | None = None

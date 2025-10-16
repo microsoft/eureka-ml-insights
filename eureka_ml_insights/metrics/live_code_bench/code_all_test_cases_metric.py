@@ -56,7 +56,7 @@ class CodePassedAllTestCasesMetric(metrics_base.Metric):
             True if all test cases pass, False otherwise.
         """
         test_cases: list[evaluate_code_utils.TestCase] = (
-            evaluate_code_utils._parse_test_cases(
+            evaluate_code_utils.parse_test_cases(
                 row[self._test_cases_column_name]
             )
         )
