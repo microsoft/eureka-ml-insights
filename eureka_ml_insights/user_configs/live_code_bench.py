@@ -15,7 +15,7 @@ from eureka_ml_insights.configs import config
 from eureka_ml_insights.core import eval_reporting
 from eureka_ml_insights.metrics import reports
 from eureka_ml_insights.data_utils import live_code_bench_utils
-from eureka_ml_insights.metrics import live_code_bench_metrics
+from eureka_ml_insights.metrics.live_code_bench import code_all_test_cases_metric
 from typing import Any
 
 
@@ -115,13 +115,13 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                 }
             ),
             metric_config=config.MetricConfig(
-                class_name=live_code_bench_metrics.CodeAllTestCasesPassedMetric,
+                class_name=code_all_test_cases_metric.CodePassedAllTestCasesMetric,
             ),
             aggregator_configs=[
                 config.AggregatorConfig(
                     class_name=reports.AverageAggregator,
                     init_args={
-                        "column_names": ["CodeAllTestCasesPassedMetric_result"],
+                        "column_names": ["CodePassedAllTestCasesMetric_result"],
                     }
                 ),
             ],
