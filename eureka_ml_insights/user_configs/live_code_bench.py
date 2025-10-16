@@ -37,7 +37,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
         Returns:
             A PipelineConfig object defining the pipeline steps.
         """
-        self._prompt_creator = configs.PromptProcessingConfig(
+        self._prompt_creation = configs.PromptProcessingConfig(
             component_type=core.PromptProcessing,
             prompt_template_path=str(self._PROMPT_TEMPLATE_PATH),
             data_reader_config=configs.DataSetConfig(
@@ -56,14 +56,14 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
             output_dir=str(pathlib.Path(self.log_dir) / "prompts")
         )
 
-        self._response_generator = configs.InferenceConfig(
+        self._response_generation = configs.InferenceConfig(
             component_type=core.Inference,
             model_config=model_config,
             data_loader_config=configs.DataSetConfig(
                 class_name=data_utils.DataLoader,
                 init_args={
                     "path": str(
-                        pathlib.Path(self._prompt_creator.output_dir) /
+                        pathlib.Path(self._prompt_creation.output_dir) /
                         "transformed_data.jsonl"
                     ),
                 }
@@ -71,13 +71,13 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
             output_dir=str(pathlib.Path(self.log_dir) / "responses")
         )
 
-        self._code_extractor = configs.DataProcessingConfig(
+        self._code_extraction = configs.DataProcessingConfig(
             component_type=core.DataProcessing,
             data_reader_config=configs.DataSetConfig(
                 class_name=data_utils.DataReader,
                 init_args={
                     "path": str(
-                        pathlib.Path(self._response_generator.output_dir) /
+                        pathlib.Path(self._response_generation.output_dir) /
                         "inference_result.jsonl"
                     ),
                     "format": ".jsonl",
@@ -94,9 +94,9 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
 
         return configs.PipelineConfig(
             component_configs=[
-                self._prompt_creator,
-                self._response_generator,
-                self._code_extractor,
+                self._prompt_creation,
+                self._response_generation,
+                self._code_extraction,
             ],
             log_dir=self.log_dir,
         )
