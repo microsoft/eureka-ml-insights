@@ -42,6 +42,7 @@ setup(
         'pycocotools>=2.0.8',
         'vllm>=0.8.5',
         'latex2sympy2>=1.9.1',
+        'parameterized>=0.9.0',
     ],
     extras_require={
         'llamacpp': [
