@@ -4,10 +4,14 @@ To run:
     python -m unittest \
         eureka_ml_insights.metrics.live_code_bench.code_execution_utils_test
 """
-import unittest
-import subprocess
 import datetime
 import pickle
+import subprocess
+import textwrap
+import unittest
+
+from parameterized import parameterized
+from typing import Any
 
 from eureka_ml_insights.metrics.live_code_bench import code_execution_utils
 
@@ -162,6 +166,146 @@ class ExecuteScriptTest(unittest.TestCase):
         )
 
         self.assertRegex(result.error_message, "Startup failure:")
+
+
+class ExecuteFunctionIntegrationTest(unittest.TestCase):
+    """Integration tests for execute_function that actually runs subprocesses."""
+
+    @parameterized.expand([
+        (
+            code_execution_utils.FunctionJob(
+                src_code=textwrap.dedent("""\
+                        import sys
+                        import math
+
+                        def multiply_and_sqrt(a, b):
+                            print("Running multiply_and_sqrt")
+                            print("Logging info", file=sys.stderr)
+                            return math.sqrt(a * b)
+                    """),
+                function_name="multiply_and_sqrt",
+                args=(16, 9),
+            ),
+            code_execution_utils.FunctionResult(
+                return_value=12.0,
+                stdout="Running multiply_and_sqrt\n",
+                stderr="Logging info\n",
+            ),
+        ),
+        (
+            code_execution_utils.FunctionJob(
+                src_code=textwrap.dedent("""\
+                    _CONSTANT = 10
+
+                    def foo() -> int:
+                        print("In foo")
+                        return 42 + _CONSTANT
+
+                    def bar(a: str) -> tuple[int, str]:
+                        print("In bar")
+                        return foo(), a
+                """),
+                function_name="bar",
+                kwargs={"a": "test"},
+            ),
+            code_execution_utils.FunctionResult(
+                return_value=(52, "test"),
+                error_message="",
+                stdout="In bar\nIn foo\n",
+            ),
+        ),
+    ])
+    def test_success(self, job: code_execution_utils.FunctionJob,
+                     expected_result: code_execution_utils.FunctionResult):
+        """Test happy path function execution."""
+        result = code_execution_utils.execute_function(job)
+
+        self.assertEqual(result.success, True)
+        self.assertEqual(result.return_value, expected_result.return_value)
+        self.assertEqual(result.error_message, expected_result.error_message)
+        self.assertEqual(result.stdout, expected_result.stdout)
+        self.assertEqual(result.stderr, expected_result.stderr)
+
+    def test_timeout(self):
+        """Test function execution that times out."""
+        job = code_execution_utils.FunctionJob(
+            src_code=textwrap.dedent("""\
+                import time
+
+                def long_running_function():
+                    time.sleep(10)
+                    return "Done"
+            """),
+            function_name="long_running_function",
+            timeout=datetime.timedelta(seconds=1),
+        )
+
+        result = code_execution_utils.execute_function(job)
+
+        self.assertFalse(result.success)
+        self.assertIsNone(result.return_value)
+        self.assertEqual(result.stdout, "")
+        self.assertEqual(result.stderr, "")
+
+        assert job.timeout is not None
+        self.assertRegex(
+            result.error_message, "Timeout: Function execution exceeded "
+            f"{job.timeout.total_seconds()} seconds.")
+
+    def test_error_in_function(self):
+        """Test function execution that raises an error."""
+        job = code_execution_utils.FunctionJob(
+            src_code=textwrap.dedent("""\
+                def faulty_function():
+                    print("This will fail")
+                    raise ValueError("Intentional error")
+            """),
+            function_name="faulty_function",
+        )
+
+        result = code_execution_utils.execute_function(job)
+
+        self.assertFalse(result.success)
+        self.assertIsNone(result.return_value)
+        self.assertEqual(result.stdout, "This will fail\n")
+        self.assertEqual(result.stderr, "")
+        self.assertRegex(result.error_message, "ValueError: Intentional error")
+    
+    def test_syntax_error_in_code(self):
+        """Test function execution with syntax error in source code."""
+        job = code_execution_utils.FunctionJob(
+            src_code=textwrap.dedent("""\
+                def broken_function()
+                    return "Missing colon"
+            """),
+            function_name="broken_function",
+        )
+
+        result = code_execution_utils.execute_function(job)
+
+        self.assertFalse(result.success)
+        self.assertIsNone(result.return_value)
+        self.assertEqual(result.stdout, "")
+        self.assertEqual(result.stderr, "")
+        self.assertRegex(result.error_message, "SyntaxError")
+    
+    def test_function_not_found(self):
+        """Test function execution when the specified function is not found."""
+        job = code_execution_utils.FunctionJob(
+            src_code=textwrap.dedent("""\
+                def existing_function():
+                    return "I exist"
+            """),
+            function_name="non_existent_function",
+        )
+
+        result = code_execution_utils.execute_function(job)
+
+        self.assertFalse(result.success)
+        self.assertIsNone(result.return_value)
+        self.assertEqual(result.stdout, "")
+        self.assertEqual(result.stderr, "")
+        self.assertRegex(result.error_message, "KeyError")
 
 
 if __name__ == "__main__":
