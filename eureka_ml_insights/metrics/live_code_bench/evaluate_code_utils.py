@@ -102,11 +102,9 @@ def _normalize_for_comparison(val: Any) -> Any:
     return val
 
 
-def evaluate_function(
-        function: Callable[..., Any],
-        test_case: TestCase,
-        timeout: datetime.timedelta | None = None
-) -> TestResult:
+def evaluate_function(function: Callable[..., Any],
+                      test_case: TestCase,
+                      timeout: datetime.timedelta | None = None) -> TestResult:
     """Evaluates a function against a single test case.
     
     Args:
@@ -119,8 +117,8 @@ def evaluate_function(
         A TestResult indicating whether the test passed, any error message,
         and error code.
     """
-    timeout_seconds: float | None = (
-        timeout.total_seconds() if timeout is not None else None)
+    timeout_seconds: float | None = (timeout.total_seconds()
+                                     if timeout is not None else None)
     try:
         with futures.ThreadPoolExecutor(max_workers=1) as executor:
             future = executor.submit(function, *test_case.inputs)
@@ -129,18 +127,16 @@ def evaluate_function(
     except futures.TimeoutError:
         return TestResult(
             passed=False,
-            error_message=(
-                "Timeout: Function execution exceeded "
-                f"{timeout_seconds} seconds"))
+            error_message=("Timeout: Function execution exceeded "
+                           f"{timeout_seconds} seconds"))
 
     except Exception as e:
         return TestResult(
             passed=False,
             error_message=f"Exception during execution: {str(e)}")
-    
+
     result_normalized = _normalize_for_comparison(result)
-    expected_normalized = _normalize_for_comparison(
-            test_case.expected_output)
+    expected_normalized = _normalize_for_comparison(test_case.expected_output)
 
     passed = (result_normalized == expected_normalized)
 
@@ -153,3 +149,57 @@ def evaluate_function(
                 f"Wrong output: Expected {test_case.expected_output!r}, "
                 f"got {result!r}"))
 
+
+def _is_main_str(node: ast.AST) -> bool:
+    """Check if node is a string literal with value '__main__'."""
+    return (isinstance(node, ast.Constant)
+            and isinstance(node.value, str)
+            and node.value == "__main__")
+
+
+def _is_name_var(node: ast.AST) -> bool:
+    """Check if node is a Name node with id '__name__'."""
+    return isinstance(node, ast.Name) and node.id == "__name__"
+
+
+def clean_if_main_block(code: str) -> str:
+    """Remove `if __name__ == '__main__'` or equivalent block from code.
+
+    This safely detects the main guard regardless of quote style,
+    comparison order, or parentheses.
+
+    Args:
+        code: The code string to clean.
+
+    Returns:
+        The cleaned code string without the `if __name__ == '__main__'` block.
+
+    Raises:
+        ValueError: If the code cannot be parsed.
+    """
+    try:
+        tree = ast.parse(code)
+    except Exception as e:
+        raise ValueError("Failed to parse code for cleaning.") from e
+
+    new_body = []
+
+    for node in tree.body:
+        if isinstance(node, ast.If):
+            test = node.test
+            if (isinstance(test, ast.Compare)
+                    and isinstance(test.ops[0], ast.Eq)
+                    and len(test.comparators) == 1):
+                left, right = test.left, test.comparators[0]
+
+                # Allow both `__name__ == "__main__"`
+                # and `"__main__" == __name__`
+                if ((_is_name_var(left) and _is_main_str(right))
+                        or (_is_main_str(left) and _is_name_var(right))):
+                    new_body.extend(node.body)
+                    continue
+
+        new_body.append(node)
+
+    tree.body = new_body
+    return ast.unparse(tree)
