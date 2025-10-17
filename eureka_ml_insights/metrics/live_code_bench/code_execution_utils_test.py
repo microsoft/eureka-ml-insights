@@ -308,5 +308,109 @@ class ExecuteFunctionIntegrationTest(unittest.TestCase):
         self.assertRegex(result.error_message, "KeyError")
 
 
+class ExecuteScriptIntegrationTest(unittest.TestCase):
+    """Integration tests for execute_script that actually runs subprocesses."""
+
+    @parameterized.expand([
+        (
+            code_execution_utils.ScriptJob(
+                script=textwrap.dedent("""\
+                    import sys
+                    data = sys.stdin.read()
+                    print(f"Received: {data.strip()}")
+                    print("Some debug info", file=sys.stderr)
+                """),
+                stdin_input="Hello, World!\n",
+            ),
+            code_execution_utils.ScriptResult(
+                stdout="Received: Hello, World!\n",
+                stderr="Some debug info\n",
+            ),
+        ),
+        (
+            code_execution_utils.ScriptJob(
+                script=textwrap.dedent("""\
+                    import math
+
+                    def crazy_add(a, b):
+                        return int(math.pow(a + b, 2))
+
+                    def main():
+                        x = int(input("Enter a number: "))
+                        y = int(input("Enter another number: "))
+                        print(crazy_add(x, y))
+
+                    if __name__ == "__main__":
+                        main()
+                """),
+                stdin_input="3\n4\n",
+            ),
+            code_execution_utils.ScriptResult(
+                stdout="Enter a number: Enter another number: 49\n",
+            ),
+        ),
+    ])
+    def test_success(self, job: code_execution_utils.ScriptJob,
+                     expected_result: code_execution_utils.ScriptResult):
+        """Test happy path script execution."""
+        result = code_execution_utils.execute_script(job)
+
+        self.assertEqual(result.stdout, expected_result.stdout)
+        self.assertEqual(result.stderr, expected_result.stderr)
+        self.assertEqual(result.error_message, "")
+    
+    def test_timeout(self):
+        """Test script execution that times out."""
+        job = code_execution_utils.ScriptJob(
+            script=textwrap.dedent("""\
+                import time
+                time.sleep(10)
+                print("Done")
+            """),
+            timeout=datetime.timedelta(seconds=1),
+        )
+
+        result = code_execution_utils.execute_script(job)
+
+        self.assertEqual(result.stdout, "")
+        self.assertEqual(result.stderr, "")
+
+        assert job.timeout is not None
+        self.assertRegex(
+            result.error_message, "Timeout: Script execution exceeded "
+            f"{job.timeout.total_seconds()} seconds.")
+    
+    def test_error_in_script(self):
+        """Test script execution that raises an error."""
+        job = code_execution_utils.ScriptJob(
+            script=textwrap.dedent("""\
+                print("About to fail")
+                raise RuntimeError("Intentional script error")
+            """),
+        )
+
+        result = code_execution_utils.execute_script(job)
+
+        self.assertEqual(result.stdout, "About to fail\n")
+        self.assertRegex(
+            result.stderr, "RuntimeError: Intentional script error")
+        self.assertRegex(
+            result.error_message, "RuntimeError: Intentional script error")
+    
+    def test_syntax_error_in_script(self):
+        """Test script execution with syntax error in script."""
+        job = code_execution_utils.ScriptJob(
+            script=textwrap.dedent("""\
+                def broken_function()
+                    print("I am missing a colon")
+            """),
+        )
+
+        result = code_execution_utils.execute_script(job)
+
+        self.assertEqual(result.stdout, "")
+        self.assertRegex(result.stderr, "SyntaxError")
+        self.assertRegex(result.error_message, "SyntaxError")
+
 if __name__ == "__main__":
     unittest.main()
