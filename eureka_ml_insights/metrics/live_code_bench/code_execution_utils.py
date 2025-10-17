@@ -1,9 +1,26 @@
+"""Defines utilities for executing Python code and retrieving results.
+
+Executing functions typical usage:
+    job = FunctionJob(
+        src_code="def add(a, b): return a + b",
+        function_name="add",
+        args=(2, 3),
+        timeout=datetime.timedelta(seconds=5)
+    )
+    result: FunctionResult = execute_function(job)
+
+Executing scripts typical usage:
+    job = ScriptJob(
+        script="print('Hello, World!')",
+        timeout=datetime.timedelta(seconds=5)
+    )
+    result: ScriptResult = execute_script(job)
+"""
 import dataclasses
 import datetime
 import pickle
 import subprocess
 import sys
-import types
 
 from enum import Enum
 from typing import Any, Protocol
@@ -123,11 +140,14 @@ class RawProcessResult:
         stdout: Content written to standard output.
         stderr: Content written to standard error.
         returncode: Process return code.
+        exit_reason: Reason for process exit.
+        error_message: Error message if execution failed.
     """
     stdout: bytes = b""
     stderr: bytes = b""
     returncode: int = 0
     exit_reason: ProcessExitReason = ProcessExitReason.COMPLETED
+    error_message: str = ""
 
 
 @dataclasses.dataclass(frozen=True)
@@ -221,11 +241,12 @@ def _execute_subprocess(
                                 stderr=result.stderr,
                                 returncode=result.returncode)
 
-    except subprocess.TimeoutExpired:
-        return RawProcessResult(returncode=-1, exit_reason=ProcessExitReason.TIMEOUT)
+    except subprocess.TimeoutExpired as e:
+        return RawProcessResult(exit_reason=ProcessExitReason.TIMEOUT,
+                                error_message=str(e))
     except Exception as e:
-        return RawProcessResult(returncode=-1,
-                                exit_reason=ProcessExitReason.STARTUP_FAILURE)
+        return RawProcessResult(exit_reason=ProcessExitReason.STARTUP_FAILURE,
+                                error_message=str(e))
 
 
 def execute_script(job: ScriptJob,
@@ -250,8 +271,8 @@ def execute_script(job: ScriptJob,
 
     raw_result = _execute_subprocess(args=[sys.executable, '-c', job.script],
                                      input=input,
-                                     timeout=job.timeout,
-                                     runner=runner)
+                                     runner=runner,
+                                     timeout=job.timeout)
 
     if raw_result.exit_reason == ProcessExitReason.COMPLETED:
         stderr_str = raw_result.stderr.decode("utf-8", errors="replace")
@@ -273,10 +294,12 @@ def execute_script(job: ScriptJob,
                            if job.timeout else "unknown")
         return ScriptResult(
             error_message=
-            f"Timeout: Script execution exceeded {timeout_seconds} seconds")
+            f"Timeout: Script execution exceeded {timeout_seconds} "
+            f"seconds.\n{raw_result.error_message}"
+        )
     elif raw_result.exit_reason == ProcessExitReason.STARTUP_FAILURE:
         return ScriptResult(
-            error_message="Failed to start the script process.")
+            error_message=f"Startup failure: {raw_result.error_message}")
     else:
         raise ValueError(f"Unknown exit reason: {raw_result.exit_reason}")
 
@@ -361,7 +384,8 @@ def execute_function(job: FunctionJob,
     raw_result = _execute_subprocess(
         args=[sys.executable, '-c', _FUNCTION_RUNNER_SCRIPT],
         input=_serialize_function_job(job),
-        runner=runner)
+        runner=runner,
+        timeout=job.timeout)
 
     if raw_result.exit_reason == ProcessExitReason.COMPLETED:
         return _deserialize_function_result(raw_result)
@@ -370,9 +394,10 @@ def execute_function(job: FunctionJob,
                            if job.timeout else "unknown")
         return FunctionResult(
             error_message=
-            f"Timeout: Function execution exceeded {timeout_seconds} seconds")
+            f"Timeout: Function execution exceeded {timeout_seconds} "
+            f"seconds.\n{raw_result.error_message}")
     elif raw_result.exit_reason == ProcessExitReason.STARTUP_FAILURE:
         return FunctionResult(
-            error_message="Failed to start the function process.")
+            error_message=f"Startup failure: {raw_result.error_message}")
     else:
         raise ValueError(f"Unknown exit reason: {raw_result.exit_reason}")
