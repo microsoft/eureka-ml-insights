@@ -213,6 +213,22 @@ class ExecuteFunctionIntegrationTest(unittest.TestCase):
                 stdout="In bar\nIn foo\n",
             ),
         ),
+        (
+            code_execution_utils.FunctionJob(
+                src_code=textwrap.dedent("""\
+                    class Solution:
+                        def add(self, x: int, y: int) -> int:
+                            print("Adding numbers")
+                            return x + y
+                """),
+                function_name="Solution.add",
+                args=(5, 7),
+            ),
+            code_execution_utils.FunctionResult(
+                return_value=12,
+                stdout="Adding numbers\n",
+            ),
+        ),
     ])
     def test_success(self, job: code_execution_utils.FunctionJob,
                      expected_result: code_execution_utils.FunctionResult):
@@ -304,7 +320,9 @@ class ExecuteFunctionIntegrationTest(unittest.TestCase):
         self.assertIsNone(result.return_value)
         self.assertEqual(result.stdout, "")
         self.assertEqual(result.stderr, "")
-        self.assertRegex(result.error_message, "KeyError")
+        self.assertRegex(
+            result.error_message,
+            "'non_existent_function' not found")
 
 
 class ExecuteScriptIntegrationTest(unittest.TestCase):

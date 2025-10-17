@@ -29,11 +29,63 @@ from typing import Any, Protocol
 # This script reads a pickled FunctionJob from stdin, executes the function,
 # and writes the pickled result to stdout.
 _FUNCTION_RUNNER_SCRIPT = """
-import sys
+import inspect
 import io
 import pickle
+import sys
 import traceback
+
 from contextlib import redirect_stdout, redirect_stderr
+from typing import Any
+from collections.abc import Callable
+
+
+def extract_function(
+    function_name: str,
+    namespace: dict[str, Any]
+) -> Callable[..., Any]:
+    '''
+    Extracts a function or method from the given namespace.
+
+    Args:
+        function_name: Dotted path to the function or method (e.g.,
+            'MyClass.my_method' or 'my_function').
+        namespace: The namespace dictionary where the function/class is defined.
+    
+    Returns:
+        The callable function or method.
+    
+    Raises:
+        AttributeError: If any part of the dotted path is not found.
+        TypeError: If the resolved object is not callable.
+        KeyError: If a part of the path is not found in a dictionary.
+    '''
+    parts = function_name.split('.')
+    obj = namespace
+    
+    # Traverse the dotted path
+    for i, part in enumerate(parts):
+        if isinstance(obj, dict):
+            if part not in obj:
+                raise KeyError(f"'{part}' not found in namespace")
+            obj = obj[part]
+        else:
+            if not hasattr(obj, part):
+                raise AttributeError(
+                    f"'{type(obj).__name__}' object has no attribute '{part}'")
+            obj = getattr(obj, part)
+
+        # If we have more parts to traverse and current obj is a class,
+        # instantiate it
+        if i < len(parts) - 1 and inspect.isclass(obj):
+            obj = obj()
+    
+    # Verify the final object is callable
+    if not callable(obj):
+        raise TypeError(
+            f"'{function_name}' is not callable (got {type(obj).__name__})")
+    
+    return obj
 
 
 # Read serialized input from stdin
@@ -53,10 +105,10 @@ stdout_buffer = io.StringIO()
 stderr_buffer = io.StringIO()
 
 try:
-    namespace = {}
+    namespace: dict[str, Any] = {}
     with redirect_stdout(stdout_buffer), redirect_stderr(stderr_buffer):
         exec(code_object, namespace)
-        func = namespace[function_name]
+        func = extract_function(function_name, namespace)
         result = func(*args, **kwargs)
     output = {
         "success": True,
