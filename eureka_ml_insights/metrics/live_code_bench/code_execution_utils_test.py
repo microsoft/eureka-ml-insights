@@ -11,7 +11,6 @@ import textwrap
 import unittest
 
 from parameterized import parameterized
-from typing import Any
 
 from eureka_ml_insights.metrics.live_code_bench import code_execution_utils
 
