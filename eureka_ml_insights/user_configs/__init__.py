@@ -79,7 +79,7 @@ from .nphard_sat import (
 )
 from .nphard_tsp import NPHARD_TSP_PIPELINE, NPHARD_TSP_PIPELINE_MULTIPLE_RUNS
 from .omni_math import Omni_Math_Parallel_PIPELINE, Omni_Math_PIPELINE
-from .simpleqa import SimpleQA_PIPELINE
+from .simpleqa import SimpleQA_PIPELINE, SimpleQA_Verified_PIPELINE
 from .toxigen import (
     ToxiGen_Discriminative_PIPELINE,
     ToxiGen_Generative_PIPELINE,
@@ -182,4 +182,6 @@ __all__ = [
     FLICKR30K_PIPELINE,
     NOCAPS_PIPELINE,
     VSTAR_BENCH_PIPELINE,
+    SimpleQA_PIPELINE,
+    SimpleQA_Verified_PIPELINE,
 ]

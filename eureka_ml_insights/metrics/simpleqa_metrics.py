@@ -15,8 +15,11 @@ class SimpleQA_Metric(CompositeMetric):
 
     def process_row(self, row):
         grading_response = row["model_output"]
-        match = re.search(r"(A|B|C)", grading_response)
-        grade_letter = match.group(0) if match else "C"  # Default to "NOT_ATTEMPTED" if no match
+        if grading_response is None or str(grading_response)=="nan":
+            grade_letter = "C"  # Default to "NOT_ATTEMPTED" if there is no grading response
+        else:
+            match = re.search(r"(A|B|C)", grading_response)
+            grade_letter = match.group(0) if match else "C"  # Default to "NOT_ATTEMPTED" if no match
         
         # Metrics based on grading response
         is_correct = grade_letter == "A"

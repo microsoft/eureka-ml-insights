@@ -52,7 +52,7 @@ class SimpleQA_PIPELINE(ExperimentConfig):
                    "path": "lighteval/SimpleQA",
                    "split": "test",
                    "transform": SequenceTransform([
-                    # SamplerTransform(sample_count=100, random_seed=42),
+                    SamplerTransform(sample_count=100, random_seed=42),
                     MultiplyTransform(n_repeats=int(kwargs.get("n_repeats", 1))),
                     ColumnRename(name_mapping={"problem":"prompt", "answer":"ground_truth"}),
                     SimpleQA_MetadataExplode(metadata_column="metadata"),
@@ -85,6 +85,10 @@ class SimpleQA_PIPELINE(ExperimentConfig):
                 DataReader,
                 {"path": os.path.join(self.inference_comp.output_dir, "inference_result.jsonl"),
                  "transform": SequenceTransform([
+                    AddColumn("generated_solution"),
+                    AddColumn("gen_solution_n_output_tokens"),
+                    AddColumn("gen_solution_usage"),
+                    AddColumn("gen_solution_is_valid"),
                     CopyColumn("model_output", "generated_solution"),
                     ColumnRename(name_mapping={"n_output_tokens":"gen_solution_n_output_tokens",
                                                "usage": "gen_solution_usage",
@@ -413,3 +417,23 @@ class SimpleQA_PIPELINE(ExperimentConfig):
             ],
             self.log_dir,
         )
+
+class SimpleQA_Verified_PIPELINE(SimpleQA_PIPELINE):
+    """This class specifies the config for running SimpleQA Verified benchmark on any model"""
+
+    def configure_pipeline(self, model_config=None, resume_from=None, eval_resume_from=None, eval_model_config=None, **kwargs) -> PipelineConfig:
+        # call the parent class method to get the base pipeline config
+        pipeline_config = super().configure_pipeline(
+            model_config=model_config,
+            resume_from=resume_from,
+            eval_resume_from=eval_resume_from,
+            eval_model_config=eval_model_config,
+            **kwargs
+        )
+
+        # modify the data processing component to use the Verified split
+        self.data_processing_comp.data_reader_config.init_args["path"] = "google/simpleqa-verified"
+        self.data_processing_comp.data_reader_config.init_args["split"] = "eval"
+        num_transforms = len(self.data_processing_comp.data_reader_config.init_args["transform"].transforms)
+        self.data_processing_comp.data_reader_config.init_args["transform"].transforms = self.data_processing_comp.data_reader_config.init_args["transform"].transforms[0:num_transforms-1]  # remove last transform which is SimpleQA_MetadataExplode
+        return pipeline_config
