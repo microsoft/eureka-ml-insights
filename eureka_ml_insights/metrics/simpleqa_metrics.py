@@ -30,7 +30,7 @@ class SimpleQA_Metric(CompositeMetric):
             "is_not_attempted": is_not_attempted,
         }
 
-class SimpleQA_CorrectGivenAttemptedAggregator(NumericalAggregator):
+class SQA_CGAAggregator(NumericalAggregator):
     """This class implements a custom aggregator that computes accuracy as the ratio of correct to attempted answers.
     """
 
@@ -64,7 +64,7 @@ class SimpleQA_CorrectGivenAttemptedAggregator(NumericalAggregator):
         self.aggregated_result = {"accuracy_given_attempted": divided_result}
 
 
-class SimpleQA_CorrectGivenAttemptedAvgPass1Aggregator(SimpleQA_CorrectGivenAttemptedAggregator):
+class SQA_CGAAvgPass1Aggregator(SQA_CGAAggregator):
     """This class implements a custom aggregator that computes accuracy as the ratio of correct to attempted answers.
     """
 
@@ -91,12 +91,14 @@ class SimpleQA_CorrectGivenAttemptedAvgPass1Aggregator(SimpleQA_CorrectGivenAtte
             self.aggregated_result = {"accuracy_given_attempted": mean_divided_result}
     
     def _aggregate_grouped(self, data):
-        original_group_by = self.group_by
-        gb = data.groupby(original_group_by)
-         # For each group, apply the _aggregate method
-        group_results = {}
-        for name, group in gb:
-            # Create a temporary aggregator instance to process this group
-            self._aggregate(group)
-            group_results[name] = self.aggregated_result["accuracy_given_attempted"]
-        self.aggregated_result = {"accuracy_given_attempted": group_results}
+        if self.group_by == 'data_repeat_id':
+            self._aggregate(data)
+        else:
+            original_group_by = self.group_by
+            gb = data.groupby(original_group_by)
+            # For each group, apply the _aggregate method
+            group_results = {}
+            for name, group in gb:
+                self._aggregate(group)
+                group_results[name] = self.aggregated_result["accuracy_given_attempted"]
+            self.aggregated_result = {"accuracy_given_attempted": group_results}

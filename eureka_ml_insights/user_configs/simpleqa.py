@@ -35,7 +35,7 @@ from ..configs.config import (
 )
 from ..configs.experiment_config import ExperimentConfig
 from ..metrics import SimpleQA_Metric
-from ..metrics.simpleqa_metrics import SimpleQA_CorrectGivenAttemptedAggregator
+from ..metrics.simpleqa_metrics import SQA_CGAAggregator, SQA_CGAAvgPass1Aggregator
 from ..data_utils.simpleqa_utils import SimpleQA_MetadataExplode
 
 class SimpleQA_PIPELINE(ExperimentConfig):
@@ -52,7 +52,7 @@ class SimpleQA_PIPELINE(ExperimentConfig):
                    "path": "lighteval/SimpleQA",
                    "split": "test",
                    "transform": SequenceTransform([
-                    SamplerTransform(sample_count=10, random_seed=42),
+                    # SamplerTransform(sample_count=100, random_seed=42),
                     MultiplyTransform(n_repeats=int(kwargs.get("n_repeats", 1))),
                     ColumnRename(name_mapping={"problem":"prompt", "answer":"ground_truth"}),
                     SimpleQA_MetadataExplode(metadata_column="metadata"),
@@ -137,7 +137,7 @@ class SimpleQA_PIPELINE(ExperimentConfig):
                         "group_by": "data_repeat_id",
                     },
                 ),
-                AggregatorConfig(SimpleQA_CorrectGivenAttemptedAggregator,
+                AggregatorConfig(SQA_CGAAggregator,
                     {
                         "is_correct_column_name": "SimpleQA_Metric_is_correct",
                         "is_incorrect_column_name": "SimpleQA_Metric_is_incorrect",
@@ -160,17 +160,6 @@ class SimpleQA_PIPELINE(ExperimentConfig):
                         "filename_base": "Metrics_Avg",
                         "agg_fn": "mean"
                     }),
-                
-                # AggregatorConfig(SimpleQA_CorrectGivenAttemptedAggregator,
-                #     {
-                #         "is_correct_column_name": "SimpleQA_Metric_is_correct",
-                #         "is_incorrect_column_name": "SimpleQA_Metric_is_incorrect",
-                #         "is_not_attempted_column_name": "SimpleQA_Metric_is_not_attempted",
-                #         "group_by": "data_repeat_id",
-                #         "filename_base": "AccuracyGivenAttempted_SeparateRuns", 
-                #     }
-                # ),
-
                 AggregatorConfig(BiLevelAggregator, 
                     {
                         "column_names": [
@@ -182,7 +171,25 @@ class SimpleQA_PIPELINE(ExperimentConfig):
                         "second_groupby": "topic",
                         "filename_base": "Metrics_Avg_by_topic",
                         "agg_fn": "mean"
-                    }), 
+                    }),
+                
+                AggregatorConfig(SQA_CGAAvgPass1Aggregator,
+                    {
+                        "is_correct_column_name": "SimpleQA_Metric_is_correct",
+                        "is_incorrect_column_name": "SimpleQA_Metric_is_incorrect",
+                        "is_not_attempted_column_name": "SimpleQA_Metric_is_not_attempted",
+                        "filename_base": "AccuracyGivenAttempted_Avg", 
+                    }
+                ),
+                AggregatorConfig(SQA_CGAAvgPass1Aggregator,
+                    {
+                        "is_correct_column_name": "SimpleQA_Metric_is_correct",
+                        "is_incorrect_column_name": "SimpleQA_Metric_is_incorrect",
+                        "is_not_attempted_column_name": "SimpleQA_Metric_is_not_attempted",
+                        "filename_base": "AccuracyGivenAttempted_Avg_by_topic", 
+                        "group_by": "topic",
+                    }
+                ), 
 
                 # reports for average completion usage
                 AggregatorConfig(BiLevelAggregator, 
@@ -314,8 +321,16 @@ class SimpleQA_PIPELINE(ExperimentConfig):
                             ),
                             AddColumn("SimpleQA_Metric_grade"),
                             MajorityVoteTransform(model_output_col="SimpleQA_Metric_grade_onerun", model_label_column="SimpleQA_Metric_is_correct"),
-                            CopyColumn("majority_vote", "SimpleQA_Metric_grade"),
+                            RunPythonTransform("df = df.rename_axis(index={'data_point_id': 'data_point_id_idx'})"),
                             CopyColumn("majority_label", "SimpleQA_Metric_is_correct_majority_vote"),
+                            MajorityVoteTransform(model_output_col="SimpleQA_Metric_grade_onerun", model_label_column="SimpleQA_Metric_is_incorrect"),
+                            RunPythonTransform("df = df.rename_axis(index={'data_point_id': 'data_point_id_idx'})"),
+                            CopyColumn("majority_label", "SimpleQA_Metric_is_incorrect_majority_vote"),
+                            MajorityVoteTransform(model_output_col="SimpleQA_Metric_grade_onerun", model_label_column="SimpleQA_Metric_is_not_attempted"),
+                            RunPythonTransform("df = df.rename_axis(index={'data_point_id': 'data_point_id_idx'})"),
+                            CopyColumn("majority_label", "SimpleQA_Metric_is_not_attempted_majority_vote"),
+                            CopyColumn("majority_vote", "SimpleQA_Metric_majority_vote_grade"),
+                            RunPythonTransform("df = df.drop(columns=['SimpleQA_Metric_grade_onerun', 'majority_label', 'majority_vote'])"),
                             AddColumnAndData("count", 1),
 
                         ]
@@ -345,6 +360,8 @@ class SimpleQA_PIPELINE(ExperimentConfig):
                     {
                         "column_names": [
                             "SimpleQA_Metric_is_correct_majority_vote",
+                            "SimpleQA_Metric_is_incorrect_majority_vote",
+                            "SimpleQA_Metric_is_not_attempted_majority_vote"
                         ],
                         "filename_base": "Correctness_MajVote",
                     },
@@ -354,10 +371,20 @@ class SimpleQA_PIPELINE(ExperimentConfig):
                     {
                         "column_names": [
                             "SimpleQA_Metric_is_correct_majority_vote",
+                            "SimpleQA_Metric_is_incorrect_majority_vote",
+                            "SimpleQA_Metric_is_not_attempted_majority_vote"
                         ],
                         "filename_base": "Correctness_MajVote_by_topic",
                         "group_by": "topic",
                     },
+                ),
+                AggregatorConfig(SQA_CGAAggregator,
+                    {
+                        "is_correct_column_name": "SimpleQA_Metric_is_correct_majority_vote",
+                        "is_incorrect_column_name": "SimpleQA_Metric_is_incorrect_majority_vote",
+                        "is_not_attempted_column_name": "SimpleQA_Metric_is_not_attempted_majority_vote",
+                        "filename_base": "AccuracyGivenAttempted_MajVote", 
+                    }
                 ),
                 AggregatorConfig(CountAggregator, 
                     {
