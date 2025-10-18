@@ -2,7 +2,7 @@
 
 To run:
     python -m unittest \
-        eureka_ml_insights.metrics.live_code_bench.code_execution_utils_test
+        eureka_ml_insights.metrics.live_code_bench.code_execution_test
 """
 import datetime
 import pickle
@@ -12,7 +12,7 @@ import unittest
 
 from parameterized import parameterized
 
-from eureka_ml_insights.metrics.live_code_bench import code_execution_utils
+from eureka_ml_insights.metrics.live_code_bench import code_execution
 
 
 class MockProcessRunner:
@@ -55,7 +55,7 @@ class ExecuteFunctionTest(unittest.TestCase):
 
     def setUp(self):
         self.mock_runner = MockProcessRunner()
-        self.job = code_execution_utils.FunctionJob(
+        self.job = code_execution.FunctionJob(
             src_code="def add(a, b): return a + b",
             function_name="add",
             args=(2, 3),
@@ -75,7 +75,7 @@ class ExecuteFunctionTest(unittest.TestCase):
             "stderr": expected_stderr,
         })
 
-        result = code_execution_utils.execute_function(
+        result = code_execution.execute_function(
             job=self.job,
             runner=self.mock_runner,
         )
@@ -90,7 +90,7 @@ class ExecuteFunctionTest(unittest.TestCase):
         """Test function execution that times out."""
         self.mock_runner.should_timeout = True
 
-        result = code_execution_utils.execute_function(
+        result = code_execution.execute_function(
             job=self.job,
             runner=self.mock_runner,
         )
@@ -107,7 +107,7 @@ class ExecuteFunctionTest(unittest.TestCase):
 
         self.mock_runner.should_fail_startup = True
 
-        result = code_execution_utils.execute_function(
+        result = code_execution.execute_function(
             job=self.job,
             runner=self.mock_runner,
         )
@@ -120,7 +120,7 @@ class ExecuteScriptTest(unittest.TestCase):
 
     def setUp(self):
         self.mock_runner = MockProcessRunner()
-        self.job = code_execution_utils.ScriptJob(
+        self.job = code_execution.ScriptJob(
             script="import sys; print(int(sys.stdin.read()) + 1)",
             stdin_input="5\n",
             timeout=datetime.timedelta(seconds=5))
@@ -134,7 +134,7 @@ class ExecuteScriptTest(unittest.TestCase):
         self.mock_runner.stderr = expected_stderr.encode("utf-8")
         self.mock_runner.returncode = 0
 
-        result = code_execution_utils.execute_script(job=self.job,
+        result = code_execution.execute_script(job=self.job,
                                                      runner=self.mock_runner)
 
         self.assertEqual(result.stdout, expected_stdout)
@@ -145,7 +145,7 @@ class ExecuteScriptTest(unittest.TestCase):
         """Test script execution that times out."""
         self.mock_runner.should_timeout = True
 
-        result = code_execution_utils.execute_script(
+        result = code_execution.execute_script(
             job=self.job,
             runner=self.mock_runner,
         )
@@ -159,7 +159,7 @@ class ExecuteScriptTest(unittest.TestCase):
         """Test script execution that fails to start."""
         self.mock_runner.should_fail_startup = True
 
-        result = code_execution_utils.execute_script(
+        result = code_execution.execute_script(
             job=self.job,
             runner=self.mock_runner,
         )
@@ -172,7 +172,7 @@ class ExecuteFunctionIntegrationTest(unittest.TestCase):
 
     @parameterized.expand([
         (
-            code_execution_utils.FunctionJob(
+            code_execution.FunctionJob(
                 src_code=textwrap.dedent("""\
                         import sys
                         import math
@@ -185,14 +185,14 @@ class ExecuteFunctionIntegrationTest(unittest.TestCase):
                 function_name="multiply_and_sqrt",
                 args=(16, 9),
             ),
-            code_execution_utils.FunctionResult(
+            code_execution.FunctionResult(
                 return_value=12.0,
                 stdout="Running multiply_and_sqrt\n",
                 stderr="Logging info\n",
             ),
         ),
         (
-            code_execution_utils.FunctionJob(
+            code_execution.FunctionJob(
                 src_code=textwrap.dedent("""\
                     _CONSTANT = 10
 
@@ -207,14 +207,14 @@ class ExecuteFunctionIntegrationTest(unittest.TestCase):
                 function_name="bar",
                 kwargs={"a": "test"},
             ),
-            code_execution_utils.FunctionResult(
+            code_execution.FunctionResult(
                 return_value=(52, "test"),
                 error_message="",
                 stdout="In bar\nIn foo\n",
             ),
         ),
         (
-            code_execution_utils.FunctionJob(
+            code_execution.FunctionJob(
                 src_code=textwrap.dedent("""\
                     class Solution:
                         def add(self, x: int, y: int) -> int:
@@ -224,16 +224,16 @@ class ExecuteFunctionIntegrationTest(unittest.TestCase):
                 function_name="Solution.add",
                 args=(5, 7),
             ),
-            code_execution_utils.FunctionResult(
+            code_execution.FunctionResult(
                 return_value=12,
                 stdout="Adding numbers\n",
             ),
         ),
     ])
-    def test_success(self, job: code_execution_utils.FunctionJob,
-                     expected_result: code_execution_utils.FunctionResult):
+    def test_success(self, job: code_execution.FunctionJob,
+                     expected_result: code_execution.FunctionResult):
         """Test happy path function execution."""
-        result = code_execution_utils.execute_function(job)
+        result = code_execution.execute_function(job)
 
         self.assertEqual(result.success, True)
         self.assertEqual(result.return_value, expected_result.return_value)
@@ -243,7 +243,7 @@ class ExecuteFunctionIntegrationTest(unittest.TestCase):
 
     def test_timeout(self):
         """Test function execution that times out."""
-        job = code_execution_utils.FunctionJob(
+        job = code_execution.FunctionJob(
             src_code=textwrap.dedent("""\
                 import time
 
@@ -255,7 +255,7 @@ class ExecuteFunctionIntegrationTest(unittest.TestCase):
             timeout=datetime.timedelta(seconds=1),
         )
 
-        result = code_execution_utils.execute_function(job)
+        result = code_execution.execute_function(job)
 
         self.assertFalse(result.success)
         self.assertIsNone(result.return_value)
@@ -269,7 +269,7 @@ class ExecuteFunctionIntegrationTest(unittest.TestCase):
 
     def test_error_in_function(self):
         """Test function execution that raises an error."""
-        job = code_execution_utils.FunctionJob(
+        job = code_execution.FunctionJob(
             src_code=textwrap.dedent("""\
                 def faulty_function():
                     print("This will fail")
@@ -278,7 +278,7 @@ class ExecuteFunctionIntegrationTest(unittest.TestCase):
             function_name="faulty_function",
         )
 
-        result = code_execution_utils.execute_function(job)
+        result = code_execution.execute_function(job)
 
         self.assertFalse(result.success)
         self.assertIsNone(result.return_value)
@@ -288,7 +288,7 @@ class ExecuteFunctionIntegrationTest(unittest.TestCase):
     
     def test_syntax_error_in_code(self):
         """Test function execution with syntax error in source code."""
-        job = code_execution_utils.FunctionJob(
+        job = code_execution.FunctionJob(
             src_code=textwrap.dedent("""\
                 def broken_function()
                     return "Missing colon"
@@ -296,7 +296,7 @@ class ExecuteFunctionIntegrationTest(unittest.TestCase):
             function_name="broken_function",
         )
 
-        result = code_execution_utils.execute_function(job)
+        result = code_execution.execute_function(job)
 
         self.assertFalse(result.success)
         self.assertIsNone(result.return_value)
@@ -306,7 +306,7 @@ class ExecuteFunctionIntegrationTest(unittest.TestCase):
     
     def test_function_not_found(self):
         """Test function execution when the specified function is not found."""
-        job = code_execution_utils.FunctionJob(
+        job = code_execution.FunctionJob(
             src_code=textwrap.dedent("""\
                 def existing_function():
                     return "I exist"
@@ -314,7 +314,7 @@ class ExecuteFunctionIntegrationTest(unittest.TestCase):
             function_name="non_existent_function",
         )
 
-        result = code_execution_utils.execute_function(job)
+        result = code_execution.execute_function(job)
 
         self.assertFalse(result.success)
         self.assertIsNone(result.return_value)
@@ -330,7 +330,7 @@ class ExecuteScriptIntegrationTest(unittest.TestCase):
 
     @parameterized.expand([
         (
-            code_execution_utils.ScriptJob(
+            code_execution.ScriptJob(
                 script=textwrap.dedent("""\
                     import sys
                     data = sys.stdin.read()
@@ -339,13 +339,13 @@ class ExecuteScriptIntegrationTest(unittest.TestCase):
                 """),
                 stdin_input="Hello, World!\n",
             ),
-            code_execution_utils.ScriptResult(
+            code_execution.ScriptResult(
                 stdout="Received: Hello, World!\n",
                 stderr="Some debug info\n",
             ),
         ),
         (
-            code_execution_utils.ScriptJob(
+            code_execution.ScriptJob(
                 script=textwrap.dedent("""\
                     import math
 
@@ -362,15 +362,15 @@ class ExecuteScriptIntegrationTest(unittest.TestCase):
                 """),
                 stdin_input="3\n4\n",
             ),
-            code_execution_utils.ScriptResult(
+            code_execution.ScriptResult(
                 stdout="Enter a number: Enter another number: 49\n",
             ),
         ),
     ])
-    def test_success(self, job: code_execution_utils.ScriptJob,
-                     expected_result: code_execution_utils.ScriptResult):
+    def test_success(self, job: code_execution.ScriptJob,
+                     expected_result: code_execution.ScriptResult):
         """Test happy path script execution."""
-        result = code_execution_utils.execute_script(job)
+        result = code_execution.execute_script(job)
 
         self.assertEqual(result.stdout, expected_result.stdout)
         self.assertEqual(result.stderr, expected_result.stderr)
@@ -378,7 +378,7 @@ class ExecuteScriptIntegrationTest(unittest.TestCase):
     
     def test_timeout(self):
         """Test script execution that times out."""
-        job = code_execution_utils.ScriptJob(
+        job = code_execution.ScriptJob(
             script=textwrap.dedent("""\
                 import time
                 time.sleep(10)
@@ -387,7 +387,7 @@ class ExecuteScriptIntegrationTest(unittest.TestCase):
             timeout=datetime.timedelta(seconds=1),
         )
 
-        result = code_execution_utils.execute_script(job)
+        result = code_execution.execute_script(job)
 
         self.assertEqual(result.stdout, "")
         self.assertEqual(result.stderr, "")
@@ -399,14 +399,14 @@ class ExecuteScriptIntegrationTest(unittest.TestCase):
     
     def test_error_in_script(self):
         """Test script execution that raises an error."""
-        job = code_execution_utils.ScriptJob(
+        job = code_execution.ScriptJob(
             script=textwrap.dedent("""\
                 print("About to fail")
                 raise RuntimeError("Intentional script error")
             """),
         )
 
-        result = code_execution_utils.execute_script(job)
+        result = code_execution.execute_script(job)
 
         self.assertEqual(result.stdout, "About to fail\n")
         self.assertRegex(
@@ -416,14 +416,14 @@ class ExecuteScriptIntegrationTest(unittest.TestCase):
     
     def test_syntax_error_in_script(self):
         """Test script execution with syntax error in script."""
-        job = code_execution_utils.ScriptJob(
+        job = code_execution.ScriptJob(
             script=textwrap.dedent("""\
                 def broken_function()
                     print("I am missing a colon")
             """),
         )
 
-        result = code_execution_utils.execute_script(job)
+        result = code_execution.execute_script(job)
 
         self.assertEqual(result.stdout, "")
         self.assertRegex(result.stderr, "SyntaxError")
