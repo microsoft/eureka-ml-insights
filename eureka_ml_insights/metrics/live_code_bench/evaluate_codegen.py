@@ -6,7 +6,7 @@ import datetime
 from typing import Any
 from collections.abc import Sequence
 
-import eureka_ml_insights.metrics.live_code_bench.code_execution as code_execution
+from eureka_ml_insights.metrics.live_code_bench import code_execution
 
 
 @dataclasses.dataclass(frozen=True)
@@ -148,23 +148,20 @@ def evaluate_functional_test_case(
     Returns:
         A TestCaseResult instance indicating whether the test case passed.
     """
-    job = code_execution.FunctionJob(
-        src_code=src_code,
-        function_name=function_name,
-        args=test_case.inputs,
-        timeout=timeout
-    )
+    job = code_execution.FunctionJob(src_code=src_code,
+                                     function_name=function_name,
+                                     args=test_case.inputs,
+                                     timeout=timeout)
 
     result: code_execution.FunctionResult = (
         code_execution.execute_function(job))
-    
-    passed: bool = (
-        result.success and result.return_value == test_case.expected_output)
-    
+
+    passed: bool = (result.success
+                    and result.return_value == test_case.expected_output)
+
     return TestCaseResult(
         passed=passed,
-        error_message=result.error_message if not passed else ""
-    )
+        error_message=result.error_message if not passed else "")
 
 
 def evaluate_standard_io_test_case(
@@ -184,19 +181,15 @@ def evaluate_standard_io_test_case(
     Returns:
         A TestCaseResult instance indicating whether the test case passed.
     """
-    job = code_execution.ScriptJob(
-        script=src_code,
-        stdin_input=test_case.stdin,
-        timeout=timeout
-    )
+    job = code_execution.ScriptJob(script=src_code,
+                                   stdin_input=test_case.stdin,
+                                   timeout=timeout)
 
-    result: code_execution.ScriptResult = (
-        code_execution.execute_script(job))
- 
-    passed: bool = (
-        result.success and result.stdout == test_case.expected_stdout)
- 
+    result: code_execution.ScriptResult = (code_execution.execute_script(job))
+
+    passed: bool = (result.success
+                    and result.stdout == test_case.expected_stdout)
+
     return TestCaseResult(
         passed=passed,
-        error_message=result.error_message if not passed else ""
-    )
+        error_message=result.error_message if not passed else "")
