@@ -94,7 +94,9 @@ class IsPythonCodeValidTest(unittest.TestCase):
             def my_function():
                 return 42
         """)
-        self.assertTrue(code_parsing.is_python_code_valid(src_code))
+        is_valid, error_message = code_parsing.is_python_code_valid(src_code)
+        self.assertTrue(is_valid)
+        self.assertEqual(error_message, "")
 
     def test_invalid_code(self):
         """Test with invalid Python code."""
@@ -102,7 +104,10 @@ class IsPythonCodeValidTest(unittest.TestCase):
             def my_function(
                 return 42
         """)
-        self.assertFalse(code_parsing.is_python_code_valid(src_code))
+        is_valid, error_message = code_parsing.is_python_code_valid(src_code)
+        self.assertFalse(is_valid)
+        self.assertIn("'(' was never closed", error_message)
+
 
 if __name__ == "__main__":
     unittest.main()

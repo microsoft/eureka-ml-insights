@@ -82,17 +82,19 @@ def find_function_path(src_code: str, func_name: str) -> str:
     return finder.matches[0]
 
 
-def is_python_code_valid(src_code: str) -> bool:
+def is_python_code_valid(src_code: str) -> tuple[bool, str]:
     """Checks if the given Python source code is syntactically valid.
 
     Args:
         src_code: The source code to check.
     
     Returns:
-        True if the code is valid, False otherwise.
+        A tuple (is_valid, error_message). is_valid is True if the code is
+        valid, False otherwise. error_message contains the syntax error message
+        if the code is invalid, or an empty string if the code is valid.
     """
     try:
         ast.parse(src_code)
-        return True
-    except SyntaxError:
-        return False
+        return True, ""
+    except SyntaxError as e:
+        return False, str(e)
