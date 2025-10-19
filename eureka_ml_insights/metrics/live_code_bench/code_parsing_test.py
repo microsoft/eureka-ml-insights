@@ -85,5 +85,24 @@ class FindFunctionPathTest(unittest.TestCase):
             code_parsing.find_function_path(src_code, "my_function")
 
 
+class IsPythonCodeValidTest(unittest.TestCase):
+    """Tests for is_python_code_valid function."""
+
+    def test_valid_code(self):
+        """Test with valid Python code."""
+        src_code = textwrap.dedent("""
+            def my_function():
+                return 42
+        """)
+        self.assertTrue(code_parsing.is_python_code_valid(src_code))
+
+    def test_invalid_code(self):
+        """Test with invalid Python code."""
+        src_code = textwrap.dedent("""
+            def my_function(
+                return 42
+        """)
+        self.assertFalse(code_parsing.is_python_code_valid(src_code))
+
 if __name__ == "__main__":
     unittest.main()
