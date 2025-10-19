@@ -4,7 +4,6 @@ import dataclasses
 import datetime
 
 from typing import Any
-from collections.abc import Sequence
 
 from eureka_ml_insights.metrics.live_code_bench import code_execution
 
@@ -46,7 +45,7 @@ class TestCaseResult:
     error_message: str = ""
 
 
-def parse_functional_test_case(
+def _parse_functional_test_case(
         test_case_dict: dict[str, str]) -> FunctionalTestCase:
     """Parses a dictionary into a FunctionalTestCase.
 
@@ -72,7 +71,7 @@ def parse_functional_test_case(
     return FunctionalTestCase(inputs=inputs, expected_output=expected_output)
 
 
-def parse_standard_io_test_case(
+def _parse_standard_io_test_case(
         test_case_dict: dict[str, str]) -> StandardIOTestCase:
     """Parses a dictionary into a StandardIOTestCase.
 
@@ -107,30 +106,19 @@ def parse_test_case(
 
     Returns:
         An instance of FunctionalTestCase or StandardIOTestCase.
+    
+    Raises:
+        ValueError: If the 'testtype' is unknown.
     """
     if test_case_dict["testtype"] == "functional":
-        return parse_functional_test_case(test_case_dict)
+        return _parse_functional_test_case(test_case_dict)
     elif test_case_dict["testtype"] == "stdin":
-        return parse_standard_io_test_case(test_case_dict)
+        return _parse_standard_io_test_case(test_case_dict)
     else:
         raise ValueError(f"Unknown test type: {test_case_dict['testtype']}")
 
 
-def parse_test_cases(
-    test_cases_list: Sequence[dict[str, str]]
-) -> list[FunctionalTestCase | StandardIOTestCase]:
-    """Parses a list of test case dictionaries into the appropriate test case.
-
-    Args:
-        test_cases_list: A list of dictionaries representing the test cases.
-
-    Returns:
-        A list of instances of FunctionalTestCase or StandardIOTestCase.
-    """
-    return [parse_test_case(tc) for tc in test_cases_list]
-
-
-def evaluate_functional_test_case(
+def _evaluate_functional_test_case(
         src_code: str,
         function_name: str,
         test_case: FunctionalTestCase,
@@ -155,16 +143,21 @@ def evaluate_functional_test_case(
 
     result: code_execution.FunctionResult = (
         code_execution.execute_function(job))
+    
+    if result.success and result.return_value == test_case.expected_output:
+        return TestCaseResult(passed=True)
+    elif not result.success:
+        return TestCaseResult(passed=False,
+                              error_message=result.error_message)
+    else:
+        return TestCaseResult(
+            passed=False,
+            error_message=(
+                f"Expected output: {test_case.expected_output}, "
+                f"but got: {result.return_value}"))
 
-    passed: bool = (result.success
-                    and result.return_value == test_case.expected_output)
 
-    return TestCaseResult(
-        passed=passed,
-        error_message=result.error_message if not passed else "")
-
-
-def evaluate_standard_io_test_case(
+def _evaluate_standard_io_test_case(
         src_code: str,
         test_case: StandardIOTestCase,
         timeout: datetime.timedelta | None = None) -> TestCaseResult:
@@ -187,9 +180,56 @@ def evaluate_standard_io_test_case(
 
     result: code_execution.ScriptResult = (code_execution.execute_script(job))
 
-    passed: bool = (result.success
-                    and result.stdout == test_case.expected_stdout)
+    if result.success and result.stdout == test_case.expected_stdout:
+        return TestCaseResult(passed=True)
+    elif not result.success:
+        return TestCaseResult(passed=False,
+                              error_message=result.error_message)
+    else:
+        return TestCaseResult(
+            passed=False,
+            error_message=(
+                f"Expected stdout: {test_case.expected_stdout}, "
+                f"but got: {result.stdout}"))
 
-    return TestCaseResult(
-        passed=passed,
-        error_message=result.error_message if not passed else "")
+
+def evaluate_test_case(
+        src_code: str,
+        test_case: FunctionalTestCase | StandardIOTestCase,
+        function_name: str = "",
+        timeout: datetime.timedelta | None = None) -> TestCaseResult:
+    """Evaluates a test case against the provided source code.
+
+    Args:
+        src_code: The source code to be tested.
+        test_case: The test case to evaluate.
+        function_name: The name of the function to be tested. This is only
+            required for FunctionalTestCase instances. If the function is part
+            of a class, provide the full path (e.g., 'MyClass.my_function').
+        timeout: An optional timeout for the code execution.
+
+    Returns:
+        A TestCaseResult instance indicating whether the test case passed.
+    
+    Raises:
+        ValueError: If the test case type is unknown or if function_name is not
+            provided for FunctionalTestCase.
+    """
+    if isinstance(test_case, FunctionalTestCase):
+        if not function_name:
+            raise ValueError(
+                "function_name must be provided for FunctionalTestCase.")
+        return _evaluate_functional_test_case(
+            src_code=src_code,
+            function_name=function_name,
+            test_case=test_case,
+            timeout=timeout
+        )
+    elif isinstance(test_case, StandardIOTestCase):
+        return _evaluate_standard_io_test_case(
+            src_code=src_code,
+            test_case=test_case,
+            timeout=timeout
+        )
+    else:
+        raise ValueError(f"Unknown test case type: {type(test_case)}")
