@@ -16,7 +16,8 @@ Example:
         --lcb_start_datetime "2024-08-01T00:00:00" \
         --lcb_end_datetime "2025-01-01T23:59:59"
 
-See the `configure_pipeline()` method below for available parameters.
+See the arguments of the `configure_pipeline()` method below for available
+parameters.
 """
 
 import pathlib
@@ -156,6 +157,14 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
         lcb_end_datetime_parsed: datetime.datetime | None = (
             datetime.datetime.fromisoformat(lcb_end_datetime)
             if lcb_end_datetime is not None else None)
+
+        if lcb_start_datetime_parsed and lcb_end_datetime_parsed:
+            if lcb_start_datetime_parsed > lcb_end_datetime_parsed:
+                raise ValueError(
+                    "lcb_start_datetime must be earlier than or equal to "
+                    "lcb_end_datetime."
+                    f" Got start: {lcb_start_datetime_parsed}, "
+                    f"end: {lcb_end_datetime_parsed}.")
 
         self._prompt_creation = self._create_prompt_processing_config(
             lcb_release_version=lcb_release_version,
