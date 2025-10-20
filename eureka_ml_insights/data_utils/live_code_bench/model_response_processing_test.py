@@ -34,6 +34,21 @@ class ExtractCodeTest(unittest.TestCase):
             "",
         ),
         (
+            # No code after think token
+            "Thoughts here.</think>\nNo code snippet.",
+            "",
+        ),
+        (
+            # Code block before closing think token
+            "```python\nprint('Hello, World!')\n```\nSome thoughts.</think>",
+            "",
+        ),
+        (
+            # Malformed code block after closing think token
+            "Thoughts here.</think>\n```python\nprint('Hello, World!')",
+            "",
+        ),
+        (
             # Code block after closing think token - python specified
             "Thoughts here.</think>\n```python\nprint('Hello, World!')\n```",
             "print('Hello, World!')",
