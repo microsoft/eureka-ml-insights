@@ -11,10 +11,11 @@ Typical usage example (from the project's root directory):
 import pathlib
 import datetime
 
+from typing import Any
+
 from eureka_ml_insights import configs, core, data_utils
 from eureka_ml_insights.configs import config
 from eureka_ml_insights.core import eval_reporting
-from eureka_ml_insights.metrics import reports
 from eureka_ml_insights.data_utils.live_code_bench import (
     code_extraction_transform,
     decode_test_cases_transform,
@@ -23,142 +24,121 @@ from eureka_ml_insights.metrics.live_code_bench import (
     codegen_test_case_results_metric,
     pass_at_k_aggregator,
 )
-from typing import Any
+
+
+def _get_output_file_path(output_dir: str, filename: str) -> str:
+    """Constructs a file path within an output directory.
+
+        Args:
+            output_dir: The output directory path.
+            filename: The filename to append.
+
+        Returns:
+            String representation of the full file path.
+        """
+    return str(pathlib.Path(output_dir) / filename)
 
 
 class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
-    """Defines the pipeline for running the code generation benchmark."""
+    """Defines the pipeline for running the code generation benchmark.
 
+    Pipeline stages:
+        1. Prompt Creation: Loads dataset and creates prompts from template.
+        2. Response Generation: Generates code responses using the model.
+        3. Code Extraction: Extracts and processes code from model outputs.
+        4. Code Evaluation: Executes code against test cases and computes
+            metrics.
+    """
+
+    # Dataset configuration
     _HF_LCB_DATASET_NAME: str = "livecodebench/code_generation_lite"
     _HF_LCB_DATASET_SPLIT: str = "test"
-    _HF_LCB_RELEASE_VERSION: str = "release_v5"
+
     _PROMPT_TEMPLATE_PATH: pathlib.Path = (
-        pathlib.Path(__file__).parent /
-        "../prompt_templates/live_code_bench_templates/codegen.jinja"
-    ).resolve()
+        pathlib.Path(__file__).parent.parent /
+        "prompt_templates/live_code_bench_templates/codegen.jinja").resolve()
+
+    # Standard file names
+    _TRANSFORMED_DATA_FILE_NAME: str = "transformed_data.jsonl"
+    _INFERENCE_RESULT_FILE_NAME: str = "inference_result.jsonl"
+    _JSONL_FILE_FORMAT: str = ".jsonl"
+
+    # Column names
+    _MODEL_OUTPUT_COLUMN_NAME: str = "model_output"
+    _EXTRACTED_CODE_COLUMN_NAME: str = "extracted_code"
+    _PUBLIC_TEST_CASES_COLUMN_NAME: str = "public_test_cases"
+    _PRIVATE_TEST_CASES_COLUMN_NAME: str = "private_test_cases"
+    _METADATA_COLUMN_NAME: str = "metadata"
+    _ALL_TEST_CASES_COMBINED_COLUMN_NAME: str = "all_test_cases_combined"
+    _DATAPOINT_ID_COLUMN_NAME: str = "data_point_id"
 
     def configure_pipeline(self,
                            model_config: configs.ModelConfig | None = None,
-                           **kwargs: dict[str, Any]) -> configs.PipelineConfig:
+                           lcb_release_version: str = "release_latest",
+                           num_generated_responses_per_prompt: int = 5,
+                           closing_think_token: str = "",
+                           code_evaluation_timeout_seconds: float = 20.0,
+                           max_parallel_code_executions_per_attempt: int = 16,
+                           **kwargs: Any) -> configs.PipelineConfig:
         """Configures the steps of the pipeline.
         
         Args:
-            TODO(luizdovalle): Add args.
+            model_config: The model configuration to use for generating code
+                responses.
+            lcb_release_version: The LiveCodeBench dataset release version to
+                use. See the available versions at
+                https://huggingface.co/datasets/livecodebench/code_generation_lite.
+            num_generated_responses_per_prompt: The number of code responses to
+                generate per question. Higher numbers provide a better estimate
+                of Pass@K metrics but increase computation cost.
+            closing_think_token: The token indicating the end of the model's
+                reasoning process in the generated output. For example,
+                Phi4-reasoning uses "</think>" as the closing think token. If
+                set, only consider code snippets that appear
+                after this token in the model output. Otherwise, look for the
+                last code snippet in the entire model output.
+            code_evaluation_timeout_seconds: The timeout in seconds for
+                executing each test case.
+            max_parallel_code_executions_per_attempt: The maximum number of code
+                executions to run in parallel per code generation attempt.
         
         Returns:
             A PipelineConfig object defining the pipeline steps.
         """
-        self._prompt_creation = configs.PromptProcessingConfig(
-            component_type=core.PromptProcessing,
-            prompt_template_path=str(self._PROMPT_TEMPLATE_PATH),
-            data_reader_config=configs.DataSetConfig(
-                class_name=data_utils.HFDataReader,
-                init_args={
-                    "path": self._HF_LCB_DATASET_NAME,
-                    "split": self._HF_LCB_DATASET_SPLIT,
-                    "release_version": self._HF_LCB_RELEASE_VERSION,
-                    "transform": data_utils.SequenceTransform([
-                        data_utils.SamplerTransform(
-                            sample_count=2,
-                            random_seed=42
-                        ),
-                        data_utils.MultiplyTransform(
-                            n_repeats=3,
-                        ),
-                    ])
-                }),
-            output_dir=str(pathlib.Path(self.log_dir) / "prompts"),
+        if model_config is None:
+            raise ValueError("model_config must be provided.")
+
+        if num_generated_responses_per_prompt < 1:
+            raise ValueError(
+                "num_generated_responses_per_prompt must be at least 1."
+                f" Got {num_generated_responses_per_prompt}.")
+
+        if code_evaluation_timeout_seconds <= 0:
+            raise ValueError(
+                "code_evaluation_timeout_seconds must be positive. "
+                f"Got {code_evaluation_timeout_seconds}.")
+
+        if max_parallel_code_executions_per_attempt <= 0:
+            raise ValueError(
+                "max_parallel_code_executions_per_attempt must be positive. "
+                f"Got {max_parallel_code_executions_per_attempt}.")
+
+        self._prompt_creation = self._create_prompt_processing_config(
+            lcb_release_version=lcb_release_version,
+            num_generated_responses_per_prompt=(
+                num_generated_responses_per_prompt),
         )
 
-        self._response_generation = configs.InferenceConfig(
-            component_type=core.Inference,
-            model_config=model_config,
-            data_loader_config=configs.DataSetConfig(
-                class_name=data_utils.DataLoader,
-                init_args={
-                    "path": str(
-                        pathlib.Path(self._prompt_creation.output_dir) /
-                        "transformed_data.jsonl"
-                    ),
-                }
-            ),
-            output_dir=str(pathlib.Path(self.log_dir) / "responses"),
-        )
+        self._response_generation = self._create_inference_config(
+            model_config=model_config)
 
-        self._code_extraction = configs.DataProcessingConfig(
-            component_type=core.DataProcessing,
-            data_reader_config=configs.DataSetConfig(
-                class_name=data_utils.DataReader,
-                init_args={
-                    "path": str(
-                        pathlib.Path(self._response_generation.output_dir) /
-                        "inference_result.jsonl"
-                    ),
-                    "format": ".jsonl",
-                    "transform": data_utils.SequenceTransform([
-                        code_extraction_transform.CodeExtractionTransform(
-                            model_output_column="model_output",
-                            code_column="extracted_code",
-                            closing_think_token="",
-                        ),
-                        decode_test_cases_transform.DecodeTestCasesTransform(
-                            encoded_test_cases_column_name="private_test_cases",
-                            decoded_test_cases_column_name=(
-                                "private_test_cases"
-                            )
-                        ),
-                        data_utils.StrToJsonTransform(
-                            # private_test_cases_column_name is already
-                            # decoded by DecodeTestCasesTransform into a
-                            # JSON object, so we only need to convert the other
-                            # columns.
-                            columns=["metadata", "public_test_cases"]
-                        ),
-                        data_utils.AddColumnValuesTransform(
-                            columns=["public_test_cases", "private_test_cases"],
-                            new_column="all_test_cases_combined"
-                        )
-                    ])
-                }
-            ),
-            output_dir=str(pathlib.Path(self.log_dir) / "extracted_code")
-        )
+        self._code_extraction = self._create_code_extraction_config(
+            closing_think_token=closing_think_token)
 
-        self._code_evaluation = configs.EvalReportingConfig(
-            component_type=eval_reporting.EvalReporting,
-            data_reader_config=configs.DataSetConfig(
-                class_name=data_utils.DataReader,
-                init_args={
-                    "path": str(
-                        pathlib.Path(self._code_extraction.output_dir) /
-                        "transformed_data.jsonl"
-                    ),
-                    "format": ".jsonl",
-                }
-            ),
-            metric_config=config.MetricConfig(
-                class_name=codegen_test_case_results_metric.CodegenTestCaseResultsMetric,
-                init_args={
-                    "code_column_name": "extracted_code",
-                    "test_cases_column_name": "all_test_cases_combined",
-                    "metadata_column_name": "metadata",
-                    "timeout": datetime.timedelta(seconds=20),
-                    "max_workers": 16,
-                }
-            ),
-            aggregator_configs=[
-               config.AggregatorConfig(
-                   class_name=pass_at_k_aggregator.PassAtKAggregator,
-                   init_args={
-                       "passed_column_name": (
-                           "CodegenTestCaseResultsMetric_all_passed"),
-                       "k": 1,
-                       "group_by": "data_point_id",
-                       "filename_base": "Pass@1_by_question",
-                   }
-               ),
-            ],
-            output_dir=str(pathlib.Path(self.log_dir) / "test_case_results"),
+        self._code_evaluation = self._create_code_evaluation_config(
+            code_evaluation_timeout_seconds=code_evaluation_timeout_seconds,
+            max_parallel_code_executions_per_attempt=(
+                max_parallel_code_executions_per_attempt),
         )
 
         return configs.PipelineConfig(
@@ -170,3 +150,183 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
             ],
             log_dir=self.log_dir,
         )
+
+    def _create_prompt_processing_config(
+        self,
+        lcb_release_version: str,
+        num_generated_responses_per_prompt: int,
+    ) -> configs.PromptProcessingConfig:
+        """Creates the prompt processing configuration.
+
+        Args:
+            lcb_release_version: LiveCodeBench release version.
+            num_generated_responses_per_prompt: Number of responses per prompt.
+
+        Returns:
+            PromptProcessingConfig for the prompt creation stage.
+        """
+        return configs.PromptProcessingConfig(
+            component_type=core.PromptProcessing,
+            prompt_template_path=str(self._PROMPT_TEMPLATE_PATH),
+            data_reader_config=configs.DataSetConfig(
+                class_name=data_utils.HFDataReader,
+                init_args={
+                    "path": self._HF_LCB_DATASET_NAME,
+                    "split": self._HF_LCB_DATASET_SPLIT,
+                    "release_version": lcb_release_version,
+                    "transform": data_utils.SequenceTransform([
+                        # TODO: Remove SamplerTransform when testing is done.
+                        data_utils.SamplerTransform(sample_count=2,
+                                                    random_seed=42),
+                        decode_test_cases_transform.DecodeTestCasesTransform(
+                            encoded_test_cases_column_name=(
+                                self._PRIVATE_TEST_CASES_COLUMN_NAME),
+                            decoded_test_cases_column_name=(
+                                self._PRIVATE_TEST_CASES_COLUMN_NAME)),
+                        data_utils.StrToJsonTransform(
+                            # private_test_cases_column_name is already
+                            # decoded by DecodeTestCasesTransform into a
+                            # JSON object, so we only need to convert the other
+                            # columns.
+                            columns=[
+                                self._METADATA_COLUMN_NAME,
+                                self._PUBLIC_TEST_CASES_COLUMN_NAME
+                            ]),
+                        data_utils.AddColumnValuesTransform(
+                            # Combines the public and private test cases into
+                            # a single column as code evaluation does not
+                            # distinguish between them.
+                            columns=[
+                                self._PUBLIC_TEST_CASES_COLUMN_NAME,
+                                self._PRIVATE_TEST_CASES_COLUMN_NAME
+                            ],
+                            new_column=self._ALL_TEST_CASES_COMBINED_COLUMN_NAME
+                        ),
+                        data_utils.MultiplyTransform(
+                            # This is to generate multiple responses per prompt.
+                            n_repeats=num_generated_responses_per_prompt,
+                        ),
+                    ])
+                }),
+            output_dir=self._construct_output_dir_path("prompts"),
+        )
+
+    def _create_inference_config(
+            self,
+            model_config: configs.ModelConfig) -> configs.InferenceConfig:
+        """Constructs the inference configuration.
+
+        Args:
+            model_config: The model configuration to use.
+
+        Returns:
+            InferenceConfig for the response generation stage.
+        """
+        return configs.InferenceConfig(
+            component_type=core.Inference,
+            model_config=model_config,
+            data_loader_config=configs.DataSetConfig(
+                class_name=data_utils.DataLoader,
+                init_args={
+                    "path": _get_output_file_path(
+                        self._prompt_creation.output_dir,
+                        self._TRANSFORMED_DATA_FILE_NAME,
+                    ),
+                }),
+            output_dir=self._construct_output_dir_path("responses"),
+        )
+
+    def _create_code_extraction_config(
+            self, closing_think_token: str) -> configs.DataProcessingConfig:
+        """Creates the code extraction configuration.
+
+        Args:
+            closing_think_token: The token indicating the end of the model's
+                reasoning process in the generated output. If empty,
+                looks for the last code snippet in the entire model output.
+
+        Returns:
+            DataProcessingConfig for the code extraction stage.
+        """
+        return configs.DataProcessingConfig(
+            component_type=core.DataProcessing,
+            data_reader_config=configs.DataSetConfig(
+                class_name=data_utils.DataReader,
+                init_args={
+                    "path": _get_output_file_path(
+                        self._response_generation.output_dir,
+                        self._INFERENCE_RESULT_FILE_NAME,
+                    ),
+                    "format": self._JSONL_FILE_FORMAT,
+                    "transform": data_utils.SequenceTransform([
+                        code_extraction_transform.CodeExtractionTransform(
+                            model_output_column=self._MODEL_OUTPUT_COLUMN_NAME,
+                            code_column=self._EXTRACTED_CODE_COLUMN_NAME,
+                            closing_think_token=closing_think_token,
+                        ),
+                    ])
+                }),
+            output_dir=self._construct_output_dir_path("extracted_code"))
+
+    def _create_code_evaluation_config(
+        self, code_evaluation_timeout_seconds: float,
+        max_parallel_code_executions_per_attempt: int
+    ) -> configs.EvalReportingConfig:
+        """Creates the code evaluation configuration.
+
+        Args:
+            code_evaluation_timeout_seconds: The timeout in seconds for
+                executing each test case.
+            max_parallel_code_executions_per_attempt: The maximum number of code
+                executions to run in parallel per code generation attempt.
+
+        Returns:
+            EvalReportingConfig for the code evaluation stage.
+        """
+        return configs.EvalReportingConfig(
+            component_type=eval_reporting.EvalReporting,
+            data_reader_config=configs.DataSetConfig(
+                class_name=data_utils.DataReader,
+                init_args={
+                    "path": _get_output_file_path(
+                        self._code_extraction.output_dir,
+                        self._TRANSFORMED_DATA_FILE_NAME,
+                    ),
+                    "format": self._JSONL_FILE_FORMAT,
+                }),
+            metric_config=config.MetricConfig(
+                class_name=codegen_test_case_results_metric.
+                CodegenTestCaseResultsMetric,
+                init_args={
+                    "code_column_name": self._EXTRACTED_CODE_COLUMN_NAME,
+                    "test_cases_column_name": (
+                        self._ALL_TEST_CASES_COMBINED_COLUMN_NAME),
+                    "metadata_column_name": self._METADATA_COLUMN_NAME,
+                    "timeout": datetime.timedelta(
+                        seconds=code_evaluation_timeout_seconds),
+                    "max_workers": max_parallel_code_executions_per_attempt,
+                }),
+            aggregator_configs=[
+                config.AggregatorConfig(
+                    class_name=pass_at_k_aggregator.PassAtKAggregator,
+                    init_args={
+                        "passed_column_name": (
+                            "CodegenTestCaseResultsMetric_all_passed"),
+                        "k": 1,
+                        "group_by": self._DATAPOINT_ID_COLUMN_NAME,
+                        "filename_base": "Pass@1_by_question",
+                    }),
+            ],
+            output_dir=self._construct_output_dir_path("test_case_results"),
+        )
+
+    def _construct_output_dir_path(self, *parts: str) -> str:
+        """Constructs a path relative to the log directory.
+
+        Args:
+            parts: Path components to append to the log directory.
+
+        Returns:
+            String representation of the constructed path.
+        """
+        return str(pathlib.Path(self.log_dir).joinpath(*parts))
