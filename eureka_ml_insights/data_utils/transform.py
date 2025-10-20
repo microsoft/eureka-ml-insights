@@ -3,7 +3,7 @@ import logging
 import re
 from abc import abstractmethod
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import Dict, List, Any
 
 import numpy as np
 import pandas as pd
@@ -167,6 +167,41 @@ class CopyColumn(DFTransformBase):
 
         return df
 
+@dataclass
+class AddColumnValuesTransform(DFTransformBase):
+    """
+    Concatenates the values of multiple columns into a single column.
+
+    The value of the columns must support the '+' operator.
+    Example:
+        df = pd.DataFrame({
+            "a": [[1, 2], [3, 4]],
+            "b": [[5], [6, 7]]
+        })
+        t = AddColumnValuesTransform(columns=["a", "b"], new_column="combined")
+        print(t.transform(df))
+        # -> combined = [[1, 2, 5], [3, 4, 6, 7]]
+
+    Attributes:
+        columns: List of column names whose values are to be concatenated.
+        new_column: Name of the new column to store the concatenated values.
+    """
+
+    columns: List[str]
+    new_column: str
+
+    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        # Start with the first column
+        result = df[self.columns[0]]
+
+        # Iteratively add the remaining columns
+        for col in self.columns[1:]:
+            result = result + df[col]
+
+        # Assign to new column (don’t modify original df)
+        df[self.new_column] = result
+        return df
+
 
 @dataclass
 class MultiColumnTransform(DFTransformBase):
@@ -205,6 +240,9 @@ class MultiColumnTransform(DFTransformBase):
 class StrToJsonTransform(MultiColumnTransform):
     """
     Transforms string representation of a JSON object to an actual JSON object.
+
+    Args:
+        columns: Column(s) to apply transform to.
     """
 
     columns: List[str] | str

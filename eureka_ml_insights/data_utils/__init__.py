@@ -41,6 +41,7 @@ from .transform import (
     TokenCounterTransform,
     ExtractUsageTransform,
     StrToJsonTransform,
+    AddColumnValuesTransform,
 )
 
 __all__ = [
@@ -82,4 +83,5 @@ __all__ = [
     NumpyEncoder,
     ExtractUsageTransform,
     StrToJsonTransform,
+    AddColumnValuesTransform,
 ]
