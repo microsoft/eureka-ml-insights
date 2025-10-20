@@ -114,13 +114,6 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
             output_dir=str(pathlib.Path(self.log_dir) / "extracted_code")
         )
 
-        # This metric runs the code against the test cases and creates two
-        # columns:
-        # - "passed": A list of booleans indicating whether each test case
-        #   passed.
-        # - "error_messages": A list of error messages for each test case that
-        #   failed. If a test case passed, the corresponding error
-        #   message is an empty string.
         self._grade_code = configs.EvalReportingConfig(
             component_type=eval_reporting.EvalReporting,
             data_reader_config=configs.DataSetConfig(

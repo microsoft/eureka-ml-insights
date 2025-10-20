@@ -8,12 +8,31 @@ import pandas as pd
 import concurrent.futures
 
 from collections import defaultdict
+from typing import TypedDict
 
 from eureka_ml_insights.metrics import metrics_base
 from eureka_ml_insights.metrics.live_code_bench import (
     evaluate_codegen,
     code_parsing,
 )
+
+
+class TestResults(TypedDict):
+    """Defines the structure of the test results returned by the metric.
+
+    Attributes:
+        passed: A list of booleans indicating whether each test case passed.
+            In the same order as the test cases provided.
+        error_messages: A list of error messages for each test case that failed.
+            In the same order as the test cases provided. If a test case passed,
+            the corresponding error message is an empty string.
+        all_passed: A boolean indicating whether all test cases passed.
+            None only if there are no test cases.
+    """
+
+    passed: list[bool]
+    error_messages: list[str]
+    all_passed: bool | None
 
 
 def _run_test(
@@ -97,7 +116,7 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
         self._timeout = timeout
         self._max_workers = max_workers
 
-    def __evaluate__(self, row: "pd.Series") -> dict[str, list[bool | str]]:  # type: ignore
+    def __evaluate__(self, row: "pd.Series") -> TestResults:  # type: ignore
         """Runs the code against the test cases and checks if they pass.
 
         Args:
@@ -114,11 +133,7 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
                     needed for functional test cases.
 
         Returns:
-            A dictionary with keys:
-            - 'passed': A list of booleans indicating if each test case passed.
-            - 'error_message': A list of strings with error messages for each
-                failed test case. If no error, the string is empty.
-            The lists are in the same order as the test cases.
+            A TestResults dictionary.
         """
         code: str = row[self._code_column_name].strip()
         function_name: str = row[self._metadata_column_name].get(
@@ -127,24 +142,30 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
         raw_test_cases: list[dict[str, str]] = row[self._test_cases_column_name]
 
         if not raw_test_cases:
-            return {"passed": [], "error_messages": []}
+            return TestResults(
+                passed=[],
+                error_messages=[],
+                all_passed=None,
+            )
 
         if not code:
-            return {
-                "passed": [False] * len(raw_test_cases),
-                "error_messages": [
+            return TestResults(
+                passed=[False] * len(raw_test_cases),
+                error_messages=[
                     "No code generated."
                 ] * len(raw_test_cases),
-            }
+                all_passed=False,
+            )
 
         is_valid_code, parse_error = code_parsing.is_python_code_valid(code)
         if not is_valid_code:
-            return {
-                "passed": [False] * len(raw_test_cases),
-                "error_messages": [
+            return TestResults(
+                passed=[False] * len(raw_test_cases),
+                error_messages=[
                     f"Code has syntax error: {parse_error}"
                 ] * len(raw_test_cases),
-            }
+                all_passed=False,
+            )
         
         function_path = ""
         function_parsing_error = ""
@@ -156,7 +177,11 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
         except Exception as e:
             function_parsing_error = str(e)
 
-        results: dict[str, list[bool | str]] = defaultdict(list)
+        results: TestResults = {
+            "passed": [],
+            "error_messages": [],
+            "all_passed": False,
+        }
         max_workers: int = min(self._max_workers, len(raw_test_cases))
 
         with concurrent.futures.ThreadPoolExecutor(
@@ -172,5 +197,7 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
                 test_result = future.result()
                 results["passed"].append(test_result.passed)
                 results["error_messages"].append(test_result.error_message)
+
+            results["all_passed"] = all(results["passed"])
 
         return results
