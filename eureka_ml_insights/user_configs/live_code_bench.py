@@ -5,7 +5,7 @@ See https://livecodebench.github.io/ for details.
 Typical usage example (from the project's root directory):
     $ python main.py \
         --exp_config="LIVE_CODE_BENCH_CODEGEN_PIPELINE" \
-        --model_config="OAI_O1_CONFIG"
+        --model_config="GATEWAY_GPT4O_CONFIG"
 """
 
 import pathlib
