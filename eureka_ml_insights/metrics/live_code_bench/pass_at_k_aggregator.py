@@ -74,12 +74,18 @@ class PassAtKAggregator(reports.NumericalAggregator):
             num_attempts = int(num_attempts_per_group[group_name])
             num_correct = int(num_correct_per_group[group_name])
 
-            pass_at_k_estimate = pass_at_k.estimate_pass_at_k(
+            pass_at_k_estimate: float = pass_at_k.estimate_pass_at_k(
                 num_attempts=num_attempts,
                 num_correct=num_correct,
                 k=self._k,
             )
 
             pass_at_k_from_group[group_name] = pass_at_k_estimate
+        
+        overall_avg_pass_at_k: float = (
+            sum(pass_at_k_from_group.values()) / len(pass_at_k_from_group))
 
-        self.aggregated_result = {f"pass@{self._k}": pass_at_k_from_group}
+        self.aggregated_result = {
+            f"pass@{self._k}_by_{self.group_by}": pass_at_k_from_group,
+            f"overall_avg_pass@{self._k}": overall_avg_pass_at_k,
+        }
