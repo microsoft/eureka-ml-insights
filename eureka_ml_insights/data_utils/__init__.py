@@ -39,7 +39,8 @@ from .transform import (
     ShuffleColumnsTransform,
     MajorityVoteTransform,
     TokenCounterTransform,
-    ExtractUsageTransform
+    ExtractUsageTransform,
+    StrToJsonTransform,
 )
 
 __all__ = [
@@ -80,4 +81,5 @@ __all__ = [
     MajorityVoteTransform,
     NumpyEncoder,
     ExtractUsageTransform,
+    StrToJsonTransform,
 ]

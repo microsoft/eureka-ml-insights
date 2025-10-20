@@ -8,6 +8,7 @@ from typing import Dict, List
 import numpy as np
 import pandas as pd
 import tiktoken
+import json
 
 from eureka_ml_insights.configs.config import ModelConfig
 from eureka_ml_insights.models import (
@@ -197,6 +198,31 @@ class MultiColumnTransform(DFTransformBase):
         self.validate(df)
         for column in self.columns:
             df.loc[:, column] = df.loc[:, column].apply(self._transform)
+        return df
+
+
+@dataclass
+class StrToJsonTransform(MultiColumnTransform):
+    """
+    Transforms string representation of a JSON object to an actual JSON object.
+    """
+
+    columns: List[str] | str
+
+    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        self.validate(df)
+
+        if df.empty:
+            logging.warning(
+                "The input dataframe is empty, no transformation was applied.")
+            return df
+
+        if isinstance(self.columns, str):
+            self.columns = [self.columns]
+
+        for col in self.columns:
+            df[col] = df[col].map(json.loads)
+
         return df
 
 
