@@ -5,6 +5,7 @@ This metric evaluates generated code against provided test cases.
 
 import datetime
 import pandas as pd
+
 from collections import defaultdict
 
 from eureka_ml_insights.metrics import metrics_base
@@ -15,9 +16,14 @@ from eureka_ml_insights.metrics.live_code_bench import (
 
 
 class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
-    """Evaluates the generated code against the provided test cases."""
+    """Evaluates the generated code against the provided test cases.
 
-    def __init__(self, code_column_name: str, test_cases_column_name: str,
+    See __init__ for details on the expected columns in the DataFrame.
+    See __evaluate__ for details on the output format.
+    """
+
+    def __init__(self, code_column_name: str, public_test_cases_column_name: str,
+                 private_test_cases_column_name: str,
                  metadata_column_name: str,
                  timeout: datetime.timedelta | None = None):
         """Initializes the CodegenTestCaseResultsMetric.
@@ -25,32 +31,39 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
         Args:
             code_column_name: The name of the column containing the code as a
                 string.
-            test_cases_column_name: The name of the column containing the list
-                of test case dictionaries. The column should contain a list
-                of dictionaries, each representing a test case. See
-                __evaluate__ method for details.
+            public_test_cases_column_name: The name of the column containing the
+                list of public test case dictionaries. The column should contain
+                a string representation of a list of dictionaries, each
+                representing a test case. See __evaluate__ method for details.
+            private_test_cases_column_name: The name of the column containing the
+                list of private test case dictionaries. The column should contain
+                a string representation of a list of dictionaries, each
+                representing a test case. See __evaluate__ method for details.
             metadata_column_name: The name of the column containing metadata
-                dictionary, which should include the function name under the key
-                'func_name'. This is only needed for functional test cases.
+                dictionary. The column should contain a string representation of
+                a dictionary. See __evaluate__ method for details.
             timeout: An optional timeout for each test case execution.
         """
         self._code_column_name = code_column_name
-        self._test_cases_column_name = test_cases_column_name
+        self._public_test_cases_column_name = public_test_cases_column_name
+        self._private_test_cases_column_name = private_test_cases_column_name
         self._metadata_column_name = metadata_column_name
         self._timeout = timeout
 
-    def __evaluate__(self, row: pd.Series) -> dict[str, list[bool | str]]:  # type: ignore
+    def __evaluate__(self, row: "pd.Series") -> dict[str, list[bool | str]]:  # type: ignore
         """Runs the code against the test cases and checks if they pass.
 
         Args:
             row: A row from the DataFrame containing the code and test cases.
                 Must have the following columns:
                 - code_column_name: The generated code as a string.
-                - test_cases_column_name: A list of test case dictionaries.
-                Each test case dictionary should have the following keys:
-                    - 'testtype': Either 'functional' or 'stdin'.
-                    - 'input': The input for the test case.
-                    - 'output': The expected output for the test case.
+                - (public_test_cases_column_name and
+                    private_test_cases_column_name): A list of test case
+                    dictionaries.
+                    Each test case dictionary should have the following keys:
+                        - 'testtype': Either 'functional' or 'stdin'.
+                        - 'input': The input for the test case.
+                        - 'output': The expected output for the test case.
                 - metadata_column_name: A dictionary with metadata, including
                     the function name under the key 'func_name'. This is only
                     needed for functional test cases.
@@ -65,7 +78,14 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
         code: str = row[self._code_column_name]
         function_name: str = row[self._metadata_column_name].get(
             "func_name", "")
-        raw_test_cases: list[dict[str, str]] = row[self._test_cases_column_name]
+
+        public_test_cases: list[dict[str, str]] = (
+            row[self._public_test_cases_column_name])
+        private_test_cases: list[dict[str, str]] = (
+            row[self._private_test_cases_column_name])
+
+        raw_test_cases: list[dict[str, str]] = (
+            public_test_cases + private_test_cases)
 
         if not raw_test_cases:
             return {"passed": [], "error_messages": []}
