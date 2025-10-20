@@ -1,4 +1,4 @@
-"""Unit tests for the functions in model_response_processing.py.
+"""Unit tests for the functions in parsing.py.
 
 To run:
     $ python -m unittest \
