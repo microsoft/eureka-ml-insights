@@ -7,6 +7,7 @@ from typing import Dict, List, Any
 
 import numpy as np
 import pandas as pd
+import datetime
 import tiktoken
 import json
 
@@ -198,8 +199,32 @@ class AddColumnValuesTransform(DFTransformBase):
         for col in self.columns[1:]:
             result = result + df[col]
 
-        # Assign to new column (don’t modify original df)
         df[self.new_column] = result
+        return df
+
+
+@dataclass
+class FilterDatetimeColumnToRangeTransform(DFTransformBase):
+    """
+    Filters a datetime column to a specified range.
+
+    Args:
+        column: The name of the datetime column to filter.
+        start_datetime: The start datetime for the range filter. If None, no
+            lower bound is applied.
+        end_datetime: The end datetime for the range filter. If None, no upper
+            bound is applied.
+    """
+
+    column: str
+    start_datetime: datetime.datetime | None = None
+    end_datetime: datetime.datetime | None = None
+
+    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        if self.start_datetime is not None:
+            df = df[df[self.column] >= self.start_datetime]
+        if self.end_datetime is not None:
+            df = df[df[self.column] <= self.end_datetime]
         return df
 
 

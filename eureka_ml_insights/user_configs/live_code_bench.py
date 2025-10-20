@@ -75,6 +75,8 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
     def configure_pipeline(self,
                            model_config: configs.ModelConfig | None = None,
                            lcb_release_version: str = "release_latest",
+                           lcb_start_datetime: datetime.datetime | None = None,
+                           lcb_end_datetime: datetime.datetime | None = None,
                            num_generated_responses_per_prompt: int = 5,
                            closing_think_token: str = "",
                            code_evaluation_timeout_seconds: float = 20.0,
@@ -88,6 +90,13 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
             lcb_release_version: The LiveCodeBench dataset release version to
                 use. See the available versions at
                 https://huggingface.co/datasets/livecodebench/code_generation_lite.
+            lcb_start_datetime: The start datetime for filtering the
+                LiveCodeBench dataset. Only include data points with
+                contest_date >= lcb_start_datetime. If None, do not apply a
+                start date filter.
+            lcb_end_datetime: The end datetime for filtering the LiveCodeBench
+                dataset. Only include data points with contest_date <=
+                lcb_end_datetime. If None, do not apply an end date filter
             num_generated_responses_per_prompt: The number of code responses to
                 generate per question. Higher numbers provide a better estimate
                 of Pass@K metrics but increase computation cost.
@@ -125,6 +134,8 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
 
         self._prompt_creation = self._create_prompt_processing_config(
             lcb_release_version=lcb_release_version,
+            lcb_start_datetime=lcb_start_datetime,
+            lcb_end_datetime=lcb_end_datetime,
             num_generated_responses_per_prompt=(
                 num_generated_responses_per_prompt),
         )
@@ -154,12 +165,18 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
     def _create_prompt_processing_config(
         self,
         lcb_release_version: str,
+        lcb_start_datetime: datetime.datetime | None,
+        lcb_end_datetime: datetime.datetime | None,
         num_generated_responses_per_prompt: int,
     ) -> configs.PromptProcessingConfig:
         """Creates the prompt processing configuration.
 
         Args:
             lcb_release_version: LiveCodeBench release version.
+            lcb_start_date: Start date for filtering the LiveCodeBench dataset.
+                Inclusive.
+            lcb_end_date: End date for filtering the LiveCodeBench dataset.
+                Inclusive.
             num_generated_responses_per_prompt: Number of responses per prompt.
 
         Returns:
@@ -175,6 +192,11 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     "split": self._HF_LCB_DATASET_SPLIT,
                     "release_version": lcb_release_version,
                     "transform": data_utils.SequenceTransform([
+                        data_utils.FilterDatetimeColumnToRangeTransform(
+                            column="contest_date",
+                            start_datetime=lcb_start_datetime,
+                            end_datetime=lcb_end_datetime,
+                        ),
                         # TODO: Remove SamplerTransform when testing is done.
                         data_utils.SamplerTransform(sample_count=2,
                                                     random_seed=42),
