@@ -22,8 +22,7 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
     See __evaluate__ for details on the output format.
     """
 
-    def __init__(self, code_column_name: str, public_test_cases_column_name: str,
-                 private_test_cases_column_name: str,
+    def __init__(self, code_column_name: str, test_cases_column_name: str,
                  metadata_column_name: str,
                  timeout: datetime.timedelta | None = None):
         """Initializes the CodegenTestCaseResultsMetric.
@@ -31,12 +30,8 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
         Args:
             code_column_name: The name of the column containing the code as a
                 string.
-            public_test_cases_column_name: The name of the column containing the
-                list of public test case dictionaries. The column should contain
-                a string representation of a list of dictionaries, each
-                representing a test case. See __evaluate__ method for details.
-            private_test_cases_column_name: The name of the column containing the
-                list of private test case dictionaries. The column should contain
+            test_cases_column_name: The name of the column containing the
+                list of test case dictionaries. The column should contain
                 a string representation of a list of dictionaries, each
                 representing a test case. See __evaluate__ method for details.
             metadata_column_name: The name of the column containing metadata
@@ -45,8 +40,7 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
             timeout: An optional timeout for each test case execution.
         """
         self._code_column_name = code_column_name
-        self._public_test_cases_column_name = public_test_cases_column_name
-        self._private_test_cases_column_name = private_test_cases_column_name
+        self._test_cases_column_name = test_cases_column_name
         self._metadata_column_name = metadata_column_name
         self._timeout = timeout
 
@@ -57,9 +51,7 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
             row: A row from the DataFrame containing the code and test cases.
                 Must have the following columns:
                 - code_column_name: The generated code as a string.
-                - (public_test_cases_column_name and
-                    private_test_cases_column_name): A list of test case
-                    dictionaries.
+                - test_cases_column_name: A list of test case dictionaries.
                     Each test case dictionary should have the following keys:
                         - 'testtype': Either 'functional' or 'stdin'.
                         - 'input': The input for the test case.
@@ -79,13 +71,7 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
         function_name: str = row[self._metadata_column_name].get(
             "func_name", "")
 
-        public_test_cases: list[dict[str, str]] = (
-            row[self._public_test_cases_column_name])
-        private_test_cases: list[dict[str, str]] = (
-            row[self._private_test_cases_column_name])
-
-        raw_test_cases: list[dict[str, str]] = (
-            public_test_cases + private_test_cases)
+        raw_test_cases: list[dict[str, str]] = row[self._test_cases_column_name]
 
         if not raw_test_cases:
             return {"passed": [], "error_messages": []}

@@ -104,6 +104,10 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                             # columns.
                             columns=["metadata", "public_test_cases"]
                         ),
+                        data_utils.AddColumnValuesTransform(
+                            columns=["public_test_cases", "private_test_cases"],
+                            new_column="all_test_cases_combined"
+                        )
                     ])
                 }
             ),
@@ -133,8 +137,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                 class_name=codegen_test_case_results_metric.CodegenTestCaseResultsMetric,
                 init_args={
                     "code_column_name": "extracted_code",
-                    "public_test_cases_column_name": "public_test_cases",
-                    "private_test_cases_column_name": "private_test_cases",
+                    "test_cases_column_name": "all_test_cases_combined",
                     "metadata_column_name": "metadata",
                     "timeout": datetime.timedelta(seconds=20),
                 }
