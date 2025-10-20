@@ -9,6 +9,7 @@ Typical usage example (from the project's root directory):
 """
 
 import pathlib
+import datetime
 
 from eureka_ml_insights import configs, core, data_utils
 from eureka_ml_insights.configs import config
@@ -52,14 +53,8 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     "release_version": self._HF_LCB_RELEASE_VERSION,
                     "transform": data_utils.SequenceTransform([
                         data_utils.SamplerTransform(
-                            sample_count=3,
+                            sample_count=1,
                             random_seed=42
-                        ),
-                        live_code_bench_utils.DecodeTestCasesTransform(
-                            encoded_test_cases_column_name="private_test_cases",
-                            decoded_test_cases_column_name=(
-                                "decoded_private_test_cases"
-                            )
                         ),
                     ])
                 }),
@@ -96,12 +91,32 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                             model_output_column="model_output",
                             code_column="extracted_code"
                         ),
+                        live_code_bench_utils.DecodeTestCasesTransform(
+                            encoded_test_cases_column_name="private_test_cases",
+                            decoded_test_cases_column_name=(
+                                "private_test_cases"
+                            )
+                        ),
+                        data_utils.StrToJsonTransform(
+                            # private_test_cases_column_name is already
+                            # decoded by DecodeTestCasesTransform into a
+                            # JSON object, so we only need to convert the other
+                            # columns.
+                            columns=["metadata", "public_test_cases"]
+                        ),
                     ])
                 }
             ),
             output_dir=str(pathlib.Path(self.log_dir) / "extracted_code")
         )
 
+        # This metric runs the code against the test cases and creates two
+        # columns:
+        # - "passed": A list of booleans indicating whether each test case
+        #   passed.
+        # - "error_messages": A list of error messages for each test case that
+        #   failed. If a test case passed, the corresponding error
+        #   message is an empty string.
         self._grade_code = configs.EvalReportingConfig(
             component_type=eval_reporting.EvalReporting,
             data_reader_config=configs.DataSetConfig(
@@ -116,16 +131,15 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
             ),
             metric_config=config.MetricConfig(
                 class_name=codegen_test_case_results_metric.CodegenTestCaseResultsMetric,
+                init_args={
+                    "code_column_name": "extracted_code",
+                    "public_test_cases_column_name": "public_test_cases",
+                    "private_test_cases_column_name": "private_test_cases",
+                    "metadata_column_name": "metadata",
+                    "timeout": datetime.timedelta(seconds=20),
+                }
             ),
-            aggregator_configs=[
-                config.AggregatorConfig(
-                    class_name=reports.AverageAggregator,
-                    init_args={
-                        "column_names": ["CodePassedAllTestCasesMetric_result"],
-                    }
-                ),
-            ],
-            output_dir=str(pathlib.Path(self.log_dir) / "eval_report"),
+            output_dir=str(pathlib.Path(self.log_dir) / "raw_test_case_results"),
         )
 
         return configs.PipelineConfig(
