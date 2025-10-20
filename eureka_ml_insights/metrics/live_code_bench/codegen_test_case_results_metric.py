@@ -5,6 +5,7 @@ This metric evaluates generated code against provided test cases.
 
 import datetime
 import pandas as pd
+import concurrent.futures
 
 from collections import defaultdict
 
@@ -13,6 +14,54 @@ from eureka_ml_insights.metrics.live_code_bench import (
     evaluate_codegen,
     code_parsing,
 )
+
+
+def _run_test(
+        raw_test_case: dict[str, str],
+        code: str,
+        function_path: str,
+        function_parsing_error: str,
+        timeout: datetime.timedelta | None = None,
+) -> evaluate_codegen.TestCaseResult:
+    """Runs a single test case against the generated code.
+
+    Args:
+        raw_test_case: A dictionary representing the test case.
+            Should have the following keys:
+                - 'testtype': Either 'functional' or 'stdin'.
+                - 'input': The input for the test case.
+                - 'output': The expected output for the test case.
+        code: The generated code as a string.
+        function_path: The path to the function to be tested.
+            Empty string if not applicable.
+        function_parsing_error: An error message if there was an error
+            parsing the function, empty string otherwise.
+
+    Returns:
+        The result of the test.
+    """
+    try:
+        test_case = evaluate_codegen.parse_test_case(raw_test_case)
+        if (isinstance(test_case, evaluate_codegen.FunctionalTestCase)
+            and function_parsing_error):
+            return evaluate_codegen.TestCaseResult(
+                passed=False,
+                error_message=(
+                    f"Cannot run functional test case because "
+                    f"function parsing failed: {function_parsing_error}"
+                ),
+            )
+        return evaluate_codegen.evaluate_test_case(
+            src_code=code,
+            function_name=function_path,
+            test_case=test_case,
+            timeout=timeout,
+        )
+    except Exception as e:
+        return evaluate_codegen.TestCaseResult(
+            passed=False,
+            error_message=f"Unexpected error: {str(e)}"
+        )
 
 
 class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
@@ -24,7 +73,8 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
 
     def __init__(self, code_column_name: str, test_cases_column_name: str,
                  metadata_column_name: str,
-                 timeout: datetime.timedelta | None = None):
+                 timeout: datetime.timedelta | None = None,
+                 max_workers: int = 16) -> None:
         """Initializes the CodegenTestCaseResultsMetric.
 
         Args:
@@ -38,11 +88,14 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
                 dictionary. The column should contain a string representation of
                 a dictionary. See __evaluate__ method for details.
             timeout: An optional timeout for each test case execution.
+            max_workers: The maximum number of workers to use for parallel
+                execution of test cases.
         """
         self._code_column_name = code_column_name
         self._test_cases_column_name = test_cases_column_name
         self._metadata_column_name = metadata_column_name
         self._timeout = timeout
+        self._max_workers = max_workers
 
     def __evaluate__(self, row: "pd.Series") -> dict[str, list[bool | str]]:  # type: ignore
         """Runs the code against the test cases and checks if they pass.
@@ -96,32 +149,20 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
             function_parsing_error = str(e)
 
         results: dict[str, list[bool | str]] = defaultdict(list)
-        for raw_test_case in raw_test_cases:
-            try:
-                test_case = evaluate_codegen.parse_test_case(raw_test_case)
-                if (isinstance(test_case, evaluate_codegen.FunctionalTestCase)
-                        and function_parsing_error):
-                    test_result = evaluate_codegen.TestCaseResult(
-                        passed=False,
-                        error_message=(
-                            f"Cannot run functional test case because "
-                            f"function parsing failed: {function_parsing_error}"
-                        ),
-                    )
-                    continue
-                test_result = evaluate_codegen.evaluate_test_case(
-                    src_code=code,
-                    function_name=function_path,
-                    test_case=test_case,
-                    timeout=self._timeout,
-                )
-            except Exception as e:
-                test_result = evaluate_codegen.TestCaseResult(
-                    passed=False,
-                    error_message=f"Unexpected error: {str(e)}"
-                )
+        max_workers: int = min(self._max_workers, len(raw_test_cases))
 
-            results["passed"].append(test_result.passed)
-            results["error_messages"].append(test_result.error_message)
+        with concurrent.futures.ThreadPoolExecutor(
+            max_workers=max_workers) as executor:
+            futures = [
+                executor.submit(_run_test, raw, code, function_path,
+                                function_parsing_error, self._timeout)
+                for raw in raw_test_cases
+            ]
+
+            # Iterate in the same order as the test cases
+            for future in futures:
+                test_result = future.result()
+                results["passed"].append(test_result.passed)
+                results["error_messages"].append(test_result.error_message)
 
         return results

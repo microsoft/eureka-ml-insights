@@ -140,6 +140,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     "test_cases_column_name": "all_test_cases_combined",
                     "metadata_column_name": "metadata",
                     "timeout": datetime.timedelta(seconds=20),
+                    "max_workers": 8,
                 }
             ),
             output_dir=str(pathlib.Path(self.log_dir) / "raw_test_case_results"),
