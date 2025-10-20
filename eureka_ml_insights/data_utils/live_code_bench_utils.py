@@ -7,6 +7,8 @@ import pickle
 import re
 import zlib
 
+from typing import Any
+
 from eureka_ml_insights.data_utils import transform
 
 
@@ -22,13 +24,13 @@ def _extract_code(response: str | None) -> str | None:
     return ""
 
 
-def _decode_compressed_base64_json(encoded_test_cases: str) -> str:
+def _decode_compressed_base64_json(encoded_test_cases: str) -> Any:
     base64_decoded = base64.b64decode(encoded_test_cases.encode("utf-8"))
     decompressed = zlib.decompress(base64_decoded)
     return json.loads(pickle.loads(decompressed))
 
 
-def _decode_test_cases(encoded_test_cases: str | None) -> str | None:
+def _decode_test_cases(encoded_test_cases: str | None) -> Any:
     if encoded_test_cases is None:
         return None
 
