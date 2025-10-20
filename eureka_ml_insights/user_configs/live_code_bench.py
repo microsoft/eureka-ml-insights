@@ -158,7 +158,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                    }
                ),
             ],
-            output_dir=str(pathlib.Path(self.log_dir) / "raw_test_case_results"),
+            output_dir=str(pathlib.Path(self.log_dir) / "test_case_results"),
         )
 
         return configs.PipelineConfig(
