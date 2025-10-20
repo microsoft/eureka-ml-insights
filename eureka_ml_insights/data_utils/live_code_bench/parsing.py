@@ -3,45 +3,56 @@
 import re
 
 
-def extract_code(
-        response: str | None, closing_think_token: str="</think>") -> str:
-    """Extracts the code snippet from the model response.
+def extract_code_blocks(
+        response: str | None, closing_think_token: str = "") -> list[str]:
+    """Extracts all code snippets from a model response.
 
-    Only considers text after the last `closing_think_token`.
+    Only considers text after the last `closing_think_token` if provided.
 
     Args:
         response: The model response as a string.
-        closing_think_token: The token indicating the end of the model's thought
-            process.
+        closing_think_token: The token marking the end of the model's thought
+            process (e.g., "</think>").
 
     Returns:
-        The extracted code snippet as a string, or an empty string if no code
-        snippet is found.
+        A list of all extracted code snippets (possibly empty).
     """
     if not response:
-        return ""
+        return []
     
-    if closing_think_token not in response:
-        return ""
+    if closing_think_token and closing_think_token not in response:
+        return []
 
-    # Remove content before and including the closing think token.
-    content_after_thinking: str = (
-        response.rpartition(closing_think_token)[2].strip())
+    # Restrict to text after the last think token, if present
+    response_to_consider = (
+        response.rpartition(closing_think_token)[2].strip()
+        if closing_think_token
+        else response.strip()
+    )
 
-    if not content_after_thinking:
-        return ""
+    if not response_to_consider:
+        return []
 
-    # Try to find a code snippet in markdown format:
-    #   ```python
-    #   <code>
-    #   ```
-    # or
-    #   ```
-    #   <code>
-    #   ```
-    match = re.search(
-        r"```(?:python)?\n(.*?)\n```", content_after_thinking, re.DOTALL)
-    if match:
-        return match.group(1).strip()
+    # Find all markdown-style code blocks, optionally with a language tag
+    # Matches both ```python\n<code>\n``` and ```\n<code>\n```
+    matches = re.findall(
+        r"```(?:python)?\n(.*?)\n```", response_to_consider, re.DOTALL)
 
-    return ""
+    # Strip whitespace around each code snippet
+    return [m.strip() for m in matches]
+
+
+def extract_last_code_block(
+        response: str | None, closing_think_token: str = "") -> str:
+    """Extracts the last code snippet from a model response.
+
+    Args:
+        response: The model response as a string.
+        closing_think_token: The token marking the end of the model's thought
+            process (e.g., "</think>").
+
+    Returns:
+        The last extracted code snippet, or an empty string if none found.
+    """
+    blocks = extract_code_blocks(response, closing_think_token)
+    return blocks[-1] if blocks else ""
