@@ -15,7 +15,10 @@ from eureka_ml_insights import configs, core, data_utils
 from eureka_ml_insights.configs import config
 from eureka_ml_insights.core import eval_reporting
 from eureka_ml_insights.metrics import reports
-from eureka_ml_insights.data_utils import live_code_bench_utils
+from eureka_ml_insights.data_utils.live_code_bench import (
+    code_extraction_transform,
+    decode_test_cases_transform,
+)
 from eureka_ml_insights.metrics.live_code_bench import codegen_test_case_results_metric
 from typing import Any
 
@@ -56,6 +59,9 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                             sample_count=1,
                             random_seed=42
                         ),
+                        # data_utils.MultiplyTransform(
+                        #     n_repeats=5,
+                        # ),
                     ])
                 }),
             output_dir=str(pathlib.Path(self.log_dir) / "prompts"),
@@ -87,11 +93,11 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     ),
                     "format": ".jsonl",
                     "transform": data_utils.SequenceTransform([
-                        live_code_bench_utils.CodeExtractionTransform(
+                        code_extraction_transform.CodeExtractionTransform(
                             model_output_column="model_output",
                             code_column="extracted_code"
                         ),
-                        live_code_bench_utils.DecodeTestCasesTransform(
+                        decode_test_cases_transform.DecodeTestCasesTransform(
                             encoded_test_cases_column_name="private_test_cases",
                             decoded_test_cases_column_name=(
                                 "private_test_cases"
