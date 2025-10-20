@@ -19,7 +19,10 @@ from eureka_ml_insights.data_utils.live_code_bench import (
     code_extraction_transform,
     decode_test_cases_transform,
 )
-from eureka_ml_insights.metrics.live_code_bench import codegen_test_case_results_metric
+from eureka_ml_insights.metrics.live_code_bench import (
+    codegen_test_case_results_metric,
+    pass_at_k_aggregator,
+)
 from typing import Any
 
 
@@ -143,6 +146,18 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     "max_workers": 16,
                 }
             ),
+            aggregator_configs=[
+               config.AggregatorConfig(
+                   class_name=pass_at_k_aggregator.PassAtKAggregator,
+                   init_args={
+                       "passed_column_name": (
+                           "CodegenTestCaseResultsMetric_all_passed"),
+                       "k": 1,
+                       "group_by": "data_point_id",
+                       "filename_base": "Pass@1_by_question",
+                   }
+               ),
+            ],
             output_dir=str(pathlib.Path(self.log_dir) / "raw_test_case_results"),
         )
 
