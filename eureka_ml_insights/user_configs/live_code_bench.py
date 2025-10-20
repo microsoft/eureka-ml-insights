@@ -56,12 +56,12 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     "release_version": self._HF_LCB_RELEASE_VERSION,
                     "transform": data_utils.SequenceTransform([
                         data_utils.SamplerTransform(
-                            sample_count=1,
+                            sample_count=2,
                             random_seed=42
                         ),
-                        # data_utils.MultiplyTransform(
-                        #     n_repeats=5,
-                        # ),
+                        data_utils.MultiplyTransform(
+                            n_repeats=3,
+                        ),
                     ])
                 }),
             output_dir=str(pathlib.Path(self.log_dir) / "prompts"),
@@ -95,7 +95,8 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     "transform": data_utils.SequenceTransform([
                         code_extraction_transform.CodeExtractionTransform(
                             model_output_column="model_output",
-                            code_column="extracted_code"
+                            code_column="extracted_code",
+                            closing_think_token="",
                         ),
                         decode_test_cases_transform.DecodeTestCasesTransform(
                             encoded_test_cases_column_name="private_test_cases",
