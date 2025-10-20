@@ -2,10 +2,21 @@
 
 See https://livecodebench.github.io/ for details.
 
-Typical usage example (from the project's root directory):
+Minimal usage example (from the project's root directory):
     $ python main.py \
-        --exp_config="LIVE_CODE_BENCH_CODEGEN_PIPELINE" \
-        --model_config="GATEWAY_GPT4O_CONFIG"
+        --exp_config "LIVE_CODE_BENCH_CODEGEN_PIPELINE" \
+        --model_config "GATEWAY_GPT4O_CONFIG"
+
+Other command line arguments can be provided as needed.
+Example:
+    $ python main.py \
+        --exp_config "LIVE_CODE_BENCH_CODEGEN_PIPELINE" \
+        --model_config "GATEWAY_GPT4O_CONFIG" \
+        --lcb_release_version "release_v5" \
+        --lcb_start_datetime "2024-08-01T00:00:00" \
+        --lcb_end_datetime "2025-01-01T23:59:59"
+
+See the `configure_pipeline()` method below for available parameters.
 """
 
 import pathlib
@@ -75,12 +86,14 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
     def configure_pipeline(self,
                            model_config: configs.ModelConfig | None = None,
                            lcb_release_version: str = "release_latest",
-                           lcb_start_datetime: datetime.datetime | None = None,
-                           lcb_end_datetime: datetime.datetime | None = None,
+                           lcb_start_datetime: str | None = None,
+                           lcb_end_datetime: str | None = None,
                            num_generated_responses_per_prompt: int = 5,
+                           max_concurrent_inference_requests: int = 5,
                            closing_think_token: str = "",
                            code_evaluation_timeout_seconds: float = 20.0,
                            max_parallel_code_executions_per_attempt: int = 16,
+                           resume_from: str | None = None,
                            **kwargs: Any) -> configs.PipelineConfig:
         """Configures the steps of the pipeline.
         
@@ -100,6 +113,8 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
             num_generated_responses_per_prompt: The number of code responses to
                 generate per question. Higher numbers provide a better estimate
                 of Pass@K metrics but increase computation cost.
+            max_concurrent_inference_requests: The maximum number of concurrent
+                inference requests to send to the model.
             closing_think_token: The token indicating the end of the model's
                 reasoning process in the generated output. For example,
                 Phi4-reasoning uses "</think>" as the closing think token. If
@@ -110,6 +125,8 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                 executing each test case.
             max_parallel_code_executions_per_attempt: The maximum number of code
                 executions to run in parallel per code generation attempt.
+            resume_from: Path to the file where previous inference results are
+                stored
         
         Returns:
             A PipelineConfig object defining the pipeline steps.
@@ -132,16 +149,26 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                 "max_parallel_code_executions_per_attempt must be positive. "
                 f"Got {max_parallel_code_executions_per_attempt}.")
 
+        lcb_start_datetime_parsed: datetime.datetime | None = (
+            datetime.datetime.fromisoformat(lcb_start_datetime)
+            if lcb_start_datetime is not None else None)
+
+        lcb_end_datetime_parsed: datetime.datetime | None = (
+            datetime.datetime.fromisoformat(lcb_end_datetime)
+            if lcb_end_datetime is not None else None)
+
         self._prompt_creation = self._create_prompt_processing_config(
             lcb_release_version=lcb_release_version,
-            lcb_start_datetime=lcb_start_datetime,
-            lcb_end_datetime=lcb_end_datetime,
+            lcb_start_datetime=lcb_start_datetime_parsed,
+            lcb_end_datetime=lcb_end_datetime_parsed,
             num_generated_responses_per_prompt=(
                 num_generated_responses_per_prompt),
         )
 
         self._response_generation = self._create_inference_config(
-            model_config=model_config)
+            model_config=model_config,
+            max_concurrent_inference_requests=max_concurrent_inference_requests,
+            resume_from=resume_from,)
 
         self._code_extraction = self._create_code_extraction_config(
             closing_think_token=closing_think_token)
@@ -193,7 +220,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     "release_version": lcb_release_version,
                     "transform": data_utils.SequenceTransform([
                         data_utils.FilterDatetimeColumnToRangeTransform(
-                            column="contest_date",
+                            column_name="contest_date",
                             start_datetime=lcb_start_datetime,
                             end_datetime=lcb_end_datetime,
                         ),
@@ -235,11 +262,15 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
 
     def _create_inference_config(
             self,
-            model_config: configs.ModelConfig) -> configs.InferenceConfig:
+            model_config: configs.ModelConfig,
+            max_concurrent_inference_requests: int = 5,
+            resume_from: str | None = None) -> configs.InferenceConfig:
         """Constructs the inference configuration.
 
         Args:
             model_config: The model configuration to use.
+            resume_from: Path to the file where previous inference results are
+                stored
 
         Returns:
             InferenceConfig for the response generation stage.
@@ -255,6 +286,8 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                         self._TRANSFORMED_DATA_FILE_NAME,
                     ),
                 }),
+            resume_from=resume_from,  # type: ignore
+            max_concurrent=max_concurrent_inference_requests,
             output_dir=self._construct_output_dir_path("responses"),
         )
 

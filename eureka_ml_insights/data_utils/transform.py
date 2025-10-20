@@ -216,15 +216,16 @@ class FilterDatetimeColumnToRangeTransform(DFTransformBase):
             bound is applied.
     """
 
-    column: str
+    column_name: str
     start_datetime: datetime.datetime | None = None
     end_datetime: datetime.datetime | None = None
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        column: pd.Series[pd.Timestamp] = pd.to_datetime(df[self.column_name])
         if self.start_datetime is not None:
-            df = df[df[self.column] >= self.start_datetime]
+            df = df[column >= self.start_datetime]
         if self.end_datetime is not None:
-            df = df[df[self.column] <= self.end_datetime]
+            df = df[column <= self.end_datetime]
         return df
 
 
