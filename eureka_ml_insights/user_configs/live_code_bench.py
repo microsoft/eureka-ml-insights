@@ -124,7 +124,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
             output_dir=str(pathlib.Path(self.log_dir) / "extracted_code")
         )
 
-        self._grade_code = configs.EvalReportingConfig(
+        self._code_evaluation = configs.EvalReportingConfig(
             component_type=eval_reporting.EvalReporting,
             data_reader_config=configs.DataSetConfig(
                 class_name=data_utils.DataReader,
@@ -166,7 +166,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                 self._prompt_creation,
                 self._response_generation,
                 self._code_extraction,
-                self._grade_code,
+                self._code_evaluation,
             ],
             log_dir=self.log_dir,
         )
