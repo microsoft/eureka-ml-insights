@@ -120,7 +120,7 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
                 failed test case. If no error, the string is empty.
             The lists are in the same order as the test cases.
         """
-        code: str = row[self._code_column_name]
+        code: str = row[self._code_column_name].strip()
         function_name: str = row[self._metadata_column_name].get(
             "func_name", "")
 
@@ -128,6 +128,14 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
 
         if not raw_test_cases:
             return {"passed": [], "error_messages": []}
+
+        if not code:
+            return {
+                "passed": [False] * len(raw_test_cases),
+                "error_messages": [
+                    "No code generated."
+                ] * len(raw_test_cases),
+            }
 
         is_valid_code, parse_error = code_parsing.is_python_code_valid(code)
         if not is_valid_code:
