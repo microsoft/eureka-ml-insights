@@ -74,7 +74,7 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
     def __init__(self, code_column_name: str, test_cases_column_name: str,
                  metadata_column_name: str,
                  timeout: datetime.timedelta | None = None,
-                 max_workers: int = 16) -> None:
+                 max_workers: int = 1) -> None:
         """Initializes the CodegenTestCaseResultsMetric.
 
         Args:
