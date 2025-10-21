@@ -84,16 +84,20 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
     _ALL_TEST_CASES_COMBINED_COLUMN_NAME: str = "all_test_cases_combined"
     _DATAPOINT_ID_COLUMN_NAME: str = "data_point_id"
 
+    # In the parameters below, we accept strings as well as the actual
+    # types since the command line arguments are not parsed by main.py
+    # and instead are passed as strings. The arguments are converted to the
+    # appropriate types in the method body.
     def configure_pipeline(self,
                            model_config: configs.ModelConfig | None = None,
                            lcb_release_version: str = "release_latest",
                            lcb_start_datetime: str | None = None,
                            lcb_end_datetime: str | None = None,
-                           num_generated_responses_per_prompt: int = 5,
-                           max_concurrent_inference_requests: int = 5,
+                           num_generated_responses_per_prompt: int | str = 5,
+                           max_concurrent_inference_requests: int | str = 5,
                            closing_think_token: str = "",
-                           code_evaluation_timeout_seconds: float = 20.0,
-                           max_parallel_code_executions_per_attempt: int = 16,
+                           code_evaluation_timeout_seconds: float | str = 20.0,
+                           max_parallel_code_executions_per_attempt: int | str = 16,
                            resume_from: str | None = None,
                            **kwargs: Any) -> configs.PipelineConfig:
         """Configures the steps of the pipeline.
@@ -106,11 +110,13 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                 https://huggingface.co/datasets/livecodebench/code_generation_lite.
             lcb_start_datetime: The start datetime for filtering the
                 LiveCodeBench dataset. Only include data points with
-                contest_date >= lcb_start_datetime. If None, do not apply a
+                contest_date >= lcb_start_datetime. Should be in the ISO 8601
+                format, e.g., "2024-08-01T00:00:00". If None, do not apply a
                 start date filter.
             lcb_end_datetime: The end datetime for filtering the LiveCodeBench
                 dataset. Only include data points with contest_date <=
-                lcb_end_datetime. If None, do not apply an end date filter
+                lcb_end_datetime. Should be in the ISO 8601 format, e.g.,
+                "2025-01-01T23:59:59". If None, do not apply an end date filter.
             num_generated_responses_per_prompt: The number of code responses to
                 generate per question. Higher numbers provide a better estimate
                 of Pass@K metrics but increase computation cost.
@@ -134,17 +140,30 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
         """
         if model_config is None:
             raise ValueError("model_config must be provided.")
-
+        
+        num_generated_responses_per_prompt = int(
+            num_generated_responses_per_prompt)
         if num_generated_responses_per_prompt < 1:
             raise ValueError(
                 "num_generated_responses_per_prompt must be at least 1."
                 f" Got {num_generated_responses_per_prompt}.")
+        
+        max_concurrent_inference_requests = int(
+            max_concurrent_inference_requests)
+        if max_concurrent_inference_requests <= 0:
+            raise ValueError(
+                "max_concurrent_inference_requests must be positive. "
+                f"Got {max_concurrent_inference_requests}.")
 
+        code_evaluation_timeout_seconds = float(
+            code_evaluation_timeout_seconds)
         if code_evaluation_timeout_seconds <= 0:
             raise ValueError(
                 "code_evaluation_timeout_seconds must be positive. "
                 f"Got {code_evaluation_timeout_seconds}.")
 
+        max_parallel_code_executions_per_attempt = int(
+            max_parallel_code_executions_per_attempt)
         if max_parallel_code_executions_per_attempt <= 0:
             raise ValueError(
                 "max_parallel_code_executions_per_attempt must be positive. "
