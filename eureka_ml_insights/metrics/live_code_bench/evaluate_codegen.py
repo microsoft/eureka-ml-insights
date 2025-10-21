@@ -180,7 +180,12 @@ def _evaluate_standard_io_test_case(
 
     result: code_execution.ScriptResult = (code_execution.execute_script(job))
 
-    if result.success and result.stdout == test_case.expected_stdout:
+    # Strip trailing newlines for comparison.
+    # The generated code may use sys.stdout.write which does not add a newline.
+    received_stdout: str = result.stdout.rstrip('\n')
+    expected_stdout: str = test_case.expected_stdout.rstrip('\n')
+
+    if result.success and received_stdout == expected_stdout:
         return TestCaseResult(passed=True)
     elif not result.success:
         return TestCaseResult(passed=False,
@@ -189,8 +194,8 @@ def _evaluate_standard_io_test_case(
         return TestCaseResult(
             passed=False,
             error_message=(
-                f"Expected stdout: {test_case.expected_stdout}, "
-                f"but got: {result.stdout}"))
+                f"Expected stdout: {expected_stdout}, "
+                f"but got: {received_stdout}"))
 
 
 def evaluate_test_case(
