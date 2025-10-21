@@ -13,9 +13,9 @@ class RawTestCaseDict(TypedDict):
     """A raw test case dictionary as obtained from the LiveCodeBench test cases.
 
     Attributes:
-        testtype: The type of the test case.
         input: The input string for the test case.
         output: The expected output string for the test case.
+        testtype: The type of the test case.
     """
     input: str
     output: str
