@@ -45,6 +45,25 @@ class TestCaseResult:
     error_message: str = ""
 
 
+def _parse_functional_test_case_io(expr: str) -> tuple[Any, ...]:
+    """Parses a functional test case input or output expression.
+
+    Args:
+        expr: A string representation of the input or output.
+            Can be a single expression or multiple expressions
+            separated by newlines (each representing an argument).
+
+    Returns:
+        A tuple of evaluated expressions.
+    """
+    result: list[Any] = []
+    for sub_expr in expr.split("\n"):
+        if not sub_expr.strip():
+            continue
+        result.append(eval(sub_expr))
+    return tuple(result)
+
+
 def _parse_functional_test_case(
         test_case_dict: dict[str, str]) -> FunctionalTestCase:
     """Parses a dictionary into a FunctionalTestCase.
@@ -57,18 +76,20 @@ def _parse_functional_test_case(
             expected output.
             Example:
                 {
-                    "inputs": "['a', 2, 'c']",
+                    "inputs": "['a', 2, 'c']\n[1, 2, 3]",
                     "output": "6"
                 }
 
     Returns:
         A FunctionalTestCase instance.
     """
-    inputs = eval(test_case_dict["inputs"])
-    if not isinstance(inputs, tuple):
-        inputs = (inputs, )
-    expected_output = eval(test_case_dict["output"])
-    return FunctionalTestCase(inputs=inputs, expected_output=expected_output)
+    return FunctionalTestCase(
+        inputs=_parse_functional_test_case_io(test_case_dict["inputs"]),
+        expected_output=
+            # Function outputs are single expressions. If the function outputs
+            # multiple values, they should be returned as a tuple anyway.
+            _parse_functional_test_case_io(test_case_dict["output"])[0]
+    )
 
 
 def _parse_standard_io_test_case(

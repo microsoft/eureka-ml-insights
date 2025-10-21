@@ -18,17 +18,36 @@ class ParseTestCaseTest(unittest.TestCase):
     """Tests for the parse_test_case function."""
 
     @parameterized.expand([
+        # (inputs, output, expected_inputs, expected_output)
+
+        # Integer inputs and output
         ("5", "10", (5,), 10),
-        ("(1, 2)", "3", (1, 2), 3),
-        ("('a', 'b', 'c')", "'abc'", ("a", "b", "c"), "abc"),
+
+        # Tuple input and integer output
+        ("(1, 2)", "3", ((1, 2),), 3),
+
+        # Tuple input and string output
+        ("('a', 'b', 'c')", "'abc'", (("a", "b", "c"),), "abc"),
+
+        # List input and list output
         ("[]", "[]", ([],), []),
-        ("(1, 'a', 3.5)", "(2, 'b', 4.5)", (1, 'a', 3.5), (2, 'b', 4.5)),
+
+        # Tuple input and output with mixed types
+        ("(1, 'a', 3.5)", "(2, 'b', 4.5)", ((1, 'a', 3.5),), (2, 'b', 4.5)),
         (
             "[[1, 2], [3, 4]]",
             "[[5, 6], [7, 8]]",
             ([[1, 2], [3, 4]],),
             [[5, 6], [7, 8]]
         ),
+
+        # Multiple inputs and single output
+        (
+            "['a', 2, 'c']\n[1, 2, 3]",
+            "6",
+            (['a', 2, 'c'], [1, 2, 3]),
+            6
+        )
     ])
     def test_parse_functional_case(
         self, inputs: str, output: str, expected_inputs: tuple[Any, ...],
