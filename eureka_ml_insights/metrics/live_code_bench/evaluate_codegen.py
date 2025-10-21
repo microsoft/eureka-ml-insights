@@ -182,8 +182,8 @@ def _evaluate_standard_io_test_case(
 
     # Strip trailing newlines for comparison.
     # The generated code may use sys.stdout.write which does not add a newline.
-    received_stdout: str = result.stdout.rstrip('\n')
-    expected_stdout: str = test_case.expected_stdout.rstrip('\n')
+    received_stdout: str = result.stdout.rstrip("\n")
+    expected_stdout: str = test_case.expected_stdout.rstrip("\n")
 
     if result.success and received_stdout == expected_stdout:
         return TestCaseResult(passed=True)

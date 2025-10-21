@@ -159,16 +159,40 @@ class EvaluateTestCaseTest(unittest.TestCase):
                 test_case=test_case
             )
     
-    def test_evaluate_stdin_case_passes(self):
+    @parameterized.expand([
+        # (src_code, stdin, expected_stdout)
+
+        # Simple addition
+        (
+            textwrap.dedent("""
+                x = int(input())
+                y = int(input())
+                print(x + y)
+            """),
+            "2\n3\n",
+            "5\n"
+        ),
+
+        # No newline in output
+        (
+            textwrap.dedent("""
+                import sys
+
+                x = int(input())
+                y = int(input())
+
+                sys.stdout.write(str(x + y))
+            """),
+            "2\n3\n",
+            "5\n"
+        ),
+    ])
+    def test_evaluate_stdin_case_passes(
+        self, src_code: str, stdin: str, expected_stdout: str):
         """Evaluates a standard I/O test case that should pass."""
-        src_code = textwrap.dedent("""
-            x = int(input())
-            y = int(input())
-            print(x + y)
-        """)
         test_case = evaluate_codegen.StandardIOTestCase(
-            stdin="1\n2\n",
-            expected_stdout="3\n"
+            stdin=stdin,
+            expected_stdout=expected_stdout
         )
 
         result = evaluate_codegen.evaluate_test_case(
@@ -197,7 +221,7 @@ class EvaluateTestCaseTest(unittest.TestCase):
         )
 
         self.assertFalse(result.passed)
-        self.assertIn("Expected stdout: a\n, but got: 6\n", result.error_message)
+        self.assertIn("Expected stdout: a, but got: 6", result.error_message)
     
     def test_evaluate_stdin_case_runtime_error(self):
         """Evaluates a standard I/O test case that should fail due to runtime error."""
