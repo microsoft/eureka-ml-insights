@@ -276,9 +276,9 @@ def _execute_subprocess(
     
     Args:
         args: Command line arguments for the subprocess.
+        runner: ProcessRunner for subprocess execution.
         input: Optional byte sequence to provide as stdin.
         timeout: Maximum allowed time for execution.
-        runner: ProcessRunner for subprocess execution.
     
     Returns:
         RawProcessResult with captured outputs.
