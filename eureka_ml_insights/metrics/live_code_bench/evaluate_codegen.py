@@ -1,5 +1,6 @@
 """Defines utilities to run LiveCodeBench code generation test cases."""
 
+import ast
 import dataclasses
 import datetime
 
@@ -45,6 +46,10 @@ class TestCaseResult:
     error_message: str = ""
 
 
+class InvalidTestCaseExpressionException(Exception):
+    """Raised when a test case expression cannot be parsed."""
+
+
 def _parse_functional_test_case_io(expr: str) -> tuple[Any, ...]:
     """Parses a functional test case input or output expression.
 
@@ -55,12 +60,21 @@ def _parse_functional_test_case_io(expr: str) -> tuple[Any, ...]:
 
     Returns:
         A tuple of evaluated expressions.
+
+    Raises:
+        InvalidTestCaseExpressionException: If any expression cannot be parsed.
     """
     result: list[Any] = []
-    for sub_expr in expr.split("\n"):
+    for i, sub_expr in enumerate(expr.split("\n"), start=1):
         if not sub_expr.strip():
             continue
-        result.append(eval(sub_expr))
+        try:
+            evaluated = ast.literal_eval(sub_expr)
+        except (ValueError, SyntaxError) as e:
+            raise InvalidTestCaseExpressionException(
+                f"Failed to parse expression on line {i} of "
+                f"{expr}: {sub_expr}") from e
+        result.append(evaluated)
     return tuple(result)
 
 
