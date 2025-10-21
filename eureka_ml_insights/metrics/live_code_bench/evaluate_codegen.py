@@ -50,6 +50,10 @@ class InvalidTestCaseExpressionException(Exception):
     """Raised when a test case expression cannot be parsed."""
 
 
+class InvalidTestCaseOutputException(Exception):
+    """Raised when a test case output is invalid."""
+
+
 def _parse_functional_test_case_io(expr: str) -> tuple[Any, ...]:
     """Parses a functional test case input or output expression.
 
@@ -66,14 +70,14 @@ def _parse_functional_test_case_io(expr: str) -> tuple[Any, ...]:
     """
     result: list[Any] = []
     for i, sub_expr in enumerate(expr.split("\n"), start=1):
-        if not sub_expr.strip():
+        sub_expr = sub_expr.strip()
+        if not sub_expr:
             continue
         try:
             evaluated = ast.literal_eval(sub_expr)
         except (ValueError, SyntaxError) as e:
             raise InvalidTestCaseExpressionException(
-                f"Failed to parse expression on line {i} of "
-                f"{expr}: {sub_expr}") from e
+                f"Failed to parse expression on line {i}: {sub_expr!r}") from e
         result.append(evaluated)
     return tuple(result)
 
@@ -87,7 +91,8 @@ def _parse_functional_test_case(
             'inputs' should contain a string with the representation of the
             input as it would be passed to the function (e.g., a list or tuple).
             'output' should contain a string with the representation of the
-            expected output.
+            expected output. There should be only one expression for the output
+            (i.e. a single line).
             Example:
                 {
                     "inputs": "['a', 2, 'c']\n[1, 2, 3]",
@@ -96,13 +101,26 @@ def _parse_functional_test_case(
 
     Returns:
         A FunctionalTestCase instance.
+
+    Raises:
+        InvalidTestCaseOutputException: If the output cannot be parsed into a
+            single expression.
     """
+    inputs = _parse_functional_test_case_io(test_case_dict["inputs"])
+    output = _parse_functional_test_case_io(test_case_dict["output"])
+
+    if len(output) != 1:
+        # Function outputs should be a single expression. If the function
+        # returns multiple values, they should be returned as a tuple.
+        raise InvalidTestCaseOutputException(
+            "Functional test case output must be a single expression. "
+            f"Got {len(output)} expressions: {output}")
+
+    output = output[0]
+
     return FunctionalTestCase(
-        inputs=_parse_functional_test_case_io(test_case_dict["inputs"]),
-        expected_output=
-            # Function outputs are single expressions. If the function outputs
-            # multiple values, they should be returned as a tuple anyway.
-            _parse_functional_test_case_io(test_case_dict["output"])[0]
+        inputs=inputs,
+        expected_output=output
     )
 
 

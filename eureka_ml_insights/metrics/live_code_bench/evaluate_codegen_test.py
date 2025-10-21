@@ -77,7 +77,7 @@ class ParseTestCaseTest(unittest.TestCase):
         # Non-literal in inputs
         ("open('file.txt')", "10"),
     ])
-    def test_parse_functional_case_invalid_values(self, inputs: str, output: str):
+    def test_parse_functional_case_invalid_io_expressions(self, inputs: str, output: str):
         """Raises InvalidTestCaseExpressionException for invalid functional test case values."""
         data = {
             "inputs": inputs,
@@ -85,9 +85,17 @@ class ParseTestCaseTest(unittest.TestCase):
             "testtype": "functional",
         }
 
+    def test_parse_functional_case_invalid_output_raises(self):
+        """Raises InvalidTestCaseOutputException for functional test case with invalid output."""
+        data = {
+            "inputs": "(1, 2)\n2",
+            "output": "(3, 4)\n1",  # Invalid: multiple expressions
+            "testtype": "functional",
+        }
+
         with self.assertRaisesRegex(
-            evaluate_codegen.InvalidTestCaseExpressionException,
-            "Failed to parse expression"):
+            evaluate_codegen.InvalidTestCaseOutputException,
+            "Functional test case output must be a single expression"):
             evaluate_codegen.parse_test_case(data)
 
     def test_parse_stdin_case(self):
