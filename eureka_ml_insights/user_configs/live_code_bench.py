@@ -254,9 +254,6 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                             start_datetime=lcb_start_datetime,
                             end_datetime=lcb_end_datetime,
                         ),
-                        # TODO: Remove SamplerTransform when testing is done.
-                        data_utils.SamplerTransform(sample_count=2,
-                                                    random_seed=42),
                         decode_test_cases_transform.DecodeTestCasesTransform(
                             encoded_test_cases_column_name=(
                                 self._PRIVATE_TEST_CASES_COLUMN_NAME),
