@@ -7,8 +7,8 @@ import datetime
 import pandas as pd
 import concurrent.futures
 
-from collections import defaultdict
-from typing import TypedDict
+from typing import TypedDict, override
+from tqdm.auto import tqdm
 
 from eureka_ml_insights.metrics import metrics_base
 from eureka_ml_insights.metrics.live_code_bench import (
@@ -116,6 +116,31 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
         self._timeout = timeout
         self._max_workers = max_workers
 
+    # Override this method to show that a progress bar.
+    # Otherwise, the behavior is the same as the parent.
+    @override
+    def evaluate(self, data: pd.DataFrame) -> pd.DataFrame:
+        """Evaluates the generated code against the provided test cases.
+
+        Args:
+            data: A DataFrame containing the data to evaluate. See
+                __evaluate__ method for details on the expected columns.
+
+        Returns:
+            A DataFrame with an additional columns.
+        """
+        self.validate_data(data)
+
+        tqdm.pandas(desc="Running test cases against generated code")
+
+        data[self.__class__.__name__ + "_result"] = (
+            data.progress_apply(lambda x: self.__evaluate__(x), axis=1))  # type: ignore
+
+        data = self.decompose_metric(data)
+
+        return data
+
+    @override
     def __evaluate__(self, row: "pd.Series") -> TestResults:  # type: ignore
         """Runs the code against the test cases and checks if they pass.
 
