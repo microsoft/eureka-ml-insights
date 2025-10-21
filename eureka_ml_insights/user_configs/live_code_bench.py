@@ -65,6 +65,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
     # Dataset configuration
     _HF_LCB_DATASET_NAME: str = "livecodebench/code_generation_lite"
     _HF_LCB_DATASET_SPLIT: str = "test"
+    _HF_TRUST_REMOTE_CODE: bool = True
 
     _PROMPT_TEMPLATE_PATH: pathlib.Path = (
         pathlib.Path(__file__).parent.parent /
@@ -246,6 +247,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     "path": self._HF_LCB_DATASET_NAME,
                     "split": self._HF_LCB_DATASET_SPLIT,
                     "release_version": lcb_release_version,
+                    "trust_remote_code": self._HF_TRUST_REMOTE_CODE,
                     "transform": data_utils.SequenceTransform([
                         data_utils.FilterDatetimeColumnToRangeTransform(
                             column_name="contest_date",
