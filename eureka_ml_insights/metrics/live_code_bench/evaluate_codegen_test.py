@@ -55,7 +55,7 @@ class ParseTestCaseTest(unittest.TestCase):
         """Parses a functional test case dictionary correctly."""
         data = {
             "testtype": "functional",
-            "inputs": inputs,
+            "input": inputs,
             "output": output,
         }
 
@@ -80,7 +80,7 @@ class ParseTestCaseTest(unittest.TestCase):
     def test_parse_functional_case_invalid_io_expressions(self, inputs: str, output: str):
         """Raises InvalidTestCaseExpressionException for invalid functional test case values."""
         data = {
-            "inputs": inputs,
+            "input": inputs,
             "output": output,
             "testtype": "functional",
         }
@@ -88,7 +88,7 @@ class ParseTestCaseTest(unittest.TestCase):
     def test_parse_functional_case_invalid_output_raises(self):
         """Raises InvalidTestCaseOutputException for functional test case with invalid output."""
         data = {
-            "inputs": "(1, 2)\n2",
+            "input": "(1, 2)\n2",
             "output": "(3, 4)\n1",  # Invalid: multiple expressions
             "testtype": "functional",
         }

@@ -4,9 +4,22 @@ import ast
 import dataclasses
 import datetime
 
-from typing import Any
+from typing import Any, TypedDict, cast
 
 from eureka_ml_insights.metrics.live_code_bench import code_execution
+
+
+class RawTestCaseDict(TypedDict):
+    """A raw test case dictionary as obtained from the LiveCodeBench test cases.
+
+    Attributes:
+        testtype: The type of the test case.
+        input: The input string for the test case.
+        output: The expected output string for the test case.
+    """
+    input: str
+    output: str
+    testtype: str
 
 
 @dataclasses.dataclass(frozen=True)
@@ -83,19 +96,19 @@ def _parse_functional_test_case_io(expr: str) -> tuple[Any, ...]:
 
 
 def _parse_functional_test_case(
-        test_case_dict: dict[str, str]) -> FunctionalTestCase:
+        test_case_dict: RawTestCaseDict) -> FunctionalTestCase:
     """Parses a dictionary into a FunctionalTestCase.
 
     Args:
-        test_case_dict: A dictionary with keys 'inputs' and 'output'.
-            'inputs' should contain a string with the representation of the
+        test_case_dict: A dictionary with keys 'input' and 'output'.
+            'input' should contain a string with the representation of the
             input as it would be passed to the function (e.g., a list or tuple).
             'output' should contain a string with the representation of the
             expected output. There should be only one expression for the output
             (i.e. a single line).
             Example:
                 {
-                    "inputs": "['a', 2, 'c']\n[1, 2, 3]",
+                    "input": "['a', 2, 'c']\n[1, 2, 3]",
                     "output": "6"
                 }
 
@@ -106,7 +119,7 @@ def _parse_functional_test_case(
         InvalidTestCaseOutputException: If the output cannot be parsed into a
             single expression.
     """
-    inputs = _parse_functional_test_case_io(test_case_dict["inputs"])
+    inputs = _parse_functional_test_case_io(test_case_dict["input"])
     output = _parse_functional_test_case_io(test_case_dict["output"])
 
     if len(output) != 1:
@@ -125,7 +138,7 @@ def _parse_functional_test_case(
 
 
 def _parse_standard_io_test_case(
-        test_case_dict: dict[str, str]) -> StandardIOTestCase:
+        test_case_dict: RawTestCaseDict) -> StandardIOTestCase:
     """Parses a dictionary into a StandardIOTestCase.
 
     Args:
@@ -148,27 +161,36 @@ def _parse_standard_io_test_case(
 
 
 def parse_test_case(
-        test_case_dict: dict[str,
-                             str]) -> FunctionalTestCase | StandardIOTestCase:
+        test_case_dict: dict[str, str]
+) -> FunctionalTestCase | StandardIOTestCase:
     """Parses a test case dictionary into the appropriate test case dataclass.
 
     Args:
         test_case_dict: A dictionary representing the test case.
-        It must contain three keys: 'testtype', 'input', and 'output'.
+        It must contain 'testtype', 'input', and 'output' keys.
         'testtype' should be either 'functional' or 'stdin'.
 
     Returns:
-        An instance of FunctionalTestCase or StandardIOTestCase.
+        A FunctionalTestCase or StandardIOTestCase instance.
     
     Raises:
-        ValueError: If the 'testtype' is unknown.
+        ValueError: If the test case type is unknown.
     """
-    if test_case_dict["testtype"] == "functional":
-        return _parse_functional_test_case(test_case_dict)
-    elif test_case_dict["testtype"] == "stdin":
-        return _parse_standard_io_test_case(test_case_dict)
-    else:
-        raise ValueError(f"Unknown test type: {test_case_dict['testtype']}")
+    required_keys = {"testtype", "input", "output"}
+    missing = required_keys - test_case_dict.keys()
+    if missing:
+        raise ValueError(f"Missing required keys: {', '.join(missing)}")
+
+    validated_test_case_dict = cast(RawTestCaseDict, test_case_dict)
+
+    match validated_test_case_dict["testtype"]:
+        case "functional":
+            return _parse_functional_test_case(validated_test_case_dict)
+        case "stdin":
+            return _parse_standard_io_test_case(validated_test_case_dict)
+        case _:
+            raise ValueError(
+                f"Unknown test type: {validated_test_case_dict['testtype']}")
 
 
 def _evaluate_functional_test_case(
