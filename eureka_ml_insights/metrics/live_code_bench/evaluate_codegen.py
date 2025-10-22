@@ -183,14 +183,13 @@ def parse_test_case(
 
     validated_test_case_dict = cast(RawTestCaseDict, test_case_dict)
 
-    match validated_test_case_dict["testtype"]:
-        case "functional":
-            return _parse_functional_test_case(validated_test_case_dict)
-        case "stdin":
-            return _parse_standard_io_test_case(validated_test_case_dict)
-        case _:
-            raise ValueError(
-                f"Unknown test type: {validated_test_case_dict['testtype']}")
+    if validated_test_case_dict["testtype"] == "functional":
+        return _parse_functional_test_case(validated_test_case_dict)
+    elif validated_test_case_dict["testtype"] == "stdin":
+        return _parse_standard_io_test_case(validated_test_case_dict)
+    else:
+        raise ValueError(
+            f"Unknown test type: {validated_test_case_dict['testtype']}")
 
 
 def _evaluate_functional_test_case(
