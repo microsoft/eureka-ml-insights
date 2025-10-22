@@ -98,9 +98,6 @@ def _apply_resource_limits(
 
 def _apply_syscall_filter_linux(blocked_syscalls: frozenset[str]) -> None:
     """Apply syscall filtering on Linux using seccomp."""
-    if not blocked_syscalls:
-        return
-
     try:
         import seccomp  # type: ignore
     except ImportError:
