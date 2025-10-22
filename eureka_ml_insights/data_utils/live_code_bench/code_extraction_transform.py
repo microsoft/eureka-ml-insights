@@ -4,6 +4,7 @@ import dataclasses
 import pandas as pd
 
 from tqdm.auto import tqdm
+from typing import override
 
 from eureka_ml_insights.data_utils import transform
 
@@ -24,6 +25,7 @@ class CodeExtractionTransform(transform.DFTransformBase):
     code_column: str
     closing_think_token: str = ""
 
+    @override
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """Extracts the code snippets from the model outputs.
 
