@@ -1,10 +1,3 @@
-"""Unit tests for pass_at_k.py.
-
-To run:
-    python -m unittest \
-        eureka_ml_insights.metrics.live_code_bench.pass_at_k_test
-"""
-
 import unittest
 
 from parameterized import parameterized

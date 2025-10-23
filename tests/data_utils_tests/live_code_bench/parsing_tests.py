@@ -1,10 +1,3 @@
-"""Unit tests for the functions in parsing.py.
-
-To run:
-    $ python -m unittest \
-        eureka_ml_insights.data_utils.live_code_bench.parsing_test
-"""
-
 import unittest
 from parameterized import parameterized
 

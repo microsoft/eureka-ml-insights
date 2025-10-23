@@ -1,10 +1,3 @@
-"""Test for sandbox_config.py.
-
-To run:
-    python -m unittest \
-        eureka_ml_insights.metrics.live_code_bench.sandbox_config_test
-"""
-
 import subprocess
 import sys
 import textwrap

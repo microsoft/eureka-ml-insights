@@ -1,10 +1,3 @@
-"""Unit tests for evaluate_codegen.py.
-
-To run:
-    python -m unittest \
-        eureka_ml_insights.metrics.live_code_bench.evaluate_codegen_test
-"""
-
 import unittest
 import textwrap
 
