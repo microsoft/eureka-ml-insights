@@ -21,7 +21,9 @@ import dataclasses
 import datetime
 import pickle
 import subprocess
+import tempfile
 import sys
+import os
 
 from enum import Enum
 from typing import Any, Protocol
@@ -340,6 +342,46 @@ def _execute_subprocess(
                                 error_message=str(e))
 
 
+def _execute_python_script(
+    script: str,
+    runner: ProcessRunner,
+    input: bytes = b"",
+    timeout: datetime.timedelta | None = None,
+    preexec_fn: Callable[[], None] | None = None
+) -> RawProcessResult:
+    """Execute a Python script in a subprocess.
+
+    Args:
+        script: The Python code to execute.
+        runner: ProcessRunner for subprocess execution.
+        input: Optional byte sequence to provide as stdin.
+        timeout: Maximum allowed time for execution.
+        preexec_fn: Optional callable to be called in the child process
+            just before the child is executed.
+
+    Returns:
+        RawProcessResult with captured outputs.
+    """
+    with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as f:
+        # Write the script to a temporary file to account for cases where
+        # the script is large or contains complex structures that may not
+        # be handled well with command line arguments.
+        f.write(script)
+        tmp_path = f.name
+
+    try:
+        result: RawProcessResult = _execute_subprocess(
+            args=[sys.executable, tmp_path],
+            input=input,
+            runner=runner,
+            timeout=timeout,
+            preexec_fn=preexec_fn)
+    finally:
+        os.remove(tmp_path)
+
+    return result
+
+
 def execute_script(job: ScriptJob,
                    runner: ProcessRunner | None = None) -> ScriptResult:
     """Execute a ScriptJob and retrieves the result.
@@ -363,11 +405,12 @@ def execute_script(job: ScriptJob,
     preexec_fn = (job.sandbox_cfg.to_preexec_fn()
                   if job.sandbox_cfg is not None else None)
 
-    raw_result = _execute_subprocess(args=[sys.executable, '-c', job.script],
-                                     input=input,
-                                     runner=runner,
-                                     timeout=job.timeout,
-                                     preexec_fn=preexec_fn)
+    raw_result: RawProcessResult = _execute_python_script(
+        script=job.script,
+        input=input,
+        runner=runner,
+        timeout=job.timeout,
+        preexec_fn=preexec_fn)
 
     if raw_result.exit_reason == ProcessExitReason.COMPLETED:
         stderr_str = raw_result.stderr.decode("utf-8", errors="replace")
@@ -479,8 +522,8 @@ def execute_function(job: FunctionJob,
     preexec_fn = (job.sandbox_cfg.to_preexec_fn()
                   if job.sandbox_cfg is not None else None)
 
-    raw_result = _execute_subprocess(
-        args=[sys.executable, '-c', _FUNCTION_RUNNER_SCRIPT],
+    raw_result: RawProcessResult = _execute_python_script(
+        script=_FUNCTION_RUNNER_SCRIPT,
         input=_serialize_function_job(job),
         runner=runner,
         timeout=job.timeout,
