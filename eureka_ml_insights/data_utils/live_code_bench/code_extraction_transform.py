@@ -1,4 +1,8 @@
-"""Defines a transform that extracts code snippets from model outputs."""
+"""Defines a transform that extracts code snippets from model outputs.
+
+Reproduces the behavior of lcb_runner/utils/extraction_utils.py in the
+LiveCodeBench repository.
+"""
 
 import dataclasses
 import pandas as pd

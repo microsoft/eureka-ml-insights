@@ -1,4 +1,9 @@
-"""Defines a transform that decodes test cases."""
+"""Defines a transform that decodes test cases.
+
+Reproduces the behavior of the CodeGenerationProblem.__post_init__ method
+within lcb_runner/benchmarks/code_generation.py in the LiveCodeBench
+repository.
+"""
 
 import pandas as pd
 import dataclasses
