@@ -168,6 +168,22 @@ class CopyColumn(DFTransformBase):
 
         return df
 
+
+@dataclass
+class DropColumnsTransform(DFTransformBase):
+    """Drops specified columns from the DataFrame.
+
+    Attributes:
+        columns: The column name(s) to be dropped.
+    """
+    columns: List[str] | str
+
+    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        if isinstance(self.columns, str):
+            self.columns = [self.columns]
+        return df.drop(columns=self.columns)
+
+
 @dataclass
 class ConcatColumnsToSingleColumnTransform(DFTransformBase):
     """

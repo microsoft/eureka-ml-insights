@@ -165,7 +165,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                            closing_think_token: str = "",
                            code_evaluation_timeout_seconds: float | str = 20.0,
                            max_parallel_code_executions_per_attempt: int | str = 16,
-                           max_memory_bytes: int | str = _DEFAULT_MAX_MEMORY_BYTES,
+                           max_memory_bytes: int | str | None = _DEFAULT_MAX_MEMORY_BYTES,
                            blocked_syscalls: str | frozenset[str] = _DEFAULT_BLOCKED_SYSCALLS,
                            additional_imports: str = _DEFAULT_ADDITIONAL_PYTHON_IMPORTS,
                            resume_from: str | None = None,
@@ -278,15 +278,21 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     "sample_count must be positive. "
                     f"Got {sample_count}.")
 
-        max_memory_bytes_int: int = int(max_memory_bytes)
-        if max_memory_bytes_int <= 0:
-            raise ValueError(
-                "max_memory_bytes must be positive. "
-                f"Got {max_memory_bytes_int}.")
+        if not max_memory_bytes:
+            max_memory_bytes = None
+        else:
+            max_memory_bytes = int(max_memory_bytes)
+            if max_memory_bytes <= 0:
+                raise ValueError(
+                    "max_memory_bytes must be positive. "
+                    f"Got {max_memory_bytes}.")
 
-        blocked_syscalls_set: frozenset[str] = frozenset(
-            syscall.strip() for syscall in blocked_syscalls.split(",")
-        ) if isinstance(blocked_syscalls, str) else blocked_syscalls
+        if blocked_syscalls is None or len(blocked_syscalls) == 0:
+            blocked_syscalls_set = frozenset()
+        else:
+            blocked_syscalls_set: frozenset[str] = frozenset(
+                syscall.strip() for syscall in blocked_syscalls.split(",")
+            ) if isinstance(blocked_syscalls, str) else blocked_syscalls
 
         self._prompt_creation = self._create_prompt_processing_config(
             lcb_release_version=lcb_release_version,
@@ -324,7 +330,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
             code_evaluation_timeout_seconds=code_evaluation_timeout_seconds,
             max_parallel_code_executions_per_attempt=(
                 max_parallel_code_executions_per_attempt),
-            max_memory_bytes=max_memory_bytes_int,
+            max_memory_bytes=max_memory_bytes,
             blocked_syscalls=blocked_syscalls_set,
             additional_imports=additional_imports,
         )
@@ -419,6 +425,15 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                 ],
                 new_column=self._ALL_TEST_CASES_COMBINED_COLUMN_NAME
             ),
+            data_utils.DropColumnsTransform(
+                # Remove columns that are not needed for prompt generation
+                # or later stages. This helps reduce data size and I/O
+                # time.
+                columns=[
+                    self._PUBLIC_TEST_CASES_COLUMN_NAME,
+                    self._PRIVATE_TEST_CASES_COLUMN_NAME,
+                ]
+            ),
             data_utils.MultiplyTransform(
                 # This is to generate multiple responses per prompt.
                 n_repeats=num_generated_responses_per_prompt,
@@ -507,7 +522,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
         extracted_code_filepath: str,
         code_evaluation_timeout_seconds: float,
         max_parallel_code_executions_per_attempt: int,
-        max_memory_bytes: int,
+        max_memory_bytes: int | None,
         blocked_syscalls: frozenset[str],
         additional_imports: str,
     ) -> configs.EvalReportingConfig:
