@@ -52,17 +52,17 @@ class SandboxConfig:
                 _die("Sandbox failed: running as privileged user.")
 
             try:
+                _apply_syscall_filter(self.blocked_syscalls)
+            except Exception as e:
+                _die(f"Sandbox failed to apply syscall filter: {str(e)}")
+
+            try:
                 _apply_resource_limits(
                     max_memory_bytes=self.max_memory_bytes,
                     max_fds=self.max_fds,
                 )
             except Exception as e:
                 _die(f"Sandbox failed to apply resource limits: {str(e)}")
-
-            try:
-                _apply_syscall_filter(self.blocked_syscalls)
-            except Exception as e:
-                _die(f"Sandbox failed to apply syscall filter: {str(e)}")
 
         return preexec_fn
 
