@@ -530,6 +530,8 @@ class HFDataReader(DataReader):
         # TODO: Remove this once LiveCodeBench supports reading the
         # dataset without running a remote script.
         # See https://github.com/LiveCodeBench/LiveCodeBench/issues/108
+        # **DO NOT** set this argument as it is unsafe to run external code.
+        # This is a temporary workaround for onboarding LiveCodeBench.
         trust_remote_code: bool = False,
         **kwargs,
     ):
