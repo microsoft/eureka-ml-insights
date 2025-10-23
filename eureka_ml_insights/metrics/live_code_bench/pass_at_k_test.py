@@ -58,7 +58,7 @@ class EstimatePassAtKTest(unittest.TestCase):
             ValueError,
             "K must be a positive integer."):
             pass_at_k.estimate_pass_at_k(num_attempts=5, num_correct=3, k=k)
-    
+
 
 if __name__ == "__main__":
     unittest.main()
