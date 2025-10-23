@@ -140,6 +140,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
     _JSONL_FILE_FORMAT: str = ".jsonl"
 
     # Column names
+    _CONTEST_DATE_COLUMN_NAME: str = "contest_date"
     _MODEL_OUTPUT_COLUMN_NAME: str = "model_output"
     _EXTRACTED_CODE_COLUMN_NAME: str = "extracted_code"
     _PUBLIC_TEST_CASES_COLUMN_NAME: str = "public_test_cases"
@@ -352,10 +353,22 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
             PromptProcessingConfig for the prompt creation stage.
         """
         transforms: list[data_utils.DFTransformBase] = [
-            data_utils.FilterDatetimeColumnToRangeTransform(
-                column_name="contest_date",
-                start_datetime=lcb_start_datetime,
-                end_datetime=lcb_end_datetime,
+            data_utils.ApplyFunctionToColumn(
+                src_column_name=self._CONTEST_DATE_COLUMN_NAME,
+                dst_column_name=self._CONTEST_DATE_COLUMN_NAME,
+                function=lambda x: datetime.datetime.fromisoformat(x),
+            ),
+            data_utils.FilterColumnToRange(
+                column_name=self._CONTEST_DATE_COLUMN_NAME,
+                start=lcb_start_datetime,
+                end=lcb_end_datetime,
+            ),
+            # Have to convert back to a string since the output of the step must
+            # be JSON serializable and a timestamp is not.
+            data_utils.ApplyFunctionToColumn(
+                src_column_name=self._CONTEST_DATE_COLUMN_NAME,
+                dst_column_name=self._CONTEST_DATE_COLUMN_NAME,
+                function=lambda x: x.isoformat(),
             ),
         ]
 

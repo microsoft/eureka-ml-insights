@@ -42,7 +42,8 @@ from .transform import (
     ExtractUsageTransform,
     StrToJsonTransform,
     ConcatColumnsToSingleColumn,
-    FilterDatetimeColumnToRangeTransform,
+    ApplyFunctionToColumn,
+    FilterColumnToRange,
 )
 
 __all__ = [
@@ -85,5 +86,6 @@ __all__ = [
     ExtractUsageTransform,
     StrToJsonTransform,
     ConcatColumnsToSingleColumn,
-    FilterDatetimeColumnToRangeTransform,
+    ApplyFunctionToColumn,
+    FilterColumnToRange,
 ]

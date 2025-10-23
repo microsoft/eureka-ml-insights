@@ -3,7 +3,7 @@ import logging
 import re
 from abc import abstractmethod
 from dataclasses import dataclass, field
-from typing import Dict, List, Any
+from typing import Any, Callable, Dict, List
 
 import numpy as np
 import pandas as pd
@@ -204,29 +204,54 @@ class ConcatColumnsToSingleColumn(DFTransformBase):
 
 
 @dataclass
-class FilterDatetimeColumnToRangeTransform(DFTransformBase):
+class ApplyFunctionToColumn(DFTransformBase):
     """
-    Filters a datetime column to a specified range.
+    Applies a user-defined function to a specified column in the DataFrame.
 
     Args:
-        column: The name of the datetime column to filter.
-        start_datetime: The start datetime for the range filter. If None, no
-            lower bound is applied.
-        end_datetime: The end datetime for the range filter. If None, no upper
-            bound is applied.
+        column_name: The name of the column to which the function will be applied.
+        function: A callable that takes a single argument and returns a transformed value.
+    """
+
+    src_column_name: str
+    dst_column_name: str
+    function: Callable[[Any], Any]
+
+    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        df[self.dst_column_name] = (df[self.src_column_name]
+                                    .apply(self.function))
+        return df
+
+
+@dataclass
+class FilterColumnToRange(DFTransformBase):
+    """
+    Filters a DataFrame column to a specified value range.
+
+    Works for any comparable type (numeric, datetime, string, etc.)
+
+    Args:
+        column_name: The name of the column to filter.
+        start: The inclusive lower bound for the range filter. If None, no lower
+            bound.
+        end: The inclusive upper bound for the range filter. If None, no upper
+            bound.
     """
 
     column_name: str
-    start_datetime: datetime.datetime | None = None
-    end_datetime: datetime.datetime | None = None
+    start: Any = None
+    end: Any = None
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        column: pd.Series[pd.Timestamp] = pd.to_datetime(df[self.column_name])
-        if self.start_datetime is not None:
-            df = df[column >= self.start_datetime]
-        if self.end_datetime is not None:
-            df = df[column <= self.end_datetime]
-        return df
+        column = df[self.column_name]
+
+        mask = pd.Series(True, index=df.index)
+        if self.start is not None:
+            mask &= column >= self.start
+        if self.end is not None:
+            mask &= column <= self.end
+
+        return df[mask]
 
 
 @dataclass
