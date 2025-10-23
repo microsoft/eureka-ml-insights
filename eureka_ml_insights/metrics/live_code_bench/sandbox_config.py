@@ -48,9 +48,6 @@ class SandboxConfig:
         """
 
         def preexec_fn() -> None:
-            if not self.allow_privileged and _is_privileged_user():
-                _die("Sandbox failed: running as privileged user.")
-
             try:
                 _apply_syscall_filter(self.blocked_syscalls)
             except Exception as e:
@@ -114,7 +111,7 @@ def _apply_syscall_filter_linux(blocked_syscalls: frozenset[str]) -> None:
         syscall_no: int = seccomp.resolve_syscall(
             seccomp.system_arch(), syscall_name)
         if syscall_no < 0:
-            _die(f"Unknown syscall name for filtering: {syscall_name}")
+            raise ValueError(f"Unknown syscall name: {syscall_name}")
         filt.add_rule(seccomp.KILL_PROCESS, syscall_name)
 
     filt.load()
@@ -132,17 +129,6 @@ def _apply_syscall_filter(blocked_syscalls: frozenset[str]) -> None:
     else:
         raise NotImplementedError(
             f"Syscall filtering not implemented for platform: {platform}")
-
-
-def _is_privileged_user() -> bool:
-    """Return True if process is running with elevated privileges (root/UID 0)."""
-    platform: str = sys.platform
-
-    if platform.startswith("linux") or platform.startswith("darwin"):
-        return os.geteuid() == 0
-    else:
-        raise NotImplementedError(
-            f"Privilege check not implemented for platform: {platform}")
 
 
 def _die(msg: str) -> None:

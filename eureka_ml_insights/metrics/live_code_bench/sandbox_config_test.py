@@ -200,7 +200,7 @@ class SyscallFilterIntegrationTest(unittest.TestCase):
 
         self.assertNotEqual(result.returncode, 0)
         self.assertIn(
-            "Unknown syscall name for filtering", result.stderr.decode())
+            "Unknown syscall name", result.stderr.decode())
 
 
 if __name__ == '__main__':
