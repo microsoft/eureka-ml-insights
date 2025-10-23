@@ -299,20 +299,34 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
         )
 
         self._response_generation = self._create_inference_config(
+            prompts_filepath=_get_output_file_path(
+                self._prompt_creation.output_dir,
+                self._TRANSFORMED_DATA_FILE_NAME,
+            ),
             model_config=model_config,
             max_concurrent_inference_requests=max_concurrent_inference_requests,
-            resume_from=resume_from,)
+            resume_from=resume_from,
+        )
 
         self._code_extraction = self._create_code_extraction_config(
-            closing_think_token=closing_think_token)
+            model_responses_filepath=_get_output_file_path(
+                self._response_generation.output_dir,
+                self._INFERENCE_RESULT_FILE_NAME,
+            ),
+            closing_think_token=closing_think_token,
+        )
 
         self._code_evaluation = self._create_code_evaluation_config(
+            extracted_code_filepath=_get_output_file_path(
+                self._code_extraction.output_dir,
+                self._TRANSFORMED_DATA_FILE_NAME,
+            ),
             code_evaluation_timeout_seconds=code_evaluation_timeout_seconds,
             max_parallel_code_executions_per_attempt=(
                 max_parallel_code_executions_per_attempt),
             max_memory_bytes=max_memory_bytes_int,
             blocked_syscalls=blocked_syscalls_set,
-            additional_imports=additional_imports
+            additional_imports=additional_imports,
         )
 
         return configs.PipelineConfig(
@@ -428,12 +442,14 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
 
     def _create_inference_config(
             self,
+            prompts_filepath: str,
             model_config: configs.ModelConfig,
             max_concurrent_inference_requests: int = 5,
             resume_from: str | None = None) -> configs.InferenceConfig:
         """Constructs the inference configuration.
 
         Args:
+            prompts_filepath: The file path to the prompts.
             model_config: The model configuration to use.
             resume_from: Path to the file where previous inference results are
                 stored
@@ -447,10 +463,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
             data_loader_config=configs.DataSetConfig(
                 class_name=data_utils.DataLoader,
                 init_args={
-                    "path": _get_output_file_path(
-                        self._prompt_creation.output_dir,
-                        self._TRANSFORMED_DATA_FILE_NAME,
-                    ),
+                    "path": prompts_filepath,
                 }),
             resume_from=resume_from,  # type: ignore
             max_concurrent=max_concurrent_inference_requests,
@@ -458,10 +471,13 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
         )
 
     def _create_code_extraction_config(
-            self, closing_think_token: str) -> configs.DataProcessingConfig:
+            self,
+            model_responses_filepath: str,
+            closing_think_token: str) -> configs.DataProcessingConfig:
         """Creates the code extraction configuration.
 
         Args:
+            model_responses_filepath: The file path to the model responses.
             closing_think_token: The token indicating the end of the model's
                 reasoning process in the generated output. If empty,
                 looks for the last code snippet in the entire model output.
@@ -474,10 +490,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
             data_reader_config=configs.DataSetConfig(
                 class_name=data_utils.DataReader,
                 init_args={
-                    "path": _get_output_file_path(
-                        self._response_generation.output_dir,
-                        self._INFERENCE_RESULT_FILE_NAME,
-                    ),
+                    "path": model_responses_filepath,
                     "format": self._JSONL_FILE_FORMAT,
                     "transform": data_utils.SequenceTransform([
                         code_extraction_transform.CodeExtractionTransform(
@@ -490,7 +503,9 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
             output_dir=self._construct_output_dir_path("extracted_code"))
 
     def _create_code_evaluation_config(
-        self, code_evaluation_timeout_seconds: float,
+        self,
+        extracted_code_filepath: str,
+        code_evaluation_timeout_seconds: float,
         max_parallel_code_executions_per_attempt: int,
         max_memory_bytes: int,
         blocked_syscalls: frozenset[str],
@@ -499,6 +514,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
         """Creates the code evaluation configuration.
 
         Args:
+            extracted_code_filepath: The file path to the extracted code.
             code_evaluation_timeout_seconds: The timeout in seconds for
                 executing each test case.
             max_parallel_code_executions_per_attempt: The maximum number of code
@@ -518,10 +534,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
             data_reader_config=configs.DataSetConfig(
                 class_name=data_utils.DataReader,
                 init_args={
-                    "path": _get_output_file_path(
-                        self._code_extraction.output_dir,
-                        self._TRANSFORMED_DATA_FILE_NAME,
-                    ),
+                    "path": extracted_code_filepath,
                     "format": self._JSONL_FILE_FORMAT,
                 }),
             metric_config=config.MetricConfig(
