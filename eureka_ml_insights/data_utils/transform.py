@@ -288,7 +288,7 @@ class MultiColumnTransform(DFTransformBase):
 
 
 @dataclass
-class StrToJsonTransform(MultiColumnTransform):
+class ConvertStrColumnToJson(MultiColumnTransform):
     """
     Transforms string representation of a JSON object to an actual JSON object.
 

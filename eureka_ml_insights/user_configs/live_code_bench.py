@@ -400,7 +400,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     self._PRIVATE_TEST_CASES_COLUMN_NAME),
                 decoded_test_cases_column_name=(
                     self._PRIVATE_TEST_CASES_COLUMN_NAME)),
-            data_utils.StrToJsonTransform(
+            data_utils.ConvertStrColumnToJson(
                 # private_test_cases_column_name is already
                 # decoded by DecodeTestCasesTransform into a
                 # JSON object, so we only need to convert the other
