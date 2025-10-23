@@ -108,15 +108,16 @@ def _apply_syscall_filter_linux(blocked_syscalls: frozenset[str]) -> None:
                 "seccomp is required for syscall filtering on Linux")
 
     # Default allow all syscalls
-    filter = seccomp.SyscallFilter(defaction=seccomp.ALLOW)
-
-    kill_action = getattr(seccomp, "KILL_PROCESS", seccomp.KILL)
+    filt = seccomp.SyscallFilter(defaction=seccomp.ALLOW)
 
     for syscall_name in blocked_syscalls:
-        # Kill the process if blocked syscall is called
-        filter.add_rule(kill_action, syscall_name)
+        syscall_no: int = seccomp.resolve_syscall(
+            seccomp.system_arch(), syscall_name)
+        if syscall_no < 0:
+            _die(f"Unknown syscall name for filtering: {syscall_name}")
+        filt.add_rule(seccomp.KILL_PROCESS, syscall_name)
 
-    filter.load()
+    filt.load()
 
 
 def _apply_syscall_filter(blocked_syscalls: frozenset[str]) -> None:

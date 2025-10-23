@@ -35,6 +35,7 @@ class ResourceLimitIntegrationTest(unittest.TestCase):
                                 capture_output=True)
 
         self.assertNotEqual(result.returncode, 0)
+        self.assertIn("MemoryError", result.stderr.decode())
 
     def test_memory_limit_allows_small_allocation(self):
         """Test that memory limits allow allocating within the limit."""
@@ -50,6 +51,7 @@ class ResourceLimitIntegrationTest(unittest.TestCase):
                                 capture_output=True)
 
         self.assertEqual(result.returncode, 0)
+        self.assertEqual(result.stderr.decode(), "")
 
     def test_fds_limit_prevents_opening_too_many_files(self):
         """Test that file descriptor limits prevent opening too many files."""
@@ -69,6 +71,7 @@ class ResourceLimitIntegrationTest(unittest.TestCase):
                                 capture_output=True)
 
         self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Too many open files", result.stderr.decode())
 
     def test_fds_limit_allows_opening_within_limit(self):
         """Test that file descriptor limits allow opening files within the limit."""
@@ -88,6 +91,7 @@ class ResourceLimitIntegrationTest(unittest.TestCase):
                                 capture_output=True)
 
         self.assertEqual(result.returncode, 0)
+        self.assertEqual(result.stderr.decode(), "")
 
 
 @unittest.skipIf(
@@ -97,7 +101,7 @@ class SyscallFilterIntegrationTest(unittest.TestCase):
     """Integration tests to verify syscall filtering works."""
 
     @parameterized.expand([
-        # (blocked_syscalls, code, should_succeed)
+        # (blocked_syscalls, code, should_succeed, stderr_contains)
 
         # Test blocking network connect syscall
         (
@@ -107,18 +111,18 @@ class SyscallFilterIntegrationTest(unittest.TestCase):
                     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     s.connect(('localhost', 0))
                 """),
-            False
+            False,
         ),
 
         # Test allowing network connect syscall
         (
-            frozenset(),
+            frozenset({"fork"}),
             textwrap.dedent("""
                 import socket
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.bind(('localhost', 0))
             """),
-            True
+            True,
         ),
 
         # Test blocking file open syscall
@@ -128,17 +132,17 @@ class SyscallFilterIntegrationTest(unittest.TestCase):
                 f = open('/dev/null', 'r')
                 data = f.read()
             """),
-            False
+            False,
         ),
 
         # Test allowing file open syscall
         (
-            frozenset(),
+            frozenset({"socket"}),
             textwrap.dedent("""
                 f = open('/dev/null', 'r')
                 data = f.read()
             """),
-            True
+            True,
         ),
 
         # Test blocking process creation syscall
@@ -152,12 +156,12 @@ class SyscallFilterIntegrationTest(unittest.TestCase):
                 else:
                     os.waitpid(pid, 0)
             """),
-            False
+            False,
         ),
 
         # Test allowing process creation syscall
         (
-            frozenset(),
+            frozenset({"socket"}),
             textwrap.dedent("""
                 import os
                 pid = os.fork()
@@ -166,11 +170,11 @@ class SyscallFilterIntegrationTest(unittest.TestCase):
                 else:
                     os.waitpid(pid, 0)
             """),
-            True
+            True,
         ),
     ])
     def test_syscall_behavior(self, blocked_syscalls: frozenset[str],
-                              code: str, should_succeed: bool):
+                              code: str, should_succeed: bool) -> None:
         """Test syscall filtering behavior parameterized by syscall and expected outcome."""
         config = sandbox_config.SandboxConfig(
             blocked_syscalls=blocked_syscalls)
@@ -184,6 +188,19 @@ class SyscallFilterIntegrationTest(unittest.TestCase):
             self.assertEqual(result.returncode, 0)
         else:
             self.assertNotEqual(result.returncode, 0)
+
+    def test_unknown_syscall_name_raises_error(self):
+        """Test that an unknown syscall name raises an error in the subprocess."""
+        config = sandbox_config.SandboxConfig(
+            blocked_syscalls=frozenset({"nonexistent_syscall"}))
+
+        result = subprocess.run([sys.executable, "-c", "pass"],
+                                preexec_fn=config.to_preexec_fn(),
+                                capture_output=True)
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(
+            "Unknown syscall name for filtering", result.stderr.decode())
 
 
 if __name__ == '__main__':
