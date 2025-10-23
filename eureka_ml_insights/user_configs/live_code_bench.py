@@ -22,6 +22,7 @@ parameters.
 
 import datetime
 import pathlib
+import textwrap
 import sys
 
 from typing import Any
@@ -38,6 +39,46 @@ from eureka_ml_insights.metrics.live_code_bench import (
     pass_at_k_aggregator,
     sandbox_config,
 )
+
+
+# Default additional imports to include in the code being tested.
+_DEFAULT_ADDITIONAL_PYTHON_IMPORTS: str = textwrap.dedent("""
+    from string import *
+    from re import *
+    from datetime import *
+    from collections import *
+    from heapq import *
+    from bisect import *
+    from copy import *
+    from math import *
+    from random import *
+    from statistics import *
+    from itertools import *
+    from functools import *
+    from operator import *
+    from io import *
+    from sys import *
+    from json import *
+    from builtins import *
+    from typing import *
+    import string
+    import re
+    import datetime
+    import collections
+    import heapq
+    import bisect
+    import copy
+    import math
+    import random
+    import statistics
+    import itertools
+    import functools
+    import operator
+    import io
+    import sys
+    import json
+    sys.setrecursionlimit(50000)
+""")
 
 # Maximum memory limit for each test code execution.
 _DEFAULT_MAX_MEMORY_BYTES: int = 4 * 1024**3  # 4 GB
@@ -116,6 +157,8 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                            lcb_release_version: str = "release_latest",
                            lcb_start_datetime: str | None = None,
                            lcb_end_datetime: str | None = None,
+                           sampler_random_seed: int | str = 42,
+                           sample_count: int | str | None = None,
                            num_generated_responses_per_prompt: int | str = 5,
                            max_concurrent_inference_requests: int | str = 5,
                            closing_think_token: str = "",
@@ -123,6 +166,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                            max_parallel_code_executions_per_attempt: int | str = 16,
                            max_memory_bytes: int | str = _DEFAULT_MAX_MEMORY_BYTES,
                            blocked_syscalls: str | frozenset[str] = _DEFAULT_BLOCKED_SYSCALLS,
+                           additional_imports: str = _DEFAULT_ADDITIONAL_PYTHON_IMPORTS,
                            resume_from: str | None = None,
                            **kwargs: Any) -> configs.PipelineConfig:
         """Configures the steps of the pipeline.
@@ -142,6 +186,11 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                 dataset. Only include data points with contest_date <=
                 lcb_end_datetime. Should be in the ISO 8601 format, e.g.,
                 "2025-01-01T23:59:59". If None, do not apply an end date filter.
+            sampler_random_seed: The random seed to use for sampling data points
+                from the dataset for reproducibility.
+            sample_count: The number of data points to sample from the dataset.
+                This can be used for testing the pipeline with a smaller subset
+                of the data.
             num_generated_responses_per_prompt: The number of code responses to
                 generate per question. Higher numbers provide a better estimate
                 of Pass@K metrics but increase computation cost.
@@ -162,6 +211,10 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
             blocked_syscalls: A set of system calls to block during code
                 execution. If string, should be a comma-separated list of
                 syscall names.
+            additional_imports: Additional Python import statements to include
+                at the start of the code being tested. This can be used to
+                provide access to standard libraries that the code under test
+                may require.
             resume_from: Path to the file where previous inference results are
                 stored
         
@@ -215,6 +268,15 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     f" Got start: {lcb_start_datetime_parsed}, "
                     f"end: {lcb_end_datetime_parsed}.")
 
+        sampler_random_seed = int(sampler_random_seed)
+
+        if sample_count is not None:
+            sample_count = int(sample_count)
+            if sample_count <= 0:
+                raise ValueError(
+                    "sample_count must be positive. "
+                    f"Got {sample_count}.")
+
         max_memory_bytes_int: int = int(max_memory_bytes)
         if max_memory_bytes_int <= 0:
             raise ValueError(
@@ -229,6 +291,8 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
             lcb_release_version=lcb_release_version,
             lcb_start_datetime=lcb_start_datetime_parsed,
             lcb_end_datetime=lcb_end_datetime_parsed,
+            sampler_random_seed=sampler_random_seed,
+            sample_count=sample_count,
             num_generated_responses_per_prompt=(
                 num_generated_responses_per_prompt),
         )
@@ -246,7 +310,8 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
             max_parallel_code_executions_per_attempt=(
                 max_parallel_code_executions_per_attempt),
             max_memory_bytes=max_memory_bytes_int,
-            blocked_syscalls=blocked_syscalls_set
+            blocked_syscalls=blocked_syscalls_set,
+            additional_imports=additional_imports
         )
 
         return configs.PipelineConfig(
@@ -264,6 +329,8 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
         lcb_release_version: str,
         lcb_start_datetime: datetime.datetime | None,
         lcb_end_datetime: datetime.datetime | None,
+        sampler_random_seed: int,
+        sample_count: int | None,
         num_generated_responses_per_prompt: int,
     ) -> configs.PromptProcessingConfig:
         """Creates the prompt processing configuration.
@@ -274,11 +341,63 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                 Inclusive.
             lcb_end_date: End date for filtering the LiveCodeBench dataset.
                 Inclusive.
+            sampler_random_seed: The random seed to use for sampling data points
+                from the dataset for reproducibility.
+            sample_count: The number of data points to sample from the dataset.
+                This can be used for testing the pipeline with a smaller subset
+                of the data.
             num_generated_responses_per_prompt: Number of responses per prompt.
 
         Returns:
             PromptProcessingConfig for the prompt creation stage.
         """
+        transforms: list[data_utils.DFTransformBase] = [
+            data_utils.FilterDatetimeColumnToRangeTransform(
+                column_name="contest_date",
+                start_datetime=lcb_start_datetime,
+                end_datetime=lcb_end_datetime,
+            ),
+        ]
+
+        if sample_count is not None:
+            transforms.append(
+                data_utils.SamplerTransform(
+                    random_seed=sampler_random_seed,
+                    sample_count=sample_count,
+                )
+            )
+
+        transforms.extend([
+            decode_test_cases_transform.DecodeTestCasesTransform(
+                encoded_test_cases_column_name=(
+                    self._PRIVATE_TEST_CASES_COLUMN_NAME),
+                decoded_test_cases_column_name=(
+                    self._PRIVATE_TEST_CASES_COLUMN_NAME)),
+            data_utils.StrToJsonTransform(
+                # private_test_cases_column_name is already
+                # decoded by DecodeTestCasesTransform into a
+                # JSON object, so we only need to convert the other
+                # columns.
+                columns=[
+                    self._METADATA_COLUMN_NAME,
+                    self._PUBLIC_TEST_CASES_COLUMN_NAME
+                ]),
+            data_utils.AddColumnValuesTransform(
+                # Combines the public and private test cases into
+                # a single column as code evaluation does not
+                # distinguish between them.
+                columns=[
+                    self._PUBLIC_TEST_CASES_COLUMN_NAME,
+                    self._PRIVATE_TEST_CASES_COLUMN_NAME
+                ],
+                new_column=self._ALL_TEST_CASES_COMBINED_COLUMN_NAME
+            ),
+            data_utils.MultiplyTransform(
+                # This is to generate multiple responses per prompt.
+                n_repeats=num_generated_responses_per_prompt,
+            ),
+        ])
+
         return configs.PromptProcessingConfig(
             component_type=core.PromptProcessing,
             prompt_template_path=str(self._PROMPT_TEMPLATE_PATH),
@@ -289,41 +408,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     "split": self._HF_LCB_DATASET_SPLIT,
                     "release_version": lcb_release_version,
                     "trust_remote_code": self._HF_TRUST_REMOTE_CODE,
-                    "transform": data_utils.SequenceTransform([
-                        data_utils.FilterDatetimeColumnToRangeTransform(
-                            column_name="contest_date",
-                            start_datetime=lcb_start_datetime,
-                            end_datetime=lcb_end_datetime,
-                        ),
-                        decode_test_cases_transform.DecodeTestCasesTransform(
-                            encoded_test_cases_column_name=(
-                                self._PRIVATE_TEST_CASES_COLUMN_NAME),
-                            decoded_test_cases_column_name=(
-                                self._PRIVATE_TEST_CASES_COLUMN_NAME)),
-                        data_utils.StrToJsonTransform(
-                            # private_test_cases_column_name is already
-                            # decoded by DecodeTestCasesTransform into a
-                            # JSON object, so we only need to convert the other
-                            # columns.
-                            columns=[
-                                self._METADATA_COLUMN_NAME,
-                                self._PUBLIC_TEST_CASES_COLUMN_NAME
-                            ]),
-                        data_utils.AddColumnValuesTransform(
-                            # Combines the public and private test cases into
-                            # a single column as code evaluation does not
-                            # distinguish between them.
-                            columns=[
-                                self._PUBLIC_TEST_CASES_COLUMN_NAME,
-                                self._PRIVATE_TEST_CASES_COLUMN_NAME
-                            ],
-                            new_column=self._ALL_TEST_CASES_COMBINED_COLUMN_NAME
-                        ),
-                        data_utils.MultiplyTransform(
-                            # This is to generate multiple responses per prompt.
-                            n_repeats=num_generated_responses_per_prompt,
-                        ),
-                    ])
+                    "transform": data_utils.SequenceTransform(transforms)
                 }),
             output_dir=self._construct_output_dir_path("prompts"),
         )
@@ -396,6 +481,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
         max_parallel_code_executions_per_attempt: int,
         max_memory_bytes: int,
         blocked_syscalls: frozenset[str],
+        additional_imports: str,
     ) -> configs.EvalReportingConfig:
         """Creates the code evaluation configuration.
 
@@ -408,6 +494,8 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                 execution is allowed to use.
             blocked_syscalls: A set of system calls to block during code
                 evaluation.
+            additional_imports: Additional Python import statements to include
+                at the start of the code being tested.
 
         Returns:
             EvalReportingConfig for the code evaluation stage.
@@ -438,6 +526,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                         max_memory_bytes=max_memory_bytes,
                         blocked_syscalls=blocked_syscalls,
                     ),
+                    "additional_imports": additional_imports,
                 }),
             aggregator_configs=[
                 config.AggregatorConfig(

@@ -99,7 +99,8 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
                  metadata_column_name: str,
                  timeout: datetime.timedelta | None = None,
                  max_workers: int = 1,
-                 sandbox_cfg: sandbox_config.SandboxConfig | None = None) -> None:
+                 sandbox_cfg: sandbox_config.SandboxConfig | None = None,
+                 additional_imports: str = "") -> None:
         """Initializes the CodegenTestCaseResultsMetric.
 
         Args:
@@ -116,6 +117,8 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
             max_workers: The maximum number of workers to use for parallel
                 execution of test cases.
             sandbox_cfg: An optional SandboxConfig to run the code in a sandbox.
+            additional_imports: Additional Python import statements to include
+                at the start of the code being tested.
         """
         self._code_column_name = code_column_name
         self._test_cases_column_name = test_cases_column_name
@@ -123,6 +126,7 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
         self._timeout = timeout
         self._max_workers = max_workers
         self._sandbox_cfg = sandbox_cfg
+        self._additional_imports = additional_imports
 
     # Override this method to show that a progress bar.
     # Otherwise, the behavior is the same as the parent.
@@ -189,6 +193,10 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
                 ] * len(raw_test_cases),
                 all_passed=False,
             )
+
+        # Prepend additional imports to the code
+        if self._additional_imports:
+            code = self._additional_imports + "\n\n" + code
 
         is_valid_code, parse_error = code_parsing.is_python_code_valid(code)
         if not is_valid_code:
