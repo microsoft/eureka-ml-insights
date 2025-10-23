@@ -3,9 +3,9 @@
 This metric evaluates generated code against provided test cases.
 """
 
+import concurrent.futures
 import datetime
 import pandas as pd
-import concurrent.futures
 
 from typing import TypedDict, override
 from tqdm.auto import tqdm
@@ -14,6 +14,7 @@ from eureka_ml_insights.metrics import metrics_base
 from eureka_ml_insights.metrics.live_code_bench import (
     evaluate_codegen,
     code_parsing,
+    sandbox_config,
 )
 
 
@@ -41,6 +42,7 @@ def _run_test(
         function_path: str,
         function_parsing_error: str,
         timeout: datetime.timedelta | None = None,
+        sandbox_cfg: sandbox_config.SandboxConfig | None = None,
 ) -> evaluate_codegen.TestCaseResult:
     """Runs a single test case against the generated code.
 
@@ -55,6 +57,8 @@ def _run_test(
             Empty string if not applicable.
         function_parsing_error: An error message if there was an error
             parsing the function, empty string otherwise.
+        timeout: An optional timeout for the test case execution.
+        sandbox_cfg: An optional SandboxConfig to run the code in a sandbox.
 
     Returns:
         The result of the test.
@@ -75,6 +79,7 @@ def _run_test(
             function_name=function_path,
             test_case=test_case,
             timeout=timeout,
+            sandbox_cfg=sandbox_cfg,
         )
     except Exception as e:
         return evaluate_codegen.TestCaseResult(
@@ -93,7 +98,8 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
     def __init__(self, code_column_name: str, test_cases_column_name: str,
                  metadata_column_name: str,
                  timeout: datetime.timedelta | None = None,
-                 max_workers: int = 1) -> None:
+                 max_workers: int = 1,
+                 sandbox_cfg: sandbox_config.SandboxConfig | None = None) -> None:
         """Initializes the CodegenTestCaseResultsMetric.
 
         Args:
@@ -109,12 +115,14 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
             timeout: An optional timeout for each test case execution.
             max_workers: The maximum number of workers to use for parallel
                 execution of test cases.
+            sandbox_cfg: An optional SandboxConfig to run the code in a sandbox.
         """
         self._code_column_name = code_column_name
         self._test_cases_column_name = test_cases_column_name
         self._metadata_column_name = metadata_column_name
         self._timeout = timeout
         self._max_workers = max_workers
+        self._sandbox_cfg = sandbox_cfg
 
     # Override this method to show that a progress bar.
     # Otherwise, the behavior is the same as the parent.
@@ -213,7 +221,8 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
             max_workers=max_workers) as executor:
             futures = [
                 executor.submit(_run_test, raw, code, function_path,
-                                function_parsing_error, self._timeout)
+                                function_parsing_error, self._timeout,
+                                self._sandbox_cfg)
                 for raw in raw_test_cases
             ]
 

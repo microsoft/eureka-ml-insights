@@ -26,6 +26,10 @@ import sys
 from enum import Enum
 from typing import Any, Protocol
 
+from collections.abc import Callable
+
+from eureka_ml_insights.metrics.live_code_bench import sandbox_config
+
 # Minimal wrapper script to run functions in a subprocess
 # This script reads a pickled FunctionJob from stdin, executes the function,
 # and writes the pickled result to stdout.
@@ -150,12 +154,15 @@ class FunctionJob:
         function_name: Name of the function to extract and execute.
         args: Positional arguments to pass to the function.
         kwargs: Keyword arguments to pass to the function.
+        timeout: Maximum allowed time for execution.
+        sanbox_cfg: Optional SandboxConfig to restrict resource usage.
     """
     src_code: str
     function_name: str
     args: tuple[Any, ...] = ()
     kwargs: dict[str, Any] = dataclasses.field(default_factory=dict)
     timeout: datetime.timedelta | None = None
+    sandbox_cfg: sandbox_config.SandboxConfig | None = None
 
 
 @dataclasses.dataclass(frozen=True)
@@ -166,10 +173,13 @@ class ScriptJob:
         script: The self-contained Python code to execute.
         stdin_input: Optional byte sequence or string to provide as stdin to the
             script.
+        timeout: Maximum allowed time for execution.
+        sanbox_cfg: Optional SandboxConfig to restrict resource usage.
     """
     script: str
     stdin_input: str | bytes = b""
     timeout: datetime.timedelta | None = None
+    sandbox_cfg: sandbox_config.SandboxConfig | None = None
 
 
 class ProcessExitReason(Enum):
@@ -248,22 +258,46 @@ class FunctionResult:
 class ProcessRunner(Protocol):
     """Protocol for running subprocesses (enables testing with mocks)."""
 
-    def run(self, args: list[str], input: bytes | None, capture_output: bool,
-            timeout: datetime.timedelta | None) -> subprocess.CompletedProcess:
-        """Run a subprocess and return the result."""
+    def run(
+            self,
+            args: list[str],
+            input: bytes | None = None,
+            capture_output: bool = True,
+            timeout: datetime.timedelta | None = None,
+            preexec_fn: Callable[[], None] | None = None
+        ) -> subprocess.CompletedProcess:
+        """Run a subprocess and return the result.
+
+        Args:
+            args: Command line arguments for the subprocess.
+            input: Optional byte sequence to provide as stdin.
+            capture_output: Whether to capture stdout and stderr.
+            timeout: Maximum allowed time for execution.
+            preexec_fn: Optional callable to be called in the child process
+                just before the child is executed.
+
+        Returns:
+            CompletedProcess instance with execution results.
+        """
         ...
 
 
 class SubprocessRunner:
     """Default subprocess runner using subprocess.run."""
-
-    def run(self, args: list[str], input: bytes | None, capture_output: bool,
-            timeout: datetime.timedelta | None) -> subprocess.CompletedProcess:
+    def run(
+            self,
+            args: list[str],
+            input: bytes | None = None,
+            capture_output: bool = True,
+            timeout: datetime.timedelta | None = None,
+            preexec_fn: Callable[[], None] | None = None
+        ) -> subprocess.CompletedProcess:
         return subprocess.run(
             args,
             input=input,
             capture_output=capture_output,
-            timeout=timeout.total_seconds() if timeout else None)
+            timeout=timeout.total_seconds() if timeout else None,
+            preexec_fn=preexec_fn)
 
 
 def _execute_subprocess(
@@ -271,6 +305,7 @@ def _execute_subprocess(
     runner: ProcessRunner,
     input: bytes = b"",
     timeout: datetime.timedelta | None = None,
+    preexec_fn: Callable[[], None] | None = None
 ) -> RawProcessResult:
     """Execute a subprocess with given arguments and input.
     
@@ -279,6 +314,9 @@ def _execute_subprocess(
         runner: ProcessRunner for subprocess execution.
         input: Optional byte sequence to provide as stdin.
         timeout: Maximum allowed time for execution.
+        preexec_fn: Optional callable to be called in the child process
+            just before the child is executed. Can be used to set resource
+            limits, for example.
     
     Returns:
         RawProcessResult with captured outputs.
@@ -287,8 +325,8 @@ def _execute_subprocess(
     try:
         result = runner.run(args,
                             input=input,
-                            capture_output=True,
-                            timeout=timeout)
+                            timeout=timeout,
+                            preexec_fn=preexec_fn)
 
         return RawProcessResult(stdout=result.stdout,
                                 stderr=result.stderr,
@@ -322,10 +360,14 @@ def execute_script(job: ScriptJob,
     input: bytes = (job.stdin_input.encode('utf-8') if isinstance(
         job.stdin_input, str) else job.stdin_input)
 
+    preexec_fn = (job.sandbox_cfg.to_preexec_fn()
+                  if job.sandbox_cfg is not None else None)
+
     raw_result = _execute_subprocess(args=[sys.executable, '-c', job.script],
                                      input=input,
                                      runner=runner,
-                                     timeout=job.timeout)
+                                     timeout=job.timeout,
+                                     preexec_fn=preexec_fn)
 
     if raw_result.exit_reason == ProcessExitReason.COMPLETED:
         stderr_str = raw_result.stderr.decode("utf-8", errors="replace")
@@ -434,11 +476,15 @@ def execute_function(job: FunctionJob,
     if runner is None:
         runner = SubprocessRunner()
 
+    preexec_fn = (job.sandbox_cfg.to_preexec_fn()
+                  if job.sandbox_cfg is not None else None)
+
     raw_result = _execute_subprocess(
         args=[sys.executable, '-c', _FUNCTION_RUNNER_SCRIPT],
         input=_serialize_function_job(job),
         runner=runner,
-        timeout=job.timeout)
+        timeout=job.timeout,
+        preexec_fn=preexec_fn)
 
     if raw_result.exit_reason == ProcessExitReason.COMPLETED:
         return _deserialize_function_result(raw_result)

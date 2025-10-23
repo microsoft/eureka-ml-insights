@@ -20,8 +20,9 @@ See the arguments of the `configure_pipeline()` method below for available
 parameters.
 """
 
-import pathlib
 import datetime
+import pathlib
+import sys
 
 from typing import Any
 
@@ -35,7 +36,28 @@ from eureka_ml_insights.data_utils.live_code_bench import (
 from eureka_ml_insights.metrics.live_code_bench import (
     codegen_test_case_results_metric,
     pass_at_k_aggregator,
+    sandbox_config,
 )
+
+# Maximum memory limit for each test code execution.
+_DEFAULT_MAX_MEMORY_BYTES: int = 4 * 1024**3  # 4 GB
+
+_PLATFORM: str = sys.platform
+
+if _PLATFORM.startswith("linux"):
+    # Some dangerous syscalls
+    # The code under test cannot call these syscalls.
+    _DEFAULT_BLOCKED_SYSCALLS = frozenset({
+        # File system
+        "unlink", "rename", "mkdir", "rmdir", "chmod", "chown",
+        # Process control
+        "fork", "vfork", "clone", "kill", "setuid", "setgid",
+        # Network
+        "socket", "connect", "bind", "listen", "accept",
+    })
+else:
+    # Unsupported platforms just get an empty set; no syscalls are blocked
+    _DEFAULT_BLOCKED_SYSCALLS = frozenset()
 
 
 def _get_output_file_path(output_dir: str, filename: str) -> str:
@@ -99,6 +121,8 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                            closing_think_token: str = "",
                            code_evaluation_timeout_seconds: float | str = 20.0,
                            max_parallel_code_executions_per_attempt: int | str = 16,
+                           max_memory_bytes: int | str = _DEFAULT_MAX_MEMORY_BYTES,
+                           blocked_syscalls: str | frozenset[str] = _DEFAULT_BLOCKED_SYSCALLS,
                            resume_from: str | None = None,
                            **kwargs: Any) -> configs.PipelineConfig:
         """Configures the steps of the pipeline.
@@ -133,6 +157,11 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                 executing each test case.
             max_parallel_code_executions_per_attempt: The maximum number of code
                 executions to run in parallel per code generation attempt.
+            max_memory_bytes: The maximum memory in bytes that each code
+                execution is allowed to use.
+            blocked_syscalls: A set of system calls to block during code
+                execution. If string, should be a comma-separated list of
+                syscall names.
             resume_from: Path to the file where previous inference results are
                 stored
         
@@ -186,6 +215,16 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     f" Got start: {lcb_start_datetime_parsed}, "
                     f"end: {lcb_end_datetime_parsed}.")
 
+        max_memory_bytes_int: int = int(max_memory_bytes)
+        if max_memory_bytes_int <= 0:
+            raise ValueError(
+                "max_memory_bytes must be positive. "
+                f"Got {max_memory_bytes_int}.")
+
+        blocked_syscalls_set: frozenset[str] = frozenset(
+            syscall.strip() for syscall in blocked_syscalls.split(",")
+        ) if isinstance(blocked_syscalls, str) else blocked_syscalls
+
         self._prompt_creation = self._create_prompt_processing_config(
             lcb_release_version=lcb_release_version,
             lcb_start_datetime=lcb_start_datetime_parsed,
@@ -206,6 +245,8 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
             code_evaluation_timeout_seconds=code_evaluation_timeout_seconds,
             max_parallel_code_executions_per_attempt=(
                 max_parallel_code_executions_per_attempt),
+            max_memory_bytes=max_memory_bytes_int,
+            blocked_syscalls=blocked_syscalls_set
         )
 
         return configs.PipelineConfig(
@@ -352,7 +393,9 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
 
     def _create_code_evaluation_config(
         self, code_evaluation_timeout_seconds: float,
-        max_parallel_code_executions_per_attempt: int
+        max_parallel_code_executions_per_attempt: int,
+        max_memory_bytes: int,
+        blocked_syscalls: frozenset[str],
     ) -> configs.EvalReportingConfig:
         """Creates the code evaluation configuration.
 
@@ -361,6 +404,10 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                 executing each test case.
             max_parallel_code_executions_per_attempt: The maximum number of code
                 executions to run in parallel per code generation attempt.
+            max_memory_bytes: The maximum memory in bytes that each code
+                execution is allowed to use.
+            blocked_syscalls: A set of system calls to block during code
+                evaluation.
 
         Returns:
             EvalReportingConfig for the code evaluation stage.
@@ -387,6 +434,10 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     "timeout": datetime.timedelta(
                         seconds=code_evaluation_timeout_seconds),
                     "max_workers": max_parallel_code_executions_per_attempt,
+                    "sandbox_cfg": sandbox_config.SandboxConfig(
+                        max_memory_bytes=max_memory_bytes,
+                        blocked_syscalls=blocked_syscalls,
+                    ),
                 }),
             aggregator_configs=[
                 config.AggregatorConfig(

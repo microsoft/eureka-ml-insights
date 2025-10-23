@@ -6,7 +6,10 @@ import datetime
 
 from typing import Any, TypedDict, cast
 
-from eureka_ml_insights.metrics.live_code_bench import code_execution
+from eureka_ml_insights.metrics.live_code_bench import (
+    code_execution,
+    sandbox_config
+)
 
 
 class RawTestCaseDict(TypedDict):
@@ -196,7 +199,9 @@ def _evaluate_functional_test_case(
         src_code: str,
         function_name: str,
         test_case: FunctionalTestCase,
-        timeout: datetime.timedelta | None = None) -> TestCaseResult:
+        timeout: datetime.timedelta | None = None,
+        sandbox_cfg: sandbox_config.SandboxConfig | None = None
+) -> TestCaseResult:
     """Evaluates a functional test case against the provided source code.
 
     Args:
@@ -206,6 +211,8 @@ def _evaluate_functional_test_case(
             'MyClass.my_function').
         test_case: The FunctionalTestCase instance.
         timeout: An optional timeout for the code execution.
+        sandbox_cfg: An optional SandboxConfig to apply resource limits
+            and syscall filtering during code execution.
 
     Returns:
         A TestCaseResult instance indicating whether the test case passed.
@@ -213,7 +220,8 @@ def _evaluate_functional_test_case(
     job = code_execution.FunctionJob(src_code=src_code,
                                      function_name=function_name,
                                      args=test_case.inputs,
-                                     timeout=timeout)
+                                     timeout=timeout,
+                                     sandbox_cfg=sandbox_cfg)
 
     result: code_execution.FunctionResult = (
         code_execution.execute_function(job))
@@ -234,7 +242,9 @@ def _evaluate_functional_test_case(
 def _evaluate_standard_io_test_case(
         src_code: str,
         test_case: StandardIOTestCase,
-        timeout: datetime.timedelta | None = None) -> TestCaseResult:
+        timeout: datetime.timedelta | None = None,
+        sandbox_cfg: sandbox_config.SandboxConfig | None = None
+) -> TestCaseResult:
     """Evaluates a standard I/O test case against the provided source code.
 
     The source code is expected to be a script that reads from stdin and
@@ -244,15 +254,18 @@ def _evaluate_standard_io_test_case(
         src_code: The source code to be tested.
         test_case: The StandardIOTestCase instance.
         timeout: An optional timeout for the code execution.
+        sandbox_cfg: An optional SandboxConfig to apply resource limits
+            and syscall filtering during code execution.
     
     Returns:
         A TestCaseResult instance indicating whether the test case passed.
     """
     job = code_execution.ScriptJob(script=src_code,
                                    stdin_input=test_case.stdin,
-                                   timeout=timeout)
+                                   timeout=timeout,
+                                   sandbox_cfg=sandbox_cfg)
 
-    result: code_execution.ScriptResult = (code_execution.execute_script(job))
+    result: code_execution.ScriptResult = code_execution.execute_script(job)
 
     # Strip trailing newlines for comparison.
     # The generated code may use sys.stdout.write which does not add a newline.
@@ -276,7 +289,9 @@ def evaluate_test_case(
         src_code: str,
         test_case: FunctionalTestCase | StandardIOTestCase,
         function_name: str = "",
-        timeout: datetime.timedelta | None = None) -> TestCaseResult:
+        timeout: datetime.timedelta | None = None,
+        sandbox_cfg: sandbox_config.SandboxConfig | None = None
+) -> TestCaseResult:
     """Evaluates a test case against the provided source code.
 
     Args:
@@ -286,6 +301,8 @@ def evaluate_test_case(
             required for FunctionalTestCase instances. If the function is part
             of a class, provide the full path (e.g., 'MyClass.my_function').
         timeout: An optional timeout for the code execution.
+        sandbox_cfg: Configuration to apply resource limits and syscall
+            filtering
 
     Returns:
         A TestCaseResult instance indicating whether the test case passed.
@@ -302,13 +319,15 @@ def evaluate_test_case(
             src_code=src_code,
             function_name=function_name,
             test_case=test_case,
-            timeout=timeout
+            timeout=timeout,
+            sandbox_cfg=sandbox_cfg,
         )
     elif isinstance(test_case, StandardIOTestCase):
         return _evaluate_standard_io_test_case(
             src_code=src_code,
             test_case=test_case,
-            timeout=timeout
+            timeout=timeout,
+            sandbox_cfg=sandbox_cfg,
         )
     else:
         raise ValueError(f"Unknown test case type: {type(test_case)}")

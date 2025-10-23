@@ -12,6 +12,7 @@ import textwrap
 import unittest
 
 from parameterized import parameterized
+from collections.abc import Callable
 
 from eureka_ml_insights.metrics.live_code_bench import code_execution
 
@@ -35,8 +36,12 @@ class MockProcessRunner:
         self.should_timeout = False
         self.should_fail_startup = False
 
-    def run(self, args: list[str], input: bytes | None, capture_output: bool,
-            timeout: datetime.timedelta | None) -> subprocess.CompletedProcess:
+    def run(self, args: list[str],
+            input: bytes | None = None,
+            capture_output: bool = True,
+            timeout: datetime.timedelta | None = None,
+            preexec_fn: Callable[[], None] | None = None
+    ) -> subprocess.CompletedProcess:
         if self.should_timeout and timeout is not None:
             raise subprocess.TimeoutExpired(args, timeout.total_seconds())
         elif self.should_timeout:
@@ -429,6 +434,7 @@ class ExecuteScriptIntegrationTest(unittest.TestCase):
         self.assertEqual(result.stdout, "")
         self.assertRegex(result.stderr, "SyntaxError")
         self.assertRegex(result.error_message, "SyntaxError")
+
 
 if __name__ == "__main__":
     unittest.main()
