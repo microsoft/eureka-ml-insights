@@ -1,6 +1,9 @@
 """Defines the CodegenTestCaseResultsMetric.
 
 This metric evaluates generated code against provided test cases.
+
+This attempts to reproduce the behavior of lcb_runner/runner/custom_evaluator.py
+in the LiveCodeBench repository.
 """
 
 import concurrent.futures
