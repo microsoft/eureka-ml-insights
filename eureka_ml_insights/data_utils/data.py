@@ -527,6 +527,9 @@ class HFDataReader(DataReader):
         transform: Optional[DFTransformBase] = None,
         cache_dir: str = None,
         load_data_from_disk: bool = False,
+        # TODO: Remove this once LiveCodeBench supports reading the
+        # dataset without running a remote script.
+        # See https://github.com/LiveCodeBench/LiveCodeBench/issues/108
         trust_remote_code: bool = False,
         **kwargs,
     ):
@@ -540,6 +543,8 @@ class HFDataReader(DataReader):
             transform: optional list of Transforms, to apply after loading.
             cache_dir: optional str, local cache path.
             load_data_from_disk: optional bool, if True, load the Huggingface dataset from specified local path.
+            trust_remote_code: optional bool, whether to trust remote code when
+                loading dataset.
         """
         super().__init__(path=path, transform=transform, **kwargs)
         self.split = split
@@ -547,6 +552,9 @@ class HFDataReader(DataReader):
         self.cache_dir = cache_dir
         self.load_data_from_disk = load_data_from_disk
         self.trust_remote_code = trust_remote_code
+        # TODO: Remove this once LiveCodeBench supports the 'revision'
+        # parameter of load_dataset.
+        # See https://huggingface.co/docs/datasets/v4.2.0/en/package_reference/loading_methods#datasets.load_dataset.revision
         self.release_version = kwargs.get("release_version", None)
 
     def _save_base64_to_image_file(self, image_base64: dict, cache_path: str) -> str:
