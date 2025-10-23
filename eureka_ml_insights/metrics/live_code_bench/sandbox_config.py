@@ -110,10 +110,11 @@ def _apply_syscall_filter_linux(blocked_syscalls: frozenset[str]) -> None:
     # Default allow all syscalls
     filter = seccomp.SyscallFilter(defaction=seccomp.ALLOW)
 
+    kill_action = getattr(seccomp, "KILL_PROCESS", seccomp.KILL)
+
     for syscall_name in blocked_syscalls:
         # Kill the process if blocked syscall is called
-        action = getattr(seccomp, "KILL_PROCESS", seccomp.KILL)
-        filter.add_rule(action, syscall_name)
+        filter.add_rule(kill_action, syscall_name)
 
     filter.load()
 
