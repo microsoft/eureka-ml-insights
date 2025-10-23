@@ -169,7 +169,7 @@ class CopyColumn(DFTransformBase):
         return df
 
 @dataclass
-class AddColumnValuesTransform(DFTransformBase):
+class ConcatColumnsToSingleColumn(DFTransformBase):
     """
     Concatenates the values of multiple columns into a single column.
 
@@ -179,7 +179,7 @@ class AddColumnValuesTransform(DFTransformBase):
             "a": [[1, 2], [3, 4]],
             "b": [[5], [6, 7]]
         })
-        t = AddColumnValuesTransform(columns=["a", "b"], new_column="combined")
+        t = ConcatColumnsToSingleColumn(columns=["a", "b"], new_column="combined")
         print(t.transform(df))
         # -> combined = [[1, 2, 5], [3, 4, 6, 7]]
 

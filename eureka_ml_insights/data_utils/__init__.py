@@ -41,7 +41,7 @@ from .transform import (
     TokenCounterTransform,
     ExtractUsageTransform,
     StrToJsonTransform,
-    AddColumnValuesTransform,
+    ConcatColumnsToSingleColumn,
     FilterDatetimeColumnToRangeTransform,
 )
 
@@ -84,6 +84,6 @@ __all__ = [
     NumpyEncoder,
     ExtractUsageTransform,
     StrToJsonTransform,
-    AddColumnValuesTransform,
+    ConcatColumnsToSingleColumn,
     FilterDatetimeColumnToRangeTransform,
 ]

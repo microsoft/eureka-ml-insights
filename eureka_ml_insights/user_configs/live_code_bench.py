@@ -382,7 +382,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     self._METADATA_COLUMN_NAME,
                     self._PUBLIC_TEST_CASES_COLUMN_NAME
                 ]),
-            data_utils.AddColumnValuesTransform(
+            data_utils.ConcatColumnsToSingleColumn(
                 # Combines the public and private test cases into
                 # a single column as code evaluation does not
                 # distinguish between them.
