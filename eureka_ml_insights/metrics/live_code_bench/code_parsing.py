@@ -56,7 +56,7 @@ def find_function_path(src_code: str, func_name: str) -> str:
             "class MyClass:\n    def my_function(self): pass",
             "my_function"
         )
-        Returns: "MyClass.my_function
+        Returns: "MyClass.my_function"
 
     Args:
         src_code: The source code to search.
