@@ -30,7 +30,6 @@ from typing import Any, Protocol
 
 from collections.abc import Callable
 
-from eureka_ml_insights.metrics.live_code_bench import sandbox_config
 
 # Minimal wrapper script to run functions in a subprocess
 # This script reads a pickled FunctionJob from stdin, executes the function,
@@ -164,7 +163,6 @@ class FunctionJob:
     args: tuple[Any, ...] = ()
     kwargs: dict[str, Any] = dataclasses.field(default_factory=dict)
     timeout: datetime.timedelta | None = None
-    sandbox_cfg: sandbox_config.SandboxConfig | None = None
 
 
 @dataclasses.dataclass(frozen=True)
@@ -181,7 +179,6 @@ class ScriptJob:
     script: str
     stdin_input: str | bytes = b""
     timeout: datetime.timedelta | None = None
-    sandbox_cfg: sandbox_config.SandboxConfig | None = None
 
 
 class ProcessExitReason(Enum):
@@ -402,15 +399,11 @@ def execute_script(job: ScriptJob,
     input: bytes = (job.stdin_input.encode('utf-8') if isinstance(
         job.stdin_input, str) else job.stdin_input)
 
-    preexec_fn = (job.sandbox_cfg.to_preexec_fn()
-                  if job.sandbox_cfg is not None else None)
-
     raw_result: RawProcessResult = _execute_python_script(
         script=job.script,
         input=input,
         runner=runner,
-        timeout=job.timeout,
-        preexec_fn=preexec_fn)
+        timeout=job.timeout)
 
     if raw_result.exit_reason == ProcessExitReason.COMPLETED:
         stderr_str = raw_result.stderr.decode("utf-8", errors="replace")
@@ -519,15 +512,11 @@ def execute_function(job: FunctionJob,
     if runner is None:
         runner = SubprocessRunner()
 
-    preexec_fn = (job.sandbox_cfg.to_preexec_fn()
-                  if job.sandbox_cfg is not None else None)
-
     raw_result: RawProcessResult = _execute_python_script(
         script=_FUNCTION_RUNNER_SCRIPT,
         input=_serialize_function_job(job),
         runner=runner,
-        timeout=job.timeout,
-        preexec_fn=preexec_fn)
+        timeout=job.timeout)
 
     if raw_result.exit_reason == ProcessExitReason.COMPLETED:
         return _deserialize_function_result(raw_result)
