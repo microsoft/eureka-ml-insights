@@ -367,19 +367,19 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
             PromptProcessingConfig for the prompt creation stage.
         """
         transforms: list[data_utils.DFTransformBase] = [
-            data_utils.ApplyFunctionToColumn(
+            data_utils.ApplyFunctionToColumnTransform(
                 src_column_name=self._CONTEST_DATE_COLUMN_NAME,
                 dst_column_name=self._CONTEST_DATE_COLUMN_NAME,
                 function=lambda x: datetime.datetime.fromisoformat(x),
             ),
-            data_utils.FilterColumnToRange(
+            data_utils.FilterColumnToRangeTransform(
                 column_name=self._CONTEST_DATE_COLUMN_NAME,
                 start=lcb_start_datetime,
                 end=lcb_end_datetime,
             ),
             # Have to convert back to a string since the output of the step must
             # be JSON serializable and a timestamp is not.
-            data_utils.ApplyFunctionToColumn(
+            data_utils.ApplyFunctionToColumnTransform(
                 src_column_name=self._CONTEST_DATE_COLUMN_NAME,
                 dst_column_name=self._CONTEST_DATE_COLUMN_NAME,
                 function=lambda x: x.isoformat(),
@@ -400,7 +400,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     self._PRIVATE_TEST_CASES_COLUMN_NAME),
                 decoded_test_cases_column_name=(
                     self._PRIVATE_TEST_CASES_COLUMN_NAME)),
-            data_utils.ConvertStrColumnToJson(
+            data_utils.ConvertStrColumnToJsonTransform(
                 # private_test_cases_column_name is already
                 # decoded by DecodeTestCasesTransform into a
                 # JSON object, so we only need to convert the other
@@ -409,7 +409,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     self._METADATA_COLUMN_NAME,
                     self._PUBLIC_TEST_CASES_COLUMN_NAME
                 ]),
-            data_utils.ConcatColumnsToSingleColumn(
+            data_utils.ConcatColumnsToSingleColumnTransform(
                 # Combines the public and private test cases into
                 # a single column as code evaluation does not
                 # distinguish between them.

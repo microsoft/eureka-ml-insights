@@ -169,7 +169,7 @@ class CopyColumn(DFTransformBase):
         return df
 
 @dataclass
-class ConcatColumnsToSingleColumn(DFTransformBase):
+class ConcatColumnsToSingleColumnTransform(DFTransformBase):
     """
     Concatenates the values of multiple columns into a single column.
 
@@ -179,7 +179,8 @@ class ConcatColumnsToSingleColumn(DFTransformBase):
             "a": [[1, 2], [3, 4]],
             "b": [[5], [6, 7]]
         })
-        t = ConcatColumnsToSingleColumn(columns=["a", "b"], new_column="combined")
+        t = ConcatColumnsToSingleColumnTransform(
+            columns=["a", "b"], new_column="combined")
         print(t.transform(df))
         # -> combined = [[1, 2, 5], [3, 4, 6, 7]]
 
@@ -204,7 +205,7 @@ class ConcatColumnsToSingleColumn(DFTransformBase):
 
 
 @dataclass
-class ApplyFunctionToColumn(DFTransformBase):
+class ApplyFunctionToColumnTransform(DFTransformBase):
     """
     Applies a user-defined function to a specified column in the DataFrame.
 
@@ -224,7 +225,7 @@ class ApplyFunctionToColumn(DFTransformBase):
 
 
 @dataclass
-class FilterColumnToRange(DFTransformBase):
+class FilterColumnToRangeTransform(DFTransformBase):
     """
     Filters a DataFrame column to a specified value range.
 
@@ -288,7 +289,7 @@ class MultiColumnTransform(DFTransformBase):
 
 
 @dataclass
-class ConvertStrColumnToJson(MultiColumnTransform):
+class ConvertStrColumnToJsonTransform(MultiColumnTransform):
     """
     Transforms string representation of a JSON object to an actual JSON object.
 

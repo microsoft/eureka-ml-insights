@@ -40,10 +40,10 @@ from .transform import (
     MajorityVoteTransform,
     TokenCounterTransform,
     ExtractUsageTransform,
-    ConvertStrColumnToJson,
-    ConcatColumnsToSingleColumn,
-    ApplyFunctionToColumn,
-    FilterColumnToRange,
+    ConvertStrColumnToJsonTransform,
+    ConcatColumnsToSingleColumnTransform,
+    ApplyFunctionToColumnTransform,
+    FilterColumnToRangeTransform,
 )
 
 __all__ = [
@@ -84,8 +84,8 @@ __all__ = [
     MajorityVoteTransform,
     NumpyEncoder,
     ExtractUsageTransform,
-    ConvertStrColumnToJson,
-    ConcatColumnsToSingleColumn,
-    ApplyFunctionToColumn,
-    FilterColumnToRange,
+    ConvertStrColumnToJsonTransform,
+    ConcatColumnsToSingleColumnTransform,
+    ApplyFunctionToColumnTransform,
+    FilterColumnToRangeTransform,
 ]
