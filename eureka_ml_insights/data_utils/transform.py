@@ -285,34 +285,6 @@ class MultiColumnTransform(DFTransformBase):
 
 
 @dataclass
-class ConvertStrColumnToJsonTransform(MultiColumnTransform):
-    """
-    Transforms string representation of a JSON object to an actual JSON object.
-
-    Args:
-        columns: Column(s) to apply transform to.
-    """
-
-    columns: List[str] | str
-
-    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        self.validate(df)
-
-        if df.empty:
-            logging.warning(
-                "The input dataframe is empty, no transformation was applied.")
-            return df
-
-        if isinstance(self.columns, str):
-            self.columns = [self.columns]
-
-        for col in self.columns:
-            df[col] = df[col].map(json.loads)
-
-        return df
-
-
-@dataclass
 class ShuffleColumnsTransform(MultiColumnTransform):
     """
     For a set of columns, shuffles the values across each row of these columns.

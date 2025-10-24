@@ -366,15 +366,17 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     self._PRIVATE_TEST_CASES_COLUMN_NAME),
                 decoded_test_cases_column_name=(
                     self._PRIVATE_TEST_CASES_COLUMN_NAME)),
-            data_utils.ConvertStrColumnToJsonTransform(
-                # private_test_cases_column_name is already
-                # decoded by DecodeTestCasesTransform into a
-                # JSON object, so we only need to convert the other
-                # columns.
-                columns=[
-                    self._METADATA_COLUMN_NAME,
-                    self._PUBLIC_TEST_CASES_COLUMN_NAME
-                ]),
+            data_utils.RunPythonTransform(
+                python_code=textwrap.dedent(f"""
+                    df[[
+                        "{self._METADATA_COLUMN_NAME}",
+                        "{self._PUBLIC_TEST_CASES_COLUMN_NAME}"]] = (
+                        df[[
+                            "{self._METADATA_COLUMN_NAME}",
+                            "{self._PUBLIC_TEST_CASES_COLUMN_NAME}"]]
+                        .map(json.loads))
+                """)
+            ),
             data_utils.ConcatColumnsToSingleColumnTransform(
                 # Combines the public and private test cases into
                 # a single column as code evaluation does not
