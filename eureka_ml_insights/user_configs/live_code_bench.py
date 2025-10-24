@@ -330,10 +330,11 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
             PromptProcessingConfig for the prompt creation stage.
         """
         transforms: list[data_utils.DFTransformBase] = [
-            data_utils.ApplyFunctionToColumnTransform(
-                src_column_name=self._CONTEST_DATE_COLUMN_NAME,
-                dst_column_name=self._CONTEST_DATE_COLUMN_NAME,
-                function=lambda x: datetime.datetime.fromisoformat(x),
+            data_utils.RunPythonTransform(
+                python_code=textwrap.dedent(f"""
+                   df["{self._CONTEST_DATE_COLUMN_NAME}"] = pd.to_datetime(
+                       df["{self._CONTEST_DATE_COLUMN_NAME}"])
+                """)
             ),
             data_utils.FilterColumnToRangeTransform(
                 column_name=self._CONTEST_DATE_COLUMN_NAME,
@@ -342,10 +343,12 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
             ),
             # Have to convert back to a string since the output of the step must
             # be JSON serializable and a timestamp is not.
-            data_utils.ApplyFunctionToColumnTransform(
-                src_column_name=self._CONTEST_DATE_COLUMN_NAME,
-                dst_column_name=self._CONTEST_DATE_COLUMN_NAME,
-                function=lambda x: x.isoformat(),
+            data_utils.RunPythonTransform(
+                python_code=textwrap.dedent(f"""
+                   df["{self._CONTEST_DATE_COLUMN_NAME}"] = (
+                       df["{self._CONTEST_DATE_COLUMN_NAME}"]
+                       .dt.strftime("%Y-%m-%dT%H:%M:%S"))
+                """)
             ),
         ]
 

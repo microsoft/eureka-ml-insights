@@ -221,26 +221,6 @@ class ConcatColumnsToSingleColumnTransform(DFTransformBase):
 
 
 @dataclass
-class ApplyFunctionToColumnTransform(DFTransformBase):
-    """
-    Applies a user-defined function to a specified column in the DataFrame.
-
-    Args:
-        column_name: The name of the column to which the function will be applied.
-        function: A callable that takes a single argument and returns a transformed value.
-    """
-
-    src_column_name: str
-    dst_column_name: str
-    function: Callable[[Any], Any]
-
-    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        df[self.dst_column_name] = (df[self.src_column_name]
-                                    .apply(self.function))
-        return df
-
-
-@dataclass
 class FilterColumnToRangeTransform(DFTransformBase):
     """
     Filters a DataFrame column to a specified value range.

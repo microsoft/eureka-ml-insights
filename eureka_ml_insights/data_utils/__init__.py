@@ -43,7 +43,6 @@ from .transform import (
     ExtractUsageTransform,
     ConvertStrColumnToJsonTransform,
     ConcatColumnsToSingleColumnTransform,
-    ApplyFunctionToColumnTransform,
     FilterColumnToRangeTransform,
 )
 
@@ -88,6 +87,5 @@ __all__ = [
     ExtractUsageTransform,
     ConvertStrColumnToJsonTransform,
     ConcatColumnsToSingleColumnTransform,
-    ApplyFunctionToColumnTransform,
     FilterColumnToRangeTransform,
 ]
