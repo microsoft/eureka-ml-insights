@@ -1,11 +1,15 @@
-"""Defines Pass@K metric aggregator."""
+"""Defines Pass@K metric aggregator.
 
+This code reproduces the behavior of the Pass@K metric as defined in
+https://github.com/LiveCodeBench/LiveCodeBench/blob/28fef95ea8c9f7a547c8329f2cd3d32b92c1fa24/lcb_runner/evaluation/pass_k_utils.py
+"""
+
+import math
 import pandas as pd
 
 from typing import cast
 
 from eureka_ml_insights.metrics import reports
-from eureka_ml_insights.metrics.live_code_bench import pass_at_k
 
 
 class PassAtKAggregator(reports.NumericalAggregator):
@@ -46,7 +50,7 @@ class PassAtKAggregator(reports.NumericalAggregator):
         num_attempts: int = len(passed)
         num_correct: int = passed.sum()
 
-        pass_at_k_estimate: float = pass_at_k.estimate_pass_at_k(
+        pass_at_k_estimate: float = estimate_pass_at_k(
             num_attempts=num_attempts, num_correct=num_correct, k=self._k)
 
         self.aggregated_result = {f"pass@{self._k}": pass_at_k_estimate}
@@ -74,7 +78,7 @@ class PassAtKAggregator(reports.NumericalAggregator):
             num_attempts = int(num_attempts_per_group[group_name])
             num_correct = int(num_correct_per_group[group_name])
 
-            pass_at_k_estimate: float = pass_at_k.estimate_pass_at_k(
+            pass_at_k_estimate: float = estimate_pass_at_k(
                 num_attempts=num_attempts,
                 num_correct=num_correct,
                 k=self._k,
@@ -89,3 +93,41 @@ class PassAtKAggregator(reports.NumericalAggregator):
             f"pass@{self._k}_by_{self.group_by}": pass_at_k_from_group,
             f"overall_avg_pass@{self._k}": overall_avg_pass_at_k,
         }
+
+
+def estimate_pass_at_k(
+    num_attempts: int, num_correct: int, k: int
+) -> float:
+    """Computes the Pass@K metric for the given test results.
+
+    Args:
+        num_attempts: An integer representing the total number of attempts.
+        num_correct: An integer representing the number of correct attempts.
+        k: An integer representing the K value for the Pass@K metric.
+
+    Returns:
+        A float representing the Pass@K metric.
+
+    Raises:
+        ValueError: If K is not a positive integer or if num_correct exceeds
+            num_attempts.
+    """
+    if num_correct > num_attempts:
+        raise ValueError(
+            "Number of correct attempts cannot exceed total attempts. "
+            f"Got {num_correct} correct attempts and {num_attempts} total "
+            "attempts.")
+
+    if k <= 0:
+        raise ValueError(f"K must be a positive integer. Got {k}.")
+
+    if num_correct == 0:
+        return 0.0
+
+    if num_attempts <= k:
+        return 1.0
+
+    p_choosing_all_incorrect: float = (
+        math.comb(num_attempts - num_correct, k) / math.comb(num_attempts, k))
+
+    return 1.0 - p_choosing_all_incorrect
