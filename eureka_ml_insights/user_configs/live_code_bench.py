@@ -35,7 +35,7 @@ from eureka_ml_insights.data_utils.live_code_bench import (
 )
 from eureka_ml_insights.metrics.live_code_bench import (
     codegen_test_case_results_metric,
-    pass_at_k_aggregator,
+    estimate_pass_at_k_aggregator,
 )
 from eureka_ml_insights.core.job_runner.command_runners import subprocess_runner
 
@@ -527,7 +527,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                 }),
             aggregator_configs=[
                 config.AggregatorConfig(
-                    class_name=pass_at_k_aggregator.PassAtKAggregator,
+                    class_name=estimate_pass_at_k_aggregator.EstimatePassAtKAggregator,
                     init_args={
                         "passed_column_name": (
                             "CodegenTestCaseResultsMetric_all_passed"),

@@ -2,7 +2,7 @@ import unittest
 
 from parameterized import parameterized
 
-from eureka_ml_insights.metrics.live_code_bench import pass_at_k_aggregator
+from eureka_ml_insights.metrics.live_code_bench import estimate_pass_at_k_aggregator
 
 
 class EstimatePassAtKTest(unittest.TestCase):
@@ -27,7 +27,7 @@ class EstimatePassAtKTest(unittest.TestCase):
         expected_pass_at_k: float,
     ):
         """Tests the estimate_pass_at_k function with various inputs."""
-        result = pass_at_k_aggregator.estimate_pass_at_k(
+        result = estimate_pass_at_k_aggregator.estimate_pass_at_k(
             num_attempts=num_attempts,
             num_correct=num_correct,
             k=k,
@@ -39,7 +39,7 @@ class EstimatePassAtKTest(unittest.TestCase):
         with self.assertRaisesRegex(
             ValueError,
             "Number of correct attempts cannot exceed total attempts."):
-            pass_at_k_aggregator.estimate_pass_at_k(
+            estimate_pass_at_k_aggregator.estimate_pass_at_k(
                 num_attempts=5, num_correct=6, k=1)
 
     @parameterized.expand([
@@ -51,7 +51,7 @@ class EstimatePassAtKTest(unittest.TestCase):
         with self.assertRaisesRegex(
             ValueError,
             "K must be a positive integer."):
-            pass_at_k_aggregator.estimate_pass_at_k(
+            estimate_pass_at_k_aggregator.estimate_pass_at_k(
                 num_attempts=5, num_correct=3, k=k)
 
 

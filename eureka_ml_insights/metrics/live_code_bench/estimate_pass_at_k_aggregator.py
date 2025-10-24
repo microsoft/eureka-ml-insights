@@ -12,7 +12,7 @@ from typing import cast
 from eureka_ml_insights.metrics import reports
 
 
-class PassAtKAggregator(reports.NumericalAggregator):
+class EstimatePassAtKAggregator(reports.NumericalAggregator):
     """Implements the Pass@K metric aggregator."""
 
     def __init__(self, passed_column_name: str, k: int, **kwargs):
