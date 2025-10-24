@@ -9,7 +9,6 @@ import pandas as pd
 import dataclasses
 
 from tqdm.auto import tqdm
-from typing import override
 
 from eureka_ml_insights.data_utils import transform
 from eureka_ml_insights.data_utils.live_code_bench import encoding
@@ -28,7 +27,6 @@ class DecodeTestCasesTransform(transform.DFTransformBase):
     encoded_test_cases_column_name: str
     decoded_test_cases_column_name: str
 
-    @override
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """Decodes the test cases in the DataFrame.
 

@@ -10,7 +10,7 @@ import concurrent.futures
 import datetime
 import pandas as pd
 
-from typing import TypedDict, override
+from typing import TypedDict
 from tqdm.auto import tqdm
 
 from eureka_ml_insights.metrics import metrics_base
@@ -132,7 +132,6 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
 
     # Override this method to show that a progress bar.
     # Otherwise, the behavior is the same as the parent.
-    @override
     def evaluate(self, data: pd.DataFrame) -> pd.DataFrame:
         """Evaluates the generated code against the provided test cases.
 
@@ -154,7 +153,6 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
 
         return data
 
-    @override
     def __evaluate__(self, row: "pd.Series") -> TestResults:  # type: ignore
         """Runs the code against the test cases and checks if they pass.
 
