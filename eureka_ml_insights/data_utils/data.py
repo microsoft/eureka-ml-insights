@@ -549,6 +549,13 @@ class HFDataReader(DataReader):
                 loading dataset.
         """
         super().__init__(path=path, transform=transform, **kwargs)
+
+        if trust_remote_code and not path.startswith("livecodebench/"):
+            raise ValueError(
+                "The 'trust_remote_code' parameter can only be set to True when"
+                " loading datasets from the 'livecodebench/' namespace. Got"
+                f" {path}."
+            )
         self.split = split
         self.tasks = tasks
         self.cache_dir = cache_dir
