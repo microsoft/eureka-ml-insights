@@ -23,7 +23,6 @@ parameters.
 import datetime
 import pathlib
 import textwrap
-import sys
 
 from typing import Any
 
@@ -144,8 +143,8 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                            lcb_end_datetime: str | None = None,
                            sampler_random_seed: int | str = 42,
                            sample_count: int | str | None = None,
-                           num_generated_responses_per_prompt: int | str = 5,
-                           max_concurrent_inference_requests: int | str = 5,
+                           n_repeats: int | str = 5,
+                           max_concurrent: int | str = 5,
                            closing_think_token: str = "",
                            code_evaluation_timeout_seconds: float | str = 20.0,
                            max_parallel_code_executions_per_attempt: int | str = 16,
@@ -174,10 +173,10 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
             sample_count: The number of data points to sample from the dataset.
                 This can be used for testing the pipeline with a smaller subset
                 of the data.
-            num_generated_responses_per_prompt: The number of code responses to
+            n_repeats: The number of code responses to
                 generate per question. Higher numbers provide a better estimate
                 of Pass@K metrics but increase computation cost.
-            max_concurrent_inference_requests: The maximum number of concurrent
+            max_concurrent: The maximum number of concurrent
                 inference requests to send to the model.
             closing_think_token: The token indicating the end of the model's
                 reasoning process in the generated output. For example,
@@ -202,19 +201,19 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
         if model_config is None:
             raise ValueError("model_config must be provided.")
         
-        num_generated_responses_per_prompt = int(
-            num_generated_responses_per_prompt)
-        if num_generated_responses_per_prompt < 1:
+        n_repeats = int(
+            n_repeats)
+        if n_repeats < 1:
             raise ValueError(
-                "num_generated_responses_per_prompt must be at least 1."
-                f" Got {num_generated_responses_per_prompt}.")
+                "n_repeats must be at least 1."
+                f" Got {n_repeats}.")
         
-        max_concurrent_inference_requests = int(
-            max_concurrent_inference_requests)
-        if max_concurrent_inference_requests <= 0:
+        max_concurrent = int(
+            max_concurrent)
+        if max_concurrent <= 0:
             raise ValueError(
                 "max_concurrent_inference_requests must be positive. "
-                f"Got {max_concurrent_inference_requests}.")
+                f"Got {max_concurrent}.")
 
         code_evaluation_timeout_seconds = float(
             code_evaluation_timeout_seconds)
@@ -261,8 +260,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
             lcb_end_datetime=lcb_end_datetime_parsed,
             sampler_random_seed=sampler_random_seed,
             sample_count=sample_count,
-            num_generated_responses_per_prompt=(
-                num_generated_responses_per_prompt),
+            n_repeats=n_repeats,
         )
 
         self._response_generation = self._create_inference_config(
@@ -271,7 +269,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                 self._TRANSFORMED_DATA_FILE_NAME,
             ),
             model_config=model_config,
-            max_concurrent_inference_requests=max_concurrent_inference_requests,
+            max_concurrent_inference_requests=max_concurrent,
             resume_from=resume_from,
         )
 
@@ -311,7 +309,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
         lcb_end_datetime: datetime.datetime | None,
         sampler_random_seed: int,
         sample_count: int | None,
-        num_generated_responses_per_prompt: int,
+        n_repeats: int,
     ) -> configs.PromptProcessingConfig:
         """Creates the prompt processing configuration.
 
@@ -326,7 +324,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
             sample_count: The number of data points to sample from the dataset.
                 This can be used for testing the pipeline with a smaller subset
                 of the data.
-            num_generated_responses_per_prompt: Number of responses per prompt.
+            n_repeats: Number of responses per prompt.
 
         Returns:
             PromptProcessingConfig for the prompt creation stage.
@@ -395,7 +393,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
             ),
             data_utils.MultiplyTransform(
                 # This is to generate multiple responses per prompt.
-                n_repeats=num_generated_responses_per_prompt,
+                n_repeats=n_repeats,
             ),
         ])
 
