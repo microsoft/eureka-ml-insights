@@ -2,8 +2,8 @@
 
 This metric evaluates generated code against provided test cases.
 
-This attempts to reproduce the behavior of lcb_runner/runner/custom_evaluator.py
-in the LiveCodeBench repository.
+This attempts to reproduce the behavior of
+https://github.com/LiveCodeBench/LiveCodeBench/blob/28fef95ea8c9f7a547c8329f2cd3d32b92c1fa24/lcb_runner/runner/custom_evaluator.py.
 """
 
 import concurrent.futures
@@ -37,58 +37,6 @@ class TestResults(TypedDict):
     passed: list[bool]
     error_messages: list[str]
     all_passed: bool | None
-
-
-def _run_test(
-        raw_test_case: dict[str, str],
-        code: str,
-        function_path: str,
-        function_parsing_error: str,
-        runner: command_runners_base.CommandRunner,
-        timeout: datetime.timedelta | None = None,
-) -> evaluate_codegen.TestCaseResult:
-    """Runs a single test case against the generated code.
-
-    Args:
-        raw_test_case: A dictionary representing the test case.
-            Should have the following keys:
-                - 'testtype': Either 'functional' or 'stdin'.
-                - 'input': The input for the test case.
-                - 'output': The expected output for the test case.
-        code: The generated code as a string.
-        function_path: The path to the function to be tested.
-            Empty string if not applicable.
-        function_parsing_error: An error message if there was an error
-            parsing the function, empty string otherwise.
-        runner: The command runner to use for executing the job.
-        timeout: An optional timeout for the test case execution.
-
-    Returns:
-        The result of the test.
-    """
-    try:
-        test_case = evaluate_codegen.parse_test_case(raw_test_case)
-        if (isinstance(test_case, evaluate_codegen.FunctionalTestCase)
-            and function_parsing_error):
-            return evaluate_codegen.TestCaseResult(
-                passed=False,
-                error_message=(
-                    f"Cannot run functional test case because "
-                    f"function parsing failed: {function_parsing_error}"
-                ),
-            )
-        return evaluate_codegen.evaluate_test_case(
-            src_code=code,
-            function_name=function_path,
-            test_case=test_case,
-            runner=runner,
-            timeout=timeout,
-        )
-    except Exception as e:
-        return evaluate_codegen.TestCaseResult(
-            passed=False,
-            error_message=f"Unexpected error: {str(e)}"
-        )
 
 
 class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
@@ -243,3 +191,55 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
             results["all_passed"] = all(results["passed"])
 
         return results
+
+
+def _run_test(
+        raw_test_case: dict[str, str],
+        code: str,
+        function_path: str,
+        function_parsing_error: str,
+        runner: command_runners_base.CommandRunner,
+        timeout: datetime.timedelta | None = None,
+) -> evaluate_codegen.TestCaseResult:
+    """Runs a single test case against the generated code.
+
+    Args:
+        raw_test_case: A dictionary representing the test case.
+            Should have the following keys:
+                - 'testtype': Either 'functional' or 'stdin'.
+                - 'input': The input for the test case.
+                - 'output': The expected output for the test case.
+        code: The generated code as a string.
+        function_path: The path to the function to be tested.
+            Empty string if not applicable.
+        function_parsing_error: An error message if there was an error
+            parsing the function, empty string otherwise.
+        runner: The command runner to use for executing the job.
+        timeout: An optional timeout for the test case execution.
+
+    Returns:
+        The result of the test.
+    """
+    try:
+        test_case = evaluate_codegen.parse_test_case(raw_test_case)
+        if (isinstance(test_case, evaluate_codegen.FunctionalTestCase)
+            and function_parsing_error):
+            return evaluate_codegen.TestCaseResult(
+                passed=False,
+                error_message=(
+                    f"Cannot run functional test case because "
+                    f"function parsing failed: {function_parsing_error}"
+                ),
+            )
+        return evaluate_codegen.evaluate_test_case(
+            src_code=code,
+            function_name=function_path,
+            test_case=test_case,
+            runner=runner,
+            timeout=timeout,
+        )
+    except Exception as e:
+        return evaluate_codegen.TestCaseResult(
+            passed=False,
+            error_message=f"Unexpected error: {str(e)}"
+        )
