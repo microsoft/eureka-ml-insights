@@ -412,7 +412,8 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     "trust_remote_code": self._HF_TRUST_REMOTE_CODE,
                     "transform": data_utils.SequenceTransform(transforms)
                 }),
-            output_dir=self._construct_output_dir_path("prompts"),
+            output_dir=self._construct_output_dir_path(
+                "data_processing_output"),
         )
 
     def _create_inference_config(
@@ -442,7 +443,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                 }),
             resume_from=resume_from,  # type: ignore
             max_concurrent=max_concurrent_inference_requests,
-            output_dir=self._construct_output_dir_path("responses"),
+            output_dir=self._construct_output_dir_path("inference_result"),
         )
 
     def _create_code_extraction_config(
@@ -475,7 +476,8 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                         ),
                     ])
                 }),
-            output_dir=self._construct_output_dir_path("extracted_code"))
+            output_dir=self._construct_output_dir_path(
+                "code_extraction_processing_output"))
 
     def _create_code_evaluation_config(
         self,
@@ -531,7 +533,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                         "filename_base": "Pass@1_by_question",
                     }),
             ],
-            output_dir=self._construct_output_dir_path("test_case_results"),
+            output_dir=self._construct_output_dir_path("eval_report"),
         )
 
     def _construct_output_dir_path(self, *parts: str) -> str:
