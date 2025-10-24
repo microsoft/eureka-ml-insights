@@ -2,9 +2,11 @@
 
 import ast
 
+
 class AmbiguousFunctionNameError(Exception):
     """Raised when multiple functions with the same name are found in the code."""
     pass
+
 
 class _FunctionFinder(ast.NodeVisitor):
     """AST visitor that finds function definitions by name.
