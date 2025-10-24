@@ -1,7 +1,7 @@
 import unittest
 from parameterized import parameterized
 
-from eureka_ml_insights.data_utils.live_code_bench import parsing
+from eureka_ml_insights.data_utils.live_code_bench import code_extraction_transform
 
 
 class ExtractCodeBlocksTest(unittest.TestCase):
@@ -83,7 +83,7 @@ class ExtractCodeBlocksTest(unittest.TestCase):
     def test_extract_code_blocks(
         self, response: str | None, closing_think_token: str,
         expected_blocks: list[str]):
-        extracted_blocks = parsing.extract_code_blocks(
+        extracted_blocks = code_extraction_transform.extract_code_blocks(
             response, closing_think_token)
         self.assertEqual(extracted_blocks, expected_blocks)
 
@@ -135,6 +135,8 @@ class ExtractLastCodeBlockTest(unittest.TestCase):
             "y=2"
         ),
     ])
-    def test_extract_last_code_block(self, response, closing_think_token, expected_code):
-        extracted_code = parsing.extract_last_code_block(response, closing_think_token)
+    def test_extract_last_code_block(
+        self, response, closing_think_token, expected_code):
+        extracted_code = code_extraction_transform.extract_last_code_block(
+            response, closing_think_token)
         self.assertEqual(extracted_code, expected_code)
