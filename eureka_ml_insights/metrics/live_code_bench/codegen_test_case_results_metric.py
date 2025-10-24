@@ -14,6 +14,7 @@ from typing import TypedDict, override
 from tqdm.auto import tqdm
 
 from eureka_ml_insights.metrics import metrics_base
+from eureka_ml_insights.core.job_runner.command_runners import base as command_runners_base
 from eureka_ml_insights.metrics.live_code_bench import (
     evaluate_codegen,
     code_parsing,
@@ -43,6 +44,7 @@ def _run_test(
         code: str,
         function_path: str,
         function_parsing_error: str,
+        runner: command_runners_base.CommandRunner,
         timeout: datetime.timedelta | None = None,
 ) -> evaluate_codegen.TestCaseResult:
     """Runs a single test case against the generated code.
@@ -58,6 +60,7 @@ def _run_test(
             Empty string if not applicable.
         function_parsing_error: An error message if there was an error
             parsing the function, empty string otherwise.
+        runner: The command runner to use for executing the job.
         timeout: An optional timeout for the test case execution.
 
     Returns:
@@ -78,6 +81,7 @@ def _run_test(
             src_code=code,
             function_name=function_path,
             test_case=test_case,
+            runner=runner,
             timeout=timeout,
         )
     except Exception as e:
@@ -96,6 +100,7 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
 
     def __init__(self, code_column_name: str, test_cases_column_name: str,
                  metadata_column_name: str,
+                 runner: command_runners_base.CommandRunner,
                  timeout: datetime.timedelta | None = None,
                  max_workers: int = 1,
                  additional_imports: str = "") -> None:
@@ -120,6 +125,7 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
         self._code_column_name = code_column_name
         self._test_cases_column_name = test_cases_column_name
         self._metadata_column_name = metadata_column_name
+        self._runner = runner
         self._timeout = timeout
         self._max_workers = max_workers
         self._additional_imports = additional_imports
@@ -225,7 +231,8 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
             max_workers=max_workers) as executor:
             futures = [
                 executor.submit(_run_test, raw, code, function_path,
-                                function_parsing_error, self._timeout)
+                                function_parsing_error, self._runner,
+                                self._timeout)
                 for raw in raw_test_cases
             ]
 

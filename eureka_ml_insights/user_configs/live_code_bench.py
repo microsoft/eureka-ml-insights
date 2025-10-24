@@ -38,6 +38,7 @@ from eureka_ml_insights.metrics.live_code_bench import (
     codegen_test_case_results_metric,
     pass_at_k_aggregator,
 )
+from eureka_ml_insights.core.job_runner.command_runners import subprocess_runner
 
 
 # Default additional imports to include in the code being tested.
@@ -127,6 +128,10 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
     _METADATA_COLUMN_NAME: str = "metadata"
     _ALL_TEST_CASES_COMBINED_COLUMN_NAME: str = "all_test_cases_combined"
     _DATAPOINT_ID_COLUMN_NAME: str = "data_point_id"
+
+    # Runner used to execute code during test case evaluation
+    _CODE_EXECUTION_RUNNER: subprocess_runner.SubprocessCommandRunner = (
+        subprocess_runner.SubprocessCommandRunner())
 
     # In the parameters below, we accept strings as well as the actual
     # types since the command line arguments are not parsed by main.py
@@ -508,6 +513,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     "test_cases_column_name": (
                         self._ALL_TEST_CASES_COMBINED_COLUMN_NAME),
                     "metadata_column_name": self._METADATA_COLUMN_NAME,
+                    "runner": self._CODE_EXECUTION_RUNNER,
                     "timeout": datetime.timedelta(
                         seconds=code_evaluation_timeout_seconds),
                     "max_workers": max_parallel_code_executions_per_attempt,

@@ -1,3 +1,4 @@
+# To run: python -m unittest tests.metric_utils_tests.live_code_bench.evaluate_codegen_tests
 import unittest
 import textwrap
 
@@ -5,6 +6,7 @@ from parameterized import parameterized
 from typing import Any
 
 from eureka_ml_insights.metrics.live_code_bench import evaluate_codegen
+from eureka_ml_insights.core.job_runner.command_runners import subprocess_runner
 
 
 class ParseTestCaseTest(unittest.TestCase):
@@ -120,6 +122,11 @@ class ParseTestCaseTest(unittest.TestCase):
 class EvaluateTestCaseTest(unittest.TestCase):
     """Tests for the evaluate_codegen function."""
 
+    @classmethod
+    def setUpClass(cls):
+        """Sets up a command runner for the tests."""
+        cls.command_runner = subprocess_runner.SubprocessCommandRunner()
+
     def test_evaluate_functional_case_passes(self):
         """Evaluates a functional test case that should pass."""
         src_code = textwrap.dedent("""
@@ -134,6 +141,7 @@ class EvaluateTestCaseTest(unittest.TestCase):
 
         result = evaluate_codegen.evaluate_test_case(
             src_code=src_code,
+            runner=self.command_runner,
             function_name=function_name,
             test_case=test_case
         )
@@ -155,6 +163,7 @@ class EvaluateTestCaseTest(unittest.TestCase):
 
         result = evaluate_codegen.evaluate_test_case(
             src_code=src_code,
+            runner=self.command_runner,
             function_name=function_name,
             test_case=test_case
         )
@@ -176,6 +185,7 @@ class EvaluateTestCaseTest(unittest.TestCase):
 
         result = evaluate_codegen.evaluate_test_case(
             src_code=src_code,
+            runner=self.command_runner,
             function_name=function_name,
             test_case=test_case
         )
@@ -200,6 +210,7 @@ class EvaluateTestCaseTest(unittest.TestCase):
         ):
             evaluate_codegen.evaluate_test_case(
                 src_code=src_code,
+                runner=self.command_runner,
                 function_name="",
                 test_case=test_case
             )
@@ -242,7 +253,8 @@ class EvaluateTestCaseTest(unittest.TestCase):
 
         result = evaluate_codegen.evaluate_test_case(
             src_code=src_code,
-            test_case=test_case
+            test_case=test_case,
+            runner=self.command_runner,
         )
 
         self.assertTrue(result.passed)
@@ -262,7 +274,8 @@ class EvaluateTestCaseTest(unittest.TestCase):
 
         result = evaluate_codegen.evaluate_test_case(
             src_code=src_code,
-            test_case=test_case
+            test_case=test_case,
+            runner=self.command_runner,
         )
 
         self.assertFalse(result.passed)
@@ -282,7 +295,8 @@ class EvaluateTestCaseTest(unittest.TestCase):
 
         result = evaluate_codegen.evaluate_test_case(
             src_code=src_code,
-            test_case=test_case
+            test_case=test_case,
+            runner=self.command_runner,
         )
 
         self.assertFalse(result.passed)

@@ -6,9 +6,10 @@ import datetime
 
 from typing import Any, TypedDict, cast
 
-from eureka_ml_insights.metrics.live_code_bench import (
-    code_execution,
-)
+from eureka_ml_insights.core.job_runner import job_runner
+from eureka_ml_insights.core.job_runner.command_runners import base as command_runners_base
+from eureka_ml_insights.core.job_runner.jobs import python_function_from_script_job
+from eureka_ml_insights.core.job_runner.jobs import python_script_job
 
 
 class RawTestCaseDict(TypedDict):
@@ -198,6 +199,7 @@ def _evaluate_functional_test_case(
         src_code: str,
         function_name: str,
         test_case: FunctionalTestCase,
+        runner: command_runners_base.CommandRunner,
         timeout: datetime.timedelta | None = None,
 ) -> TestCaseResult:
     """Evaluates a functional test case against the provided source code.
@@ -208,35 +210,64 @@ def _evaluate_functional_test_case(
             is part of a class, provide the full path (e.g.,
             'MyClass.my_function').
         test_case: The FunctionalTestCase instance.
+        runner: The command runner to use for executing the job.
         timeout: An optional timeout for the code execution.
 
     Returns:
         A TestCaseResult instance indicating whether the test case passed.
     """
-    job = code_execution.FunctionJob(src_code=src_code,
-                                     function_name=function_name,
-                                     args=test_case.inputs,
-                                     timeout=timeout)
+    job = python_function_from_script_job.PythonFunctionFromScriptJob(
+        src_script=src_code,
+        function_name=function_name,
+        args=test_case.inputs,
+    )
 
-    result: code_execution.FunctionResult = (
-        code_execution.execute_function(job))
+    result: job_runner.JobExecutionResult = job_runner.run_job(
+        job=job,
+        command_runner=runner,
+        timeout=timeout)
     
-    if result.success and result.return_value == test_case.expected_output:
-        return TestCaseResult(passed=True)
-    elif not result.success:
-        return TestCaseResult(passed=False,
-                              error_message=result.error_message)
-    else:
+    if result.runner_status == command_runners_base.CommandStatus.COMPLETED:
+        job_result = cast(
+            python_function_from_script_job.PythonFunctionFromScriptJobResult,
+            result.job_result)
+        if (job_result.success and
+            job_result.return_value == test_case.expected_output):
+            return TestCaseResult(passed=True)
+        elif not job_result.success:
+            assert job_result.exception_class_name is not None
+            assert job_result.exception_msg is not None
+            return TestCaseResult(passed=False,
+                                  error_message=(
+                                    "Raised exception "
+                                    + job_result.exception_class_name
+                                    + ": " + job_result.exception_msg))
+        else:
+            return TestCaseResult(
+                passed=False,
+                error_message=(
+                    f"Expected output: {test_case.expected_output}, "
+                    f"but got: {job_result.return_value}"))
+    elif result.runner_status == command_runners_base.CommandStatus.TIMEOUT:
+        assert timeout is not None
+        return TestCaseResult(
+            passed=False,
+            error_message=("Code execution timed out after "
+                           f"{timeout.total_seconds()} seconds."))
+    elif result.runner_status == command_runners_base.CommandStatus.FAILED_TO_RUN:
         return TestCaseResult(
             passed=False,
             error_message=(
-                f"Expected output: {test_case.expected_output}, "
-                f"but got: {result.return_value}"))
+                f"Code execution failed to run: {result.job_result.stderr}"))
+    else:
+        raise ValueError(
+            f"Unknown runner status: {result.runner_status}")
 
 
 def _evaluate_standard_io_test_case(
         src_code: str,
         test_case: StandardIOTestCase,
+        runner: command_runners_base.CommandRunner,
         timeout: datetime.timedelta | None = None,
 ) -> TestCaseResult:
     """Evaluates a standard I/O test case against the provided source code.
@@ -247,38 +278,63 @@ def _evaluate_standard_io_test_case(
     Args:
         src_code: The source code to be tested.
         test_case: The StandardIOTestCase instance.
+        runner: The command runner to use for executing the job.
         timeout: An optional timeout for the code execution.
     
     Returns:
         A TestCaseResult instance indicating whether the test case passed.
     """
-    job = code_execution.ScriptJob(script=src_code,
-                                   stdin_input=test_case.stdin,
-                                   timeout=timeout)
+    job = python_script_job.PythonScriptFromSrcJob(
+        script=src_code,
+        stdin=test_case.stdin,
+    )
 
-    result: code_execution.ScriptResult = code_execution.execute_script(job)
+    result: job_runner.JobExecutionResult = job_runner.run_job(
+        job=job,
+        command_runner=runner,
+        timeout=timeout)
 
-    # Strip trailing newlines for comparison.
-    # The generated code may use sys.stdout.write which does not add a newline.
-    received_stdout: str = result.stdout.rstrip("\n")
-    expected_stdout: str = test_case.expected_stdout.rstrip("\n")
+    if result.runner_status == command_runners_base.CommandStatus.COMPLETED:
+        job_result = cast(
+            python_script_job.PythonScriptFromSrcJobResult,
+            result.job_result)
+        received_stdout: str = job_result.stdout_str.rstrip("\n")
+        expected_stdout: str = test_case.expected_stdout.rstrip("\n")
 
-    if result.success and received_stdout == expected_stdout:
-        return TestCaseResult(passed=True)
-    elif not result.success:
-        return TestCaseResult(passed=False,
-                              error_message=result.error_message)
-    else:
+        if job_result.returncode == 0 and received_stdout == expected_stdout:
+            return TestCaseResult(passed=True)
+        elif job_result.returncode != 0:
+            return TestCaseResult(
+                passed=False,
+                error_message=(
+                    f"Script exited with return code {job_result.returncode}. "
+                    f"Stderr: {job_result.stderr_str}"))
+        else:
+            return TestCaseResult(
+                passed=False,
+                error_message=(
+                    f"Expected stdout: {expected_stdout}, "
+                    f"but got: {received_stdout}"))
+    elif result.runner_status == command_runners_base.CommandStatus.TIMEOUT:
+        assert timeout is not None
+        return TestCaseResult(
+            passed=False,
+            error_message=("Code execution timed out after "
+                           f"{timeout.total_seconds()} seconds."))
+    elif result.runner_status == command_runners_base.CommandStatus.FAILED_TO_RUN:
         return TestCaseResult(
             passed=False,
             error_message=(
-                f"Expected stdout: {expected_stdout}, "
-                f"but got: {received_stdout}"))
+                f"Code execution failed to run: {result.job_result.stderr}"))
+    else:
+        raise ValueError(
+            f"Unknown runner status: {result.runner_status}")
 
 
 def evaluate_test_case(
         src_code: str,
         test_case: FunctionalTestCase | StandardIOTestCase,
+        runner: command_runners_base.CommandRunner,
         function_name: str = "",
         timeout: datetime.timedelta | None = None,
 ) -> TestCaseResult:
@@ -287,6 +343,7 @@ def evaluate_test_case(
     Args:
         src_code: The source code to be tested.
         test_case: The test case to evaluate.
+        runner: The command runner to use for executing the job.
         function_name: The name of the function to be tested. This is only
             required for FunctionalTestCase instances. If the function is part
             of a class, provide the full path (e.g., 'MyClass.my_function').
@@ -307,12 +364,14 @@ def evaluate_test_case(
             src_code=src_code,
             function_name=function_name,
             test_case=test_case,
+            runner=runner,
             timeout=timeout,
         )
     elif isinstance(test_case, StandardIOTestCase):
         return _evaluate_standard_io_test_case(
             src_code=src_code,
             test_case=test_case,
+            runner=runner,
             timeout=timeout,
         )
     else:
