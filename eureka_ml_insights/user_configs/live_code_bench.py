@@ -35,9 +35,9 @@ from eureka_ml_insights.data_utils.live_code_bench import (
 )
 from eureka_ml_insights.metrics.live_code_bench import (
     codegen_test_case_results_metric,
-    estimate_pass_at_k_aggregator,
 )
 from eureka_ml_insights.core.job_runner.command_runners import subprocess_runner
+from eureka_ml_insights.metrics import reports
 
 
 # Default additional imports to include in the code being tested.
@@ -526,15 +526,30 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     "additional_imports": additional_imports,
                 }),
             aggregator_configs=[
+                # Calculates the pass@1 by question across all attempts.
                 config.AggregatorConfig(
-                    class_name=estimate_pass_at_k_aggregator.EstimatePassAtKAggregator,
+                    class_name=reports.AverageAggregator,
                     init_args={
-                        "passed_column_name": (
-                            "CodegenTestCaseResultsMetric_all_passed"),
-                        "k": 1,
+                        "column_names": [
+                            "CodegenTestCaseResultsMetric_all_passed",
+                        ],
                         "group_by": self._DATAPOINT_ID_COLUMN_NAME,
-                        "filename_base": "Pass@1_by_question",
-                    }),
+                        "filename_base": "Pass@1_ByQuestion",
+                    }
+                ),
+                # Calculates the pass@1 by question across all attempts and then
+                # averages them to get the overall pass@1.
+                config.AggregatorConfig(
+                    class_name=reports.BiLevelAggregator,
+                    init_args={
+                        "column_names": [
+                            "CodegenTestCaseResultsMetric_all_passed",
+                        ],
+                        "first_groupby": self._DATAPOINT_ID_COLUMN_NAME,
+                        "agg_fn": "mean",
+                        "filename_base": "Pass@1_Overall",
+                    }
+                ),
             ],
             output_dir=self._construct_output_dir_path("eval_report"),
         )
