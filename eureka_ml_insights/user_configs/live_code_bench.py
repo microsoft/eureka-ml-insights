@@ -377,15 +377,16 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                         .map(json.loads))
                 """)
             ),
-            data_utils.ConcatColumnsToSingleColumnTransform(
+            data_utils.RunPythonTransform(
                 # Combines the public and private test cases into
                 # a single column as code evaluation does not
                 # distinguish between them.
-                columns=[
-                    self._PUBLIC_TEST_CASES_COLUMN_NAME,
-                    self._PRIVATE_TEST_CASES_COLUMN_NAME
-                ],
-                new_column=self._ALL_TEST_CASES_COMBINED_COLUMN_NAME
+                python_code=textwrap.dedent(f"""
+                    df["{self._ALL_TEST_CASES_COMBINED_COLUMN_NAME}"] = (
+                        df["{self._PUBLIC_TEST_CASES_COLUMN_NAME}"] +
+                        df["{self._PRIVATE_TEST_CASES_COLUMN_NAME}"]
+                    )
+                """)
             ),
             data_utils.DropColumnsTransform(
                 # Remove columns that are not needed for prompt generation

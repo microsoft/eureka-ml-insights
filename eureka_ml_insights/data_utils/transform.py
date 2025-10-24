@@ -185,42 +185,6 @@ class DropColumnsTransform(DFTransformBase):
 
 
 @dataclass
-class ConcatColumnsToSingleColumnTransform(DFTransformBase):
-    """
-    Concatenates the values of multiple columns into a single column.
-
-    The value of the columns must support the '+' operator.
-    Example:
-        df = pd.DataFrame({
-            "a": [[1, 2], [3, 4]],
-            "b": [[5], [6, 7]]
-        })
-        t = ConcatColumnsToSingleColumnTransform(
-            columns=["a", "b"], new_column="combined")
-        print(t.transform(df))
-        # -> combined = [[1, 2, 5], [3, 4, 6, 7]]
-
-    Attributes:
-        columns: List of column names whose values are to be concatenated.
-        new_column: Name of the new column to store the concatenated values.
-    """
-
-    columns: List[str]
-    new_column: str
-
-    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        # Start with the first column
-        result = df[self.columns[0]]
-
-        # Iteratively add the remaining columns
-        for col in self.columns[1:]:
-            result = result + df[col]
-
-        df[self.new_column] = result
-        return df
-
-
-@dataclass
 class FilterColumnToRangeTransform(DFTransformBase):
     """
     Filters a DataFrame column to a specified value range.
