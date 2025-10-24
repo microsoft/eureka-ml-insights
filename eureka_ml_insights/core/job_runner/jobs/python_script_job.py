@@ -15,9 +15,9 @@ class PythonScriptFromSrcJobResult:
         stdout_str: The standard output decoded as a UTF-8 string.
         stderr_str: The standard error decoded as a UTF-8 string.
     """
-    stdout: bytes
-    stderr: bytes
-    returncode: int
+    stdout: bytes = b""
+    stderr: bytes = b""
+    returncode: int = 0
 
     @property
     def stdout_str(self) -> str:
