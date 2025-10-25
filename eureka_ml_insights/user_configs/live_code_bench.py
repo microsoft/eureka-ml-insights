@@ -582,6 +582,18 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                         "filename_base": "Overall_Average_Pass@1",
                     }
                 ),
+                # Calculates best-of-n accuracy by question (n = num_repeats).
+                config.AggregatorConfig(
+                    class_name=reports.MaxAggregator,
+                    init_args={
+                        "column_names": [
+                            "CodegenTestCaseResultsMetric_all_passed",
+                        ],
+                        "group_by": self._DATAPOINT_ID_COLUMN_NAME,
+                        "agg_fn": "max",
+                        "filename_base": "BestOfN_ByQuestion",
+                    }
+                ),
                 # Calculates overall average best-of-n accuracy (
                 # n = num_repeats).
                 config.AggregatorConfig(
