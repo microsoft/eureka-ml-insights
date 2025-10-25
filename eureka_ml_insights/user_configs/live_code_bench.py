@@ -80,19 +80,6 @@ _DEFAULT_ADDITIONAL_PYTHON_IMPORTS: str = textwrap.dedent("""
 """)
 
 
-def _get_output_file_path(output_dir: str, filename: str) -> str:
-    """Constructs a file path within an output directory.
-
-        Args:
-            output_dir: The output directory path.
-            filename: The filename to append.
-
-        Returns:
-            String representation of the full file path.
-        """
-    return str(pathlib.Path(output_dir) / filename)
-
-
 class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
     """Defines the pipeline for running the code generation benchmark.
 
@@ -564,3 +551,16 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
             String representation of the constructed path.
         """
         return str(pathlib.Path(self.log_dir).joinpath(*parts))
+
+
+def _get_output_file_path(output_dir: str, filename: str) -> str:
+    """Constructs a file path within an output directory.
+
+        Args:
+            output_dir: The output directory path.
+            filename: The filename to append.
+
+        Returns:
+            String representation of the full file path.
+        """
+    return str(pathlib.Path(output_dir) / filename)
