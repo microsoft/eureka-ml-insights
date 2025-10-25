@@ -69,4 +69,5 @@ dependencies:
       - pycocotools>=2.0.8
       - vllm>=0.8.5
       - latex2sympy2>=1.9.1
+      - pyseccomp>=0.1.2
 prefix: /home/sayouse/miniconda3/envs/myenv
