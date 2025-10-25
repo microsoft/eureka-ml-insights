@@ -175,6 +175,9 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
     _ALL_TEST_CASES_COMBINED_COLUMN_NAME: str = "all_test_cases_combined"
     _DIFFICULTY_LEVEL_COLUMN_NAME: str = "difficulty"
     _DATAPOINT_ID_COLUMN_NAME: str = "data_point_id"
+    _USAGE_COLUMN_NAME: str = "usage"
+    _N_OUTPUT_TOKENS_COLUMN_NAME: str = "n_output_tokens"
+    _USAGE_COMPLETION_OUTPUT_COLUMN_NAME: str = "usage_completion_output"
 
     # In the parameters below, we accept strings as well as the actual
     # types since the command line arguments are not parsed by main.py
@@ -297,11 +300,12 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
             closing_think_token=closing_think_token,
         )
 
-        self._code_evaluation = self._create_code_evaluation_config(
+        self._eval_reporting = self._create_eval_report_config(
             extracted_code_filepath=_get_output_file_path(
                 self._code_extraction.output_dir,
                 self._TRANSFORMED_DATA_FILE_NAME,
             ),
+            model_config=model_config,
             code_evaluation_runner=params.code_evaluation_runner,
             code_evaluation_timeout_seconds=params.code_eval_timeout,
             max_parallel_code_executions_per_attempt=(
@@ -314,7 +318,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                 self._prompt_creation,
                 self._response_generation,
                 self._code_extraction,
-                self._code_evaluation,
+                self._eval_reporting,
             ],
             log_dir=self.log_dir,
         )
@@ -488,20 +492,19 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                 init_args={
                     "path": model_responses_filepath,
                     "format": self._JSONL_FILE_EXT,
-                    "transform": data_utils.SequenceTransform([
-                        code_extraction_transform.CodeExtractionTransform(
-                            model_output_column=self._MODEL_OUTPUT_COLUMN_NAME,
-                            code_column=self._EXTRACTED_CODE_COLUMN_NAME,
-                            closing_think_token=closing_think_token,
-                        ),
-                    ])
+                    "transform": code_extraction_transform.CodeExtractionTransform(
+                        model_output_column=self._MODEL_OUTPUT_COLUMN_NAME,
+                        code_column=self._EXTRACTED_CODE_COLUMN_NAME,
+                        closing_think_token=closing_think_token,
+                    ),
                 }),
             output_dir=self._construct_output_dir_path(
                 "code_extraction_processing_output"))
 
-    def _create_code_evaluation_config(
+    def _create_eval_report_config(
         self,
         extracted_code_filepath: str,
+        model_config: configs.ModelConfig,
         code_evaluation_runner: command_runners_base.CommandRunner,
         code_evaluation_timeout_seconds: float,
         max_parallel_code_executions_per_attempt: int,
@@ -511,6 +514,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
 
         Args:
             extracted_code_filepath: The file path to the extracted code.
+            model_config: The model configuration used for generating code.
             code_evaluation_timeout_seconds: The timeout in seconds for
                 executing each test case.
             max_parallel_code_executions_per_attempt: The maximum number of code
@@ -528,6 +532,13 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                 init_args={
                     "path": extracted_code_filepath,
                     "format": self._JSONL_FILE_EXT,
+                    "transform": data_utils.ExtractUsageTransform(
+                        model_config=model_config,
+                        usage_column=self._USAGE_COLUMN_NAME,
+                        n_tokens_column=self._N_OUTPUT_TOKENS_COLUMN_NAME,
+                        usage_completion_output_col=(
+                            self._USAGE_COMPLETION_OUTPUT_COLUMN_NAME)
+                    ),
                 }),
             metric_config=config.MetricConfig(
                 class_name=codegen_test_case_results_metric.
@@ -542,7 +553,8 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                         seconds=code_evaluation_timeout_seconds),
                     "max_workers": max_parallel_code_executions_per_attempt,
                     "additional_imports": additional_imports,
-                }),
+                }
+            ),
             aggregator_configs=[
                 # Calculates the pass@1 by question across all attempts.
                 config.AggregatorConfig(
@@ -646,6 +658,31 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                         "first_groupby": self._DATAPOINT_ID_COLUMN_NAME,
                         "agg_fn": "min",
                         "filename_base": "Overall_Average_WorstOfN",
+                    }
+                ),
+                # Average usage by difficulty and data point
+                config.AggregatorConfig(
+                    class_name=reports.BiLevelAggregator,
+                    init_args={
+                        "column_names": [
+                            self._USAGE_COMPLETION_OUTPUT_COLUMN_NAME
+                        ],
+                        "first_groupby": self._DATAPOINT_ID_COLUMN_NAME,
+                        "agg_fn": "mean",
+                        "second_groupby": self._DIFFICULTY_LEVEL_COLUMN_NAME,
+                        "filename_base": "Usage_ByDifficulty",
+                    }
+                ),
+                # Average usage per data point across all attempts.
+                config.AggregatorConfig(
+                    class_name=reports.BiLevelAggregator,
+                    init_args={
+                        "column_names": [
+                            self._USAGE_COMPLETION_OUTPUT_COLUMN_NAME
+                        ],
+                        "first_groupby": self._DATAPOINT_ID_COLUMN_NAME,
+                        "agg_fn": "mean",
+                        "filename_base": "Overall_Average_Usage_ByDataPoint",
                     }
                 ),
             ],
