@@ -594,6 +594,20 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                         "filename_base": "BestOfN_ByQuestion",
                     }
                 ),
+                # Calculates average best-of-n accuracy by difficulty level (
+                # n = num_repeats).
+                config.AggregatorConfig(
+                    class_name=reports.BiLevelAggregator,
+                    init_args={
+                        "column_names": [
+                            "CodegenTestCaseResultsMetric_all_passed",
+                        ],
+                        "first_groupby": self._DATAPOINT_ID_COLUMN_NAME,
+                        "agg_fn": "max",
+                        "second_groupby": self._DIFFICULTY_LEVEL_COLUMN_NAME,
+                        "filename_base": "BestOfN_ByDifficulty",
+                    }
+                ),
                 # Calculates overall average best-of-n accuracy (
                 # n = num_repeats).
                 config.AggregatorConfig(
