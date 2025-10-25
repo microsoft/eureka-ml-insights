@@ -1,4 +1,9 @@
-"""Defines how to execute a Python function from a source script."""
+"""Defines how to execute a Python function from a source script.
+
+The function should be defined in the provided source script, which is expected
+to be self-contained, including all necessary imports and definitions.
+The function must return a picklable object.
+"""
 
 import dataclasses
 import pickle
@@ -6,6 +11,8 @@ import sys
 import textwrap
 
 from typing import Any
+
+from eureka_ml_insights.core.job_runner.jobs import base
 
 
 # Minimal wrapper script to run functions.
@@ -149,7 +156,7 @@ class PythonFunctionFromScriptJobResult:
 
 
 @dataclasses.dataclass(frozen=True)
-class PythonFunctionFromScriptJob:
+class PythonFunctionFromScriptJob(base.Job):
     """Job to execute a Python function defined in a source script.
 
     The function must return a picklable object. The source script should be

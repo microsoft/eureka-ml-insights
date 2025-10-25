@@ -6,7 +6,7 @@ import datetime
 from eureka_ml_insights.core.job_runner.command_runners import base
 
 
-class SubprocessCommandRunner:
+class SubprocessCommandRunner(base.CommandRunner):
     """Command runner that uses subprocess to execute commands."""
 
     def run(

@@ -1,8 +1,13 @@
-"""Defines how to execute a Python script provided as source code."""
+"""Defines how to execute a Python script provided as source code.
+
+The script is expected to read input from stdin and write output to stdout.
+It should be self-contained, including all necessary imports and definitions.
+"""
 
 import dataclasses
 import sys
 
+from eureka_ml_insights.core.job_runner.jobs import base
 
 @dataclasses.dataclass(frozen=True)
 class PythonScriptFromSrcJobResult:
@@ -29,7 +34,7 @@ class PythonScriptFromSrcJobResult:
 
 
 @dataclasses.dataclass(frozen=True)
-class PythonScriptFromSrcJob:
+class PythonScriptFromSrcJob(base.Job):
     """Job to execute a Python script provided as source code.
 
     The script is expected to read input from stdin and write output to stdout.

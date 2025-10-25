@@ -1,10 +1,13 @@
-"""Defines the interface for executing CLI commands."""
+"""Defines the interface for executing CLI commands.
 
+The command runner takes a command and executes it, returning the result.
+"""
+
+import abc
 import dataclasses
 import datetime
 
 from enum import Enum
-from typing import Protocol
 
 
 class CommandStatus(Enum):
@@ -30,9 +33,10 @@ class CommandResult:
     status: CommandStatus = CommandStatus.COMPLETED
 
 
-class CommandRunner(Protocol):
+class CommandRunner(abc.ABC):
     """Protocol for running a command and returning the result."""
 
+    @abc.abstractmethod
     def run(
         self,
         command: list[str],
@@ -52,4 +56,3 @@ class CommandRunner(Protocol):
         Returns:
             The result of the command execution.
         """
-        ...
