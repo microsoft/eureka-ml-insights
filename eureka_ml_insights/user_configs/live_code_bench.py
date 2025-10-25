@@ -173,6 +173,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
     _PRIVATE_TEST_CASES_COLUMN_NAME: str = "private_test_cases"
     _METADATA_COLUMN_NAME: str = "metadata"
     _ALL_TEST_CASES_COMBINED_COLUMN_NAME: str = "all_test_cases_combined"
+    _DIFFICULTY_LEVEL_COLUMN_NAME: str = "difficulty"
     _DATAPOINT_ID_COLUMN_NAME: str = "data_point_id"
 
     # In the parameters below, we accept strings as well as the actual
@@ -565,6 +566,20 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                         "first_groupby": self._DATAPOINT_ID_COLUMN_NAME,
                         "agg_fn": "mean",
                         "filename_base": "Pass@1_Overall",
+                    }
+                ),
+                # Calculates the pass@1 by question across all attempts and then
+                # averages them by difficulty level to get pass@1 by difficulty.
+                config.AggregatorConfig(
+                    class_name=reports.BiLevelAggregator,
+                    init_args={
+                        "column_names": [
+                            "CodegenTestCaseResultsMetric_all_passed",
+                        ],
+                        "first_groupby": self._DATAPOINT_ID_COLUMN_NAME,
+                        "second_groupby": self._DIFFICULTY_LEVEL_COLUMN_NAME,
+                        "agg_fn": "mean",
+                        "filename_base": "Pass@1_ByDifficulty",
                     }
                 ),
             ],
