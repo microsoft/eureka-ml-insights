@@ -15,7 +15,7 @@ from tqdm.auto import tqdm
 
 from eureka_ml_insights.metrics import metrics_base
 from eureka_ml_insights.core.job_runner.command_runners import base as command_runners_base
-from eureka_ml_insights.metrics.live_code_bench import python_code_parser
+from eureka_ml_insights.metrics import python_code_utils
 from eureka_ml_insights.metrics.live_code_bench import raw_test_case
 from eureka_ml_insights.metrics.live_code_bench import functional_test_case
 from eureka_ml_insights.metrics.live_code_bench import standard_io_test_case
@@ -153,7 +153,7 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
         if self._additional_imports:
             code = self._additional_imports + "\n\n" + code
 
-        is_valid_code, parse_error = python_code_parser.is_python_code_valid(
+        is_valid_code, parse_error = python_code_utils.is_python_code_valid(
             code)
         if not is_valid_code:
             return TestResultsMetric(
@@ -166,7 +166,7 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
         function_path = ""
         function_parsing_error = ""
         try:
-            function_path = (python_code_parser.find_function_path(
+            function_path = (python_code_utils.find_function_path(
                 code, function_name) if function_name else "")
         except Exception as e:
             function_parsing_error = str(e)
