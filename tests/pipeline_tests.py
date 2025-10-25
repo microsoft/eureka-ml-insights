@@ -48,6 +48,7 @@ from eureka_ml_insights.user_configs import (
     IFEval_PIPELINE,
     ToxiGen_Discriminative_PIPELINE,
     ToxiGen_Generative_PIPELINE,
+    LIVE_CODE_BENCH_CODEGEN_PIPELINE,
 )
 from tests.test_utils import (
     DetectionTestModel,
@@ -412,6 +413,16 @@ class TEST_NPHARD_TSP_PIPELINE(NPHARD_TSP_PIPELINE_MULTIPLE_RUNS):
         return config
 
 
+class TEST_LIVE_CODE_BENCH_CODEGEN_PIPELINE(LIVE_CODE_BENCH_CODEGEN_PIPELINE):
+    # Tests LiveCodeBench Codegen Pipeline with GenericTestModel and TestDataLoader
+    def configure_pipeline(self):  # type: ignore
+        model_config = ModelConfig(GenericTestModel, {})
+        config = super().configure_pipeline(model_config=model_config)
+        self._prompt_creation.data_reader_config.class_name = TestHFDataReader
+        self._response_generation.data_loader_config.class_name = TestDataLoader
+        self._response_generation.data_loader_config.init_args["n_iter"] = N_ITER
+        return config
+
 class PipelineTest:
     def setUp(self) -> None:
         self.conf = self.get_config()
@@ -671,6 +682,10 @@ class GSM8K_PipelineTest(PipelineTest, unittest.TestCase):
 class GSMSYMBOLIC_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_GSMSYMBOLIC_PIPELINE().pipeline_config
+
+class LIVE_CODE_BENCH_CODEGEN_PipelineTest(PipelineTest, unittest.TestCase):
+    def get_config(self):
+        return TEST_LIVE_CODE_BENCH_CODEGEN_PIPELINE().pipeline_config
 
 
 if __name__ == "__main__":
