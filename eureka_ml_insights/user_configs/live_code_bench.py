@@ -21,6 +21,7 @@ parameters.
 """
 
 import datetime
+import dataclasses
 import pathlib
 import textwrap
 
@@ -80,6 +81,58 @@ _DEFAULT_ADDITIONAL_PYTHON_IMPORTS: str = textwrap.dedent("""
 """)
 
 
+@dataclasses.dataclass(frozen=True)
+class PipelineParams:
+    """Parameters for configuring the LiveCodeBench code generation pipeline."""
+    n_repeats: int
+    max_concurrent: int
+    code_eval_timeout: float
+    max_parallel_executions: int
+    sampler_seed: int
+    sample_count: int | None
+    start_dt: datetime.datetime | None
+    end_dt: datetime.datetime | None
+
+    @classmethod
+    def from_args(
+        cls,
+        *,
+        n_repeats: int | str,
+        max_concurrent: int | str,
+        code_evaluation_timeout_seconds: float | str,
+        max_parallel_code_executions_per_attempt: int | str,
+        sampler_random_seed: int | str,
+        sample_count: int | str | None,
+        lcb_start_datetime: str | None,
+        lcb_end_datetime: str | None,
+    ):
+        """Creates PipelineParams from command line arguments and validates them."""
+        return cls(
+            n_repeats=_validate_positive_int(n_repeats,
+                                             "n_repeats"),
+            max_concurrent=_validate_positive_int(max_concurrent,
+                                                  "max_concurrent"),
+            code_eval_timeout=_validate_positive_float(
+                code_evaluation_timeout_seconds,
+                "code_evaluation_timeout_seconds"
+            ),
+            max_parallel_executions=_validate_positive_int(
+                max_parallel_code_executions_per_attempt,
+                "max_parallel_code_executions_per_attempt",
+            ),
+            sampler_seed=int(sampler_random_seed),
+            sample_count=(
+                None
+                if sample_count is None
+                else _validate_positive_int(sample_count, "sample_count")
+            ),
+            start_dt=_parse_iso_datetime(lcb_start_datetime,
+                                         "lcb_start_datetime"),
+            end_dt=_parse_iso_datetime(lcb_end_datetime,
+                                       "lcb_end_datetime"),
+        )
+
+
 class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
     """Defines the pipeline for running the code generation benchmark.
 
@@ -103,7 +156,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
     # Standard file names
     _TRANSFORMED_DATA_FILE_NAME: str = "transformed_data.jsonl"
     _INFERENCE_RESULT_FILE_NAME: str = "inference_result.jsonl"
-    _JSONL_FILE_FORMAT: str = ".jsonl"
+    _JSONL_FILE_EXT: str = ".jsonl"
 
     # Column names
     _CONTEST_DATE_COLUMN_NAME: str = "contest_date"
@@ -128,7 +181,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                            lcb_release_version: str = "release_latest",
                            lcb_start_datetime: str | None = None,
                            lcb_end_datetime: str | None = None,
-                           sampler_random_seed: int | str = 42,
+                           sampler_seed: int | str = 42,
                            sample_count: int | str | None = None,
                            n_repeats: int | str = 5,
                            max_concurrent: int | str = 5,
@@ -155,7 +208,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                 dataset. Only include data points with contest_date <=
                 lcb_end_datetime. Should be in the ISO 8601 format, e.g.,
                 "2025-01-01T23:59:59". If None, do not apply an end date filter.
-            sampler_random_seed: The random seed to use for sampling data points
+            sampler_seed: The random seed to use for sampling data points
                 from the dataset for reproducibility.
             sample_count: The number of data points to sample from the dataset.
                 This can be used for testing the pipeline with a smaller subset
@@ -188,66 +241,33 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
         if model_config is None:
             raise ValueError("model_config must be provided.")
         
-        n_repeats = int(
-            n_repeats)
-        if n_repeats < 1:
-            raise ValueError(
-                "n_repeats must be at least 1."
-                f" Got {n_repeats}.")
-        
-        max_concurrent = int(
-            max_concurrent)
-        if max_concurrent <= 0:
-            raise ValueError(
-                "max_concurrent_inference_requests must be positive. "
-                f"Got {max_concurrent}.")
+        params = PipelineParams.from_args(
+            n_repeats=n_repeats,
+            max_concurrent=max_concurrent,
+            code_evaluation_timeout_seconds=(
+                code_evaluation_timeout_seconds),
+            max_parallel_code_executions_per_attempt=(
+                max_parallel_code_executions_per_attempt),
+            sampler_random_seed=sampler_seed,
+            sample_count=sample_count,
+            lcb_start_datetime=lcb_start_datetime,
+            lcb_end_datetime=lcb_end_datetime,
+        )
 
-        code_evaluation_timeout_seconds = float(
-            code_evaluation_timeout_seconds)
-        if code_evaluation_timeout_seconds <= 0:
-            raise ValueError(
-                "code_evaluation_timeout_seconds must be positive. "
-                f"Got {code_evaluation_timeout_seconds}.")
-
-        max_parallel_code_executions_per_attempt = int(
-            max_parallel_code_executions_per_attempt)
-        if max_parallel_code_executions_per_attempt <= 0:
-            raise ValueError(
-                "max_parallel_code_executions_per_attempt must be positive. "
-                f"Got {max_parallel_code_executions_per_attempt}.")
-
-        lcb_start_datetime_parsed: datetime.datetime | None = (
-            datetime.datetime.fromisoformat(lcb_start_datetime)
-            if lcb_start_datetime is not None else None)
-
-        lcb_end_datetime_parsed: datetime.datetime | None = (
-            datetime.datetime.fromisoformat(lcb_end_datetime)
-            if lcb_end_datetime is not None else None)
-
-        if lcb_start_datetime_parsed and lcb_end_datetime_parsed:
-            if lcb_start_datetime_parsed > lcb_end_datetime_parsed:
-                raise ValueError(
-                    "lcb_start_datetime must be earlier than or equal to "
-                    "lcb_end_datetime."
-                    f" Got start: {lcb_start_datetime_parsed}, "
-                    f"end: {lcb_end_datetime_parsed}.")
-
-        sampler_random_seed = int(sampler_random_seed)
-
-        if sample_count is not None:
-            sample_count = int(sample_count)
-            if sample_count <= 0:
-                raise ValueError(
-                    "sample_count must be positive. "
-                    f"Got {sample_count}.")
+        _validate_datetime_range(
+            params.start_dt,
+            params.end_dt,
+            "lcb_start_datetime",
+            "lcb_end_datetime",
+        )
 
         self._prompt_creation = self._create_prompt_processing_config(
             lcb_release_version=lcb_release_version,
-            lcb_start_datetime=lcb_start_datetime_parsed,
-            lcb_end_datetime=lcb_end_datetime_parsed,
-            sampler_random_seed=sampler_random_seed,
-            sample_count=sample_count,
-            n_repeats=n_repeats,
+            lcb_start_datetime=params.start_dt,
+            lcb_end_datetime=params.end_dt,
+            sampler_random_seed=params.sampler_seed,
+            sample_count=params.sample_count,
+            n_repeats=params.n_repeats,
         )
 
         self._response_generation = self._create_inference_config(
@@ -256,7 +276,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                 self._TRANSFORMED_DATA_FILE_NAME,
             ),
             model_config=model_config,
-            max_concurrent_inference_requests=max_concurrent,
+            max_concurrent_inference_requests=params.max_concurrent,
             resume_from=resume_from,
         )
 
@@ -273,9 +293,9 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                 self._code_extraction.output_dir,
                 self._TRANSFORMED_DATA_FILE_NAME,
             ),
-            code_evaluation_timeout_seconds=code_evaluation_timeout_seconds,
+            code_evaluation_timeout_seconds=params.code_eval_timeout,
             max_parallel_code_executions_per_attempt=(
-                max_parallel_code_executions_per_attempt),
+                params.max_parallel_executions),
             additional_imports=additional_imports,
         )
 
@@ -457,7 +477,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                 class_name=data_utils.DataReader,
                 init_args={
                     "path": model_responses_filepath,
-                    "format": self._JSONL_FILE_FORMAT,
+                    "format": self._JSONL_FILE_EXT,
                     "transform": data_utils.SequenceTransform([
                         code_extraction_transform.CodeExtractionTransform(
                             model_output_column=self._MODEL_OUTPUT_COLUMN_NAME,
@@ -496,7 +516,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                 class_name=data_utils.DataReader,
                 init_args={
                     "path": extracted_code_filepath,
-                    "format": self._JSONL_FILE_FORMAT,
+                    "format": self._JSONL_FILE_EXT,
                 }),
             metric_config=config.MetricConfig(
                 class_name=codegen_test_case_results_metric.
@@ -564,3 +584,51 @@ def _get_output_file_path(output_dir: str, filename: str) -> str:
             String representation of the full file path.
         """
     return str(pathlib.Path(output_dir) / filename)
+
+
+def _validate_positive_int(value: int | str, name: str) -> int:
+    """Converts to int and ensures the value is positive."""
+    try:
+        value = int(value)
+    except (TypeError, ValueError):
+        raise ValueError(f"{name} must be an integer. Got {value!r}.")
+    if value <= 0:
+        raise ValueError(f"{name} must be positive. Got {value}.")
+    return value
+
+
+def _validate_positive_float(value: float | str, name: str) -> float:
+    """Converts to float and ensures the value is positive."""
+    try:
+        value = float(value)
+    except (TypeError, ValueError):
+        raise ValueError(f"{name} must be a float. Got {value!r}.")
+    if value <= 0:
+        raise ValueError(f"{name} must be positive. Got {value}.")
+    return value
+
+
+def _parse_iso_datetime(
+        dt_str: str | None, name: str) -> datetime.datetime | None:
+    """Parses an ISO 8601 datetime string if provided."""
+    if dt_str is None:
+        return None
+    try:
+        return datetime.datetime.fromisoformat(dt_str)
+    except ValueError:
+        raise ValueError(
+            f"{name} must be a valid ISO 8601 datetime string. Got {dt_str!r}.")
+
+
+def _validate_datetime_range(
+    start: datetime.datetime | None,
+    end: datetime.datetime | None,
+    start_name: str,
+    end_name: str
+) -> None:
+    """Ensures start <= end if both are provided."""
+    if start and end and start > end:
+        raise ValueError(
+            f"{start_name} must be earlier than or equal to {end_name}. "
+            f"Got start={start}, end={end}."
+        )
