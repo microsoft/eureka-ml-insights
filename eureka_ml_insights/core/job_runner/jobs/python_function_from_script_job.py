@@ -14,7 +14,6 @@ from typing import Any
 
 from eureka_ml_insights.core.job_runner.jobs import base
 
-
 # Minimal wrapper script to run functions.
 # This script reads a pickled FunctionJob from stdin, executes the function,
 # and writes the pickled result to stdout.
@@ -130,6 +129,7 @@ except Exception as e:
     pickle.dump(fallback_output, sys.stdout.buffer)
 """)
 
+
 @dataclasses.dataclass(frozen=True)
 class PythonFunctionFromScriptJobResult:
     """Result of executing a PythonFunctionFromScriptJob.
@@ -194,12 +194,8 @@ class PythonFunctionFromScriptJob(base.Job):
         except Exception as e:
             raise ValueError(f"Failed to serialize job input") from e
 
-    def deserialize_result(
-        self,
-        stdout: bytes,
-        stderr: bytes,
-        retcode: int
-    ) -> PythonFunctionFromScriptJobResult:
+    def deserialize_result(self, stdout: bytes, stderr: bytes,
+                           retcode: int) -> PythonFunctionFromScriptJobResult:
         """Deserializes the job result from the runner output.
 
         Args:
@@ -225,21 +221,19 @@ class PythonFunctionFromScriptJob(base.Job):
                 f"but got {type(result).__name__}")
 
         expected_keys: frozenset[str] = frozenset({
-            "result", "exception_class_name",
-            "exception_msg", "stdout", "stderr"
+            "result", "exception_class_name", "exception_msg", "stdout",
+            "stderr"
         })
 
         missing_keys: frozenset[str] = expected_keys - set(result.keys())
 
         if missing_keys:
-            raise ValueError(
-                "Missing keys in result from job runner: "
-                f"{', '.join(missing_keys)}")
+            raise ValueError("Missing keys in result from job runner: "
+                             f"{', '.join(missing_keys)}")
 
         return PythonFunctionFromScriptJobResult(
             return_value=result["result"],
             stdout=result["stdout"],
             stderr=result["stderr"],
             exception_class_name=result["exception_class_name"],
-            exception_msg=result["exception_msg"]
-        )
+            exception_msg=result["exception_msg"])

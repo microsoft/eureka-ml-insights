@@ -9,6 +9,7 @@ import sys
 
 from eureka_ml_insights.core.job_runner.jobs import base
 
+
 @dataclasses.dataclass(frozen=True)
 class PythonScriptFromSrcJobResult:
     """Result of executing a PythonScriptFromSrcJob.
@@ -58,12 +59,8 @@ class PythonScriptFromSrcJob(base.Job):
             return self.stdin.encode("utf-8")
         return self.stdin
 
-    def deserialize_result(
-        self,
-        stdout: bytes,
-        stderr: bytes,
-        retcode: int
-    ) -> PythonScriptFromSrcJobResult:
+    def deserialize_result(self, stdout: bytes, stderr: bytes,
+                           retcode: int) -> PythonScriptFromSrcJobResult:
         """Deserializes the job result from the runner output.
 
         Args:
@@ -74,7 +71,6 @@ class PythonScriptFromSrcJob(base.Job):
         Returns:
             The deserialized PythonScriptJobResult.
         """
-        return PythonScriptFromSrcJobResult(
-            stdout=stdout,
-            stderr=stderr,
-            returncode=retcode)
+        return PythonScriptFromSrcJobResult(stdout=stdout,
+                                            stderr=stderr,
+                                            returncode=retcode)
