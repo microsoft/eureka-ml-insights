@@ -22,6 +22,7 @@ from eureka_ml_insights.data_utils import (
     SequenceTransform,
     ShuffleColumnsTransform,
     TokenCounterTransform,
+    DropColumnsTransform,
 )
 
 
@@ -254,6 +255,32 @@ class TestColMatchMap(unittest.TestCase):
             df = val["df"]
             df = self.col_match_map_transform.transform(df)
             self.assertEqual(list(df["ground_truth"]), val["ground_truth"])
+
+
+class TestDropColumnsTransform(unittest.TestCase):
+    """Testing the DropColumnsTransform used to drop specified columns from a DataFrame."""
+
+    def setUp(self):
+        self.df = pd.DataFrame(
+            {
+                "A": [1, 2, 3, 4, 5],
+                "B": ["a", "b", "c", "d", "e"],
+                "C": [-10, -20, -30, -40, -50],
+                "D": ["hi", "how", "are", "you", "?"],
+            }
+        )
+    
+    def test_drop_single_column(self):
+        columns_to_drop = "B"
+        transform = DropColumnsTransform(columns=columns_to_drop)
+        result = transform.transform(self.df)
+        self.assertListEqual(list(result.columns), ["A", "C", "D"])
+
+    def test_drop_multiple_columns(self):
+        columns_to_drop = ["B", "D"]
+        transform = DropColumnsTransform(columns=columns_to_drop)
+        result = transform.transform(self.df)
+        self.assertListEqual(list(result.columns), ["A", "C"])
 
 
 if __name__ == "__main__":
