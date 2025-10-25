@@ -789,7 +789,7 @@ def _construct_runner(runner_name: str,) -> command_runners_base.CommandRunner:
         return subprocess_runner.SubprocessCommandRunner(
             preexec_fn=sandbox_config.to_preexec_fn()
         )
-    elif runner_name == "unsafe":
+    elif runner_name == "unsafe_subprocess":
         return subprocess_runner.SubprocessCommandRunner()
     else:
         raise ValueError(f"Unknown runner name: {runner_name}")
