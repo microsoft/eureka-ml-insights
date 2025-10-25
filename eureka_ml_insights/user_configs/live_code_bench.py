@@ -556,6 +556,20 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     }
                 ),
                 # Calculates the pass@1 by question across all attempts and then
+                # averages them by difficulty level to get pass@1 by difficulty.
+                config.AggregatorConfig(
+                    class_name=reports.BiLevelAggregator,
+                    init_args={
+                        "column_names": [
+                            "CodegenTestCaseResultsMetric_all_passed",
+                        ],
+                        "first_groupby": self._DATAPOINT_ID_COLUMN_NAME,
+                        "agg_fn": "mean",
+                        "second_groupby": self._DIFFICULTY_LEVEL_COLUMN_NAME,
+                        "filename_base": "Pass@1_ByDifficulty",
+                    }
+                ),
+                # Calculates the pass@1 by question across all attempts and then
                 # averages them to get the overall pass@1.
                 config.AggregatorConfig(
                     class_name=reports.BiLevelAggregator,
@@ -565,11 +579,11 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                         ],
                         "first_groupby": self._DATAPOINT_ID_COLUMN_NAME,
                         "agg_fn": "mean",
-                        "filename_base": "Pass@1_Overall",
+                        "filename_base": "Overall_Average_Pass@1",
                     }
                 ),
-                # Calculates the pass@1 by question across all attempts and then
-                # averages them by difficulty level to get pass@1 by difficulty.
+                # Calculates overall average best-of-n accuracy (
+                # n = num_repeats).
                 config.AggregatorConfig(
                     class_name=reports.BiLevelAggregator,
                     init_args={
@@ -577,9 +591,8 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                             "CodegenTestCaseResultsMetric_all_passed",
                         ],
                         "first_groupby": self._DATAPOINT_ID_COLUMN_NAME,
-                        "second_groupby": self._DIFFICULTY_LEVEL_COLUMN_NAME,
-                        "agg_fn": "mean",
-                        "filename_base": "Pass@1_ByDifficulty",
+                        "agg_fn": "max",
+                        "filename_base": "Overall_Average_BestOfN",
                     }
                 ),
             ],
