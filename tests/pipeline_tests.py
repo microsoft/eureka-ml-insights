@@ -683,6 +683,7 @@ class GSMSYMBOLIC_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_GSMSYMBOLIC_PIPELINE().pipeline_config
 
+
 class LIVE_CODE_BENCH_CODEGEN_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_LIVE_CODE_BENCH_CODEGEN_PIPELINE().pipeline_config
