@@ -1,7 +1,7 @@
 import textwrap
 import unittest
 
-from eureka_ml_insights.metrics.live_code_bench import code_parsing
+from eureka_ml_insights.metrics.live_code_bench import python_code_parser
 
 
 class FindFunctionPathTest(unittest.TestCase):
@@ -10,7 +10,7 @@ class FindFunctionPathTest(unittest.TestCase):
     def test_find_function_at_module_level(self):
         """Test finding a function at module level."""
         src_code = "def my_function(): pass"
-        result = code_parsing.find_function_path(src_code, "my_function")
+        result = python_code_parser.find_function_path(src_code, "my_function")
         self.assertEqual(result, "my_function")
 
     def test_find_function_in_single_class(self):
@@ -20,7 +20,7 @@ class FindFunctionPathTest(unittest.TestCase):
                 def my_function(self):
                     pass
         """)
-        result = code_parsing.find_function_path(src_code, "my_function")
+        result = python_code_parser.find_function_path(src_code, "my_function")
         self.assertEqual(result, "MyClass.my_function")
 
     def test_find_function_in_nested_class(self):
@@ -31,7 +31,7 @@ class FindFunctionPathTest(unittest.TestCase):
                     def my_function(self):
                         pass
         """)
-        result = code_parsing.find_function_path(src_code, "my_function")
+        result = python_code_parser.find_function_path(src_code, "my_function")
         self.assertEqual(result, "OuterClass.InnerClass.my_function")
 
     def test_find_function_in_deeply_nested_class(self):
@@ -43,7 +43,7 @@ class FindFunctionPathTest(unittest.TestCase):
                         def my_function(self):
                             pass
         """)
-        result = code_parsing.find_function_path(src_code, "my_function")
+        result = python_code_parser.find_function_path(src_code, "my_function")
         self.assertEqual(result, "Level1.Level2.Level3.my_function")
 
     def test_function_not_found(self):
@@ -53,7 +53,7 @@ class FindFunctionPathTest(unittest.TestCase):
             LookupError,
             "No function named 'my_function' found.",
         ):
-            code_parsing.find_function_path(src_code, "my_function")
+            python_code_parser.find_function_path(src_code, "my_function")
     
     def test_multiple_functions_found(self):
         """Test behavior when multiple functions with the same name are found."""
@@ -67,16 +67,16 @@ class FindFunctionPathTest(unittest.TestCase):
                     pass
         """)
         with self.assertRaisesRegex(
-            code_parsing.AmbiguousFunctionNameError,
+            python_code_parser.AmbiguousFunctionNameError,
             "Multiple functions named 'my_function' found: "
         ):
-            code_parsing.find_function_path(src_code, "my_function")
+            python_code_parser.find_function_path(src_code, "my_function")
     
     def test_invalid_syntax(self):
         """Test behavior when source code has invalid syntax."""
         src_code = "def my_function(: pass"  # Syntax error
         with self.assertRaises(SyntaxError):
-            code_parsing.find_function_path(src_code, "my_function")
+            python_code_parser.find_function_path(src_code, "my_function")
 
 
 class IsPythonCodeValidTest(unittest.TestCase):
@@ -88,7 +88,7 @@ class IsPythonCodeValidTest(unittest.TestCase):
             def my_function():
                 return 42
         """)
-        is_valid, error_message = code_parsing.is_python_code_valid(src_code)
+        is_valid, error_message = python_code_parser.is_python_code_valid(src_code)
         self.assertTrue(is_valid)
         self.assertEqual(error_message, "")
 
@@ -98,7 +98,7 @@ class IsPythonCodeValidTest(unittest.TestCase):
             def my_function(
                 return 42
         """)
-        is_valid, error_message = code_parsing.is_python_code_valid(src_code)
+        is_valid, error_message = python_code_parser.is_python_code_valid(src_code)
         self.assertFalse(is_valid)
         self.assertIn("'(' was never closed", error_message)
 

@@ -10,18 +10,23 @@ import concurrent.futures
 import datetime
 import pandas as pd
 
-from typing import TypedDict
+from typing import TypedDict, cast
 from tqdm.auto import tqdm
 
 from eureka_ml_insights.metrics import metrics_base
 from eureka_ml_insights.core.job_runner.command_runners import base as command_runners_base
-from eureka_ml_insights.metrics.live_code_bench import (
-    evaluate_codegen,
-    code_parsing,
-)
+from eureka_ml_insights.metrics.live_code_bench import python_code_parser
+from eureka_ml_insights.metrics.live_code_bench import raw_test_case
+from eureka_ml_insights.metrics.live_code_bench import functional_test_case
+from eureka_ml_insights.metrics.live_code_bench import standard_io_test_case
+from eureka_ml_insights.metrics.live_code_bench import functional_test_case_parser
+from eureka_ml_insights.metrics.live_code_bench import standard_io_test_case_parser
+from eureka_ml_insights.metrics.live_code_bench import functional_test_case_evaluator
+from eureka_ml_insights.metrics.live_code_bench import standard_io_test_case_evaluator
+from eureka_ml_insights.metrics.live_code_bench import test_case_result
 
 
-class TestResults(TypedDict):
+class TestResultsMetric(TypedDict):
     """Defines the structure of the test results returned by the metric.
 
     Attributes:
@@ -36,7 +41,7 @@ class TestResults(TypedDict):
 
     passed: list[bool]
     error_messages: list[str]
-    all_passed: bool | None
+    all_passed: bool
 
 
 class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
@@ -46,7 +51,9 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
     See __evaluate__ for details on the output format.
     """
 
-    def __init__(self, code_column_name: str, test_cases_column_name: str,
+    def __init__(self,
+                 code_column_name: str,
+                 test_cases_column_name: str,
                  metadata_column_name: str,
                  runner: command_runners_base.CommandRunner,
                  timeout: datetime.timedelta | None = None,
@@ -101,7 +108,8 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
 
         return data
 
-    def __evaluate__(self, row: "pd.Series") -> TestResults:  # type: ignore
+    def __evaluate__(self,   # type: ignore
+                     row: "pd.Series") -> TestResultsMetric:
         """Runs the code against the test cases and checks if they pass.
 
         Args:
@@ -124,21 +132,20 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
         function_name: str = row[self._metadata_column_name].get(
             "func_name", "")
 
-        raw_test_cases: list[dict[str, str]] = row[self._test_cases_column_name]
+        raw_test_cases: list[dict[str,
+                                  str]] = row[self._test_cases_column_name]
 
         if not raw_test_cases:
-            return TestResults(
+            return TestResultsMetric(
                 passed=[],
                 error_messages=[],
-                all_passed=None,
+                all_passed=False,
             )
 
         if not code:
-            return TestResults(
+            return TestResultsMetric(
                 passed=[False] * len(raw_test_cases),
-                error_messages=[
-                    "No code generated."
-                ] * len(raw_test_cases),
+                error_messages=["No code generated."] * len(raw_test_cases),
                 all_passed=False,
             )
 
@@ -146,27 +153,25 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
         if self._additional_imports:
             code = self._additional_imports + "\n\n" + code
 
-        is_valid_code, parse_error = code_parsing.is_python_code_valid(code)
+        is_valid_code, parse_error = python_code_parser.is_python_code_valid(
+            code)
         if not is_valid_code:
-            return TestResults(
+            return TestResultsMetric(
                 passed=[False] * len(raw_test_cases),
-                error_messages=[
-                    f"Code has syntax error: {parse_error}"
-                ] * len(raw_test_cases),
+                error_messages=[f"Code has syntax error: {parse_error}"] *
+                len(raw_test_cases),
                 all_passed=False,
             )
-        
+
         function_path = ""
         function_parsing_error = ""
         try:
-            function_path = (
-                code_parsing.find_function_path(code, function_name)
-                if function_name else ""
-            )
+            function_path = (python_code_parser.find_function_path(
+                code, function_name) if function_name else "")
         except Exception as e:
             function_parsing_error = str(e)
 
-        results: TestResults = {
+        results: TestResultsMetric = {
             "passed": [],
             "error_messages": [],
             "all_passed": False,
@@ -174,13 +179,13 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
         max_workers: int = min(self._max_workers, len(raw_test_cases))
 
         with concurrent.futures.ThreadPoolExecutor(
-            max_workers=max_workers) as executor:
-            futures = [
-                executor.submit(_run_test, raw, code, function_path,
-                                function_parsing_error, self._runner,
-                                self._timeout)
-                for raw in raw_test_cases
-            ]
+                max_workers=max_workers) as executor:
+            futures: list[concurrent.futures.Future] = []
+            for raw_tc in raw_test_cases:
+                futures.append(
+                    executor.submit(_run_test, raw_tc, code, function_path,
+                                    function_parsing_error, self._runner,
+                                    self._timeout))
 
             # Iterate in the same order as the test cases
             for future in futures:
@@ -193,53 +198,114 @@ class CodegenTestCaseResultsMetric(metrics_base.CompositeMetric):
         return results
 
 
-def _run_test(
-        raw_test_case: dict[str, str],
-        code: str,
-        function_path: str,
-        function_parsing_error: str,
-        runner: command_runners_base.CommandRunner,
-        timeout: datetime.timedelta | None = None,
-) -> evaluate_codegen.TestCaseResult:
-    """Runs a single test case against the generated code.
+def _parse_test_case(
+    raw_tc: dict[str, str],
+) -> functional_test_case.FunctionalTestCase | standard_io_test_case.StandardIOTestCase:
+    """Parses a raw test case dictionary into a test case object.
 
     Args:
-        raw_test_case: A dictionary representing the test case.
-            Should have the following keys:
-                - 'testtype': Either 'functional' or 'stdin'.
-                - 'input': The input for the test case.
-                - 'output': The expected output for the test case.
-        code: The generated code as a string.
-        function_path: The path to the function to be tested.
-            Empty string if not applicable.
-        function_parsing_error: An error message if there was an error
-            parsing the function, empty string otherwise.
+        raw_tc: A dictionary representing the test case.
+    
+    Returns:
+        A FunctionalTestCase or StandardIOTestCase object.
+    """
+    require_keys = {"testtype", "input", "output"}
+    missing_keys = require_keys - raw_tc.keys()
+    if missing_keys:
+        raise ValueError(f"Test case is missing required keys: {missing_keys}")
+
+    validated_raw_tc = cast(raw_test_case.RawTestCaseDict, raw_tc)
+    if validated_raw_tc["testtype"] == "functional":
+        return functional_test_case_parser.parse_functional_test_case(
+            validated_raw_tc)
+    elif validated_raw_tc["testtype"] == "stdin":
+        return standard_io_test_case_parser.parse_standard_io_test_case(
+            validated_raw_tc)
+    else:
+        raise ValueError(
+            f"Unknown test case type: {validated_raw_tc['testtype']}")
+
+
+def _evaluate_test_case(
+    src_code: str,
+    test_case: functional_test_case.FunctionalTestCase
+    | standard_io_test_case.StandardIOTestCase,
+    runner: command_runners_base.CommandRunner,
+    function_name: str = "",
+    function_parsing_error: str = "",
+    timeout: datetime.timedelta | None = None,
+) -> test_case_result.TestCaseResult:
+    """Evaluates a test case against the provided source code.
+
+    Args:
+        src_code: The source code to be tested.
+        test_case: The test case to evaluate.
         runner: The command runner to use for executing the job.
-        timeout: An optional timeout for the test case execution.
+        function_name: The name of the function to be tested. This is only
+            required for FunctionalTestCase instances. If the function is part
+            of a class, provide the full path (e.g., 'MyClass.my_function').
+        timeout: An optional timeout for the code execution.
 
     Returns:
-        The result of the test.
+        A TestCaseResult instance indicating whether the test case passed.
+    
+    Raises:
+        ValueError: If the test case type is unknown or if function_name is not
+            provided for FunctionalTestCase.
     """
+    if isinstance(test_case, functional_test_case.FunctionalTestCase):
+        if function_name and function_parsing_error:
+            raise ValueError("Cannot evaluate functional test case because "
+                             f"parsing of function {function_name} failed: "
+                             f"{function_parsing_error}")
+
+        if not function_name:
+            raise ValueError(
+                "function_name must be provided for FunctionalTestCase.")
+
+        return functional_test_case_evaluator.evaluate_functional_test_case(
+            src_code=src_code,
+            function_name=function_name,
+            test_case=test_case,
+            runner=runner,
+            timeout=timeout,
+        )
+    elif isinstance(test_case, standard_io_test_case.StandardIOTestCase):
+        return standard_io_test_case_evaluator.evaluate_standard_io_test_case(
+            src_code=src_code,
+            test_case=test_case,
+            runner=runner,
+            timeout=timeout,
+        )
+    else:
+        raise ValueError(f"Unknown test case type: {type(test_case)}")
+
+
+def _run_test(
+    raw_test_case: dict[str, str],
+    code: str,
+    function_path: str,
+    function_parsing_error: str,
+    runner: command_runners_base.CommandRunner,
+    timeout: datetime.timedelta | None = None,
+) -> test_case_result.TestCaseResult:
+    """Runs a single test case against the generated code."""
     try:
-        test_case = evaluate_codegen.parse_test_case(raw_test_case)
-        if (isinstance(test_case, evaluate_codegen.FunctionalTestCase)
-            and function_parsing_error):
-            return evaluate_codegen.TestCaseResult(
-                passed=False,
-                error_message=(
-                    f"Cannot run functional test case because "
-                    f"function parsing failed: {function_parsing_error}"
-                ),
-            )
-        return evaluate_codegen.evaluate_test_case(
+        test_case = _parse_test_case(raw_test_case)
+    except Exception as e:
+        return test_case_result.TestCaseResult(
+            passed=False, error_message=f"Failed to parse test case: {str(e)}")
+
+    try:
+        return _evaluate_test_case(
             src_code=code,
             function_name=function_path,
+            function_parsing_error=function_parsing_error,
             test_case=test_case,
             runner=runner,
             timeout=timeout,
         )
     except Exception as e:
-        return evaluate_codegen.TestCaseResult(
+        return test_case_result.TestCaseResult(
             passed=False,
-            error_message=f"Unexpected error: {str(e)}"
-        )
+            error_message=f"Error during test case evaluation: {str(e)}")

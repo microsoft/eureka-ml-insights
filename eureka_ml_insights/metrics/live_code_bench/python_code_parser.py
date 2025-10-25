@@ -22,6 +22,7 @@ class _FunctionFinder(ast.NodeVisitor):
     Attributes:
         matches: A list of full function names that match the searched name.
     """
+
     def __init__(self, func_name: str):
         """Initializes the FunctionFinder.
 
