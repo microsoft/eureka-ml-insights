@@ -635,6 +635,19 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                         "filename_base": "WorstOfN_ByDifficulty",
                     }
                 ),
+                # Calculates overall average worst-of-n accuracy (
+                # n = num_repeats).
+                config.AggregatorConfig(
+                    class_name=reports.BiLevelAggregator,
+                    init_args={
+                        "column_names": [
+                            "CodegenTestCaseResultsMetric_all_passed",
+                        ],
+                        "first_groupby": self._DATAPOINT_ID_COLUMN_NAME,
+                        "agg_fn": "min",
+                        "filename_base": "Overall_Average_WorstOfN",
+                    }
+                ),
             ],
             output_dir=self._construct_output_dir_path("eval_report"),
         )
