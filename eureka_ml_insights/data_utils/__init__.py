@@ -26,6 +26,7 @@ from .transform import (
     ColumnMatchMapTransform,
     ColumnRename,
     CopyColumn,
+    DropColumnsTransform,
     DFTransformBase,
     ImputeNA,
     MapStringsTransform,
@@ -39,7 +40,8 @@ from .transform import (
     ShuffleColumnsTransform,
     MajorityVoteTransform,
     TokenCounterTransform,
-    ExtractUsageTransform
+    ExtractUsageTransform,
+    FilterColumnToRangeTransform,
 )
 
 __all__ = [
@@ -50,6 +52,7 @@ __all__ = [
     AzureJsonReader,
     TXTWriter,
     CopyColumn,
+    DropColumnsTransform,
     DataReader,
     DataLoader,
     AzureDataReader,
@@ -80,4 +83,5 @@ __all__ = [
     MajorityVoteTransform,
     NumpyEncoder,
     ExtractUsageTransform,
+    FilterColumnToRangeTransform,
 ]

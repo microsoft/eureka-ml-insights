@@ -100,6 +100,9 @@ from .vision_language.spatial_map import (
     SPATIAL_MAP_TEXTONLY_PIPELINE,
 )
 from .vstar_bench import VSTAR_BENCH_PIPELINE
+from .live_code_bench import (
+    LIVE_CODE_BENCH_CODEGEN_PIPELINE,
+)
 
 __all__ = [
     LLM_EXTRACTION_SUBPIPELINE_MIXIN,
@@ -181,4 +184,5 @@ __all__ = [
     FLICKR30K_PIPELINE,
     NOCAPS_PIPELINE,
     VSTAR_BENCH_PIPELINE,
+    LIVE_CODE_BENCH_CODEGEN_PIPELINE,
 ]
