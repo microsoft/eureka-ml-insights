@@ -6,7 +6,7 @@ from typing import cast
 
 from eureka_ml_insights.core.job_runner import job_runner
 from eureka_ml_insights.core.job_runner.command_runners import base as command_runners_base
-from eureka_ml_insights.core.job_runner.jobs import python_function_from_script_job
+from eureka_ml_insights.core.job_runner.jobs import python_function_job
 from eureka_ml_insights.metrics.live_code_bench import functional_test_case
 from eureka_ml_insights.metrics.live_code_bench import test_case_result
 
@@ -39,7 +39,7 @@ def evaluate_functional_test_case(
         raise ValueError(
             "function_name must be provided for FunctionalTestCase.")
 
-    job = python_function_from_script_job.PythonFunctionFromScriptJob(
+    job = python_function_job.PythonFunctionJob(
         src_script=src_code,
         function_name=function_name,
         args=test_case.inputs,
@@ -50,7 +50,7 @@ def evaluate_functional_test_case(
 
     if result.runner_status == command_runners_base.CommandStatus.COMPLETED:
         job_result = cast(
-            python_function_from_script_job.PythonFunctionFromScriptJobResult,
+            python_function_job.PythonFunctionJobResult,
             result.job_result)
         if (job_result.success
                 and job_result.return_value == test_case.expected_output):

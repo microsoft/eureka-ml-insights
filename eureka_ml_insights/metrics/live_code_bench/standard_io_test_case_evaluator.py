@@ -29,7 +29,7 @@ def evaluate_standard_io_test_case(
     Returns:
         A TestCaseResult instance indicating whether the test case passed.
     """
-    job = python_script_job.PythonScriptFromSrcJob(
+    job = python_script_job.PythonScriptJob(
         script=src_code,
         stdin=test_case.stdin,
     )
@@ -38,7 +38,7 @@ def evaluate_standard_io_test_case(
         job=job, command_runner=runner, timeout=timeout)
 
     if result.runner_status == command_runners_base.CommandStatus.COMPLETED:
-        job_result = cast(python_script_job.PythonScriptFromSrcJobResult,
+        job_result = cast(python_script_job.PythonScriptJobResult,
                           result.job_result)
         received_stdout: str = job_result.stdout_str.rstrip("\n")
         expected_stdout: str = test_case.expected_stdout.rstrip("\n")

@@ -131,8 +131,8 @@ except Exception as e:
 
 
 @dataclasses.dataclass(frozen=True)
-class PythonFunctionFromScriptJobResult:
-    """Result of executing a PythonFunctionFromScriptJob.
+class PythonFunctionJobResult:
+    """Result of executing a PythonFunctionJob.
 
     Attributes:
         return_value: The return value of the executed function.
@@ -156,7 +156,7 @@ class PythonFunctionFromScriptJobResult:
 
 
 @dataclasses.dataclass(frozen=True)
-class PythonFunctionFromScriptJob(base.Job):
+class PythonFunctionJob(base.Job):
     """Job to execute a Python function defined in a source script.
 
     The function must return a picklable object. The source script should be
@@ -195,7 +195,7 @@ class PythonFunctionFromScriptJob(base.Job):
             raise ValueError(f"Failed to serialize job input") from e
 
     def deserialize_result(self, stdout: bytes, stderr: bytes,
-                           retcode: int) -> PythonFunctionFromScriptJobResult:
+                           retcode: int) -> PythonFunctionJobResult:
         """Deserializes the job result from the runner output.
 
         Args:
@@ -204,7 +204,7 @@ class PythonFunctionFromScriptJob(base.Job):
             retcode: The return code from the job runner.
 
         Returns:
-            The deserialized PythonFunctionFromScriptJobResult.
+            The deserialized PythonFunctionJobResult.
 
         Raises:
             ValueError: If the result cannot be deserialized or does not have
@@ -231,7 +231,7 @@ class PythonFunctionFromScriptJob(base.Job):
             raise ValueError("Missing keys in result from job runner: "
                              f"{', '.join(missing_keys)}")
 
-        return PythonFunctionFromScriptJobResult(
+        return PythonFunctionJobResult(
             return_value=result["result"],
             stdout=result["stdout"],
             stderr=result["stderr"],
