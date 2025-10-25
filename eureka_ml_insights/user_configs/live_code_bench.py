@@ -37,6 +37,8 @@ from eureka_ml_insights.data_utils.live_code_bench import (
 from eureka_ml_insights.metrics.live_code_bench import (
     codegen_test_case_results_metric,
 )
+from eureka_ml_insights.core.job_runner.sandboxing import preexec_fn_sandboxing
+from eureka_ml_insights.core.job_runner.command_runners import base as command_runners_base
 from eureka_ml_insights.core.job_runner.command_runners import subprocess_runner
 from eureka_ml_insights.metrics import reports
 
@@ -85,6 +87,7 @@ _DEFAULT_ADDITIONAL_PYTHON_IMPORTS: str = textwrap.dedent("""
 class PipelineParams:
     """Parameters for configuring the LiveCodeBench code generation pipeline."""
     n_repeats: int
+    code_evaluation_runner: command_runners_base.CommandRunner
     max_concurrent: int
     code_eval_timeout: float
     max_parallel_executions: int
@@ -98,6 +101,7 @@ class PipelineParams:
         cls,
         *,
         n_repeats: int | str,
+        code_evaluation_runner_name: str,
         max_concurrent: int | str,
         code_evaluation_timeout_seconds: float | str,
         max_parallel_code_executions_per_attempt: int | str,
@@ -110,6 +114,9 @@ class PipelineParams:
         return cls(
             n_repeats=_validate_positive_int(n_repeats,
                                              "n_repeats"),
+            code_evaluation_runner=_construct_runner(
+                code_evaluation_runner_name
+            ),
             max_concurrent=_validate_positive_int(max_concurrent,
                                                   "max_concurrent"),
             code_eval_timeout=_validate_positive_float(
@@ -168,10 +175,6 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
     _ALL_TEST_CASES_COMBINED_COLUMN_NAME: str = "all_test_cases_combined"
     _DATAPOINT_ID_COLUMN_NAME: str = "data_point_id"
 
-    # Runner used to execute code during test case evaluation
-    _CODE_EXECUTION_RUNNER: subprocess_runner.SubprocessCommandRunner = (
-        subprocess_runner.SubprocessCommandRunner())
-
     # In the parameters below, we accept strings as well as the actual
     # types since the command line arguments are not parsed by main.py
     # and instead are passed as strings. The arguments are converted to the
@@ -186,6 +189,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                            n_repeats: int | str = 5,
                            max_concurrent: int | str = 5,
                            closing_think_token: str = "",
+                           code_evaluation_runner_name: str = "safe_subprocess",
                            code_evaluation_timeout_seconds: float | str = 20.0,
                            max_parallel_code_executions_per_attempt: int | str = 16,
                            additional_imports: str = _DEFAULT_ADDITIONAL_PYTHON_IMPORTS,
@@ -224,6 +228,9 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                 set, only consider code snippets that appear
                 after this token in the model output. Otherwise, look for the
                 last code snippet in the entire model output.
+            code_evaluation_runner_name: The name of the command runner to use
+                for executing the generated code during evaluation. For options,
+                see the `_construct_runner()` function.
             code_evaluation_timeout_seconds: The timeout in seconds for
                 executing each test case.
             max_parallel_code_executions_per_attempt: The maximum number of code
@@ -243,6 +250,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
         
         params = PipelineParams.from_args(
             n_repeats=n_repeats,
+            code_evaluation_runner_name=code_evaluation_runner_name,
             max_concurrent=max_concurrent,
             code_evaluation_timeout_seconds=(
                 code_evaluation_timeout_seconds),
@@ -293,6 +301,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                 self._code_extraction.output_dir,
                 self._TRANSFORMED_DATA_FILE_NAME,
             ),
+            code_evaluation_runner=params.code_evaluation_runner,
             code_evaluation_timeout_seconds=params.code_eval_timeout,
             max_parallel_code_executions_per_attempt=(
                 params.max_parallel_executions),
@@ -492,6 +501,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
     def _create_code_evaluation_config(
         self,
         extracted_code_filepath: str,
+        code_evaluation_runner: command_runners_base.CommandRunner,
         code_evaluation_timeout_seconds: float,
         max_parallel_code_executions_per_attempt: int,
         additional_imports: str,
@@ -526,7 +536,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     "test_cases_column_name": (
                         self._ALL_TEST_CASES_COMBINED_COLUMN_NAME),
                     "metadata_column_name": self._METADATA_COLUMN_NAME,
-                    "runner": self._CODE_EXECUTION_RUNNER,
+                    "runner": code_evaluation_runner,
                     "timeout": datetime.timedelta(
                         seconds=code_evaluation_timeout_seconds),
                     "max_workers": max_parallel_code_executions_per_attempt,
@@ -632,3 +642,36 @@ def _validate_datetime_range(
             f"{start_name} must be earlier than or equal to {end_name}. "
             f"Got start={start}, end={end}."
         )
+
+
+def _construct_runner(runner_name: str,) -> command_runners_base.CommandRunner:
+    """Constructs a code evaluation runner with optional sandboxing.
+
+    Args:
+        runner_name: The name of the runner to construct. Options are:
+            - "safe_subprocess": Uses a subprocess runner with basic syscall
+              sandboxing (Linux only). The processes also runs slower due to the
+              sandboxing.
+            - "unsafe": Uses a standard subprocess runner without sandboxing.
+
+    Returns:
+        A configured CommandRunner.
+    """
+    if runner_name == "safe_subprocess":
+        # NOTE: This only works on linux systems and is not strict security.
+        # The code evaluation also runs slower when this is used. The ideal
+        # set up is running the entire pipeline within a container and using
+        # the "unsafe" runner.
+        sandbox_config = preexec_fn_sandboxing.SandboxConfig(
+            max_memory_bytes=4 * 1024**3,  # 4 GB
+            blocked_syscalls={"fork", "vfork", "clone", "kill",
+                              "unlink", "socket", "connect",
+                              "bind", "listen"}
+        )
+        return subprocess_runner.SubprocessCommandRunner(
+            preexec_fn=sandbox_config.to_preexec_fn()
+        )
+    elif runner_name == "unsafe":
+        return subprocess_runner.SubprocessCommandRunner()
+    else:
+        raise ValueError(f"Unknown runner name: {runner_name}")
