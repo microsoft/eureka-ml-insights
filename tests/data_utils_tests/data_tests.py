@@ -22,6 +22,8 @@ from eureka_ml_insights.data_utils import (
     SequenceTransform,
     ShuffleColumnsTransform,
     TokenCounterTransform,
+    DropColumnsTransform,
+    FilterColumnToRangeTransform,
 )
 
 
@@ -254,6 +256,70 @@ class TestColMatchMap(unittest.TestCase):
             df = val["df"]
             df = self.col_match_map_transform.transform(df)
             self.assertEqual(list(df["ground_truth"]), val["ground_truth"])
+
+
+class TestDropColumnsTransform(unittest.TestCase):
+    """Testing the DropColumnsTransform used to drop specified columns from a DataFrame."""
+
+    def setUp(self):
+        self.df = pd.DataFrame(
+            {
+                "A": [1, 2, 3, 4, 5],
+                "B": ["a", "b", "c", "d", "e"],
+                "C": [-10, -20, -30, -40, -50],
+                "D": ["hi", "how", "are", "you", "?"],
+            }
+        )
+    
+    def test_drop_single_column(self):
+        columns_to_drop = "B"
+        transform = DropColumnsTransform(columns=columns_to_drop)
+        result = transform.transform(self.df)
+        self.assertListEqual(list(result.columns), ["A", "C", "D"])
+
+    def test_drop_multiple_columns(self):
+        columns_to_drop = ["B", "D"]
+        transform = DropColumnsTransform(columns=columns_to_drop)
+        result = transform.transform(self.df)
+        self.assertListEqual(list(result.columns), ["A", "C"])
+
+
+class TestFilterColumnToRangeTransform(unittest.TestCase):
+    """Testing the FilterColumnToRangeTransform used to filter rows based on a column's value range."""
+
+    def setUp(self):
+        self.df = pd.DataFrame(
+            {
+                "ints": [1, 2, 3, 4, 5],
+                "strings": ["a", "b", "c", "d", "e"],
+                "datetimes": pd.date_range("2025-01-01", periods=5, freq="D"),
+            }
+        )
+
+    def test_filter_integers(self):
+        transform = FilterColumnToRangeTransform(
+            column_name="ints", start=2, end=4)
+        result = transform.transform(self.df)
+        self.assertListEqual(list(result["ints"]), [2, 3, 4])
+    
+    def test_filter_strings(self):
+        transform = FilterColumnToRangeTransform(
+            column_name="strings", start="b", end="d")
+        result = transform.transform(self.df)
+        self.assertListEqual(list(result["strings"]), ["b", "c", "d"])
+    
+    def test_filter_datetimes(self):
+        transform = FilterColumnToRangeTransform(
+            column_name="datetimes",
+            start=pd.Timestamp("2025-01-02"),
+            end=pd.Timestamp("2025-01-04"))
+        result = transform.transform(self.df)
+        self.assertListEqual(
+            list(result["datetimes"]),
+            [pd.Timestamp("2025-01-02"),
+             pd.Timestamp("2025-01-03"),
+             pd.Timestamp("2025-01-04")]
+        )
 
 
 if __name__ == "__main__":

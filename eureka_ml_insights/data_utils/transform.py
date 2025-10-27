@@ -3,11 +3,13 @@ import logging
 import re
 from abc import abstractmethod
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import Any, Callable, Dict, List
 
 import numpy as np
 import pandas as pd
+import datetime
 import tiktoken
+import json
 
 from eureka_ml_insights.configs.config import ModelConfig
 from eureka_ml_insights.models import (
@@ -165,6 +167,52 @@ class CopyColumn(DFTransformBase):
         df[self.column_name_dst] = df[self.column_name_src]
 
         return df
+
+
+@dataclass
+class DropColumnsTransform(DFTransformBase):
+    """Drops specified columns from the DataFrame.
+
+    Attributes:
+        columns: The column name(s) to be dropped.
+    """
+    columns: List[str] | str
+
+    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        if isinstance(self.columns, str):
+            self.columns = [self.columns]
+        return df.drop(columns=self.columns)
+
+
+@dataclass
+class FilterColumnToRangeTransform(DFTransformBase):
+    """
+    Filters a DataFrame column to a specified value range.
+
+    Works for any comparable type (numeric, datetime, string, etc.)
+
+    Args:
+        column_name: The name of the column to filter.
+        start: The inclusive lower bound for the range filter. If None, no lower
+            bound.
+        end: The inclusive upper bound for the range filter. If None, no upper
+            bound.
+    """
+
+    column_name: str
+    start: Any = None
+    end: Any = None
+
+    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        column = df[self.column_name]
+
+        mask = pd.Series(True, index=df.index)
+        if self.start is not None:
+            mask &= column >= self.start
+        if self.end is not None:
+            mask &= column <= self.end
+
+        return df[mask]
 
 
 @dataclass
