@@ -306,18 +306,12 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                 self._code_extraction.output_dir,
                 self._TRANSFORMED_DATA_FILE_NAME,
             ),
+            model_config=model_config,
             code_evaluation_runner=params.code_evaluation_runner,
             code_evaluation_timeout_seconds=params.code_eval_timeout,
             max_parallel_code_executions_per_attempt=(
                 params.max_parallel_executions),
             additional_imports=additional_imports,
-        )
-
-        self._pass_at_1_evaluation = self._create_pass_at_1_eval_config(
-            code_eval_report_path=_get_output_file_path(
-                self._code_evaluation.output_dir,
-                self._METRIC_RESULTS_FILE_NAME,
-            ),
         )
 
         self._best_of_n_evaluation = self._create_best_of_n_eval_config(
@@ -334,24 +328,14 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
             ),
         )
 
-        self._usage_evaluation = self._create_usage_eval_config(
-            code_eval_report_path=_get_output_file_path(
-                self._code_evaluation.output_dir,
-                self._METRIC_RESULTS_FILE_NAME,
-            ),
-            model_config=model_config,
-        )
-
         return configs.PipelineConfig(
             component_configs=[
                 self._prompt_creation,
                 self._response_generation,
                 self._code_extraction,
                 self._code_evaluation,
-                self._pass_at_1_evaluation,
                 self._best_of_n_evaluation,
                 self._worst_of_n_evaluation,
-                self._usage_evaluation,
             ],
             log_dir=self.log_dir,
         )
@@ -537,12 +521,15 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
     def _create_code_eval_config(
         self,
         extracted_code_filepath: str,
+        model_config: configs.ModelConfig,
         code_evaluation_runner: command_runners_base.CommandRunner,
         code_evaluation_timeout_seconds: float,
         max_parallel_code_executions_per_attempt: int,
         additional_imports: str,
     ) -> configs.EvalReportingConfig:
         """Creates the code evaluation configuration.
+
+        Evaluates the code on test cases and generates the main report.
 
         Args:
             extracted_code_filepath: The file path to the extracted code.
@@ -565,6 +552,13 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                 init_args={
                     "path": extracted_code_filepath,
                     "format": self._JSONL_FILE_EXT,
+                    "transform": data_utils.ExtractUsageTransform(
+                        model_config=model_config,
+                        usage_column=self._USAGE_COLUMN_NAME,
+                        n_tokens_column=self._N_OUTPUT_TOKENS_COLUMN_NAME,
+                        usage_completion_output_col=(
+                            self._USAGE_COMPLETION_OUTPUT_COLUMN_NAME)
+                    ),
                 }
             ),
             metric_config=config.MetricConfig(
@@ -580,30 +574,6 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                         seconds=code_evaluation_timeout_seconds),
                     "max_workers": max_parallel_code_executions_per_attempt,
                     "additional_imports": additional_imports,
-                }
-            ),
-            output_dir=self._construct_output_dir_path("eval_report"),
-        )
-
-    def _create_pass_at_1_eval_config(
-        self,
-        code_eval_report_path: str
-    ) -> configs.EvalReportingConfig:
-        """Creates the pass@1 evaluation configuration.
-
-        Args:
-            code_eval_report_path: The file path to the code evaluation report.
-
-        Returns:
-            EvalReportingConfig for the pass@1 evaluation stage.
-        """
-        return configs.EvalReportingConfig(
-            component_type=eval_reporting.EvalReporting,
-            data_reader_config=configs.DataSetConfig(
-                class_name=data_utils.DataReader,
-                init_args={
-                    "path": code_eval_report_path,
-                    "format": self._JSONL_FILE_EXT,
                 }
             ),
             aggregator_configs=[
@@ -645,8 +615,33 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                         "filename_base": "Overall_Average_Pass@1",
                     }
                 ),
+                # Average usage by difficulty and data point
+                config.AggregatorConfig(
+                    class_name=reports.BiLevelAggregator,
+                    init_args={
+                        "column_names": [
+                            self._USAGE_COMPLETION_OUTPUT_COLUMN_NAME
+                        ],
+                        "first_groupby": self._DATAPOINT_ID_COLUMN_NAME,
+                        "agg_fn": "mean",
+                        "second_groupby": self._DIFFICULTY_LEVEL_COLUMN_NAME,
+                        "filename_base": "Usage_ByDifficulty",
+                    }
+                ),
+                # Average usage per data point across all attempts.
+                config.AggregatorConfig(
+                    class_name=reports.BiLevelAggregator,
+                    init_args={
+                        "column_names": [
+                            self._USAGE_COMPLETION_OUTPUT_COLUMN_NAME
+                        ],
+                        "first_groupby": self._DATAPOINT_ID_COLUMN_NAME,
+                        "agg_fn": "mean",
+                        "filename_base": "Overall_Average_Usage_ByDataPoint",
+                    }
+                ),
             ],
-            output_dir=self._construct_output_dir_path("passat1_eval_report"),
+            output_dir=self._construct_output_dir_path("eval_report"),
         )
 
     def _create_best_of_n_eval_config(
@@ -765,66 +760,6 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                 ),
             ],
             output_dir=self._construct_output_dir_path("worstofn_eval_report"),
-        )
-
-    def _create_usage_eval_config(
-        self,
-        model_config: configs.ModelConfig,
-        code_eval_report_path: str
-    ) -> configs.EvalReportingConfig:
-        """Creates the code usage evaluation configuration.
-
-        Args:
-            model_config: The model configuration to use.
-            code_eval_report_path: The file path to the code evaluation report.
-
-        Returns:
-            EvalReportingConfig for the code usage evaluation stage.
-        """
-        return configs.EvalReportingConfig(
-            component_type=eval_reporting.EvalReporting,
-            data_reader_config=configs.DataSetConfig(
-                class_name=data_utils.DataReader,
-                init_args={
-                    "path": code_eval_report_path,
-                    "format": self._JSONL_FILE_EXT,
-                    "transform": data_utils.ExtractUsageTransform(
-                        model_config=model_config,
-                        usage_column=self._USAGE_COLUMN_NAME,
-                        n_tokens_column=self._N_OUTPUT_TOKENS_COLUMN_NAME,
-                        usage_completion_output_col=(
-                            self._USAGE_COMPLETION_OUTPUT_COLUMN_NAME)
-                    ),
-                }
-            ),
-            aggregator_configs=[
-                 # Average usage by difficulty and data point
-                config.AggregatorConfig(
-                    class_name=reports.BiLevelAggregator,
-                    init_args={
-                        "column_names": [
-                            self._USAGE_COMPLETION_OUTPUT_COLUMN_NAME
-                        ],
-                        "first_groupby": self._DATAPOINT_ID_COLUMN_NAME,
-                        "agg_fn": "mean",
-                        "second_groupby": self._DIFFICULTY_LEVEL_COLUMN_NAME,
-                        "filename_base": "Usage_ByDifficulty",
-                    }
-                ),
-                # Average usage per data point across all attempts.
-                config.AggregatorConfig(
-                    class_name=reports.BiLevelAggregator,
-                    init_args={
-                        "column_names": [
-                            self._USAGE_COMPLETION_OUTPUT_COLUMN_NAME
-                        ],
-                        "first_groupby": self._DATAPOINT_ID_COLUMN_NAME,
-                        "agg_fn": "mean",
-                        "filename_base": "Overall_Average_Usage_ByDataPoint",
-                    }
-                ),
-            ],
-            output_dir=self._construct_output_dir_path("usage_eval_report"),
         )
 
     def _construct_output_dir_path(self, *parts: str) -> str:
