@@ -40,6 +40,7 @@ from eureka_ml_insights.metrics.live_code_bench import (
 from eureka_ml_insights.core.job_runner.sandboxing import preexec_fn_sandboxing
 from eureka_ml_insights.core.job_runner.command_runners import base as command_runners_base
 from eureka_ml_insights.core.job_runner.command_runners import subprocess_runner
+from eureka_ml_insights.metrics.live_code_bench import count_unique_error_messages_aggregator
 from eureka_ml_insights.metrics import reports
 
 
@@ -176,6 +177,9 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
     _ALL_TEST_CASES_COMBINED_COLUMN_NAME: str = "all_test_cases_combined"
     _DIFFICULTY_LEVEL_COLUMN_NAME: str = "difficulty"
     _DATAPOINT_ID_COLUMN_NAME: str = "data_point_id"
+    _ALL_PASSED_COLUMN_NAME: str = "CodegenTestCaseResultsMetric_all_passed"
+    _ERROR_MESSAGES_COLUMN_NAME: str = (
+        "CodegenTestCaseResultsMetric_error_messages")
     _USAGE_COLUMN_NAME: str = "usage"
     _N_OUTPUT_TOKENS_COLUMN_NAME: str = "n_output_tokens"
     _USAGE_COMPLETION_OUTPUT_COLUMN_NAME: str = "usage_completion_output"
@@ -582,7 +586,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     class_name=reports.AverageAggregator,
                     init_args={
                         "column_names": [
-                            "CodegenTestCaseResultsMetric_all_passed",
+                            self._ALL_PASSED_COLUMN_NAME,
                         ],
                         "group_by": self._DATAPOINT_ID_COLUMN_NAME,
                         "filename_base": "Pass@1_ByQuestion",
@@ -594,7 +598,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     class_name=reports.BiLevelAggregator,
                     init_args={
                         "column_names": [
-                            "CodegenTestCaseResultsMetric_all_passed",
+                            self._ALL_PASSED_COLUMN_NAME,
                         ],
                         "first_groupby": self._DATAPOINT_ID_COLUMN_NAME,
                         "agg_fn": "mean",
@@ -608,7 +612,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     class_name=reports.BiLevelAggregator,
                     init_args={
                         "column_names": [
-                            "CodegenTestCaseResultsMetric_all_passed",
+                            self._ALL_PASSED_COLUMN_NAME,
                         ],
                         "first_groupby": self._DATAPOINT_ID_COLUMN_NAME,
                         "agg_fn": "mean",
@@ -638,6 +642,28 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                         "first_groupby": self._DATAPOINT_ID_COLUMN_NAME,
                         "agg_fn": "mean",
                         "filename_base": "Overall_Average_Usage_ByDataPoint",
+                    }
+                ),
+                # Get the unique error messages and their counts
+                config.AggregatorConfig(
+                    class_name=count_unique_error_messages_aggregator.CountUniqueErrorMessagesAggregator,
+                    init_args={
+                        "error_messages_column_name": (
+                            self._ERROR_MESSAGES_COLUMN_NAME),
+                        "exclude_empty": True,  # Empty means no error
+                        "filename_base": "Unique_Error_Messages",
+                    }
+                ),
+                # Get error messages and their counts by difficulty level
+                config.AggregatorConfig(
+                    class_name=count_unique_error_messages_aggregator.CountUniqueErrorMessagesAggregator,
+                    init_args={
+                        "error_messages_column_name": (
+                            self._ERROR_MESSAGES_COLUMN_NAME),
+                        "exclude_empty": True,  # Empty means no error
+                        "group_by": (
+                            self._DIFFICULTY_LEVEL_COLUMN_NAME),
+                        "filename_base": "Unique_Error_Messages_ByDifficulty",
                     }
                 ),
             ],
@@ -671,7 +697,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     class_name=reports.MaxAggregator,
                     init_args={
                         "column_names": [
-                            "CodegenTestCaseResultsMetric_all_passed",
+                            self._ALL_PASSED_COLUMN_NAME,
                         ],
                         "group_by": self._DATAPOINT_ID_COLUMN_NAME,
                         "agg_fn": "max",
@@ -684,7 +710,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     class_name=reports.BiLevelAggregator,
                     init_args={
                         "column_names": [
-                            "CodegenTestCaseResultsMetric_all_passed",
+                            self._ALL_PASSED_COLUMN_NAME,
                         ],
                         "first_groupby": self._DATAPOINT_ID_COLUMN_NAME,
                         "agg_fn": "max",
@@ -698,7 +724,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     class_name=reports.BiLevelAggregator,
                     init_args={
                         "column_names": [
-                            "CodegenTestCaseResultsMetric_all_passed",
+                            self._ALL_PASSED_COLUMN_NAME,
                         ],
                         "first_groupby": self._DATAPOINT_ID_COLUMN_NAME,
                         "agg_fn": "max",
@@ -737,7 +763,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     class_name=reports.BiLevelAggregator,
                     init_args={
                         "column_names": [
-                            "CodegenTestCaseResultsMetric_all_passed",
+                            self._ALL_PASSED_COLUMN_NAME,
                         ],
                         "first_groupby": self._DATAPOINT_ID_COLUMN_NAME,
                         "agg_fn": "min",
@@ -751,7 +777,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     class_name=reports.BiLevelAggregator,
                     init_args={
                         "column_names": [
-                            "CodegenTestCaseResultsMetric_all_passed",
+                            self._ALL_PASSED_COLUMN_NAME,
                         ],
                         "first_groupby": self._DATAPOINT_ID_COLUMN_NAME,
                         "agg_fn": "min",
