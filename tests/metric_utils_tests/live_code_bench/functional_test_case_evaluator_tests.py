@@ -1,6 +1,8 @@
 import unittest
 import textwrap
 
+from parameterized import parameterized
+
 from eureka_ml_insights.core.job_runner.command_runners import subprocess_runner
 from eureka_ml_insights.metrics.live_code_bench import functional_test_case
 from eureka_ml_insights.metrics.live_code_bench import functional_test_case_evaluator
@@ -14,18 +16,65 @@ class EvaluateFunctionalTestCase(unittest.TestCase):
         """Sets up a command runner for the tests."""
         cls.command_runner = subprocess_runner.SubprocessCommandRunner()
     
-    def test_evaluate_functional_case_passes(self):
-        """Evaluates a functional test case that should pass."""
-        src_code = textwrap.dedent("""
-            def add(a, b):
-                return a + b
-        """)
-        function_name = "add"
-        test_case = functional_test_case.FunctionalTestCase(
-            inputs=(3, 4),
-            expected_output=7
-        )
+    @parameterized.expand([
+        # (src_code, function_name, test_case)
 
+        # Integer input/output
+        (
+            textwrap.dedent("""
+                def add(a, b):
+                    return a + b
+            """),
+            "add",
+            functional_test_case.FunctionalTestCase(
+                inputs=(2, 3),
+                expected_output=5
+            )
+        ),
+
+        # List output but tuple expected output
+        (
+            textwrap.dedent("""
+                def get_list():
+                    return [1, 2, 3]
+            """),
+            "get_list",
+            functional_test_case.FunctionalTestCase(
+                inputs=(),
+                expected_output=(1, 2, 3)
+            )
+        ),
+
+        # Tuple input but list expected output
+        (
+            textwrap.dedent("""
+                def get_tuple():
+                    return (1, 2, 3)
+            """),
+            "get_tuple",
+            functional_test_case.FunctionalTestCase(
+                inputs=(),
+                expected_output=[1, 2, 3]
+            )
+        ),
+
+        # Nested tuple and list structures in dictionary
+        (
+            textwrap.dedent("""
+                def get_nested():
+                    return {'a': [1, 2], 'b': (3, 4)}
+            """),
+            "get_nested",
+            functional_test_case.FunctionalTestCase(
+                inputs=(),
+                expected_output={"a": (1, 2), "b": [3, 4]}
+            )
+        ),
+    ])
+    def test_evaluate_functional_case_passes(
+        self, src_code: str, function_name: str,
+        test_case: functional_test_case.FunctionalTestCase):
+        """Evaluates a functional test case that should pass."""
         result = functional_test_case_evaluator.evaluate_functional_test_case(
             src_code=src_code,
             runner=self.command_runner,

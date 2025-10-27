@@ -2,13 +2,38 @@
 
 import datetime
 
-from typing import cast
+from typing import Any, cast
 
 from eureka_ml_insights.core.job_runner import job_runner
 from eureka_ml_insights.core.job_runner.command_runners import base as command_runners_base
 from eureka_ml_insights.core.job_runner.jobs import python_function_job
 from eureka_ml_insights.metrics.live_code_bench import functional_test_case
 from eureka_ml_insights.metrics.live_code_bench import test_case_result
+
+
+def _normalize_output(output: Any) -> Any:
+    """Normalizes the output for comparison.
+
+    Recursively converts lists to tuples and normalizes dictionary keys
+    and values.
+
+    This is similar to the normalization done in
+    https://github.com/LiveCodeBench/LiveCodeBench/blob/28fef95ea8c9f7a547c8329f2cd3d32b92c1fa24/lcb_runner/evaluation/testing_util.py#L266
+
+    Args:
+        output: The output to normalize.
+
+    Returns:
+        The normalized output.
+    """
+    if isinstance(output, list) or isinstance(output, tuple):
+        return tuple(_normalize_output(item) for item in output)
+    elif isinstance(output, dict):
+        return {
+            _normalize_output(k): _normalize_output(v)
+            for k, v in output.items()}
+
+    return output
 
 
 def evaluate_functional_test_case(
@@ -31,7 +56,7 @@ def evaluate_functional_test_case(
 
     Returns:
         A TestCaseResult instance indicating whether the test case passed.
-    
+
     Raises:
         ValueError: If function_name is not provided.
     """
@@ -52,8 +77,13 @@ def evaluate_functional_test_case(
         job_result = cast(
             python_function_job.PythonFunctionJobResult,
             result.job_result)
+
+        normalized_actual_output = _normalize_output(job_result.return_value)
+        normalized_expected_output = _normalize_output(
+            test_case.expected_output)
+
         if (job_result.success
-                and job_result.return_value == test_case.expected_output):
+            and normalized_actual_output == normalized_expected_output):
             return test_case_result.TestCaseResult(passed=True)
         elif not job_result.success:
             assert job_result.exception_class_name is not None
