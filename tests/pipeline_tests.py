@@ -684,6 +684,10 @@ class GSMSYMBOLIC_PipelineTest(PipelineTest, unittest.TestCase):
         return TEST_GSMSYMBOLIC_PIPELINE().pipeline_config
 
 
+# Skipping since the LiveCodeBench dataset is too large to fit in the
+# VM that runs the tests on GitHub.
+@unittest.skipIf(
+    "skip_slow_tests" in os.environ, "Missing public dataset. TODO: revert")
 class LIVE_CODE_BENCH_CODEGEN_PipelineTest(PipelineTest, unittest.TestCase):
     def get_config(self):
         return TEST_LIVE_CODE_BENCH_CODEGEN_PIPELINE().pipeline_config
