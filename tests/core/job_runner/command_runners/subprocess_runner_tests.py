@@ -1,5 +1,6 @@
 import unittest
 import datetime
+import logging
 
 from eureka_ml_insights.core.job_runner.command_runners import base
 from eureka_ml_insights.core.job_runner.command_runners import subprocess_runner
@@ -35,8 +36,8 @@ class TestSubprocessCommandRunner(unittest.TestCase):
 
         runner = subprocess_runner.SubprocessCommandRunner(
             preexec_fn=preexec_fn)
-        result = runner.run(["echo", ""])
-        print(result)
+        result = runner.run(["echo", "A non-empty string"])
+        logging.info("Result: %s", result)
         self.assertEqual(result.returncode, 0)
         self.assertEqual(result.stdout.strip(), b"Preexec function called")
         
