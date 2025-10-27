@@ -95,8 +95,6 @@ function_name = input_data["function_name"]
 args = input_data["args"]
 kwargs = input_data["kwargs"]
 
-code_object = compile(src_script, '<my_source>', 'exec')
-
 # Prepare to capture output
 # This is important to avoid mixing function output with the pickled result
 # written to stdout.
@@ -104,6 +102,7 @@ stdout_buffer = io.StringIO()
 stderr_buffer = io.StringIO()
 
 try:
+    code_object = compile(src_script, '<my_source>', 'exec')
     namespace: dict[str, Any] = {}
     with redirect_stdout(stdout_buffer), redirect_stderr(stderr_buffer):
         exec(code_object, namespace)
