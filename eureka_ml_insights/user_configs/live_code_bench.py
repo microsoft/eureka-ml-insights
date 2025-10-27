@@ -646,7 +646,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     }
                 ),
             ],
-            output_dir=self._construct_output_dir_path("pass_at_1_eval_report"),
+            output_dir=self._construct_output_dir_path("passat1_eval_report"),
         )
 
     def _create_best_of_n_eval_config(
@@ -711,7 +711,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     }
                 ),
             ],
-            output_dir=self._construct_output_dir_path("best_of_n_eval_report"),
+            output_dir=self._construct_output_dir_path("bestofn_eval_report"),
         )
 
     def _create_worst_of_n_eval_config(
@@ -764,7 +764,7 @@ class LIVE_CODE_BENCH_CODEGEN_PIPELINE(configs.ExperimentConfig):
                     }
                 ),
             ],
-            output_dir=self._construct_output_dir_path("worst_of_n_eval_report"),
+            output_dir=self._construct_output_dir_path("worstofn_eval_report"),
         )
 
     def _create_usage_eval_config(
