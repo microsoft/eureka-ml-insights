@@ -1,6 +1,7 @@
 """Parses functional test cases from the LiveCodeBench format."""
 
 import ast
+import json
 
 from typing import Any
 
@@ -14,6 +15,42 @@ class InvalidTestCaseExpressionException(Exception):
 
 class InvalidTestCaseOutputException(Exception):
     """Raised when a test case output is invalid."""
+
+
+def _convert_string_to_literal(expr: str) -> Any:
+    """Converts a string expression to a Python literal.
+
+    This function attempts to parse the input string as a JSON object first,
+    and if that fails, it falls back to using `ast.literal_eval`.
+
+    The use of JSON loads mirrors the original code in
+    https://github.com/LiveCodeBench/LiveCodeBench/blob/28fef95ea8c9f7a547c8329f2cd3d32b92c1fa24/lcb_runner/evaluation/testing_util.py#L246C10-L246C26
+
+    Args:
+        expr: A string representation of a Python literal.
+
+    Returns:
+        The evaluated Python literal.
+
+    Raises:
+        InvalidTestCaseExpressionException: If the expression cannot be parsed.
+    """
+    expr = expr.strip()
+
+    if not expr:
+        raise InvalidTestCaseExpressionException(
+            "Empty expression cannot be parsed.")
+
+    try:
+        return json.loads(expr)
+    except json.JSONDecodeError:
+        pass
+
+    try:
+        return ast.literal_eval(expr)
+    except (ValueError, SyntaxError) as e:
+        raise InvalidTestCaseExpressionException(
+            f"Failed to parse expression: {expr!r}") from e
 
 
 def _parse_functional_test_case_io(expr: str) -> tuple[Any, ...]:
@@ -32,15 +69,12 @@ def _parse_functional_test_case_io(expr: str) -> tuple[Any, ...]:
     """
     result: list[Any] = []
     for i, sub_expr in enumerate(expr.split("\n"), start=1):
-        sub_expr = sub_expr.strip()
-        if not sub_expr:
-            continue
         try:
-            evaluated = ast.literal_eval(sub_expr)
-        except (ValueError, SyntaxError) as e:
+            evaluated = _convert_string_to_literal(sub_expr)
+            result.append(evaluated)
+        except InvalidTestCaseExpressionException:
             raise InvalidTestCaseExpressionException(
-                f"Failed to parse expression on line {i}: {sub_expr!r}") from e
-        result.append(evaluated)
+                f"Failed to parse expression at line {i}: {sub_expr!r}")
     return tuple(result)
 
 

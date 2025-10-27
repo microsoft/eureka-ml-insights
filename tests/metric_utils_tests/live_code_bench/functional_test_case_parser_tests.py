@@ -42,6 +42,22 @@ class FunctionalTestCaseParserTests(unittest.TestCase):
             (['a', 2, 'c'], [1, 2, 3]),
             6
         ),
+
+        # JSON literals booleans
+        (
+            "(1, 2, 3)",
+            "[true, false, null]",
+            ((1, 2, 3),),
+            [True, False, None]
+        ),
+
+        # Python literals booleans
+        (
+            "(1, 2, 3)",
+            "[True, False, None]",
+            ((1, 2, 3),),
+            [True, False, None]
+        ),
     ])
     def test_parse_functional_case(
         self, inputs: str, output: str,
@@ -74,6 +90,9 @@ class FunctionalTestCaseParserTests(unittest.TestCase):
 
         # Non-literal in output
         ("5", "open('file.txt')"),
+
+        # Empty input expression
+        ("'a'\n", "10"),
     ])
     def test_parse_functional_case_invalid_input(self, inputs: str, output: str):
         """Raises InvalidTestCaseExpressionException for invalid functional test case values."""
