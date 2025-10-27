@@ -36,6 +36,7 @@ class TestSubprocessCommandRunner(unittest.TestCase):
         runner = subprocess_runner.SubprocessCommandRunner(
             preexec_fn=preexec_fn)
         result = runner.run(["echo", ""])
+        print(result)
         self.assertEqual(result.returncode, 0)
         self.assertEqual(result.stdout.strip(), b"Preexec function called")
         
