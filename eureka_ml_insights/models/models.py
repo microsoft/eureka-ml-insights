@@ -1055,7 +1055,9 @@ class HuggingFaceModel(Model):
 
         if text_prompt:
             if self.apply_model_template:
-                text_prompt = self.model_template_fn(text_prompt, system_message)
+
+                num_images = len(query_images) if query_images is not None else 0
+                text_prompt = self.model_template_fn(text_prompt, system_message, num_images=num_images)
 
             try:
                 model_response = self._generate(text_prompt, query_images=query_images)
@@ -1067,15 +1069,25 @@ class HuggingFaceModel(Model):
                 logging.warning(e)
                 is_valid = False
 
-        response_dict.update(
-            {
-                "is_valid": is_valid,
-                "n_output_tokens": self.count_tokens(response_dict["model_output"], is_valid),
-            }
-        )
+            response_dict.update(
+                {
+                    "is_valid": is_valid,
+                    "n_output_tokens": self.count_tokens(response_dict["model_output"], is_valid),
+                }
+            )
+        else:
+            logging.warning("No text prompt provided.")
+            response_dict.update(
+                {
+                    "model_output": None,
+                    "is_valid": False,
+                    "response_time": None,
+                    "n_output_tokens": None,
+                }
+            )
         return response_dict
 
-    def model_template_fn(self, text_prompt, system_message=None):
+    def model_template_fn(self, text_prompt, system_message=None, num_images=None):
         return system_message + " " + text_prompt if system_message else text_prompt
 
 
@@ -1091,8 +1103,8 @@ class Phi3HFModel(HuggingFaceModel):
                 "but your model is not a Phi-3 model."
             )
 
-    def model_template_fn(self, text_prompt, system_message=None):
-        text_prompt = super().model_template_fn(text_prompt, system_message)
+    def model_template_fn(self, text_prompt, system_message=None, num_images=None):
+        text_prompt = super().model_template_fn(text_prompt, system_message, num_images=num_images)
         return f"<|user|>\n{text_prompt}<|end|>\n<|assistant|>"
 
 
@@ -1108,7 +1120,7 @@ class Phi4HFModel(HuggingFaceModel):
                 "but your model is not a Phi-4 model."
             )
 
-    def model_template_fn(self, text_prompt, system_message=None):
+    def model_template_fn(self, text_prompt, system_message=None, num_images=None):
         if system_message:
             return f"<|im_start|>system<|im_sep|>\n{system_message}<|im_end|>\n<|im_start|>user<|im_sep|>\n{text_prompt}<|im_end|>\n<|im_start|>assistant<|im_sep|>\n"
         else:
@@ -1199,7 +1211,7 @@ class LLaVAHuggingFaceModel(HuggingFaceModel):
 
         return super().generate(text_prompt, query_images=query_images, system_message=system_message)
 
-    def model_template_fn(self, text_prompt, system_message=None):
+    def model_template_fn(self, text_prompt, system_message=None, num_images=None):
         text_prompt = f"<image>\n{text_prompt}"
 
         if "v1.6-mistral" in self.model_name:
