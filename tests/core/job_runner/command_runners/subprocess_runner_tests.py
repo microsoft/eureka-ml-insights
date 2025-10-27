@@ -1,5 +1,4 @@
 import datetime
-import logging
 import sys
 import unittest
 
@@ -38,10 +37,11 @@ class TestSubprocessCommandRunner(unittest.TestCase):
 
         runner = subprocess_runner.SubprocessCommandRunner(
             preexec_fn=preexec_fn)
-        result = runner.run(["echo", "A non-empty string"])
-        logging.info("Result: %s", result)
+        result = runner.run(["echo", "Echoing after preexec"])
         self.assertEqual(result.returncode, 0)
-        self.assertEqual(result.stdout.strip(), b"Preexec function called")
+        self.assertEqual(
+            result.stdout.strip(),
+            b"Preexec function called\nEchoing after preexec")
         
     def test_stdin_passed(self):
         runner = subprocess_runner.SubprocessCommandRunner()
