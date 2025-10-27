@@ -1,6 +1,7 @@
-import unittest
 import datetime
 import logging
+import sys
+import unittest
 
 from eureka_ml_insights.core.job_runner.command_runners import base
 from eureka_ml_insights.core.job_runner.command_runners import subprocess_runner
@@ -32,7 +33,8 @@ class TestSubprocessCommandRunner(unittest.TestCase):
 
     def test_preexec_fn_called(self):
         def preexec_fn():
-            print("Preexec function called")
+            sys.stdout.write("Preexec function called\n")
+            sys.stdout.flush()
 
         runner = subprocess_runner.SubprocessCommandRunner(
             preexec_fn=preexec_fn)
