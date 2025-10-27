@@ -78,7 +78,17 @@ def extract_function(
 
 
 # Read serialized input from stdin
-input_data = pickle.load(sys.stdin.buffer)
+try:
+    input_data = pickle.load(sys.stdin.buffer)
+except Exception as e:
+    pickle.dump({
+        "result": None,
+        "exception_class_name": e.__class__.__name__,
+        "exception_msg": f"Startup error: {traceback.format_exc()}",
+        "stdout": "",
+        "stderr": "",
+    }, sys.stdout.buffer)
+    sys.exit(1)
 
 src_script = input_data["src_script"]
 function_name = input_data["function_name"]
