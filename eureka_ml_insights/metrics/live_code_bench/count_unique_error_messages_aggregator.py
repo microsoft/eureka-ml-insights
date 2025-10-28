@@ -14,7 +14,7 @@ class CountUniqueErrorMessagesAggregator(reports.Aggregator):
     def __init__(self,
                  error_messages_column_name: str,
                  output_dir: str,
-                 exclude_empty: bool = True,
+                 exclude_empty: bool = False,
                  normalize: bool = False,
                  group_by: str | None = None,
                  **kwargs):
