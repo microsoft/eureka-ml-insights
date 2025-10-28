@@ -63,16 +63,16 @@ class CountUniqueErrorMessagesAggregator(reports.Aggregator):
         Returns:
             A dictionary mapping each unique error message to its count.
         """
-        # Convert all entries to list if they are not already
-        normalized_error_message: list[list[str]] = (error_messages.apply(
-            lambda x: [x] if isinstance(x, str) else x).to_list())
+        # Normalize: ensure every element is a list
+        s = error_messages.map(
+            lambda x: x if isinstance(x, (list, tuple)) else [x])
 
-        # Flatten the list of lists into a single list
-        flattened_error_messages: list[str] = [
-            message for sublist in normalized_error_message
-            for message in sublist
-            if not self._exclude_empty or message.strip()
-        ]
+        # Explode the lists into individual rows
+        s = s.explode(ignore_index=True)
 
-        # Maps error message to its count
-        return Counter(flattened_error_messages)
+        s = s.dropna()
+
+        if self._exclude_empty:
+            s = s.loc[s.str.strip().astype(bool)]
+
+        return s.value_counts().to_dict()
