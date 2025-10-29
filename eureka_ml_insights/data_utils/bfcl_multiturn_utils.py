@@ -1,4 +1,4 @@
-import re
+import re, ast
 from dataclasses import dataclass
 
 import pandas as pd
@@ -30,8 +30,14 @@ class BFCLMultiturnExecuteCall(DFTransformBase):
         """
         test_entry = df_row
         response_text = test_entry["model_output"]
-        initial_config: dict = eval(test_entry["initial_config"])
-        involved_classes: list = eval(test_entry["involved_classes"])
+        try:
+            initial_config = ast.literal_eval(test_entry["initial_config"])
+        except (ValueError, SyntaxError) as e:
+            raise ValueError(f"Invalid initial_config format: {test_entry['initial_config']}") from e
+        try:
+            involved_classes: list = eval(test_entry["involved_classes"])
+        except (ValueError, SyntaxError) as e:
+            raise ValueError(f"Invalid involved_classes format: {test_entry['involved_classes']}") from e
         test_entry_id: str = test_entry["id"]
         test_category: str = test_entry_id.rsplit("_", 1)[0]
 
