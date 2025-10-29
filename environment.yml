@@ -44,7 +44,9 @@ dependencies:
       - azure-keyvault-secrets>=4.8.0
       - azure-identity>=1.16.0
       - azure-storage-blob>=12.20.0
-      - datasets>=3.2.0
+      # Has to be below version 4 due to
+      # https://github.com/LiveCodeBench/LiveCodeBench/issues/108
+      - datasets>=3.2.0,<4.0.0
       - fuzzywuzzy>=0.18.0
       - jsonlines>=2.0.0
       - pandas>=2.2.1
@@ -68,4 +70,6 @@ dependencies:
       - vllm>=0.8.5
       - latex2sympy2>=1.9.1
       - bfcl-eval>=2025.10.13
+      - parameterized>=0.9.0
+      - pyseccomp>=0.1.2
 prefix: /home/sayouse/miniconda3/envs/myenv
