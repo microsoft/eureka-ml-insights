@@ -1234,6 +1234,106 @@ class LLaVAHuggingFaceModel(HuggingFaceModel):
 
         return text_prompt
 
+@dataclass
+class Qwen3VLHFModel(HuggingFaceModel):
+    """This class is used to run a self-hosted Qwen3VL model via HuggingFace apis."""
+
+    def __post_init__(self):
+        super().__post_init__()
+        if "Qwen3-VL" not in self.model_name:
+            logging.warning(
+                "This model class applies a template to the prompt that is specific to Qwen3-VL models"
+                "but your model is not a Qwen3-VL model."
+            )
+
+    def get_model(self):
+        import torch
+        from transformers import (
+            Qwen3VLForConditionalGeneration,
+            AutoProcessor,
+        )
+
+        if self.use_flash_attn:
+            print("Using flash attention for Qwen3-VL model")
+            self.model = Qwen3VLForConditionalGeneration.from_pretrained(
+                self.model_name,
+                dtype=torch.bfloat16,
+                attn_implementation="flash_attention_2",
+                device_map="auto",
+            )
+        else:
+            self.model = Qwen3VLForConditionalGeneration.from_pretrained(
+                self.model_name,
+                dtype="auto",
+                device_map="auto",
+            )
+
+        self.processor = AutoProcessor.from_pretrained(self.model_name)
+
+    def _generate(self, text_prompt, query_images=None):
+        inputs = self.processor(text=text_prompt, images=query_images, return_tensors="pt").to(self.device)
+
+        start_time = time.time()
+        output_ids = self.model.generate(
+            **inputs,
+            max_new_tokens=self.max_tokens,
+            temperature=self.temperature,
+            top_p=self.top_p,
+            do_sample=self.do_sample,
+        )
+        end_time = time.time()
+        sequence_length = inputs["input_ids"].shape[1]
+        new_output_ids = output_ids[:, sequence_length:]
+        model_output = self.processor.batch_decode(
+            new_output_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False
+        )[0]
+
+        response_time = end_time - start_time
+        return {
+            "model_output": model_output,
+            "response_time": response_time,
+        }
+
+    def model_template_fn(self, text_prompt, system_message=None, num_images=None):
+
+        image_messages = [
+            {
+                "type": "image",
+                "image": f"image{i}",
+            } for i in range(num_images)
+        ]
+        content = image_messages + [{"type": "text", "text": text_prompt}]
+
+        messages = []
+        if system_message:
+            messages.append(
+                {
+                    "role": "system", 
+                    "content": system_message,
+                }
+            )
+        messages.append(
+            {
+                "role": "user", 
+                "content": content,
+            }
+        )
+
+        # messages = [
+        #     {
+        #         "role": "user",
+        #         "content": content,
+        #     }
+        # ]
+
+        text_prompt = self.processor.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True,
+            return_dict=False,
+        )
+
+        return text_prompt
 
 @dataclass
 class LLaVAModel(LLaVAHuggingFaceModel):

@@ -19,7 +19,8 @@ from eureka_ml_insights.models import (
     RestEndpointModel,
     TogetherModel,
     TestModel,
-    OfflineFileModel
+    OfflineFileModel,
+    Qwen3VLHFModel,
 )
 from eureka_ml_insights.models.models import AzureOpenAIModel
 
@@ -277,6 +278,28 @@ PHI4_HF_CONFIG = ModelConfig(
         "temperature": 1.0,
         "max_tokens": 4096,
         "use_flash_attn": True,
+    },
+)
+
+QWEN3_VL_4B_INSTRUCT_HF_CONFIG = ModelConfig(
+    Qwen3VLHFModel,
+    {
+        "model_name": "Qwen/Qwen3-VL-4B-Instruct",
+        "max_tokens": 768,
+        "use_flash_attn": True,
+        "do_sample": False,
+        "top_p": None
+    },
+)
+
+QWEN3_VL_8B_INSTRUCT_HF_CONFIG = ModelConfig(
+    Qwen3VLHFModel,
+    {
+        "model_name": "Qwen/Qwen3-VL-8B-Instruct",
+        "max_tokens": 768,
+        "use_flash_attn": True,
+        "do_sample": False,
+        "top_p": None
     },
 )
 

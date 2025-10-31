@@ -21,7 +21,8 @@ from .models import (
     TestModel,
     OfflineFileModel,
     VLLMModel,
-    TogetherModel
+    TogetherModel,
+    Qwen3VLHFModel,
 )
 
 __all__ = [
@@ -47,5 +48,6 @@ __all__ = [
     TestModel,
     OfflineFileModel,
     VLLMModel,
-    TogetherModel
+    TogetherModel,
+    Qwen3VLHFModel,
 ]
