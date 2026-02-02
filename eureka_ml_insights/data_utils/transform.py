@@ -244,7 +244,9 @@ class MultiColumnTransform(DFTransformBase):
             return df
         self.validate(df)
         for column in self.columns:
-            df.loc[:, column] = df.loc[:, column].apply(self._transform)
+            # Apply transform and let pandas infer the appropriate dtype
+            transformed = df[column].apply(self._transform)
+            df[column] = transformed
         return df
 
 
@@ -477,14 +479,21 @@ class MajorityVoteTransform:
         Returns:
             pd.DataFrame: Transformed dataframe with majority vote for each id_col.
         """
-        result_df = df.groupby(self.id_col).apply(
+        # Save the id_col values before groupby (pandas 3.0 drops the groupby column)
+        id_col_values = df[self.id_col].copy()
+        
+        result_df = df.groupby(self.id_col, group_keys=False).apply(
             self.majority_vote,
             self.model_output_col,
             self.model_label_column,
             self.majority_vote_col,
             self.majority_label_col,
             random_state=random_state,
-        )
+        ).reset_index(drop=True)
+        
+        # Restore the id_col if it was dropped
+        if self.id_col not in result_df.columns:
+            result_df[self.id_col] = id_col_values.values
         return result_df
 
     @staticmethod
