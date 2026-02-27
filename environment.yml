@@ -69,6 +69,7 @@ dependencies:
       - pycocotools>=2.0.8
       - vllm>=0.8.5
       - latex2sympy2>=1.9.1
+      - bfcl-eval>=2025.10.13
       - parameterized>=0.9.0
       - pyseccomp>=0.1.2
 prefix: /home/sayouse/miniconda3/envs/myenv

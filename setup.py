@@ -1,5 +1,4 @@
-from setuptools import setup, find_packages
-
+from setuptools import find_packages, setup
 
 setup(
     name='eureka_ml_insights',
@@ -44,6 +43,7 @@ setup(
         'pycocotools>=2.0.8',
         'vllm>=0.8.5',
         'latex2sympy2>=1.9.1',
+        'bfcl-eval>=2025.10.13',
         'parameterized>=0.9.0',
         'pyseccomp>=0.1.2',
     ],
@@ -54,9 +54,9 @@ setup(
     },
     classifiers=[
         # Full list at https://pypi.org/classifiers/
-        'Programming Language :: Python :: 3',
-        'License :: Apache License 2.0',
-        'Operating System :: OS Independent',
+        "Programming Language :: Python :: 3",
+        "License :: Apache License 2.0",
+        "Operating System :: OS Independent",
     ],
-    python_requires='>=3.8',
+    python_requires=">=3.8",
 )
