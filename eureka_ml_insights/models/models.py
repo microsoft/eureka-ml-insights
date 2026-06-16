@@ -29,7 +29,7 @@ class Model(ABC):
 
     chat_mode: bool = False
     system_message: str = None
-    max_concurrent: int = 1
+    max_concurrent: int = 32
 
     @abstractmethod
     def generate(self, text_prompt, *args, **kwargs):

@@ -50,7 +50,7 @@ class MMLU_BASELINE_PIPELINE(ExperimentConfig):
             {
                 "path": "cais/mmlu",
                 "split": "test",
-                "tasks": ["abstract_algebra"], #MMLUAll,
+                "tasks": MMLUAll,
                 "transform": SequenceTransform(
                     [
                         # ASTEvalTransform(columns=["choices"]),
@@ -92,6 +92,13 @@ class MMLU_BASELINE_PIPELINE(ExperimentConfig):
                             MapStringsTransform(
                                 columns=["category"],
                                 mapping=MMLUTaskToCategories,
+                            ),
+                            # MMLU stores `answer` as int 0..3; MMMUMetric compares
+                            # against the parsed letter (A/B/C/D). Convert so the
+                            # comparison can succeed.
+                            MapStringsTransform(
+                                columns=["ground_truth"],
+                                mapping={0: "A", 1: "B", 2: "C", 3: "D"},
                             ),
                         ]
                     ),
